@@ -1,0 +1,343 @@
+'use client'
+
+import { useState, useMemo } from 'react'
+import {
+  SEMANAS_VERANO, diasDeSemana, formatDia, formatFechaLarga,
+  PRECIO_DIA_SUELTO, PRECIO_SEMANA, DESCUENTO_HERMANOS, CUPON_HERMANOS,
+} from './config'
+
+const DIAS_SEMANA = ['L', 'M', 'X', 'J', 'V']
+
+// ─── Cálculo de precio ────────────────────────────────────────────────────────
+function calcularPrecio(diasSeleccionados: Set<string>, cuponAplicado: boolean) {
+  let subtotal = 0
+  const desglose: { label: string; precio: number }[] = []
+
+  for (const semana of SEMANAS_VERANO) {
+    const dias = diasDeSemana(semana)
+    const seleccionados = dias.filter(d => diasSeleccionados.has(d))
+    if (seleccionados.length === 0) continue
+    if (seleccionados.length === 5) {
+      subtotal += PRECIO_SEMANA
+      desglose.push({ label: `Semana ${semana.id} — ${semana.elemento} ${semana.emoji} (semana completa)`, precio: PRECIO_SEMANA })
+    } else {
+      const precio = seleccionados.length * PRECIO_DIA_SUELTO
+      subtotal += precio
+      desglose.push({ label: `Semana ${semana.id} — ${semana.elemento} ${semana.emoji} (${seleccionados.length} día${seleccionados.length > 1 ? 's' : ''})`, precio })
+    }
+  }
+
+  const descuento = cuponAplicado ? Math.round(subtotal * DESCUENTO_HERMANOS) : 0
+  const total = subtotal - descuento
+  return { subtotal, descuento, total, desglose }
+}
+
+// ─── Componente principal ─────────────────────────────────────────────────────
+export default function ReservaVerano() {
+  const [diasSeleccionados, setDiasSeleccionados] = useState<Set<string>>(new Set())
+  const [matinal, setMatinal]     = useState(false)   // entrada 8:00
+  const [ampliacion, setAmpliacion] = useState(false) // salida 15:00
+  const [numNinos, setNumNinos]   = useState(1)
+  const [cupon, setCupon]         = useState('')
+  const [cuponAplicado, setCuponAplicado] = useState(false)
+  const [cuponError, setCuponError] = useState(false)
+  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', notas: '' })
+  const [paso, setPaso] = useState<'seleccion' | 'datos' | 'confirmado'>('seleccion')
+  const [enviando, setEnviando] = useState(false)
+
+  const { subtotal, descuento, total, desglose } = useMemo(
+    () => calcularPrecio(diasSeleccionados, cuponAplicado),
+    [diasSeleccionados, cuponAplicado]
+  )
+
+  function toggleDia(dia: string) {
+    setDiasSeleccionados(prev => {
+      const next = new Set(prev)
+      next.has(dia) ? next.delete(dia) : next.add(dia)
+      return next
+    })
+  }
+
+  function toggleSemana(semana: typeof SEMANAS_VERANO[0]) {
+    const dias = diasDeSemana(semana)
+    const todosSeleccionados = dias.every(d => diasSeleccionados.has(d))
+    setDiasSeleccionados(prev => {
+      const next = new Set(prev)
+      if (todosSeleccionados) { dias.forEach(d => next.delete(d)) }
+      else { dias.forEach(d => next.add(d)) }
+      return next
+    })
+  }
+
+  function aplicarCupon() {
+    if (cupon.trim().toUpperCase() === CUPON_HERMANOS) {
+      setCuponAplicado(true); setCuponError(false)
+    } else {
+      setCuponError(true); setCuponAplicado(false)
+    }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setEnviando(true)
+    await new Promise(r => setTimeout(r, 1400))
+    setEnviando(false)
+    setPaso('confirmado')
+  }
+
+  // ── Confirmado ──
+  if (paso === 'confirmado') {
+    return (
+      <div className="text-center py-8">
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
+          </svg>
+        </div>
+        <h3 className="text-xl font-black text-pm-navy mb-2">¡Solicitud enviada!</h3>
+        <p className="text-sm text-gray-600 mb-4">
+          Nos pondremos en contacto contigo para confirmar la reserva del campamento de verano.
+        </p>
+        <div className="bg-pm-bg rounded-xl p-4 text-sm text-left space-y-1 max-w-xs mx-auto mb-4">
+          <div><span className="text-gray-500">Días reservados:</span> <strong>{diasSeleccionados.size}</strong></div>
+          <div><span className="text-gray-500">Niños:</span> <strong>{numNinos}</strong></div>
+          <div><span className="text-gray-500">Total:</span> <strong>{total * numNinos} €</strong></div>
+        </div>
+        <button onClick={() => { setPaso('seleccion'); setDiasSeleccionados(new Set()); setCuponAplicado(false); setCupon('') }}
+          className="text-pm-red underline text-sm">Hacer otra reserva</button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+
+      {/* ── SEMANAS y calendario ── */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="font-black text-pm-navy text-sm">Elige tus semanas o días sueltos</h3>
+          <div className="flex gap-3 text-xs text-gray-500">
+            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-pm-red rounded inline-block"/>Seleccionado</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-3 bg-pm-bg border border-gray-200 rounded inline-block"/>Disponible</span>
+          </div>
+        </div>
+
+        {SEMANAS_VERANO.map(semana => {
+          const dias = diasDeSemana(semana)
+          const seleccionados = dias.filter(d => diasSeleccionados.has(d))
+          const todosSelec = seleccionados.length === 5
+          const esSemanaCompleta = seleccionados.length === 5
+
+          return (
+            <div key={semana.id} className={`rounded-2xl border-2 overflow-hidden transition-all ${todosSelec ? semana.colorBorder : 'border-gray-200'}`}>
+              {/* Header semana */}
+              <div className={`${todosSelec ? semana.color : 'bg-pm-bg'} px-4 py-2.5 flex items-center justify-between transition-colors`}>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">{semana.emoji}</span>
+                  <div>
+                    <span className={`font-black text-sm ${todosSelec ? 'text-white' : 'text-pm-navy'}`}>
+                      Semana {semana.id} — {semana.elemento}
+                    </span>
+                    <div className={`text-xs ${todosSelec ? 'text-white/70' : 'text-gray-500'}`}>
+                      {formatFechaLarga(semana.inicio)} · {semana.lema}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {esSemanaCompleta && (
+                    <span className={`text-xs font-black px-2 py-0.5 rounded-full ${todosSelec ? 'bg-white/20 text-white' : 'bg-green-100 text-green-700'}`}>
+                      95 € ✓
+                    </span>
+                  )}
+                  <button
+                    onClick={() => toggleSemana(semana)}
+                    className={`text-xs font-bold px-3 py-1 rounded-full transition-colors ${
+                      todosSelec
+                        ? 'bg-white/20 text-white hover:bg-white/30'
+                        : 'bg-white border border-gray-200 text-pm-navy hover:border-pm-red hover:text-pm-red'
+                    }`}
+                  >
+                    {todosSelec ? '✓ Semana completa' : 'Semana completa'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Días */}
+              <div className="grid grid-cols-5 gap-1.5 p-3 bg-white">
+                {dias.map((dia, i) => {
+                  const selec = diasSeleccionados.has(dia)
+                  return (
+                    <button
+                      key={dia}
+                      onClick={() => toggleDia(dia)}
+                      className={`flex flex-col items-center py-2 rounded-xl border-2 transition-all text-xs font-semibold ${
+                        selec
+                          ? `${semana.color} text-white border-transparent`
+                          : `bg-pm-bg border-gray-200 text-gray-700 hover:border-pm-red/40`
+                      }`}
+                    >
+                      <span className="text-xs opacity-70 mb-0.5">{DIAS_SEMANA[i]}</span>
+                      <span className="font-black">{formatDia(dia).split(' ')[1]}</span>
+                    </button>
+                  )
+                })}
+              </div>
+
+              {/* Precio de esta semana */}
+              {seleccionados.length > 0 && (
+                <div className={`${semana.colorLight} px-4 py-2 text-xs ${semana.colorText} font-semibold flex justify-between`}>
+                  <span>{seleccionados.length === 5 ? '✓ Semana completa (ahorro incluido)' : `${seleccionados.length} día${seleccionados.length > 1 ? 's' : ''} suelto${seleccionados.length > 1 ? 's' : ''}`}</span>
+                  <span className="font-black">{seleccionados.length === 5 ? PRECIO_SEMANA : seleccionados.length * PRECIO_DIA_SUELTO} €</span>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* ── Solo mostrar resto si hay días seleccionados ── */}
+      {diasSeleccionados.size > 0 && (
+        <>
+          {/* Horario ampliado */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+            <div className="font-black text-pm-navy text-sm mb-3">⏰ Horario ampliado (opcional)</div>
+            <div className="text-xs text-gray-500 mb-3">Horario base: 9:00 – 14:00</div>
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={() => setMatinal(!matinal)}
+                className={`border-2 rounded-xl p-3 text-left transition-all ${matinal ? 'border-pm-red bg-pm-red-light' : 'border-gray-200 hover:border-pm-red/40'}`}>
+                <div className={`font-bold text-sm ${matinal ? 'text-pm-red' : 'text-pm-navy'}`}>Matinal 🌅</div>
+                <div className="text-xs text-gray-500 mt-0.5">Entrada desde las 8:00</div>
+                <div className="text-xs text-gray-400 mt-1">Consultar precio</div>
+              </button>
+              <button onClick={() => setAmpliacion(!ampliacion)}
+                className={`border-2 rounded-xl p-3 text-left transition-all ${ampliacion ? 'border-pm-red bg-pm-red-light' : 'border-gray-200 hover:border-pm-red/40'}`}>
+                <div className={`font-bold text-sm ${ampliacion ? 'text-pm-red' : 'text-pm-navy'}`}>Ampliación 🌆</div>
+                <div className="text-xs text-gray-500 mt-0.5">Salida hasta las 15:00</div>
+                <div className="text-xs text-gray-400 mt-1">Consultar precio</div>
+              </button>
+            </div>
+          </div>
+
+          {/* Número de niños */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+            <div className="font-black text-pm-navy text-sm mb-3">👶 Número de niños</div>
+            <div className="flex items-center gap-4">
+              <button onClick={() => setNumNinos(n => Math.max(1, n - 1))}
+                className="w-9 h-9 bg-pm-bg border border-gray-200 rounded-xl text-lg font-bold hover:border-pm-red transition-colors">−</button>
+              <div className="text-3xl font-black text-pm-navy flex-1 text-center">{numNinos}</div>
+              <button onClick={() => setNumNinos(n => n + 1)}
+                className="w-9 h-9 bg-pm-bg border border-gray-200 rounded-xl text-lg font-bold hover:border-pm-red transition-colors">+</button>
+            </div>
+          </div>
+
+          {/* Cupón hermanos */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
+            <div className="font-black text-pm-navy text-sm mb-1">🏷️ Cupón de hermanos</div>
+            <div className="text-xs text-gray-500 mb-3">Si tus hijos vienen juntos, aplica un 15% de descuento</div>
+            {cuponAplicado ? (
+              <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-sm rounded-xl px-4 py-2.5">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
+                </svg>
+                <span className="font-bold">Cupón HERMANOS aplicado — 15% de descuento</span>
+                <button onClick={() => { setCuponAplicado(false); setCupon('') }} className="ml-auto text-xs underline text-green-600">Quitar</button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={cupon}
+                  onChange={e => { setCupon(e.target.value.toUpperCase()); setCuponError(false) }}
+                  placeholder="Ej. HERMANOS"
+                  className={`flex-1 border rounded-xl px-3 py-2 text-sm focus:outline-none ${cuponError ? 'border-pm-red bg-pm-red-light' : 'border-gray-200 focus:border-pm-red'}`}
+                />
+                <button onClick={aplicarCupon}
+                  className="bg-pm-navy text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-pm-navy-md transition-colors">
+                  Aplicar
+                </button>
+              </div>
+            )}
+            {cuponError && <p className="text-xs text-pm-red mt-1">Cupón no válido. Prueba con "HERMANOS".</p>}
+          </div>
+
+          {/* Resumen de precio */}
+          <div className="bg-pm-bg border border-gray-200 rounded-xl p-4 space-y-2">
+            <div className="font-black text-pm-navy text-xs uppercase tracking-wider mb-3">Resumen de precio</div>
+            {desglose.map((d, i) => (
+              <div key={i} className="flex justify-between text-sm text-gray-600">
+                <span>{d.label}</span>
+                <span className="font-semibold">{d.precio} €</span>
+              </div>
+            ))}
+            {numNinos > 1 && (
+              <div className="flex justify-between text-sm text-gray-600 border-t border-gray-200 pt-2">
+                <span>× {numNinos} niños</span>
+                <span className="font-semibold">{subtotal * numNinos} €</span>
+              </div>
+            )}
+            {cuponAplicado && (
+              <div className="flex justify-between text-green-600 text-sm">
+                <span>Descuento hermanos (15%)</span>
+                <span className="font-semibold">− {descuento * numNinos} €</span>
+              </div>
+            )}
+            <div className="border-t border-gray-200 pt-2 flex justify-between font-black text-pm-navy text-base">
+              <span>Total</span>
+              <span>{total * numNinos} €</span>
+            </div>
+            {(matinal || ampliacion) && (
+              <p className="text-xs text-gray-400">* El precio del horario ampliado se añade al confirmar con el equipo.</p>
+            )}
+          </div>
+
+          {/* Botón continuar */}
+          {paso === 'seleccion' && (
+            <button onClick={() => setPaso('datos')}
+              className="w-full bg-pm-red hover:bg-pm-red-dark text-white font-black py-3.5 rounded-xl transition-colors">
+              Continuar con mis datos →
+            </button>
+          )}
+
+          {/* Formulario datos */}
+          {paso === 'datos' && (
+            <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
+              <div className="font-black text-pm-navy text-sm mb-2">Datos de contacto</div>
+              <input required type="text" placeholder="Nombre completo *"
+                value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"
+              />
+              <input required type="email" placeholder="Email *"
+                value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"
+              />
+              <input required type="tel" placeholder="Teléfono *"
+                value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"
+              />
+              <textarea rows={2} placeholder="Notas (alergias, necesidades especiales...)"
+                value={form.notas} onChange={e => setForm(f => ({ ...f, notas: e.target.value }))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red resize-none"
+              />
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setPaso('seleccion')}
+                  className="flex-none border border-gray-200 text-gray-600 text-sm font-bold px-4 py-3 rounded-xl hover:border-pm-red transition-colors">
+                  ← Volver
+                </button>
+                <button type="submit" disabled={!form.nombre || !form.email || !form.telefono || enviando}
+                  className="flex-1 bg-pm-red hover:bg-pm-red-dark disabled:opacity-50 text-white font-black text-sm py-3 rounded-xl transition-colors">
+                  {enviando ? 'Enviando...' : `Reservar campamento — ${total * numNinos} €`}
+                </button>
+              </div>
+            </form>
+          )}
+        </>
+      )}
+
+      {diasSeleccionados.size === 0 && (
+        <p className="text-center text-sm text-gray-400 italic py-4">
+          Selecciona semanas o días sueltos para ver el precio y continuar con la reserva.
+        </p>
+      )}
+    </div>
+  )
+}
