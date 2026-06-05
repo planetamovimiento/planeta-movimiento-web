@@ -56,7 +56,7 @@ function Exito({ onClose }: { onClose: () => void }) {
 // ──────────────────────────────────────────────────────────────────────────────
 // DÍAS SIN COLE
 // ──────────────────────────────────────────────────────────────────────────────
-function ReservaDiasSinCole({ onClose }: { onClose: () => void }) {
+export function ReservaDiasSinCole({ onClose = () => {} }: { onClose?: () => void }) {
   const [fecha, setFecha]      = useState('')
   const [ninos, setNinos]       = useState(1)
   const [form, setForm]         = useState({ nombre: '', email: '', telefono: '' })
@@ -147,7 +147,7 @@ function generarDomingos(n: number): string[] {
   return domingos
 }
 
-function ReservaDomingos({ onClose }: { onClose: () => void }) {
+export function ReservaDomingos({ onClose = () => {} }: { onClose?: () => void }) {
   const domingos = useMemo(() => generarDomingos(8), [])
   const [fecha, setFecha]   = useState('')
   const [ninos, setNinos]   = useState(1)
@@ -220,7 +220,7 @@ function ReservaDomingos({ onClose }: { onClose: () => void }) {
 // ──────────────────────────────────────────────────────────────────────────────
 const PLAZAS_HALLOWEEN = 20
 
-function ReservaHalloween({ onClose }: { onClose: () => void }) {
+export function ReservaHalloween({ onClose = () => {} }: { onClose?: () => void }) {
   const [ninos, setNinos]   = useState(1)
   const [form, setForm]     = useState({ nombre: '', email: '', telefono: '', edades: '', notas: '' })
   const [enviando, setEnviando] = useState(false)
