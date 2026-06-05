@@ -10,10 +10,10 @@ const NIVELES = [
 ]
 
 const MODALIDADES: Modalidad[] = [
-  { id: 'suelta',  label: 'Clase suelta',      sublabel: 'Ven cuando quieras',         precio: 'Consultar precio' },
-  { id: '1dia',   label: '1 clase / semana',   sublabel: 'Un día fijo a la semana',    precio: 'Consultar precio' },
-  { id: '2dias',  label: '2 clases / semana',  sublabel: 'Dos días fijos a la semana', precio: 'Consultar precio' },
-  { id: '3dias',  label: '3 clases / semana',  sublabel: 'Tres días fijos a la semana',precio: 'Consultar precio' },
+  { id: 'suelta', label: 'Clase suelta',       sublabel: 'Ven cuando quieras',          precio: 'Consultar precio' },
+  { id: '1dia',  label: '1 clase / semana',    sublabel: 'Un día fijo a la semana',     precio: 'Consultar precio' },
+  { id: '2dias', label: '2 clases / semana',   sublabel: 'Dos días fijos a la semana',  precio: 'Consultar precio' },
+  { id: '3dias', label: '3 clases / semana',   sublabel: 'Tres días fijos a la semana', precio: 'Consultar precio' },
 ]
 
 export function BotonApuntarme() {
@@ -28,7 +28,7 @@ export function BotonApuntarme() {
       </button>
       {open && (
         <ModalInscripcion
-          servicio="Gimnasia acrobática y trampolín"
+          servicio="Escuela de aéreos — Telas, Aro y Trapecio"
           niveles={NIVELES}
           modalidades={MODALIDADES}
           onClose={() => setOpen(false)}
