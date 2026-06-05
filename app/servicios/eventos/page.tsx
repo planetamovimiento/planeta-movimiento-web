@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import CalculadoraEventos from './CalculadoraEventos'
+import EventosInstalaciones from './EventosInstalaciones'
 
 export const metadata = {
   title: 'Animación infantil para eventos — Bodas, Comuniones, Bautizos | Planeta Movimiento',
@@ -93,9 +94,14 @@ export default function EventosPage() {
                   <span key={b} className="bg-white/10 border border-white/15 text-white text-xs font-semibold px-3 py-1.5 rounded-full">{b}</span>
                 ))}
               </div>
-              <a href="#reservar" className="inline-block bg-pm-red hover:bg-pm-red-dark text-white font-black px-8 py-4 rounded-xl transition-colors shadow-lg">
-                Solicitar presupuesto →
-              </a>
+              <div className="flex flex-wrap gap-3">
+                <a href="#reservar" className="inline-block bg-pm-red hover:bg-pm-red-dark text-white font-black px-8 py-4 rounded-xl transition-colors shadow-lg">
+                  Solicitar presupuesto →
+                </a>
+                <a href="#eventos-instalaciones" className="inline-block bg-white/10 hover:bg-white/20 border border-white/30 text-white font-bold px-6 py-4 rounded-xl transition-colors">
+                  🏟️ Eventos en el centro
+                </a>
+              </div>
             </div>
 
             {/* Cards packs en el hero */}
@@ -265,6 +271,9 @@ export default function EventosPage() {
           </div>
         </div>
       </section>
+
+      {/* ── EVENTOS EN INSTALACIONES ── */}
+      <EventosInstalaciones />
 
       {/* ── CTA FINAL ── */}
       <section className="bg-pm-red py-16 text-white text-center">
