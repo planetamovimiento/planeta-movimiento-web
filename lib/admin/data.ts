@@ -31,14 +31,17 @@ export async function getDashboard() {
   const [bookings, payments, forms] = await Promise.all([
     safe<Booking>(() => db.from('bookings').select('*').order('created_at', { ascending: false }).limit(100) as never),
     safe<{ importe: number; estado: string; fecha: string }>(() => db.from('payments').select('importe, estado, fecha') as never),
-    safe<{ id: string; estado: string }>(() => db.from('form_submissions').select('id, estado') as never),
+    safe<{ id: string; estado: string; tipo: string }>(() => db.from('form_submissions').select('id, estado, tipo') as never),
   ])
 
+  const esClub = (t: string) => t === 'inscripcion_club'
   const reservasHoy = bookings.rows.filter(b => b.fecha === hoy).length
   const pendientes = bookings.rows.filter(b => b.estado_reserva === 'pendiente').length
   const enEspera = bookings.rows.filter(b => b.estado_reserva === 'espera').length
   const ingresos = payments.rows.filter(p => p.estado === 'pagado').reduce((s, p) => s + (Number(p.importe) || 0), 0)
-  const formsNuevos = forms.rows.filter(f => f.estado === 'nueva').length
+  const formsNuevos = forms.rows.filter(f => f.estado === 'nueva' && !esClub(f.tipo)).length
+  const clubNuevos = forms.rows.filter(f => f.estado === 'nueva' && esClub(f.tipo)).length
+  const clubTotal = forms.rows.filter(f => esClub(f.tipo)).length
 
   // Servicios más reservados
   const conteo: Record<string, number> = {}
@@ -48,6 +51,7 @@ export async function getDashboard() {
   return {
     ok: bookings.ok,
     reservasHoy, pendientes, enEspera, ingresos, formsNuevos,
+    clubNuevos, clubTotal,
     totalReservas: bookings.rows.length,
     recientes: bookings.rows.slice(0, 8),
     topServicios,

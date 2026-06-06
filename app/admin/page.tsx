@@ -21,12 +21,24 @@ export default async function DashboardPage() {
       <div className="p-6 lg:p-8 space-y-8">
         {!d.ok && <SetupNotice />}
 
-        {/* Métricas */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Metric label="Reservas hoy" valor={d.reservasHoy} tono="navy" />
-          <Metric label="Pendientes" valor={d.pendientes} sub="Requieren confirmación" tono="amber" />
-          <Metric label="Ingresos (pagado)" valor={eur(d.ingresos)} tono="green" />
-          <Metric label="Solicitudes nuevas" valor={d.formsNuevos} tono="red" />
+        {/* Métricas Empresa */}
+        <div>
+          <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">Empresa</div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Metric label="Reservas hoy" valor={d.reservasHoy} tono="navy" />
+            <Metric label="Pendientes" valor={d.pendientes} sub="Requieren confirmación" tono="amber" />
+            <Metric label="Ingresos (pagado)" valor={eur(d.ingresos)} tono="green" />
+            <Metric label="Solicitudes empresa" valor={d.formsNuevos} tono="red" />
+          </div>
+        </div>
+
+        {/* Métricas Club Deportivo */}
+        <div>
+          <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">Club Deportivo Origen</div>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Metric label="Solicitudes nuevas" valor={d.clubNuevos} sub="Inscripciones por gestionar" tono="red" />
+            <Metric label="Total solicitudes club" valor={d.clubTotal} tono="navy" />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -93,8 +105,9 @@ export default async function DashboardPage() {
               <h3 className="text-xs font-black text-gray-400 uppercase tracking-wider mb-2">Alertas</h3>
               {d.pendientes > 0 && <div className="text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2">⏳ {d.pendientes} reserva(s) pendiente(s) de confirmar</div>}
               {d.enEspera > 0 && <div className="text-sm text-purple-700 bg-purple-50 rounded-lg px-3 py-2">📋 {d.enEspera} en lista de espera</div>}
-              {d.formsNuevos > 0 && <div className="text-sm text-pm-red bg-pm-red-light rounded-lg px-3 py-2">✉️ {d.formsNuevos} solicitud(es) sin leer</div>}
-              {d.pendientes === 0 && d.enEspera === 0 && d.formsNuevos === 0 && <div className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2">✓ Todo al día</div>}
+              {d.formsNuevos > 0 && <div className="text-sm text-pm-red bg-pm-red-light rounded-lg px-3 py-2">✉️ {d.formsNuevos} solicitud(es) de empresa sin leer</div>}
+              {d.clubNuevos > 0 && <div className="text-sm text-pm-navy bg-blue-50 rounded-lg px-3 py-2">🏅 {d.clubNuevos} solicitud(es) de inscripción al club</div>}
+              {d.pendientes === 0 && d.enEspera === 0 && d.formsNuevos === 0 && d.clubNuevos === 0 && <div className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2">✓ Todo al día</div>}
             </div>
           </div>
         </div>
@@ -102,11 +115,11 @@ export default async function DashboardPage() {
         {/* Accesos rápidos */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
+            { href: '/admin/club', icon: '🏅', label: 'Club · Solicitudes' },
             { href: '/admin/reservas', icon: '📋', label: 'Reservas' },
             { href: '/admin/formularios', icon: '✉️', label: 'Solicitudes' },
             { href: '/admin/calendario', icon: '🗓️', label: 'Calendario' },
             { href: '/admin/clientes', icon: '👥', label: 'Clientes' },
-            { href: '/admin/servicios', icon: '🎪', label: 'Servicios' },
             { href: '/admin/productos', icon: '🛒', label: 'Productos' },
           ].map(a => (
             <Link key={a.href} href={a.href} className="bg-white border border-gray-100 rounded-2xl p-4 text-center hover:shadow-md hover:border-pm-red/20 transition-all">

@@ -35,13 +35,14 @@ function ModalColaboracion({ onClose }: { onClose: () => void }) {
     e.preventDefault()
     setLoading(true)
     await submitForm({
-      tipo: 'colaboracion',
+      tipo: 'inscripcion_club',
       nombre: form.contacto,
       email: form.email,
       telefono: form.telefono,
-      asunto: `Colaboración Circo Inclusivo · ${form.asociacion}`,
+      asunto: `Circo Inclusivo · ${form.asociacion}`,
       mensaje: form.descripcion,
       datos: {
+        actividad: 'Circo Inclusivo',
         asociacion: form.asociacion, cargo: form.cargo,
         localidad: form.localidad, numPersonas: form.numPersonas,
       },

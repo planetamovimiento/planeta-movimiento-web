@@ -30,6 +30,8 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose }: Pr
     email: '',
     telefono: '',
     fechaNacimiento: '',
+    tutorLegal: '',
+    experiencia: '',
     modalidad: '',
     nivel: '',
     diasSemana: [] as string[],
@@ -52,18 +54,20 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose }: Pr
     e.preventDefault()
     setLoading(true)
     await submitForm({
-      tipo: 'inscripcion',
+      tipo: 'inscripcion_club',
       nombre: `${form.nombre} ${form.apellidos}`.trim(),
       email: form.email,
       telefono: form.telefono,
-      asunto: `Inscripción · ${servicio}`,
+      asunto: `Inscripción Club · ${servicio}`,
       mensaje: form.notas,
       datos: {
-        servicio,
+        actividad: servicio,
         fechaNacimiento: form.fechaNacimiento,
+        tutorLegal: form.tutorLegal,
+        experienciaPrevia: form.experiencia,
         modalidad: form.modalidad,
         nivel: form.nivel,
-        diasSemana: form.diasSemana.join(', '),
+        disponibilidad: form.diasSemana.join(', '),
       },
     })
     setLoading(false)
@@ -209,6 +213,33 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose }: Pr
                   onChange={e => setForm(f => ({ ...f, fechaNacimiento: e.target.value }))}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"
                 />
+              </div>
+            </div>
+
+            {/* ── Tutor legal y experiencia (opcionales) ── */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-pm-navy mb-1.5">Tutor legal <span className="text-gray-400 font-normal">(si es menor)</span></label>
+                <input
+                  type="text"
+                  value={form.tutorLegal}
+                  onChange={e => setForm(f => ({ ...f, tutorLegal: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"
+                  placeholder="Nombre del padre/madre/tutor"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-pm-navy mb-1.5">Experiencia previa</label>
+                <select
+                  value={form.experiencia}
+                  onChange={e => setForm(f => ({ ...f, experiencia: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red bg-white"
+                >
+                  <option value="">— Selecciona —</option>
+                  <option>Ninguna</option>
+                  <option>Algo de experiencia</option>
+                  <option>Bastante experiencia</option>
+                </select>
               </div>
             </div>
 

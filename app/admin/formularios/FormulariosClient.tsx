@@ -13,7 +13,8 @@ type Row = {
 const ESTADOS = ['nueva', 'leida', 'respondida', 'seguimiento', 'cerrada']
 const TIPOS_LABEL: Record<string, string> = {
   informacion: 'Información', presupuesto: 'Presupuesto', colchonetas: 'Colchonetas',
-  contacto: 'Contacto', inscripcion: 'Inscripción', colegio: 'Colegio', ayuntamiento: 'Ayuntamiento', empresa: 'Empresa',
+  contacto: 'Contacto', inscripcion: 'Inscripción', inscripcion_club: 'Inscripción Club',
+  colegio: 'Colegio', extraescolar: 'Extraescolar', ayuntamiento: 'Ayuntamiento', empresa: 'Empresa',
 }
 
 export default function FormulariosClient({ rows, puedeEditar }: { rows: Row[]; puedeEditar: boolean }) {
