@@ -1,41 +1,42 @@
+import Link from 'next/link'
 import { getRows } from '@/lib/admin/data'
+import { getProductos } from '@/lib/productos/store'
 import { AdminHeader, EstadoBadge, EmptyState, SetupNotice } from '@/components/admin/ui'
 
+export const dynamic = 'force-dynamic'
+
 export default async function ProductosPage() {
-  const [{ rows: productos, ok }, { rows: pedidos }] = await Promise.all([
-    getRows('products', 'updated_at'),
-    getRows('product_orders'),
-  ])
+  const productos = await getProductos()
+  const { rows: pedidos, ok } = await getRows('product_orders')
   const eur = (n: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(n || 0)
 
   return (
     <>
-      <AdminHeader titulo="Productos y pedidos" subtitulo="Colchonetas, stock y solicitudes de personalización" />
+      <AdminHeader titulo="Productos y pedidos" subtitulo="Colchonetas — edita precios, colores, variantes y stock" />
       <div className="p-6 lg:p-8 space-y-8">
-        {!ok && <SetupNotice />}
 
         {/* Productos */}
         <div>
           <h2 className="font-black text-pm-navy mb-3">Catálogo</h2>
-          {productos.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
-              <EmptyState icon="🛒" titulo="Sin productos en la base de datos"
-                desc="Las colchonetas se muestran en la web desde el código. Sincronízalas aquí para editar precios y stock desde el panel." />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {productos.map((p: Record<string, unknown>) => (
-                <div key={p.id as string} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-black text-pm-navy">{p.nombre as string}</h3>
-                    <EstadoBadge estado={p.activo ? 'activo' : 'inactivo'} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {productos.map(p => (
+              <Link key={p.id} href={`/admin/productos/${p.id}`}
+                className="group bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md hover:border-pm-red/30 transition-all">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{p.icon}</span>
+                    <h3 className="font-black text-pm-navy group-hover:text-pm-red transition-colors">{p.nombre}</h3>
                   </div>
-                  <div className="text-2xl font-black text-pm-navy">{eur(Number(p.precio))}</div>
-                  <div className="text-xs text-gray-400 mt-1">Stock: {p.stock != null ? (p.stock as number) : '—'}</div>
+                  <EstadoBadge estado={p.activo ? 'activo' : 'inactivo'} />
                 </div>
-              ))}
-            </div>
-          )}
+                <div className="text-2xl font-black text-pm-navy">desde {eur(Number(p.precioDesde))}</div>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-xs text-gray-400">Stock: {p.stock != null ? p.stock : 'sin límite'} · {p.variantes.length} variante(s)</span>
+                  <span className="text-xs font-bold text-pm-red">Editar →</span>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
 
         {/* Pedidos */}
