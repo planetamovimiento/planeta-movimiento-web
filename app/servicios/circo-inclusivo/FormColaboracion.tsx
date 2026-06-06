@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { submitForm } from '@/lib/forms/actions'
 
 export function BotonColaboracion() {
   const [open, setOpen] = useState(false)
@@ -33,7 +34,18 @@ function ModalColaboracion({ onClose }: { onClose: () => void }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    await new Promise(r => setTimeout(r, 1200))
+    await submitForm({
+      tipo: 'colaboracion',
+      nombre: form.contacto,
+      email: form.email,
+      telefono: form.telefono,
+      asunto: `Colaboración Circo Inclusivo · ${form.asociacion}`,
+      mensaje: form.descripcion,
+      datos: {
+        asociacion: form.asociacion, cargo: form.cargo,
+        localidad: form.localidad, numPersonas: form.numPersonas,
+      },
+    })
     setLoading(false)
     setEnviado(true)
   }

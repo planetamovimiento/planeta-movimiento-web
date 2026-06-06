@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { submitBooking } from '@/lib/forms/actions'
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 const IVA = 0.21
@@ -60,7 +61,23 @@ export default function CalculadoraEventos() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setEnviando(true)
-    await new Promise(r => setTimeout(r, 1500))
+    const extras = EXTRAS.filter(x => extrasIds.has(x.id)).map(x => x.label).join(', ')
+    await submitBooking({
+      servicio: `Evento · ${form.tipoEvento || 'externo'}`,
+      cliente_nombre: `${form.nombre} ${form.apellidos}`.trim(),
+      cliente_email: form.email,
+      cliente_telefono: form.telefono,
+      fecha: form.fecha || undefined,
+      hora: form.horario,
+      participantes,
+      precio: total,
+      observaciones: form.observaciones,
+      datos: {
+        tipoEvento: form.tipoEvento, ubicacion: form.ubicacion,
+        pack: pack.nombre, extras: extras || 'Ninguno', horasExtra,
+        totalConIva: `${total} €`,
+      },
+    })
     setEnviando(false)
     setEnviado(true)
   }

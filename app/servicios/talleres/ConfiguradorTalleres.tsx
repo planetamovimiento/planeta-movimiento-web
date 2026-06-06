@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { submitForm } from '@/lib/forms/actions'
 
 // ─── Módulos disponibles ─────────────────────────────────────────────────────
 const MODULOS = [
@@ -265,7 +266,20 @@ export default function ConfiguradorTalleres() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setEnviando(true)
-    await new Promise(r => setTimeout(r, 1500))
+    const modulos = MODULOS.filter(m => seleccionados.has(m.id)).map(m => m.nombre).join(', ')
+    await submitForm({
+      tipo: 'presupuesto',
+      nombre: form.contacto,
+      email: form.email,
+      telefono: form.telefono,
+      asunto: `Taller de circo · ${form.entidad}`,
+      mensaje: form.observaciones,
+      datos: {
+        entidad: form.entidad, tipoEntidad: form.tipoEntidad, direccion: form.direccion,
+        fecha: form.fecha, horario: form.horario, participantes,
+        monitores, modulos, presupuesto: `${totalPresupuesto} €`,
+      },
+    })
     setEnviando(false)
     setEnviado(true)
   }

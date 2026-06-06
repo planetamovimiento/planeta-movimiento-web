@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { submitForm } from '@/lib/forms/actions'
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
@@ -50,7 +51,21 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose }: Pr
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    await new Promise(r => setTimeout(r, 1200))
+    await submitForm({
+      tipo: 'inscripcion',
+      nombre: `${form.nombre} ${form.apellidos}`.trim(),
+      email: form.email,
+      telefono: form.telefono,
+      asunto: `Inscripción · ${servicio}`,
+      mensaje: form.notas,
+      datos: {
+        servicio,
+        fechaNacimiento: form.fechaNacimiento,
+        modalidad: form.modalidad,
+        nivel: form.nivel,
+        diasSemana: form.diasSemana.join(', '),
+      },
+    })
     setLoading(false)
     setEnviado(true)
   }

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { usePathname } from 'next/navigation'
 
 const NAV_ITEMS = [
   {
@@ -62,6 +63,10 @@ const NAV_ITEMS = [
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [openSection, setOpenSection] = useState<string | null>(null)
+  const pathname = usePathname()
+
+  // El panel de administración tiene su propia interfaz, sin la web pública
+  if (pathname?.startsWith('/admin')) return null
 
   return (
     <nav className="bg-pm-navy sticky top-0 z-50 shadow-lg">

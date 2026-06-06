@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { submitForm } from '@/lib/forms/actions'
 import { PRODUCTOS, type Producto, type Color, type Variante } from './productos'
 
 const WHATSAPP = '34969000000'
@@ -59,7 +60,16 @@ function ModalPersonalizar({ producto, onClose }: { producto: Producto; onClose:
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault(); setEnviando(true)
-    await new Promise(r => setTimeout(r, 1200)); setEnviando(false); setEnviado(true)
+    await submitForm({
+      tipo: 'colchonetas',
+      nombre: form.nombre,
+      email: form.email,
+      telefono: form.telefono,
+      asunto: `Personalización · ${producto.nombre}`,
+      mensaje: form.comentarios,
+      datos: { producto: producto.nombre, medidas: form.medidas, color: form.color },
+    })
+    setEnviando(false); setEnviado(true)
   }
 
   return (

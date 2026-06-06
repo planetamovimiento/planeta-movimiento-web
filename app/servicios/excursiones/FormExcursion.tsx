@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { submitForm } from '@/lib/forms/actions'
 
 const CURSOS = [
   'Educación Infantil (3-6 años)',
@@ -31,7 +32,18 @@ export default function FormExcursion() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setEnviando(true)
-    await new Promise(r => setTimeout(r, 1400))
+    await submitForm({
+      tipo: 'colegio',
+      nombre: form.contacto,
+      email: form.email,
+      telefono: form.telefono,
+      asunto: `Excursión escolar · ${form.centro}`,
+      mensaje: form.observaciones,
+      datos: {
+        centro: form.centro, fecha: form.fecha, alumnos: form.alumnos,
+        acompanantes: form.acompanantes, cursos: form.cursosSelec.join(', '),
+      },
+    })
     setEnviando(false)
     setEnviado(true)
   }

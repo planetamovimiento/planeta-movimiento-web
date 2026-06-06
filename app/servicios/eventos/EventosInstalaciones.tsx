@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { submitBooking } from '@/lib/forms/actions'
 
 // ─── Días Sin Cole ─────────────────────────────────────────────────────────
 // Configurar aquí cada temporada
@@ -68,7 +69,13 @@ export function ReservaDiasSinCole({ onClose = () => {} }: { onClose?: () => voi
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault(); setEnviando(true)
-    await new Promise(r => setTimeout(r, 1200)); setEnviando(false); setListo(true)
+    await submitBooking({
+      servicio: 'Días Sin Cole',
+      cliente_nombre: form.nombre, cliente_email: form.email, cliente_telefono: form.telefono,
+      fecha, participantes: ninos, precio: precioConIva,
+      datos: { horario: '9:00 - 14:00', numNinos: ninos },
+    })
+    setEnviando(false); setListo(true)
   }
 
   if (listo) return <Exito onClose={onClose}/>
@@ -159,7 +166,13 @@ export function ReservaDomingos({ onClose = () => {} }: { onClose?: () => void }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault(); setEnviando(true)
-    await new Promise(r => setTimeout(r, 1200)); setEnviando(false); setListo(true)
+    await submitBooking({
+      servicio: 'Domingos en Familia',
+      cliente_nombre: form.nombre, cliente_email: form.email, cliente_telefono: form.telefono,
+      fecha, participantes: ninos, precio: total,
+      datos: { horario: '11:00 - 13:00', numNinos: ninos, nota: 'Adultos gratis' },
+    })
+    setEnviando(false); setListo(true)
   }
 
   if (listo) return <Exito onClose={onClose}/>
@@ -228,7 +241,13 @@ export function ReservaHalloween({ onClose = () => {} }: { onClose?: () => void 
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault(); setEnviando(true)
-    await new Promise(r => setTimeout(r, 1200)); setEnviando(false); setListo(true)
+    await submitBooking({
+      servicio: 'Noche de Halloween',
+      cliente_nombre: form.nombre, cliente_email: form.email, cliente_telefono: form.telefono,
+      participantes: ninos, observaciones: form.notas,
+      datos: { edades: form.edades, numNinos: ninos, evento: 'Apocalipsis Zombie' },
+    })
+    setEnviando(false); setListo(true)
   }
 
   if (listo) return <Exito onClose={onClose}/>

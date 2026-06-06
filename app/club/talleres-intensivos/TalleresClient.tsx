@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { submitForm } from '@/lib/forms/actions'
 import { type Taller, type Estado } from './config'
 
 // ─── Badge de estado ─────────────────────────────────────────────────────────
@@ -35,7 +36,19 @@ function ModalAviso({ taller, tipo, onClose }: {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault(); setEnviando(true)
-    await new Promise(r => setTimeout(r, 1200)); setEnviando(false); setEnviado(true)
+    await submitForm({
+      tipo: 'inscripcion',
+      nombre: form.nombre,
+      email: form.email,
+      telefono: form.telefono,
+      asunto: `Taller intensivo · ${taller.nombre} (${tipo})`,
+      datos: {
+        taller: taller.nombre,
+        solicitud: tipo === 'aviso' ? 'Avisar cuando abra' : tipo === 'espera' ? 'Lista de espera' : 'Inscripción',
+        nivel: form.nivel,
+      },
+    })
+    setEnviando(false); setEnviado(true)
   }
 
   return (

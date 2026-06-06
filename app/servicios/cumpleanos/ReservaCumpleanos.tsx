@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { submitBooking } from '@/lib/forms/actions'
 
 // ─── Constantes de negocio ────────────────────────────────────────────────────
 const MIN_PARTICIPANTES = 13
@@ -226,7 +227,21 @@ export default function ReservaCumpleanos() {
   async function handleReservar(e: React.FormEvent) {
     e.preventDefault()
     setEnviando(true)
-    await new Promise(r => setTimeout(r, 1500))
+    await submitBooking({
+      servicio: 'Cumpleaños',
+      cliente_nombre: form.nombre,
+      cliente_email: form.email,
+      cliente_telefono: form.telefono,
+      fecha: fechaSeleccionada ? fechaSeleccionada.toISOString().slice(0, 10) : undefined,
+      hora: slotSeleccionado ?? undefined,
+      participantes,
+      precio: precio?.total,
+      observaciones: form.notas,
+      datos: {
+        merienda,
+        traeTarta: tieneTarta ? 'Sí' : 'No (tarta decorativa + juego extra)',
+      },
+    })
     setEnviando(false)
     setPaso(3)
   }

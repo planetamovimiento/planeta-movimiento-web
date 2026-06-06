@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { submitBooking } from '@/lib/forms/actions'
 import {
   SEMANAS_VERANO, diasDeSemana, formatDia, formatFechaLarga,
   PRECIO_DIA_SUELTO, PRECIO_SEMANA, DESCUENTO_HERMANOS, CUPON_HERMANOS,
@@ -80,7 +81,25 @@ export default function ReservaVerano() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setEnviando(true)
-    await new Promise(r => setTimeout(r, 1400))
+    const dias = Array.from(diasSeleccionados).sort()
+    await submitBooking({
+      servicio: 'Campamento de Verano',
+      cliente_nombre: form.nombre,
+      cliente_email: form.email,
+      cliente_telefono: form.telefono,
+      fecha: dias[0],
+      participantes: numNinos,
+      precio: total * numNinos,
+      observaciones: form.notas,
+      datos: {
+        diasSeleccionados: dias.join(', '),
+        numDias: dias.length,
+        matinal: matinal ? 'Sí (8:00)' : 'No',
+        ampliacion: ampliacion ? 'Sí (hasta 15:00)' : 'No',
+        cuponHermanos: cuponAplicado ? 'Aplicado (-15%)' : 'No',
+        numNinos,
+      },
+    })
     setEnviando(false)
     setPaso('confirmado')
   }

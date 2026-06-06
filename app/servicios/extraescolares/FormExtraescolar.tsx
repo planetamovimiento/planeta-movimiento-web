@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { submitForm } from '@/lib/forms/actions'
 
 const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']
 
@@ -22,7 +23,19 @@ export default function FormExtraescolar() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault(); setEnviando(true)
-    await new Promise(r => setTimeout(r, 1400)); setEnviando(false); setEnviado(true)
+    await submitForm({
+      tipo: 'extraescolar',
+      nombre: form.contacto,
+      email: form.email,
+      telefono: form.telefono,
+      asunto: `Extraescolar Multideporte · ${form.colegio}`,
+      mensaje: form.observaciones,
+      datos: {
+        colegio: form.colegio, ampa: form.ampa, numAlumnos: form.numAlumnos,
+        edades: form.edades.join(', '), dias: form.dias.join(', '), horario: form.horario,
+      },
+    })
+    setEnviando(false); setEnviado(true)
   }
 
   if (enviado) return (

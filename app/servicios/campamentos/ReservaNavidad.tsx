@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { submitBooking } from '@/lib/forms/actions'
 import { FECHAS_NAVIDAD, formatFechaLarga } from './config'
 
 export default function ReservaNavidad() {
@@ -26,7 +27,17 @@ export default function ReservaNavidad() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setEnviando(true)
-    await new Promise(r => setTimeout(r, 1300))
+    const dias = Array.from(seleccionados).sort()
+    await submitBooking({
+      servicio: 'Campamento de Navidad',
+      cliente_nombre: form.nombre,
+      cliente_email: form.email,
+      cliente_telefono: form.telefono,
+      fecha: dias[0],
+      participantes: numNinos,
+      observaciones: form.notas,
+      datos: { diasSeleccionados: dias.join(', '), numNinos },
+    })
     setEnviando(false)
     setPaso('confirmado')
   }
