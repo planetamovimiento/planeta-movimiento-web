@@ -3,16 +3,16 @@
 import { useState } from 'react'
 import { submitForm } from '@/lib/forms/actions'
 
-// ─── Talleres de envejecimiento activo ────────────────────────────────────────
+// ─── Talleres de envejecimiento activo (info real de planetamovimiento.com) ───
 export const TALLERES_PIEA = [
-  { id: 'bingo', nombre: 'Bingo Musical', precio: 200, icon: '🎵', grad: 'from-pm-red to-pm-red-dark',
-    desc: 'La música como herramienta para estimular recuerdos, fomentar la interacción y generar experiencias positivas. Una actividad participativa que une al grupo.' },
-  { id: 'arte', nombre: 'Creatividad y Arte', precio: 200, icon: '🎨', grad: 'from-amber-500 to-orange-600',
-    desc: 'Expresión artística y participación activa. Un espacio para crear, compartir y disfrutar potenciando la imaginación y la autoestima.' },
-  { id: 'cognitiva', nombre: 'Bienestar y Estimulación Cognitiva', precio: 200, icon: '🧠', grad: 'from-emerald-600 to-teal-700',
-    desc: 'Actividades diseñadas para trabajar la memoria, la atención, la concentración y otras capacidades cognitivas de forma amena y dinámica.' },
-  { id: 'ergonomia', nombre: 'Ergonomía y Movimiento', precio: 200, icon: '🤸', grad: 'from-sky-600 to-blue-700',
-    desc: 'Mejora de la movilidad, la postura, la conciencia corporal y el bienestar físico a través de movimiento adaptado y seguro.' },
+  { id: 'bingo', nombre: 'Bingo Musical', precio: 200, icon: '🎵', grad: 'from-pm-red to-pm-red-dark', duracion: '2 h · adaptable',
+    desc: 'Fusiona el bingo de toda la vida con canciones reconocibles de su época: en lugar de números, los participantes identifican canciones por título, artista o temática. Reactiva recuerdos, genera conversación y eleva el ánimo del grupo, con volúmenes y ritmos personalizables.' },
+  { id: 'arte', nombre: 'Creatividad y Arte', precio: 200, icon: '🎨', grad: 'from-amber-500 to-orange-600', duracion: '2 h · adaptable',
+    desc: 'Expresión artística en grupo con materiales sencillos: manualidades adaptadas, pintura, dibujo y collage, más expresión corporal suave. Refuerza la autoestima con creaciones propias y trabaja la atención y la motricidad fina, sin presión y sin experiencia previa.' },
+  { id: 'cognitiva', nombre: 'Bienestar y Estimulación Cognitiva', precio: 200, icon: '🧠', grad: 'from-emerald-600 to-teal-700', duracion: '2 h · adaptable',
+    desc: 'Combina dinámicas cognitivas (memoria, atención, lenguaje y agilidad mental) con ejercicio físico suave inspirado en yoga, pilates y entrenamiento funcional adaptado, y un cierre en calma. Mejora la atención, la movilidad y el ánimo de forma inclusiva.' },
+  { id: 'ergonomia', nombre: 'Ergonomía en Movimiento', precio: 200, icon: '🧘', grad: 'from-sky-600 to-blue-700', duracion: '2 h · adaptable',
+    desc: 'Movilidad, postura y bienestar corporal con ejercicios suaves de yoga, pilates y entrenamiento funcional adaptado. Reduce tensiones de cuello, espalda y hombros, mejora la conciencia corporal y aporta recursos para moverse mejor en el día a día.' },
 ]
 
 function Enviado({ onReset }: { onReset: () => void }) {
@@ -118,13 +118,17 @@ export function ConfiguradorTalleresPiea() {
               </div>
               <div className="p-4">
                 <p className="text-xs text-gray-500 leading-relaxed">{t.desc}</p>
-                <div className={`mt-3 text-xs font-bold ${seleccionado === t.id ? 'text-pm-red' : 'text-gray-400'}`}>
-                  {seleccionado === t.id ? '✓ Seleccionado' : 'Seleccionar'}
+                <div className="mt-3 flex items-center justify-between">
+                  <span className="text-xs text-gray-400">{t.duracion}</span>
+                  <span className={`text-xs font-bold ${seleccionado === t.id ? 'text-pm-red' : 'text-gray-400'}`}>
+                    {seleccionado === t.id ? '✓ Seleccionado' : 'Seleccionar'}
+                  </span>
                 </div>
               </div>
             </button>
           ))}
         </div>
+        <p className="text-xs text-gray-400 mt-3">Todos los talleres incluyen monitor/a especializado/a y material. Adaptados al nivel de cada grupo.</p>
       </div>
 
       {/* Formulario */}
