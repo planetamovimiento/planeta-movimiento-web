@@ -19,16 +19,32 @@ const TIPOS_LABEL: Record<string, string> = {
   licitaciones: 'Licitaciones / contratos',
 }
 
+/** Lee el nombre de la actividad de una solicitud (las inscripciones lo guardan en datos.actividad). */
+function actividadDe(r: Row): string {
+  const a = r.datos?.actividad
+  return typeof a === 'string' ? a.trim() : ''
+}
+
 export default function FormulariosClient({ rows, puedeEditar }: { rows: Row[]; puedeEditar: boolean }) {
   const [fTipo, setFTipo] = useState('')
   const [fEstado, setFEstado] = useState('')
+  const [fActividad, setFActividad] = useState('')
   const [detalle, setDetalle] = useState<Row | null>(null)
   const [pending, startTransition] = useTransition()
 
   const tipos = useMemo(() => Array.from(new Set(rows.map(r => r.tipo).filter(Boolean))) as string[], [rows])
+  const actividades = useMemo(
+    () => Array.from(new Set(rows.map(actividadDe).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'es')),
+    [rows]
+  )
   const filtradas = useMemo(() => rows.filter(r =>
-    (!fTipo || r.tipo === fTipo) && (!fEstado || r.estado === fEstado)
-  ), [rows, fTipo, fEstado])
+    (!fTipo || r.tipo === fTipo) &&
+    (!fEstado || r.estado === fEstado) &&
+    (!fActividad || actividadDe(r) === fActividad)
+  ), [rows, fTipo, fEstado, fActividad])
+
+  const hayFiltros = !!(fTipo || fEstado || fActividad)
+  function limpiar() { setFTipo(''); setFEstado(''); setFActividad('') }
 
   function setEstado(row: Row, estado: string) {
     startTransition(async () => { await cambiarEstadoFormulario(row.id, estado); setDetalle(d => d ? { ...d, estado } : d) })
@@ -36,15 +52,29 @@ export default function FormulariosClient({ rows, puedeEditar }: { rows: Row[]; 
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-wrap gap-3">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-wrap items-center gap-3">
         <select value={fTipo} onChange={e => setFTipo(e.target.value)} className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-pm-red">
           <option value="">Todos los tipos</option>
           {tipos.map(t => <option key={t} value={t}>{TIPOS_LABEL[t] || t}</option>)}
         </select>
+        {actividades.length > 0 && (
+          <select value={fActividad} onChange={e => setFActividad(e.target.value)} className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-pm-red max-w-[16rem]">
+            <option value="">Todas las actividades</option>
+            {actividades.map(a => <option key={a} value={a}>{a}</option>)}
+          </select>
+        )}
         <select value={fEstado} onChange={e => setFEstado(e.target.value)} className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-pm-red">
           <option value="">Todos los estados</option>
           {ESTADOS.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
+        {hayFiltros && (
+          <button onClick={limpiar} className="text-xs font-semibold text-pm-red hover:underline px-2 py-1">
+            Limpiar filtros
+          </button>
+        )}
+        <span className="ml-auto text-xs text-gray-400 font-semibold">
+          {filtradas.length} {filtradas.length === 1 ? 'solicitud' : 'solicitudes'}
+        </span>
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -55,9 +85,12 @@ export default function FormulariosClient({ rows, puedeEditar }: { rows: Row[]; 
             {filtradas.map(r => (
               <li key={r.id} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 cursor-pointer" onClick={() => setDetalle(r)}>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-pm-navy text-sm">{r.nombre || 'Sin nombre'}</span>
                     <span className="text-xs bg-pm-bg text-gray-500 px-2 py-0.5 rounded-full">{TIPOS_LABEL[r.tipo || ''] || r.tipo}</span>
+                    {actividadDe(r) && (
+                      <span className="text-xs bg-pm-red/10 text-pm-red font-semibold px-2 py-0.5 rounded-full">{actividadDe(r)}</span>
+                    )}
                   </div>
                   <div className="text-xs text-gray-400 truncate">{r.asunto || r.mensaje || r.email}</div>
                 </div>
