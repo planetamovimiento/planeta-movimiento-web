@@ -14,6 +14,7 @@ const NAV_ITEMS = [
       { label: 'Escuela Infantil', href: '/servicios/escuela-infantil', desc: 'Movimiento y circo para los más pequeños' },
       { label: 'Escuela de bienestar', href: '/servicios/escuela-bienestar', desc: 'Actividad física para adultos' },
       { label: 'Circo inclusivo', href: '/servicios/circo-inclusivo', desc: 'Circo adaptado para todos' },
+      { label: 'Talleres Intensivos', href: '/club/talleres-intensivos', desc: 'Formación específica de fin de semana' },
     ],
   },
   {
