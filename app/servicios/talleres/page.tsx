@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import ConfiguradorTalleres from './ConfiguradorTalleres'
 import { Galeria } from '@/components/ui/Galeria'
+import { fotoPrincipal } from '@/lib/fotos'
 
 export const metadata = {
   title: 'Talleres de Circo para Eventos — Ayuntamientos, Empresas, AMPAs | Planeta Movimiento',
@@ -27,6 +28,7 @@ const COMO_FUNCIONA = [
 ]
 
 export default function TalleresPage() {
+  const heroFoto = fotoPrincipal('talleres')
   return (
     <main className="bg-white min-h-screen">
 
@@ -44,8 +46,15 @@ export default function TalleresPage() {
       </div>
 
       {/* ── HERO ── */}
-      <section className="bg-pm-navy text-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <section className="relative bg-pm-navy text-white overflow-hidden">
+        {/* Foto real de fondo */}
+        {heroFoto && (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img src={heroFoto} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover" />
+        )}
+        {/* Overlay navy para legibilidad */}
+        <div className="absolute inset-0 bg-gradient-to-br from-pm-navy via-pm-navy/95 to-pm-navy/80" />
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <div className="inline-flex items-center gap-2 bg-pm-red/20 border border-pm-red/30 text-pm-red text-xs font-bold px-4 py-1.5 rounded-full mb-5">

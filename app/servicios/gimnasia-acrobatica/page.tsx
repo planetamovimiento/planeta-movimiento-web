@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { BotonApuntarme } from './InscripcionModal'
 import TabsDescripcion from './TabsDescripcion'
 import { Galeria } from '@/components/ui/Galeria'
+import { fotoPrincipal, fotosDe } from '@/lib/fotos'
 
 export const metadata = {
   title: 'Gimnasia acrobática y trampolín — Planeta Movimiento',
@@ -9,13 +10,9 @@ export const metadata = {
     'Un espacio donde aprenderás a moverte con agilidad, fuerza y creatividad. Acrobacias, saltos, equilibrio y técnica de parkour de forma progresiva y segura.',
 }
 
-const imagenes = [
-  { src: null, alt: 'Gimnasia acrobática temporada 25/26', principal: true },
-  { src: null, alt: 'Calendario de horarios', principal: false },
-  { src: null, alt: 'Clase de gimnasia', principal: false },
-]
-
 export default function GimnasiaAcrobaticaPage() {
+  const principal = fotoPrincipal('gimnasia-acrobatica')
+  const miniaturas = fotosDe('gimnasia-acrobatica').slice(1, 4)
   return (
     <main className="bg-white min-h-screen">
       {/* Breadcrumb */}
@@ -37,38 +34,33 @@ export default function GimnasiaAcrobaticaPage() {
 
           {/* COLUMNA IZQUIERDA — Imágenes */}
           <div className="space-y-3">
-            {/* Imagen principal */}
-            <div className="relative bg-pm-navy rounded-2xl overflow-hidden aspect-[4/3] flex items-center justify-center">
-              {/* Placeholder visual estilo "temporada 25/26" */}
-              <div className="absolute inset-0 bg-gradient-to-br from-pm-navy via-pm-navy-md to-pm-red opacity-90" />
-              <div className="relative text-center px-8">
-                <div className="text-white/20 font-black text-8xl leading-none select-none">25/26</div>
-                <div className="text-white font-black text-xl mt-2 tracking-wider uppercase">Temporada</div>
-                <div className="text-pm-red font-black text-2xl">Gimnasia acrobática</div>
+            {/* Imagen principal con foto real de fondo */}
+            <div className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-pm-navy">
+              {principal ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={principal} alt="Clase de gimnasia acrobática" className="absolute inset-0 w-full h-full object-cover" />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-pm-navy via-pm-navy-md to-pm-red opacity-90" />
+              )}
+              {/* Overlay degradado para legibilidad del texto */}
+              <div className="absolute inset-0 bg-gradient-to-t from-pm-navy/85 via-pm-navy/25 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-6">
+                <div className="text-white/60 font-black text-xs tracking-[0.2em] uppercase mb-1">Temporada 25/26</div>
+                <div className="text-white font-black text-2xl leading-tight">Gimnasia acrobática</div>
               </div>
-              {/* Lupa */}
-              <button className="absolute top-3 right-3 bg-white/20 hover:bg-white/30 rounded-full p-2 transition-colors">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/>
-                </svg>
-              </button>
             </div>
 
-            {/* Miniaturas */}
-            <div className="grid grid-cols-3 gap-3">
-              {/* Miniatura activa */}
-              <div className="rounded-xl overflow-hidden border-2 border-pm-red aspect-square bg-pm-navy flex items-center justify-center cursor-pointer">
-                <span className="text-white/40 text-xs font-bold">25/26</span>
+            {/* Miniaturas reales */}
+            {miniaturas.length > 0 && (
+              <div className="grid grid-cols-3 gap-3">
+                {miniaturas.map((src, i) => (
+                  <div key={src} className="rounded-xl overflow-hidden aspect-square bg-pm-bg">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt={`Gimnasia acrobática ${i + 2}`} loading="lazy" className="w-full h-full object-cover" />
+                  </div>
+                ))}
               </div>
-              <div className="rounded-xl overflow-hidden border-2 border-gray-200 aspect-square bg-pm-navy-md flex items-center justify-center cursor-pointer hover:border-pm-red transition-colors">
-                <svg className="w-6 h-6 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-              </div>
-              <div className="rounded-xl overflow-hidden border-2 border-gray-200 aspect-square bg-gray-100 flex items-center justify-center cursor-pointer hover:border-pm-red transition-colors">
-                <span className="text-gray-400 text-2xl">🤸</span>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* COLUMNA DERECHA — Info */}
