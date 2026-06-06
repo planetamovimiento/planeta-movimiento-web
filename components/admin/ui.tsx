@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 
 // ─── Cabecera de página ───────────────────────────────────────────────────────
-export function AdminHeader({ titulo, subtitulo, accion }: { titulo: string; subtitulo?: string; accion?: ReactNode }) {
+export function AdminHeader({ titulo, subtitulo, accion }: { titulo: ReactNode; subtitulo?: string; accion?: ReactNode }) {
   return (
     <header className="bg-white border-b border-gray-200 px-6 lg:px-8 py-4 flex items-center justify-between sticky top-0 z-30">
       <div className="pl-12 lg:pl-0">
