@@ -124,7 +124,7 @@ export const CATALOGO_SERVICIOS: ServicioCatalogo[] = [
     nombre: 'Campamentos', entidad: 'empresa', categoria: 'Ocio', tipo: 'campamento',
     descripcionCorta: 'Escuela de Superhéroes en Navidad, Semana Santa y verano.',
     descripcionLarga: 'Campamentos por días sueltos o semanas completas. Cupón hermanos y horario ampliado disponibles.',
-    edad: 'Desde 4 años', precioDesde: 30, horarios: '9:00 – 14:00 (ampliable)', estado: 'activo',
+    edad: 'Desde 4 años', precioDesde: 25, horarios: '9:00 – 14:00 (ampliable)', estado: 'activo',
     botonTexto: 'Reservar', botonAccion: 'reserva', enlace: '/servicios/campamentos',
   },
   {

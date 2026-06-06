@@ -4,33 +4,42 @@ import { useState, useMemo } from 'react'
 import { submitBooking } from '@/lib/forms/actions'
 import {
   SEMANAS_VERANO, diasDeSemana, formatDia, formatFechaLarga,
-  PRECIO_DIA_SUELTO, PRECIO_SEMANA, DESCUENTO_HERMANOS, CUPON_HERMANOS,
+  PRECIO_DIA_SUELTO, PRECIO_SEMANA, PRECIO_MATINAL, PRECIO_VESPERTINO,
+  DESCUENTO_HERMANOS, CUPON_HERMANOS,
 } from './config'
 
 const DIAS_SEMANA = ['L', 'M', 'X', 'J', 'V']
 
-// ─── Cálculo de precio ────────────────────────────────────────────────────────
-function calcularPrecio(diasSeleccionados: Set<string>, cuponAplicado: boolean) {
-  let subtotal = 0
+// ─── Cálculo de precio (por niño) ──────────────────────────────────────────────
+function calcularPrecio(diasSeleccionados: Set<string>, cuponAplicado: boolean, matinal: boolean, vespertino: boolean) {
+  let base = 0
+  let numDias = 0
   const desglose: { label: string; precio: number }[] = []
 
   for (const semana of SEMANAS_VERANO) {
     const dias = diasDeSemana(semana)
     const seleccionados = dias.filter(d => diasSeleccionados.has(d))
     if (seleccionados.length === 0) continue
+    numDias += seleccionados.length
     if (seleccionados.length === 5) {
-      subtotal += PRECIO_SEMANA
-      desglose.push({ label: `Semana ${semana.id} — ${semana.elemento} ${semana.emoji} (semana completa)`, precio: PRECIO_SEMANA })
+      base += PRECIO_SEMANA
+      desglose.push({ label: `Semana ${semana.id} — ${semana.elemento} (semana completa)`, precio: PRECIO_SEMANA })
     } else {
       const precio = seleccionados.length * PRECIO_DIA_SUELTO
-      subtotal += precio
-      desglose.push({ label: `Semana ${semana.id} — ${semana.elemento} ${semana.emoji} (${seleccionados.length} día${seleccionados.length > 1 ? 's' : ''})`, precio })
+      base += precio
+      desglose.push({ label: `Semana ${semana.id} — ${semana.elemento} (${seleccionados.length} día${seleccionados.length > 1 ? 's' : ''})`, precio })
     }
   }
 
-  const descuento = cuponAplicado ? Math.round(subtotal * DESCUENTO_HERMANOS) : 0
-  const total = subtotal - descuento
-  return { subtotal, descuento, total, desglose }
+  const descuento = cuponAplicado ? Math.round(base * DESCUENTO_HERMANOS) : 0
+  const matinalCost = matinal ? PRECIO_MATINAL * numDias : 0
+  const vespertinoCost = vespertino ? PRECIO_VESPERTINO * numDias : 0
+  if (matinalCost) desglose.push({ label: `Matinal (8:00–9:00) · ${numDias} día${numDias > 1 ? 's' : ''}`, precio: matinalCost })
+  if (vespertinoCost) desglose.push({ label: `Vespertino (14:00–15:00) · ${numDias} día${numDias > 1 ? 's' : ''}`, precio: vespertinoCost })
+
+  const subtotal = base
+  const total = base - descuento + matinalCost + vespertinoCost
+  return { subtotal, descuento, total, desglose, numDias }
 }
 
 // ─── Componente principal ─────────────────────────────────────────────────────
@@ -47,8 +56,8 @@ export default function ReservaVerano() {
   const [enviando, setEnviando] = useState(false)
 
   const { subtotal, descuento, total, desglose } = useMemo(
-    () => calcularPrecio(diasSeleccionados, cuponAplicado),
-    [diasSeleccionados, cuponAplicado]
+    () => calcularPrecio(diasSeleccionados, cuponAplicado, matinal, ampliacion),
+    [diasSeleccionados, cuponAplicado, matinal, ampliacion]
   )
 
   function toggleDia(dia: string) {
@@ -94,8 +103,8 @@ export default function ReservaVerano() {
       datos: {
         diasSeleccionados: dias.join(', '),
         numDias: dias.length,
-        matinal: matinal ? 'Sí (8:00)' : 'No',
-        ampliacion: ampliacion ? 'Sí (hasta 15:00)' : 'No',
+        matinal: matinal ? 'Sí (8:00–9:00)' : 'No',
+        vespertino: ampliacion ? 'Sí (14:00–15:00)' : 'No',
         cuponHermanos: cuponAplicado ? 'Aplicado (-15%)' : 'No',
         numNinos,
       },
@@ -224,15 +233,15 @@ export default function ReservaVerano() {
             <div className="grid grid-cols-2 gap-2">
               <button onClick={() => setMatinal(!matinal)}
                 className={`border-2 rounded-xl p-3 text-left transition-all ${matinal ? 'border-pm-red bg-pm-red-light' : 'border-gray-200 hover:border-pm-red/40'}`}>
-                <div className={`font-bold text-sm ${matinal ? 'text-pm-red' : 'text-pm-navy'}`}>Matinal 🌅</div>
-                <div className="text-xs text-gray-500 mt-0.5">Entrada desde las 8:00</div>
-                <div className="text-xs text-gray-400 mt-1">Consultar precio</div>
+                <div className={`font-bold text-sm ${matinal ? 'text-pm-red' : 'text-pm-navy'}`}>Matinal</div>
+                <div className="text-xs text-gray-500 mt-0.5">Entrada de 8:00 a 9:00</div>
+                <div className="text-xs font-bold text-pm-red mt-1">+5 € por niño y día</div>
               </button>
               <button onClick={() => setAmpliacion(!ampliacion)}
                 className={`border-2 rounded-xl p-3 text-left transition-all ${ampliacion ? 'border-pm-red bg-pm-red-light' : 'border-gray-200 hover:border-pm-red/40'}`}>
-                <div className={`font-bold text-sm ${ampliacion ? 'text-pm-red' : 'text-pm-navy'}`}>Ampliación 🌆</div>
-                <div className="text-xs text-gray-500 mt-0.5">Salida hasta las 15:00</div>
-                <div className="text-xs text-gray-400 mt-1">Consultar precio</div>
+                <div className={`font-bold text-sm ${ampliacion ? 'text-pm-red' : 'text-pm-navy'}`}>Vespertino</div>
+                <div className="text-xs text-gray-500 mt-0.5">Salida de 14:00 a 15:00</div>
+                <div className="text-xs font-bold text-pm-red mt-1">+5 € por niño y día</div>
               </button>
             </div>
           </div>
@@ -304,9 +313,6 @@ export default function ReservaVerano() {
               <span>Total</span>
               <span>{total * numNinos} €</span>
             </div>
-            {(matinal || ampliacion) && (
-              <p className="text-xs text-gray-400">* El precio del horario ampliado se añade al confirmar con el equipo.</p>
-            )}
           </div>
 
           {/* Botón continuar */}

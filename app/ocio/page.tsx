@@ -20,7 +20,7 @@ const SERVICIOS = [
     nombre: 'Campamentos',
     href: '/servicios/campamentos',
     desc: 'Escuela de Superhéroes en Navidad, Semana Santa y 8 semanas de verano. Días sueltos o semanas completas.',
-    precio: '30 € / día · 95 € / semana',
+    precio: '25 € / día · 95 € / semana',
     detalle: 'Descuento hermanos y horario ampliado',
     grad: 'from-pm-navy to-pm-navy-md',
     badge: 'Reserva online',

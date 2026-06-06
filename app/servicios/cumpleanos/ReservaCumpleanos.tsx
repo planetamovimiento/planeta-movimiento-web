@@ -200,7 +200,6 @@ export default function ReservaCumpleanos() {
   const [fechaSeleccionada, setFechaSeleccionada] = useState<Date | null>(null)
   const [slotSeleccionado, setSlotSeleccionado]   = useState<string | null>(null)
   const [participantes, setParticipantes]          = useState<number>(13)
-  const [merienda, setMerienda]                    = useState<string>('')
   const [tieneTarta, setTieneTarta]                = useState<boolean | null>(null)
   const [paso, setPaso] = useState<1 | 2 | 3>(1) // 1=fecha, 2=detalles, 3=confirmado
 
@@ -221,7 +220,7 @@ export default function ReservaCumpleanos() {
   }
 
   function canConfirmar() {
-    return merienda && tieneTarta !== null && form.nombre && form.email && form.telefono
+    return tieneTarta !== null && form.nombre && form.email && form.telefono
   }
 
   async function handleReservar(e: React.FormEvent) {
@@ -238,7 +237,7 @@ export default function ReservaCumpleanos() {
       precio: precio?.total,
       observaciones: form.notas,
       datos: {
-        merienda,
+        meriendas: 'Cada niño elige su opción el día del cumpleaños',
         traeTarta: tieneTarta ? 'Sí' : 'No (tarta decorativa + juego extra)',
       },
     })
@@ -265,7 +264,7 @@ export default function ReservaCumpleanos() {
           <div><span className="text-gray-500">Participantes:</span> <strong>{participantes}</strong></div>
           <div><span className="text-gray-500">Total estimado:</span> <strong>{precio?.total} €</strong></div>
         </div>
-        <button onClick={() => { setPaso(1); setFechaSeleccionada(null); setSlotSeleccionado(null); setMerienda(''); setTieneTarta(null); setForm({ nombre: '', email: '', telefono: '', notas: '' }) }}
+        <button onClick={() => { setPaso(1); setFechaSeleccionada(null); setSlotSeleccionado(null); setTieneTarta(null); setForm({ nombre: '', email: '', telefono: '', notas: '' }) }}
           className="text-pm-red underline text-sm">
           Hacer otra reserva
         </button>
@@ -371,24 +370,21 @@ export default function ReservaCumpleanos() {
             )}
           </div>
 
-          {/* Merienda */}
+          {/* Merienda (informativa) */}
           <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
             <div className="bg-pm-navy text-white px-3 py-1.5 flex items-center gap-2 rounded-xl mb-4">
               <span className="w-6 h-6 bg-pm-red rounded-full flex items-center justify-center text-xs font-black shrink-0">3</span>
-              <span className="font-bold text-sm">Elige la merienda</span>
+              <span className="font-bold text-sm">La merienda</span>
             </div>
-            <p className="text-xs text-gray-500 mb-3">Incluida en el precio · Todos los niños reciben la misma opción</p>
+            <p className="text-xs text-gray-500 mb-3">
+              Incluida en el precio. <strong className="text-pm-navy">Cada niño elige el día del cumpleaños</strong> la opción que prefiera entre estas:
+            </p>
             <div className="grid grid-cols-2 gap-2">
               {MERIENDAS.map(m => (
-                <button key={m.id} type="button" onClick={() => setMerienda(m.id)}
-                  className={`text-left border-2 rounded-xl p-3 transition-all ${
-                    merienda === m.id
-                      ? 'border-pm-red bg-pm-red-light'
-                      : 'border-gray-200 hover:border-pm-red/40'
-                  }`}>
-                  <div className={`font-bold text-sm ${merienda === m.id ? 'text-pm-red' : 'text-pm-navy'}`}>{m.label}</div>
+                <div key={m.id} className="border border-gray-200 rounded-xl p-3 bg-pm-bg">
+                  <div className="font-bold text-sm text-pm-navy">{m.label}</div>
                   <div className="text-xs text-gray-500 mt-0.5">{m.desc}</div>
-                </button>
+                </div>
               ))}
             </div>
 

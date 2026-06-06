@@ -241,39 +241,14 @@ export default function CampamentosPage() {
                 {/* Precios */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-white/10 border border-white/20 rounded-xl p-4 text-center">
-                    <div className="text-2xl font-black">30 €</div>
+                    <div className="text-2xl font-black">25 €</div>
                     <div className="text-white/70 text-xs">día suelto</div>
                   </div>
                   <div className="bg-pm-red/80 border border-pm-red rounded-xl p-4 text-center">
                     <div className="text-2xl font-black">95 €</div>
                     <div className="text-white/80 text-xs">semana completa</div>
-                    <div className="text-xs text-red-200 mt-0.5">vs 150 € en días sueltos</div>
+                    <div className="text-xs text-red-200 mt-0.5">vs 125 € en días sueltos</div>
                   </div>
-                </div>
-              </div>
-
-              {/* Los 4 elementos */}
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                <h3 className="font-black text-pm-navy text-lg mb-1">Los 4 elementos del héroe</h3>
-                <p className="text-gray-500 text-sm mb-4">Cada semana un elemento diferente · Se repiten 2 veces en las 8 semanas</p>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { elemento: 'Tierra', emoji: '🌍', color: 'bg-amber-50 border-amber-200', text: 'text-amber-700', semanas: '1 y 5', desc: 'Fuerza, resistencia y equilibrio. Los héroes de la tierra son los más poderosos.' },
-                    { elemento: 'Agua', emoji: '💧', color: 'bg-sky-50 border-sky-200', text: 'text-sky-700', semanas: '2 y 6', desc: 'Fluidez, coordinación y adaptación. Fluyen como el agua en cada movimiento.' },
-                    { elemento: 'Fuego', emoji: '🔥', color: 'bg-orange-50 border-orange-200', text: 'text-orange-700', semanas: '3 y 7', desc: 'Energía, pasión y destreza. Su fuego interior los impulsa a superarse.' },
-                    { elemento: 'Aire', emoji: '🌬️', color: 'bg-indigo-50 border-indigo-200', text: 'text-indigo-700', semanas: '4 y 8', desc: 'Agilidad, vuelo y trabajo en equipo. Libres como el viento.' },
-                  ].map(el => (
-                    <div key={el.elemento} className={`border rounded-xl p-4 ${el.color}`}>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">{el.emoji}</span>
-                        <div>
-                          <div className={`font-black text-sm ${el.text}`}>{el.elemento}</div>
-                          <div className="text-xs text-gray-500">Semanas {el.semanas}</div>
-                        </div>
-                      </div>
-                      <p className={`text-xs leading-relaxed ${el.text} opacity-80`}>{el.desc}</p>
-                    </div>
-                  ))}
                 </div>
               </div>
 
@@ -286,7 +261,7 @@ export default function CampamentosPage() {
                       <span className="text-xl">{semana.emoji}</span>
                       <div className="flex-1">
                         <div className={`font-black text-sm ${semana.colorText}`}>Semana {semana.id} — {semana.elemento}</div>
-                        <div className="text-xs text-gray-500">{semana.lema}</div>
+                        <div className="text-xs text-gray-500">Sentido protagonista: {semana.sentido}</div>
                       </div>
                       <div className="text-right">
                         <div className="text-xs font-bold text-gray-600">
