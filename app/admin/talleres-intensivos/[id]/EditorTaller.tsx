@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { guardarTaller } from '../actions'
+import { SubirImagen } from '@/components/admin/SubirImagen'
 import type { Taller } from '@/app/club/talleres-intensivos/config'
 
 const lbl = 'block text-xs font-bold text-pm-navy mb-1.5'
@@ -75,7 +76,7 @@ export default function EditorTaller({ taller }: { taller: Taller & { updatedAt?
           <div><label className={lbl}>Plazas libres</label><input type="number" className={inp} value={f.plazasLibres} onChange={e => set('plazasLibres', Number(e.target.value))} /></div>
         </div>
         <div><label className={lbl}>Profesor / instructor</label><input className={inp} value={f.profesor} onChange={e => set('profesor', e.target.value)} /></div>
-        <div><label className={lbl}>Imagen (URL)</label><input className={inp} value={f.imagen} onChange={e => set('imagen', e.target.value)} placeholder="/fotos/taller-telas.jpg" /></div>
+        <div><label className={lbl}>Imagen</label><SubirImagen value={f.imagen} onChange={url => set('imagen', url)} carpeta="talleres" /></div>
         <div>
           <label className={lbl}>Objetivos (uno por línea)</label>
           <textarea rows={4} className={inp + ' resize-none'} value={(f.objetivos || []).join('\n')} onChange={e => set('objetivos', e.target.value.split('\n').map(s => s.trim()).filter(Boolean))} />

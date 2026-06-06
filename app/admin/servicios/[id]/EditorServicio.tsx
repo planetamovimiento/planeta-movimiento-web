@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { guardarServicio } from '../actions'
+import { SubirImagen } from '@/components/admin/SubirImagen'
 import type { ServicioFull } from '@/lib/servicios/store'
 
 const ESTADOS = ['activo', 'inactivo', 'proximamente', 'completo', 'pausado', 'oculto', 'borrador']
@@ -125,11 +126,8 @@ export default function EditorServicio({ servicio }: { servicio: ServicioFull })
       )}
 
       {/* Imágenes */}
-      <Seccion titulo="Imágenes" nota="Pega URLs de imágenes (por ahora). La subida de archivos se añadirá después.">
-        <label className={lbl}>Imagen principal (URL)</label>
-        <input className={inp} value={f.imagen} onChange={e => set('imagen', e.target.value)} placeholder="https://..." />
-        <label className={lbl + ' mt-4'}>Galería (una URL por línea)</label>
-        <textarea rows={3} className={inp + ' resize-none'} value={(f.galeria || []).join('\n')} onChange={e => set('galeria', e.target.value.split('\n').map(s => s.trim()).filter(Boolean))} />
+      <Seccion titulo="Imagen principal" nota="Sube una foto desde tu ordenador (JPG, PNG o WebP).">
+        <SubirImagen value={f.imagen} onChange={url => set('imagen', url)} carpeta="servicios" />
       </Seccion>
 
       {/* FAQs */}
