@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { waNegocio } from '@/lib/whatsapp'
 import { BotonApuntarme } from './InscripcionModal'
 import TabsDescripcion from './TabsDescripcion'
 import { Galeria } from '@/components/ui/Galeria'
@@ -128,7 +129,7 @@ export default function GimnasiaAcrobaticaPage() {
                   657 604 665
                 </a>
                 <a
-                  href="https://wa.me/34657604665"
+                  href={waNegocio('Hola 👋, me gustaría recibir información sobre las clases de Gimnasia Acrobática y Trampolín.')}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-sm text-green-600 hover:text-green-700 transition-colors font-semibold"

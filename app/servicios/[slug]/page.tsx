@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { waNegocio } from '@/lib/whatsapp'
 import { notFound } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
 
@@ -334,7 +335,7 @@ export default async function ServicioPage({ params }: Props) {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a href="tel:+34657604665" className="text-2xl font-black hover:underline">657 604 665</a>
             <a
-              href="https://wa.me/34657604665"
+              href={waNegocio(`Hola 👋, me gustaría recibir información sobre ${servicio.nombre} de Planeta Movimiento.`)}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-3 rounded-xl transition-colors flex items-center gap-2"

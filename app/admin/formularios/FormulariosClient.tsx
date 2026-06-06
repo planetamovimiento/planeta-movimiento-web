@@ -3,6 +3,7 @@
 import { useState, useMemo, useTransition } from 'react'
 import { EstadoBadge, EmptyState } from '@/components/admin/ui'
 import { cambiarEstadoFormulario } from './actions'
+import { waCliente } from '@/lib/whatsapp'
 
 type Row = {
   id: string; tipo: string | null; nombre: string | null; email: string | null
@@ -23,6 +24,20 @@ const TIPOS_LABEL: Record<string, string> = {
 function actividadDe(r: Row): string {
   const a = r.datos?.actividad
   return typeof a === 'string' ? a.trim() : ''
+}
+
+/** Mensaje de WhatsApp predeterminado para contactar con quien envió la solicitud. */
+function mensajeWhatsApp(r: Row): string {
+  const nombre = (r.nombre || '').trim().split(/\s+/)[0]
+  const saludo = nombre ? `Hola ${nombre} 👋` : 'Hola 👋'
+  const entidad = (r.tipo || '').includes('club')
+    ? 'el Club Deportivo Origen (Planeta Movimiento)'
+    : 'Planeta Movimiento'
+  const actividad = actividadDe(r)
+  if (actividad) {
+    return `${saludo}, te escribimos desde ${entidad} sobre tu solicitud de inscripción en ${actividad}. ¿Te viene bien que hablemos para confirmar la plaza y resolver tus dudas? ¡Gracias!`
+  }
+  return `${saludo}, te escribimos desde ${entidad} sobre ${r.asunto || 'tu solicitud'}. ¿En qué podemos ayudarte? ¡Gracias!`
 }
 
 export default function FormulariosClient({ rows, puedeEditar }: { rows: Row[]; puedeEditar: boolean }) {
@@ -132,7 +147,7 @@ export default function FormulariosClient({ rows, puedeEditar }: { rows: Row[]; 
               )}
               <div className="flex gap-2 flex-wrap pt-2">
                 {detalle.email && <a href={`mailto:${detalle.email}`} className="bg-pm-navy text-white text-sm font-bold px-4 py-2 rounded-xl">Responder por email</a>}
-                {detalle.telefono && <a href={`https://wa.me/34${detalle.telefono.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="bg-green-600 text-white text-sm font-bold px-4 py-2 rounded-xl">WhatsApp</a>}
+                {detalle.telefono && <a href={waCliente(detalle.telefono, mensajeWhatsApp(detalle))} target="_blank" rel="noopener noreferrer" className="bg-green-600 text-white text-sm font-bold px-4 py-2 rounded-xl">WhatsApp</a>}
               </div>
 
               {puedeEditar && (
