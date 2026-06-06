@@ -1,203 +1,111 @@
 import Link from 'next/link'
 
 export const metadata = {
-  title: 'Club Deportivo Origen — Planeta Movimiento Cuenca',
+  title: 'Club Deportivo Origen — Circo y Acrobacia en Cuenca',
   description:
-    'El Club Deportivo Origen gestiona Planeta Movimiento en Cuenca. Circo, acrobacia, campamentos, extraescolares, eventos y mucho más para todas las edades.',
+    'El Club Deportivo Origen es una asociación sin ánimo de lucro que ofrece clases semanales de circo, acrobacia, aéreos, malabares y equilibrios en Cuenca, en colaboración con Planeta Movimiento.',
 }
 
-// ─── Todos los servicios activos ─────────────────────────────────────────────
-
-type Servicio = {
-  nombre: string
-  desc: string
-  edad: string
-  icon: string
-  href: string
-  grad: string
-  nuevo?: boolean
-}
-
-const CLUB_CLASES: Servicio[] = [
+// ─── Disciplinas del Club ─────────────────────────────────────────────────────
+// Estas son las actividades propias del Club Deportivo Origen (sin ánimo de lucro)
+const DISCIPLINAS = [
+  {
+    nombre: 'Gimnasia Acrobática',
+    desc: 'Técnica de suelo, volteos, figuras y composición corporal en grupo. Disciplina reglada con progresión por niveles.',
+    icon: '🤸',
+    edad: 'Desde 4 años',
+    grad: 'from-pm-red to-pm-red-dark',
+    href: '/servicios/gimnasia-acrobatica',
+  },
+  {
+    nombre: 'Parkour',
+    desc: 'Desplazamiento urbano y acrobático. Saltos, equilibrios y control del cuerpo en el espacio.',
+    icon: '🏃',
+    grad: 'from-slate-700 to-pm-navy',
+    edad: 'Desde 6 años',
+    href: '/servicios/parkour',
+  },
+  {
+    nombre: 'Telas Aéreas',
+    desc: 'Técnica aérea en tela. Figuras, envolturas y trabajo de altura con progresión adaptada.',
+    icon: '🎪',
+    grad: 'from-purple-700 to-indigo-800',
+    edad: 'Desde 6 años',
+    href: '/servicios/telas-aereas',
+  },
+  {
+    nombre: 'Malabares',
+    desc: 'Coordinación, ritmo y destreza a través de pelotas, clavas, aros y otros elementos de circo.',
+    icon: '🤹',
+    grad: 'from-amber-500 to-orange-600',
+    edad: 'Desde 5 años',
+    href: '/servicios/malabares',
+  },
+  {
+    nombre: 'Equilibrios',
+    desc: 'Control postural, equilibrio estático y dinámico. Trabajo con objetos y compañero.',
+    icon: '⚖️',
+    grad: 'from-emerald-600 to-teal-700',
+    edad: 'Desde 6 años',
+    href: '/servicios/equilibrios',
+  },
   {
     nombre: 'Escuela de Bienestar',
     desc: 'Pilates, Yoga y Baile para adultos. Lunes, miércoles y viernes de 09:30 a 10:30.',
-    edad: 'Adultos',
     icon: '🧘',
-    href: '/servicios/escuela-bienestar',
     grad: 'from-teal-600 to-cyan-700',
+    edad: 'Adultos',
+    href: '/servicios/escuela-bienestar',
   },
   {
     nombre: 'Jiu-Jitsu Brasileño',
-    desc: 'Arte marcial de suelo con instructores de Academia Adamas (Madrid). Sábados 11:30-13:30.',
-    edad: '+16 años · 60 €/mes',
+    desc: 'Arte marcial de suelo en colaboración con Academia Adamas (Madrid). Sábados 11:30-13:30.',
     icon: '🥋',
-    href: '/servicios/jiu-jitsu',
     grad: 'from-slate-800 to-pm-navy',
+    edad: '+16 años · 60 €/mes',
+    href: '/servicios/jiu-jitsu',
   },
   {
     nombre: 'Circo Inclusivo',
     desc: 'Circo adaptado y psicomotricidad para personas con discapacidad intelectual. Con CADIG Crisol.',
-    edad: 'Adultos con DI',
     icon: '♿',
-    href: '/servicios/circo-inclusivo',
     grad: 'from-indigo-700 to-purple-800',
+    edad: 'Adultos con DI',
+    href: '/servicios/circo-inclusivo',
   },
 ]
 
-const OCIO: Servicio[] = [
-  {
-    nombre: 'Celebración de Cumpleaños',
-    desc: '2 horas de actividad guiada, juegos y merienda. Desde 11 € por participante.',
-    edad: 'Todas las edades',
-    icon: '🎂',
-    href: '/servicios/cumpleanos',
-    grad: 'from-pm-red to-pm-red-dark',
-    nuevo: true,
-  },
-  {
-    nombre: 'Campamentos',
-    desc: 'Escuela de Superhéroes en Navidad, Semana Santa y 8 semanas de verano.',
-    edad: 'Desde 4 años',
-    icon: '🏕️',
-    href: '/servicios/campamentos',
-    grad: 'from-pm-navy to-pm-navy-md',
-    nuevo: true,
-  },
-  {
-    nombre: 'Días Sin Cole',
-    desc: 'Festivos escolares de 9:00 a 14:00. Escuela de Superhéroes. 30 € + IVA.',
-    edad: 'Desde 4 años',
-    icon: '⚡',
-    href: '/servicios/eventos',
-    grad: 'from-amber-500 to-orange-600',
-  },
-  {
-    nombre: 'Domingos en Familia',
-    desc: 'Práctica libre todos los domingos de 11:00 a 13:00. 15 € / niño. Adultos gratis.',
-    edad: 'Desde 2 años',
-    icon: '👨‍👩‍👧‍👦',
-    href: '/servicios/eventos',
-    grad: 'from-emerald-600 to-emerald-800',
-  },
-  {
-    nombre: 'Noche de Halloween',
-    desc: 'Fiesta de pijamas temática anual. Gymkana, actividades nocturnas y churros al amanecer.',
-    edad: '+10 años',
-    icon: '🧟',
-    href: '/servicios/eventos',
-    grad: 'from-gray-900 to-orange-950',
-    nuevo: true,
-  },
+const NIVELES = [
+  { nombre: 'Iniciación',  desc: 'Primeros pasos. Sin experiencia necesaria. Juego y descubrimiento.', color: 'bg-gray-100 border-gray-300',  text: 'text-gray-700' },
+  { nombre: 'Intermedio',  desc: 'Consolidación de habilidades básicas. Pequeñas rutinas y combinaciones.', color: 'bg-pm-red-light border-pm-red/30', text: 'text-pm-red' },
+  { nombre: 'Avanzado',    desc: 'Técnica depurada, combinaciones complejas y trabajo coreográfico.', color: 'bg-pm-red/80 border-pm-red', text: 'text-white' },
+  { nombre: 'Competición', desc: 'Preparación para exhibiciones y competiciones. Entrenamientos intensivos.', color: 'bg-pm-red border-pm-red-dark', text: 'text-white' },
 ]
 
-const EDUCATIVO: Servicio[] = [
-  {
-    nombre: 'Excursiones Escolares',
-    desc: '4 horas de acrobacia, aéreos, circo y expresión corporal por rotaciones. 09:00-13:00.',
-    edad: 'Infantil · Primaria · Secundaria',
-    icon: '🎒',
-    href: '/servicios/excursiones',
-    grad: 'from-pm-red to-orange-600',
-    nuevo: true,
-  },
-  {
-    nombre: 'Multideporte Extraescolar',
-    desc: 'Nos desplazamos al colegio. 1 hora/sesión, 1-2 días/semana. Para AMPAs y colegios.',
-    edad: 'Infantil (3-5) · Primaria (6-12)',
-    icon: '🏃',
-    href: '/servicios/extraescolares',
-    grad: 'from-blue-600 to-pm-navy',
-    nuevo: true,
-  },
-  {
-    nombre: 'Curso Monitor Juvenil',
-    desc: 'Titulación homologada Junta CLM. Julio 2026. Cuenca · Tarancón · Motilla. Con ARKHE.',
-    edad: '+16 años',
-    icon: '🎓',
-    href: '/servicios/monitor-juvenil',
-    grad: 'from-emerald-700 to-pm-navy',
-    nuevo: true,
-  },
-]
-
-const EVENTOS_EXT: Servicio[] = [
-  {
-    nombre: 'Animación en tu Evento',
-    desc: 'Bodas, comuniones, bautizos y fiestas. Pack Básico 150 € / Pack Grande 250 €. + IVA.',
-    edad: 'Todas las edades',
-    icon: '🎉',
-    href: '/servicios/eventos',
-    grad: 'from-purple-700 to-pm-navy',
-    nuevo: true,
-  },
-  {
-    nombre: 'Talleres de Circo',
-    desc: 'AirTrack, pórtico aéreo, malabares, pintacaras… Configurador con presupuesto en tiempo real.',
-    edad: 'Ayuntamientos · Empresas · AMPAs',
-    icon: '🎪',
-    href: '/servicios/talleres',
-    grad: 'from-pm-red to-pm-navy',
-    nuevo: true,
-  },
-]
-
-// ─── Componente tarjeta ──────────────────────────────────────────────────────
-function TarjetaServicio({ s }: { s: Servicio }) {
+// ─── Tarjeta disciplina ───────────────────────────────────────────────────────
+function TarjetaDisciplina({ d }: { d: typeof DISCIPLINAS[0] }) {
   return (
-    <Link href={s.href}
-      className="group flex flex-col bg-white border-2 border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:border-gray-200 transition-all duration-200 hover:-translate-y-0.5">
-      <div className={`relative bg-gradient-to-br ${s.grad} h-24 flex items-center justify-center shrink-0`}>
-        <span className="text-4xl">{s.icon}</span>
-        {s.nuevo && (
-          <span className="absolute top-2.5 right-2.5 bg-pm-red text-white text-xs font-black px-2 py-0.5 rounded-full">
-            Nuevo
-          </span>
-        )}
+    <div className="group flex flex-col bg-white border-2 border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md hover:border-gray-200 transition-all">
+      <div className={`bg-gradient-to-br ${d.grad} h-24 flex items-center justify-center`}>
+        <span className="text-5xl">{d.icon}</span>
       </div>
-      <div className="flex flex-col flex-1 p-4 gap-2">
-        <h3 className="font-black text-pm-navy text-sm leading-tight group-hover:text-pm-red transition-colors">
-          {s.nombre}
-        </h3>
-        <p className="text-xs text-gray-500 leading-relaxed flex-1">{s.desc}</p>
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-          <span className="text-xs bg-pm-bg border border-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-medium">{s.edad}</span>
-          <span className="text-xs font-black text-pm-red flex items-center gap-1">
-            Ver más
-            <svg className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7"/>
-            </svg>
-          </span>
+      <div className="p-5 flex flex-col flex-1 gap-2">
+        <h3 className="font-black text-pm-navy text-base">{d.nombre}</h3>
+        <p className="text-xs text-gray-500 leading-relaxed flex-1">{d.desc}</p>
+        <div className="pt-3 border-t border-gray-100 flex items-center justify-between">
+          <span className="text-xs bg-pm-bg border border-gray-200 text-gray-600 px-2 py-0.5 rounded-full">{d.edad}</span>
+          <Link href={d.href}
+            className="text-xs font-black text-pm-red flex items-center gap-1 hover:gap-2 transition-all">
+            Apuntarse →
+          </Link>
         </div>
       </div>
-    </Link>
+    </div>
   )
 }
 
-// ─── Sección con título ──────────────────────────────────────────────────────
-function SeccionServicios({ titulo, subtitulo, servicios, colorIcon }: {
-  titulo: string; subtitulo: string; servicios: Servicio[]; colorIcon: string
-}) {
-  return (
-    <section className="py-14">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-3 mb-2">
-          <span className={`text-2xl`}>{colorIcon}</span>
-          <h2 className="text-2xl font-black text-pm-navy">{titulo}</h2>
-        </div>
-        <p className="text-gray-500 text-sm mb-8 pl-10">{subtitulo}</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {servicios.map(s => <TarjetaServicio key={s.href + s.nombre} s={s} />)}
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ─── Página ──────────────────────────────────────────────────────────────────
+// ─── Página ───────────────────────────────────────────────────────────────────
 export default function ClubPage() {
-  const totalServicios = CLUB_CLASES.length + OCIO.length + EDUCATIVO.length + EVENTOS_EXT.length
-
   return (
     <main className="bg-pm-bg min-h-screen">
 
@@ -205,7 +113,6 @@ export default function ClubPage() {
       <section className="bg-pm-navy text-white py-20 border-t-4 border-pm-red">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
 
-          {/* Breadcrumb */}
           <nav className="text-sm text-gray-400 mb-8 flex items-center gap-2">
             <Link href="/" className="hover:text-white transition-colors">Inicio</Link>
             <span>›</span>
@@ -214,45 +121,35 @@ export default function ClubPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              {/* Nombre del club */}
-              <div className="flex flex-wrap items-center gap-2 mb-5">
-                <span className="bg-pm-red text-white text-xs font-black px-3 py-1 rounded-full">
-                  Temporada 2025-26 abierta
-                </span>
-                <span className="bg-white/10 text-white/70 text-xs font-semibold px-3 py-1 rounded-full border border-white/20">
-                  {totalServicios} actividades disponibles
-                </span>
-              </div>
-
-              <div className="mb-2">
-                <div className="text-pm-red text-sm font-black uppercase tracking-widest mb-1">Club Deportivo Origen</div>
-                <h1 className="text-4xl sm:text-5xl font-black leading-tight">
-                  Planeta<br/>Movimiento
-                </h1>
-              </div>
-
-              <p className="text-white/65 text-base leading-relaxed mt-4 mb-8 max-w-lg">
-                Circo, acrobacia, bienestar, campamentos, extraescolares, eventos y formación.
-                Todo en un mismo espacio en Cuenca, gestionado por el <strong className="text-white">Club Deportivo Origen</strong>.
+              <span className="inline-block bg-pm-red text-white text-xs font-black px-3 py-1 rounded-full mb-5">
+                Temporada 2025-26 abierta
+              </span>
+              <div className="text-pm-red text-sm font-black uppercase tracking-widest mb-2">Asociación sin ánimo de lucro</div>
+              <h1 className="text-4xl sm:text-5xl font-black leading-tight mb-4">
+                Club Deportivo<br/>Origen
+              </h1>
+              <p className="text-white/65 text-base leading-relaxed mb-8 max-w-lg">
+                Somos un club deportivo fundado con el objetivo de acercar el circo y la acrobacia a todas las edades.
+                Sin ánimo de lucro, con pasión por el movimiento y por crear comunidad.
               </p>
-
               <div className="flex flex-wrap gap-3">
-                <a href="#actividades" className="bg-pm-red hover:bg-pm-red-dark text-white font-black px-8 py-3.5 rounded-xl transition-colors">
-                  Ver todas las actividades
+                <a href="#disciplinas" className="bg-pm-red hover:bg-pm-red-dark text-white font-black px-8 py-3.5 rounded-xl transition-colors">
+                  Ver disciplinas
                 </a>
-                <Link href="/actividades" className="border-2 border-white/30 text-white hover:bg-white/10 font-bold px-6 py-3.5 rounded-xl transition-colors text-sm">
-                  🔍 Buscar por perfil
-                </Link>
+                <a href="#inscripcion"
+                  className="border-2 border-white/30 text-white hover:bg-white/10 font-bold px-6 py-3.5 rounded-xl transition-colors text-sm">
+                  Apuntarse al club
+                </a>
               </div>
             </div>
 
-            {/* Stats del club */}
+            {/* Stats */}
             <div className="grid grid-cols-2 gap-4">
               {[
-                { valor: totalServicios + '+', label: 'Actividades', icon: '🏅' },
-                { valor: '3',  label: 'Sedes del curso monitor', icon: '📍' },
-                { valor: '8',  label: 'Semanas de verano', icon: '☀️' },
-                { valor: '5',  label: 'Perfiles de usuario', icon: '🎯' },
+                { valor: '8',    label: 'Disciplinas',           icon: '🏅' },
+                { valor: '4',    label: 'Niveles de progresión', icon: '📈' },
+                { valor: '↑',    label: 'Sin ánimo de lucro',    icon: '🤝' },
+                { valor: '2025', label: 'Temporada activa',      icon: '📅' },
               ].map(({ valor, label, icon }) => (
                 <div key={label} className="bg-white/5 border border-white/15 rounded-2xl p-5 text-center">
                   <div className="text-2xl mb-2">{icon}</div>
@@ -265,103 +162,144 @@ export default function ClubPage() {
         </div>
       </section>
 
-      {/* ── ABOUT CLUB DEPORTIVO ORIGEN ── */}
-      <section className="bg-white py-14">
+      {/* ── QUÉ ES EL CLUB ── */}
+      <section className="bg-white py-16">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
             <div>
-              <div className="text-xs font-black text-pm-red uppercase tracking-widest mb-3">Quiénes somos</div>
-              <h2 className="text-3xl font-black text-pm-navy mb-4">Club Deportivo Origen</h2>
+              <div className="text-xs font-black text-pm-red uppercase tracking-widest mb-3">Nuestra historia</div>
+              <h2 className="text-3xl font-black text-pm-navy mb-4">¿Qué es el Club Deportivo Origen?</h2>
               <p className="text-gray-600 text-base leading-relaxed mb-4">
-                Somos el <strong className="text-pm-navy">Club Deportivo Origen</strong>, entidad gestora de las instalaciones de <strong className="text-pm-navy">Planeta Movimiento</strong> en Cuenca.
-                Nuestro objetivo es acercar el deporte, el circo y el movimiento a todas las edades y perfiles.
+                El Club Deportivo Origen nació como una asociación deportiva <strong className="text-pm-navy">sin ánimo de lucro</strong> con el objetivo de fomentar el circo, la acrobacia y el movimiento como herramientas de desarrollo personal y social.
+              </p>
+              <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                El Club es el <strong className="text-pm-navy">origen de todo</strong>. Empezamos aquí, con vocación deportiva y educativa, y con el tiempo fuimos creciendo hasta poder crear una empresa independiente.
               </p>
               <p className="text-gray-600 text-sm leading-relaxed">
-                Desde clases semanales para adultos hasta campamentos de verano, excursiones escolares, eventos privados y programas de formación. Creemos que el movimiento es la mejor herramienta para el desarrollo integral de las personas.
+                Hoy, el Club sigue activo con sus propias disciplinas y gestión, y desarrolla su actividad gracias al <strong className="text-pm-navy">acuerdo de colaboración con Planeta Movimiento S.L.</strong>, que nos cede el espacio y el material.
               </p>
             </div>
-            <div className="bg-pm-bg rounded-2xl border border-gray-200 p-6">
-              <div className="text-xs font-black text-pm-navy uppercase tracking-wider mb-4">El Club en cifras</div>
-              <div className="space-y-3">
-                {[
-                  { icon: '🎓', texto: 'Monitores cualificados y especializados' },
-                  { icon: '🛡️', texto: 'Instalaciones seguras y homologadas' },
-                  { icon: '📅', texto: 'Actividades durante todo el año' },
-                  { icon: '👶', texto: 'Para todas las edades, desde 2 años' },
-                  { icon: '🤝', texto: 'Colaboraciones con CADIG, ARKHE y Academia Adamas' },
-                  { icon: '🏛️', texto: 'Servicios para particulares, empresas y entidades' },
-                ].map(({ icon, texto }) => (
-                  <div key={texto} className="flex items-center gap-3 text-sm text-gray-700">
-                    <span className="text-xl shrink-0">{icon}</span>{texto}
+
+            {/* Relación Club – Planeta Movimiento */}
+            <div className="space-y-4">
+              <div className="bg-pm-bg border-2 border-gray-200 rounded-2xl p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-pm-navy rounded-xl flex items-center justify-center text-white font-black text-sm shrink-0">CDO</div>
+                  <div>
+                    <div className="font-black text-pm-navy text-sm">Club Deportivo Origen</div>
+                    <div className="text-xs text-gray-500">Asociación sin ánimo de lucro · Entidad deportiva</div>
                   </div>
-                ))}
+                </div>
+                <ul className="space-y-1.5">
+                  {['Gestión propia e independiente', 'Disciplinas deportivas de circo y acrobacia', 'Sin ánimo de lucro', 'Cuotas asequibles para sus socios'].map(i => (
+                    <li key={i} className="flex items-center gap-2 text-xs text-gray-700">
+                      <span className="text-pm-red font-bold">✓</span>{i}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Flecha de colaboración */}
+              <div className="flex items-center justify-center gap-3 text-xs text-gray-400 font-semibold">
+                <div className="flex-1 h-px bg-gray-200"/>
+                <span className="bg-pm-bg border border-gray-200 px-3 py-1 rounded-full whitespace-nowrap">
+                  🤝 Acuerdo de colaboración · Cesión de espacio y material
+                </span>
+                <div className="flex-1 h-px bg-gray-200"/>
+              </div>
+
+              <div className="bg-pm-red-light border-2 border-pm-red/20 rounded-2xl p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-pm-red rounded-xl flex items-center justify-center text-white font-black text-xs shrink-0">PM</div>
+                  <div>
+                    <div className="font-black text-pm-navy text-sm">Planeta Movimiento S.L.</div>
+                    <div className="text-xs text-gray-500">Empresa comercial · Instalaciones y servicios</div>
+                  </div>
+                </div>
+                <ul className="space-y-1.5">
+                  {['Empresa independiente fundada después', 'Gestiona las instalaciones y el espacio', 'Campamentos, eventos, talleres y más', 'Cede espacio y material al Club'].map(i => (
+                    <li key={i} className="flex items-center gap-2 text-xs text-gray-700">
+                      <span className="text-pm-red font-bold">✓</span>{i}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/" className="mt-3 inline-flex items-center gap-1 text-xs text-pm-red font-bold hover:underline">
+                  Ver servicios de Planeta Movimiento →
+                </Link>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── SERVICIOS ── */}
-      <div id="actividades" className="divide-y divide-gray-200">
-
-        <div className="bg-pm-bg">
-          <SeccionServicios
-            titulo="Clases del Club"
-            subtitulo="Actividades regulares semanales en nuestras instalaciones"
-            servicios={CLUB_CLASES}
-            colorIcon="🏅"
-          />
-        </div>
-
-        <div className="bg-white">
-          <SeccionServicios
-            titulo="Ocio y tiempo libre"
-            subtitulo="Campamentos, cumpleaños, eventos especiales y actividades en familia"
-            servicios={OCIO}
-            colorIcon="🎉"
-          />
-        </div>
-
-        <div className="bg-pm-bg">
-          <SeccionServicios
-            titulo="Programas educativos"
-            subtitulo="Excursiones escolares, extraescolares y formación para monitores"
-            servicios={EDUCATIVO}
-            colorIcon="📚"
-          />
-        </div>
-
-        <div className="bg-white">
-          <SeccionServicios
-            titulo="Eventos y talleres externos"
-            subtitulo="Nos desplazamos a tu evento con todo el material y los monitores"
-            servicios={EVENTOS_EXT}
-            colorIcon="🚐"
-          />
-        </div>
-      </div>
-
-      {/* ── BUSCADOR POR PERFIL ── */}
-      <section className="bg-pm-navy py-14 text-white text-center">
-        <div className="max-w-2xl mx-auto px-4">
-          <div className="text-4xl mb-4">🔍</div>
-          <h2 className="text-2xl font-black mb-3">¿No sabes qué actividad elegir?</h2>
-          <p className="text-white/60 text-sm mb-6">
-            Usa nuestro buscador por perfil: selecciona tu edad o tipo de entidad y te mostramos todas las actividades pensadas para ti.
-          </p>
-          <Link href="/actividades"
-            className="inline-block bg-pm-red hover:bg-pm-red-dark text-white font-black px-8 py-4 rounded-xl transition-colors shadow-lg">
-            Buscar por perfil →
-          </Link>
+      {/* ── DISCIPLINAS ── */}
+      <section className="bg-pm-bg py-16" id="disciplinas">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-black text-pm-navy mb-3">Disciplinas del Club</h2>
+            <p className="text-gray-500 text-sm max-w-xl mx-auto">
+              Clases semanales impartidas por monitores especializados. Elige tu disciplina o combina varias.
+              Grupos reducidos y progresión personalizada.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {DISCIPLINAS.map(d => <TarjetaDisciplina key={d.nombre} d={d} />)}
+          </div>
         </div>
       </section>
 
-      {/* ── CTA CONTACTO ── */}
-      <section className="bg-pm-red py-14 text-white text-center">
+      {/* ── NIVELES ── */}
+      <section className="bg-white py-14">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-black text-pm-navy text-center mb-3">Sistema de niveles</h2>
+          <p className="text-gray-500 text-sm text-center mb-10">Progresa de forma estructurada con objetivos claros en cada etapa</p>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            {NIVELES.map((nivel, i) => (
+              <div key={nivel.nombre} className="relative">
+                {i < NIVELES.length - 1 && (
+                  <div className="hidden sm:block absolute top-8 left-[55%] w-full h-0.5 bg-gray-200 z-0"/>
+                )}
+                <div className={`relative z-10 border-2 rounded-2xl p-6 h-full ${nivel.color}`}>
+                  <div className={`text-xs font-black uppercase tracking-wider mb-1 opacity-60 ${nivel.text}`}>Nivel {i + 1}</div>
+                  <div className={`font-black text-lg mb-2 ${nivel.text}`}>{nivel.nombre}</div>
+                  <p className={`text-sm opacity-80 ${nivel.text}`}>{nivel.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── BENEFICIOS ── */}
+      <section className="bg-pm-bg py-14">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-black text-pm-navy text-center mb-10">¿Por qué apuntarte al Club?</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[
+              { icon: '👥', titulo: 'Grupos reducidos',          desc: 'Atención personalizada en grupos pequeños para que progreses a tu ritmo.' },
+              { icon: '📈', titulo: 'Progresión por niveles',    desc: 'Sistema de niveles claro con objetivos definidos en cada disciplina.' },
+              { icon: '👨‍🏫', titulo: 'Monitores especializados', desc: 'Instructores titulados con experiencia en circo y artes acrobáticas.' },
+              { icon: '💰', titulo: 'Sin ánimo de lucro',        desc: 'Las cuotas se establecen pensando en la accesibilidad, no en el beneficio.' },
+              { icon: '🏟️', titulo: 'Instalaciones completas',   desc: 'Acceso a todo el espacio y material de Planeta Movimiento gracias al acuerdo de colaboración.' },
+              { icon: '🤝', titulo: 'Comunidad activa',          desc: 'Más que clases: una comunidad de personas que comparten la pasión por el movimiento.' },
+            ].map(({ icon, titulo, desc }) => (
+              <div key={titulo} className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                <div className="text-3xl mb-3">{icon}</div>
+                <h3 className="font-black text-pm-navy text-sm mb-2">{titulo}</h3>
+                <p className="text-xs text-gray-500 leading-relaxed">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA INSCRIPCIÓN ── */}
+      <section className="bg-pm-red py-16 text-white text-center" id="inscripcion">
         <div className="max-w-xl mx-auto px-4">
-          <h2 className="text-2xl font-black mb-3">¿Tienes alguna pregunta?</h2>
+          <div className="text-4xl mb-4">🏅</div>
+          <h2 className="text-2xl font-black mb-3">Únete al Club Deportivo Origen</h2>
           <p className="text-red-100 text-sm mb-8">
-            Contáctanos y te ayudamos a encontrar la actividad perfecta para ti o para tu entidad.
+            Las plazas son limitadas. Ponte en contacto con nosotros y te informamos de disponibilidad, horarios y cuotas.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <a href="tel:+34969000000"
@@ -369,7 +307,7 @@ export default function ClubPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
               </svg>
-              969 000 000
+              Llamar ahora
             </a>
             <a href="https://wa.me/34969000000" target="_blank" rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 border-2 border-white/40 text-white hover:bg-white/10 font-bold px-8 py-3.5 rounded-xl transition-colors text-sm">
@@ -381,6 +319,7 @@ export default function ClubPage() {
           </div>
         </div>
       </section>
+
     </main>
   )
 }
