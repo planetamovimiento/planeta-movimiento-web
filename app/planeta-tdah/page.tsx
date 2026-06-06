@@ -65,27 +65,28 @@ export default function PlanetaTdahPage() {
             ✦ Colaboración · Plataforma aliada
           </span>
 
-          {/* Logo planeta — PENDIENTE: sustituir por logo oficial de Planeta TDAH */}
-          <div className="relative mb-8 flex justify-center">
+          {/* Logo oficial — planeta con anillo */}
+          <div className="relative mb-6 flex justify-center">
             <div className="absolute inset-0 flex items-center justify-center -z-10">
               <div className="w-56 h-56 rounded-full bg-violet-500/30 blur-[70px] animate-glow-pulse" />
             </div>
-            {/* Placeholder de planeta con anillo (CSS) — reemplazar por <img> del logo oficial */}
-            <div className="relative animate-float">
-              <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full bg-gradient-to-br from-violet-400 via-violet-600 to-fuchsia-700 shadow-2xl shadow-violet-500/50 relative overflow-hidden">
-                <div className="absolute top-4 left-5 w-8 h-8 rounded-full bg-white/20 blur-sm" />
-                <div className="absolute bottom-6 right-6 w-12 h-12 rounded-full bg-fuchsia-900/40" />
-                <div className="absolute top-1/2 left-3 w-6 h-6 rounded-full bg-violet-900/30" />
-              </div>
-              {/* Anillo */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-52 h-16 sm:w-60 sm:h-20 border-4 border-fuchsia-300/50 rounded-[50%] rotate-[-20deg] pointer-events-none" />
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/tdah/planet.png"
+              alt="Planeta TDAH"
+              className="w-40 h-40 sm:w-48 sm:h-48 object-contain animate-float"
+              style={{ filter: 'drop-shadow(0 20px 50px rgba(124,58,237,0.5))' }}
+            />
           </div>
 
-          {/* Nombre + tagline */}
-          <h1 className="text-4xl sm:text-6xl font-black mb-3 bg-gradient-to-r from-violet-300 via-fuchsia-300 to-violet-300 bg-clip-text text-transparent">
-            Planeta TDAH
-          </h1>
+          {/* Logotipo de texto oficial */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/tdah/logo-text.png"
+            alt="Planeta TDAH"
+            className="h-12 sm:h-16 w-auto object-contain mx-auto mb-3"
+          />
+          <h1 className="sr-only">Planeta TDAH</h1>
           <p className="text-xl sm:text-2xl font-black text-white mb-6">
             Tu universo. Tu foco. Tu poder.
           </p>
