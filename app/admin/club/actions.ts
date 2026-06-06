@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAdminUser, can, logActivity } from '@/lib/admin/auth'
+import { TEMPORADA_ACTUAL } from '@/lib/club/constants'
 
 const hoyISO = () => new Date().toISOString().slice(0, 10)
 
@@ -90,6 +91,80 @@ export async function renombrarGrupo(id: string, nombre: string) {
 
   revalidatePath('/admin/club')
   return { ok: true }
+}
+
+// ── Importación masiva (CSV / Excel) ────────────────────────────────────────────
+
+export type ImportRow = {
+  nombre?: string
+  apellidos?: string
+  actividad?: string
+  grupo?: string
+  fechaNacimiento?: string
+  tutorLegal?: string
+  telefono?: string
+  email?: string
+  estado_general?: string
+  observaciones?: string
+  temporada?: string
+  fechaInscripcion?: string
+  pagos?: Record<string, string>
+}
+
+export async function importarInscripciones(rows: ImportRow[]) {
+  const admin = await getAdminUser()
+  if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
+  if (!Array.isArray(rows) || rows.length === 0) return { ok: false, error: 'No hay filas que importar' }
+
+  const db = createAdminClient()
+  const subs: Record<string, unknown>[] = []
+  const gestiones: Record<string, unknown>[] = []
+  let saltadas = 0
+
+  for (const r of rows) {
+    const nombre = `${r.nombre ?? ''} ${r.apellidos ?? ''}`.trim()
+    if (!nombre) { saltadas++; continue }
+    const id = crypto.randomUUID()
+    subs.push({
+      id,
+      tipo: 'inscripcion_club',
+      nombre,
+      email: r.email || null,
+      telefono: r.telefono || null,
+      asunto: r.actividad ? `Inscripción Club · ${r.actividad}` : 'Inscripción Club (importada)',
+      datos: {
+        actividad: r.actividad ?? '',
+        nombre: r.nombre ?? '',
+        apellidos: r.apellidos ?? '',
+        fechaNacimiento: r.fechaNacimiento ?? '',
+        tutorLegal: r.tutorLegal ?? '',
+        __import: true,
+      },
+      estado: 'cerrada',
+      ...(r.fechaInscripcion ? { created_at: r.fechaInscripcion } : {}),
+    })
+    gestiones.push({
+      submission_id: id,
+      grupo: r.grupo || null,
+      estado_general: r.estado_general || 'activo',
+      temporada: r.temporada || TEMPORADA_ACTUAL,
+      pagos: r.pagos ?? {},
+      observaciones: r.observaciones || null,
+      fecha_alta: r.fechaInscripcion ? r.fechaInscripcion.slice(0, 10) : null,
+      updated_by: admin.email,
+    })
+  }
+
+  if (subs.length === 0) return { ok: false, error: 'Ninguna fila tenía nombre. Revisa la asignación de columnas.' }
+
+  const { error: e1 } = await db.from('form_submissions').insert(subs)
+  if (e1) return { ok: false, error: e1.message }
+  const { error: e2 } = await db.from('club_gestion').insert(gestiones)
+  if (e2) return { ok: false, error: 'Alumnos creados, pero falló la gestión: ' + e2.message }
+
+  await logActivity({ actorEmail: admin.email, accion: `Importadas ${subs.length} inscripciones del club`, entidad: 'club' })
+  revalidatePath('/admin/club')
+  return { ok: true, importadas: subs.length, saltadas }
 }
 
 export async function eliminarGrupo(id: string) {

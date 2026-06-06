@@ -9,6 +9,7 @@ import {
   type Alumno, type Grupo, type EstadoPago, type EstadoGeneral,
 } from '@/lib/club/constants'
 import { guardarGestion, setPagoMes, crearGrupo, renombrarGrupo, eliminarGrupo } from './actions'
+import ImportarModal from './ImportarModal'
 
 const MES_ACTUAL = mesActualKey() ?? 'jun'
 
@@ -40,6 +41,7 @@ export default function ClubInscripcionesClient({
 
   const [detalleId, setDetalleId] = useState<string | null>(null)
   const [modalGrupos, setModalGrupos] = useState(false)
+  const [modalImportar, setModalImportar] = useState(false)
 
   const detalle = lista.find(a => a.id === detalleId) ?? null
 
@@ -241,9 +243,14 @@ export default function ClubInscripcionesClient({
 
           <div className="ml-auto flex items-center gap-2">
             {puedeEditar && (
-              <button onClick={() => setModalGrupos(true)} className="text-sm font-semibold text-pm-navy border border-gray-200 hover:border-pm-navy rounded-xl px-3 py-2 transition-colors">
-                ⚙️ Gestionar grupos
-              </button>
+              <>
+                <button onClick={() => setModalImportar(true)} className="text-sm font-semibold text-pm-navy border border-gray-200 hover:border-pm-navy rounded-xl px-3 py-2 transition-colors">
+                  ⬆ Importar CSV/Excel
+                </button>
+                <button onClick={() => setModalGrupos(true)} className="text-sm font-semibold text-pm-navy border border-gray-200 hover:border-pm-navy rounded-xl px-3 py-2 transition-colors">
+                  ⚙️ Gestionar grupos
+                </button>
+              </>
             )}
             <button onClick={exportarCSV} className="text-sm font-bold text-white bg-pm-navy hover:bg-pm-navy-md rounded-xl px-3 py-2 transition-colors">
               ⬇ Exportar CSV/Excel
@@ -357,6 +364,9 @@ export default function ClubInscripcionesClient({
           onPago={mes => cicloPago(detalle, mes)}
         />
       )}
+
+      {/* Importar CSV / Excel */}
+      {modalImportar && <ImportarModal onClose={() => setModalImportar(false)} />}
 
       {/* Gestión de grupos */}
       {modalGrupos && (
