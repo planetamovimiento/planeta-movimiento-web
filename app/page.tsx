@@ -1,196 +1,302 @@
 import Link from 'next/link'
+import Hero from '@/components/home/Hero'
+import Reveal from '@/components/home/Reveal'
+import CountUp from '@/components/home/CountUp'
 
-const servicios = [
-  { nombre: 'Cumpleaños', slug: 'cumpleanos', desc: 'Celebra el día más especial con nuestras actividades de circo y acrobacia.', color: 'bg-pm-red', icon: '🎂' },
-  { nombre: 'Campamentos', slug: 'campamentos', desc: 'Campamentos de verano e invierno llenos de movimiento, juego y diversión.', color: 'bg-pm-navy', icon: '⛺' },
-  { nombre: 'Acrobacia', slug: 'acrobacia', desc: 'Aprende técnicas de acrobacia de suelo y aérea con nuestros monitores.', color: 'bg-pm-navy-md', icon: '🤸' },
-  { nombre: 'Circo', slug: 'circo', desc: 'Malabares, trapecio y habilidades circenses para todas las edades.', color: 'bg-pm-red-dark', icon: '🎪' },
+export const metadata = {
+  title: 'Planeta Movimiento — Circo, deporte y ocio en Cuenca',
+  description:
+    'Centro de circo, acrobacia y movimiento en Cuenca. Club deportivo, cumpleaños, campamentos, eventos, talleres, excursiones y formación para todas las edades.',
+}
+
+// ─── Datos ────────────────────────────────────────────────────────────────────
+const SERVICIOS = [
+  { nombre: 'Club Deportivo', desc: 'Clases semanales de circo, acrobacia, aéreos y artes marciales.', href: '/club', icon: '🏅', grad: 'from-pm-navy to-pm-navy-md', span: 'lg:col-span-2' },
+  { nombre: 'Cumpleaños', desc: 'Fiestas inolvidables con actividad guiada y merienda.', href: '/servicios/cumpleanos', icon: '🎂', grad: 'from-pm-red to-pm-red-dark', span: '' },
+  { nombre: 'Campamentos', desc: 'Escuela de Superhéroes en Navidad, Semana Santa y verano.', href: '/servicios/campamentos', icon: '🏕️', grad: 'from-amber-500 to-orange-600', span: '' },
+  { nombre: 'Eventos', desc: 'Animación para bodas, comuniones y celebraciones.', href: '/servicios/eventos', icon: '🎉', grad: 'from-purple-600 to-indigo-700', span: '' },
+  { nombre: 'Talleres de Circo', desc: 'Talleres a medida para ayuntamientos y empresas.', href: '/servicios/talleres', icon: '🎪', grad: 'from-pm-red to-purple-700', span: '' },
+  { nombre: 'Excursiones Escolares', desc: '4 horas de actividad por estaciones para grupos.', href: '/servicios/excursiones', icon: '🎒', grad: 'from-pm-red to-orange-600', span: '' },
+  { nombre: 'Extraescolares', desc: 'Multideporte en tu propio colegio. Para AMPAs.', href: '/servicios/extraescolares', icon: '🏃', grad: 'from-blue-600 to-pm-navy', span: '' },
+  { nombre: 'Formación', desc: 'Curso de Monitor Juvenil con titulación oficial.', href: '/servicios/monitor-juvenil', icon: '🎓', grad: 'from-emerald-600 to-teal-700', span: 'lg:col-span-2' },
 ]
 
-const audiencias = [
-  { nombre: 'Familias', desc: 'Actividades para disfrutar juntos, desde los más pequeños hasta adultos.', color: 'bg-pm-navy', icon: '👨‍👩‍👧‍👦' },
-  { nombre: 'Colegios', desc: 'Programas educativos que combinan deporte, creatividad y trabajo en equipo.', color: 'bg-pm-red', icon: '🏫' },
-  { nombre: 'Empresas', desc: 'Team building y actividades de cohesión para equipos de trabajo.', color: 'bg-pm-navy-md', icon: '🏢' },
+const STATS = [
+  { end: 2000, prefix: '+', suffix: '', label: 'Familias confían en nosotros' },
+  { end: 15,   prefix: '', suffix: '+', label: 'Actividades diferentes' },
+  { end: 9,    prefix: '', suffix: '+', label: 'Años de experiencia' },
+  { end: 50,   prefix: '+', suffix: '', label: 'Eventos al año' },
 ]
 
-const razones = [
-  { titulo: 'Seguridad ante todo', desc: 'Instalaciones homologadas y monitores certificados para una experiencia segura.' },
-  { titulo: 'Todas las edades', desc: 'Desde 3 años hasta adultos. Tenemos la actividad perfecta para cada etapa.' },
-  { titulo: 'En el corazón de Cuenca', desc: 'Ubicados en Cuenca, accesibles y con amplias instalaciones.' },
-  { titulo: '9+ años de experiencia', desc: 'Casi una década creando experiencias únicas de movimiento y circo.' },
+const AUDIENCIAS = [
+  { nombre: 'Familias', desc: 'Cumpleaños, campamentos y actividades para disfrutar juntos.', icon: '👨‍👩‍👧‍👦', href: '/actividades', grad: 'from-pm-red to-pm-red-dark' },
+  { nombre: 'Colegios y AMPAs', desc: 'Excursiones, extraescolares y programas educativos.', icon: '🏫', href: '/actividades', grad: 'from-blue-600 to-pm-navy' },
+  { nombre: 'Empresas', desc: 'Team building, talleres y eventos corporativos.', icon: '💼', href: '/actividades', grad: 'from-slate-700 to-pm-navy' },
+  { nombre: 'Ayuntamientos', desc: 'Talleres y programas para eventos municipales.', icon: '🏛️', href: '/actividades', grad: 'from-emerald-600 to-teal-700' },
 ]
 
-const resenas = [
-  { nombre: 'María G.', texto: 'El cumpleaños de mi hija fue increíble. Los monitores son super profesionales y los niños se lo pasaron genial.', estrellas: 5 },
-  { nombre: 'Carlos P.', texto: 'Llevamos a nuestro equipo al taller de empresa y fue una experiencia transformadora. 100% recomendable.', estrellas: 5 },
+const GALERIA = [
+  { label: 'Acrobacia', icon: '🤸', grad: 'from-pm-red to-pm-red-dark' },
+  { label: 'Telas aéreas', icon: '🎪', grad: 'from-purple-600 to-indigo-800' },
+  { label: 'Parkour', icon: '🏃', grad: 'from-slate-700 to-pm-navy' },
+  { label: 'Malabares', icon: '🤹', grad: 'from-amber-500 to-orange-600' },
+  { label: 'Campamentos', icon: '🏕️', grad: 'from-emerald-600 to-teal-700' },
+  { label: 'Cumpleaños', icon: '🎂', grad: 'from-pink-500 to-pm-red' },
+  { label: 'Equilibrios', icon: '⚖️', grad: 'from-cyan-600 to-blue-700' },
+  { label: 'Jiu-Jitsu', icon: '🥋', grad: 'from-slate-800 to-pm-navy-md' },
+]
+
+const RAZONES = [
+  { titulo: 'Monitores certificados', desc: 'Profesionales titulados y con años de experiencia en circo y deporte.', icon: '🎓' },
+  { titulo: 'Instalaciones seguras', desc: 'Material homologado, colchonetas profesionales y protocolos de seguridad.', icon: '🛡️' },
+  { titulo: 'Para todas las edades', desc: 'Desde los 2 años hasta adultos. Una actividad perfecta para cada etapa.', icon: '👶' },
+  { titulo: 'Metodología propia', desc: 'Aprendizaje a través del juego con la temática Escuela de Superhéroes.', icon: '⚡' },
+]
+
+const COLABORADORES = [
+  { nombre: 'CADIG Crisol', tipo: 'Circo inclusivo' },
+  { nombre: 'ARKHE', tipo: 'Formación juvenil' },
+  { nombre: 'Academia Adamas', tipo: 'Jiu-Jitsu · Madrid' },
+  { nombre: 'Club Deportivo Origen', tipo: 'Entidad deportiva' },
+]
+
+const RESENAS = [
+  { nombre: 'María G.', rol: 'Madre', texto: 'El cumpleaños de mi hija fue increíble. Los monitores son súper profesionales y los niños no pararon de reír y moverse.', estrellas: 5 },
+  { nombre: 'Carlos P.', rol: 'RRHH empresa', texto: 'Llevamos a nuestro equipo al taller de empresa y fue una experiencia transformadora. Cohesión total. 100% recomendable.', estrellas: 5 },
+  { nombre: 'AMPA CEIP San Julián', rol: 'Centro educativo', texto: 'El multideporte extraescolar es un éxito entre los alumnos. Organización impecable y trato cercano con las familias.', estrellas: 5 },
 ]
 
 export default function HomePage() {
   return (
-    <main>
-      {/* Hero */}
-      <section className="bg-pm-navy border-t-4 border-pm-red">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 text-center">
-          <span className="inline-flex items-center gap-2 border border-pm-red/40 bg-pm-red/10 text-white text-xs font-medium px-4 py-1.5 rounded-full mb-6">
-            <span className="w-1.5 h-1.5 bg-pm-red rounded-full"></span>
-            Centro de referencia en Cuenca
-          </span>
+    <main className="bg-white">
 
-          <h1 className="text-4xl sm:text-6xl font-black text-white leading-tight mb-6">
-            Aprende jugando,<br />
-            <em className="text-pm-red not-italic">muévete sin límites</em>
-          </h1>
+      {/* ════ HERO ════ */}
+      <Hero />
 
-          <p className="text-white/55 text-lg max-w-2xl mx-auto mb-10">
-            Actividades de circo, acrobacia y movimiento para niños, jóvenes y adultos en Cuenca.
-            Diversión, aprendizaje y salud en un mismo espacio.
+      {/* ════ COLABORADORES / CONFIANZA ════ */}
+      <section className="bg-white border-b border-gray-100 py-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <p className="text-center text-xs font-bold text-gray-400 uppercase tracking-widest mb-6">
+            Colaboramos con entidades de confianza
           </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Link href="/reservar" className="bg-pm-red hover:bg-pm-red-dark text-white font-bold px-8 py-3.5 rounded-full transition-colors">
-              Reservar ahora
-            </Link>
-            <Link href="#servicios" className="border border-white/40 text-white hover:bg-white/10 font-semibold px-8 py-3.5 rounded-full transition-colors">
-              Ver actividades
-            </Link>
-          </div>
-
-          {/* Stats */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-0 divide-y sm:divide-y-0 sm:divide-x divide-white/20">
-            {[
-              { valor: '+2K', label: 'Familias' },
-              { valor: '15+', label: 'Actividades' },
-              { valor: '9+', label: 'Años' },
-            ].map(({ valor, label }) => (
-              <div key={label} className="px-10 py-4 sm:py-0">
-                <div className="text-3xl font-black text-white">{valor}</div>
-                <div className="text-white/50 text-sm">{label}</div>
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
+            {COLABORADORES.map(c => (
+              <div key={c.nombre} className="flex flex-col items-center text-center">
+                <span className="font-black text-pm-navy text-base">{c.nombre}</span>
+                <span className="text-xs text-gray-400">{c.tipo}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Audiencia */}
-      <section className="bg-pm-bg py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-black text-pm-navy text-center mb-12">
-            Encuentra tu actividad perfecta
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {audiencias.map((a) => (
-              <div key={a.nombre} className={`${a.color} text-white rounded-2xl p-8 flex flex-col gap-4 cursor-pointer hover:scale-105 transition-transform`}>
-                <span className="text-4xl">{a.icon}</span>
-                <div>
-                  <h3 className="text-xl font-bold mb-2">{a.nombre}</h3>
-                  <p className="text-white/75 text-sm leading-relaxed">{a.desc}</p>
-                </div>
-                <div className="mt-auto flex items-center gap-2 text-sm font-semibold">
-                  Ver actividades <span>→</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ════ SERVICIOS DESTACADOS ════ */}
+      <section className="bg-pm-bg py-20" id="servicios">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal className="text-center mb-12">
+            <span className="inline-block text-pm-red text-xs font-black uppercase tracking-widest mb-3">Todo en un mismo lugar</span>
+            <h2 className="text-3xl sm:text-4xl font-black text-pm-navy mb-3">Nuestros servicios</h2>
+            <p className="text-gray-500 text-base max-w-xl mx-auto">
+              Desde clases regulares hasta eventos a medida. Descubre todo lo que podemos ofrecerte.
+            </p>
+          </Reveal>
 
-      {/* Servicios estrella */}
-      <section id="servicios" className="bg-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-black text-pm-navy text-center mb-12">
-            Nuestras actividades estrella
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
-            {servicios.map((s) => (
-              <Link key={s.slug} href={`/servicios/${s.slug}`}
-                className={`${s.color} text-white rounded-2xl p-8 flex flex-col gap-3 hover:scale-[1.02] transition-transform`}>
-                <span className="text-3xl">{s.icon}</span>
-                <h3 className="text-xl font-bold">{s.nombre}</h3>
-                <p className="text-white/75 text-sm leading-relaxed">{s.desc}</p>
-              </Link>
-            ))}
-          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {SERVICIOS.map((s, i) => (
+              <Reveal key={s.nombre} delay={i * 60} className={s.span}>
+                <Link
+                  href={s.href}
+                  className={`group relative block h-full bg-gradient-to-br ${s.grad} rounded-3xl p-7 overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl`}
+                >
+                  {/* Glow decorativo */}
+                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
 
-          {/* Featured card */}
-          <div className="bg-pm-navy rounded-2xl overflow-hidden flex flex-col sm:flex-row">
-            <div className="flex-1 p-10">
-              <span className="inline-flex items-center gap-2 bg-pm-red/20 text-pm-red text-xs font-bold px-3 py-1 rounded-full mb-4">
-                Nuevo — reserva online
-              </span>
-              <h3 className="text-2xl font-black text-white mb-3">Club de Movimiento</h3>
-              <p className="text-white/65 text-sm leading-relaxed mb-6">
-                Clases semanales de acrobacia, malabares y circo. Apúntate a nuestro club y progresa a tu ritmo con monitores especializados.
-              </p>
-              <Link href="/reservar" className="bg-pm-red hover:bg-pm-red-dark text-white font-bold px-6 py-2.5 rounded-full text-sm transition-colors inline-block">
-                Reservar plaza
-              </Link>
-            </div>
-            <div className="sm:w-64 bg-pm-red flex items-center justify-center p-10">
-              <span className="text-6xl">🎡</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Por qué elegirnos */}
-      <section className="bg-pm-navy py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-black text-white text-center mb-12">
-            ¿Por qué elegirnos?
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {razones.map((r) => (
-              <div key={r.titulo} className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <div className="w-10 h-10 bg-pm-red/20 rounded-xl flex items-center justify-center mb-4">
-                  <div className="w-4 h-4 bg-pm-red rounded-full"></div>
-                </div>
-                <h3 className="text-white font-bold mb-2">{r.titulo}</h3>
-                <p className="text-white/55 text-sm leading-relaxed">{r.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Reseñas */}
-      <section className="bg-pm-bg py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-black text-pm-navy text-center mb-12">
-            Lo que dicen nuestras familias
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
-            {resenas.map((r) => (
-              <div key={r.nombre} className="bg-white rounded-2xl p-8 shadow-sm">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-pm-navy rounded-full flex items-center justify-center text-white font-bold text-sm">
-                    {r.nombre.split(' ').map(n => n[0]).join('')}
+                  <div className="relative flex flex-col h-full">
+                    <span className="text-4xl mb-4 inline-block group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300">{s.icon}</span>
+                    <h3 className="text-xl font-black text-white mb-2">{s.nombre}</h3>
+                    <p className="text-white/70 text-sm leading-relaxed mb-4 flex-1">{s.desc}</p>
+                    <span className="inline-flex items-center gap-1.5 text-white font-bold text-sm">
+                      Descubrir
+                      <span className="transition-transform group-hover:translate-x-1">→</span>
+                    </span>
                   </div>
-                  <div>
-                    <div className="font-bold text-pm-navy text-sm">{r.nombre}</div>
-                    <div className="flex gap-0.5">
-                      {Array.from({ length: r.estrellas }).map((_, i) => (
-                        <span key={i} className="text-pm-red text-sm">★</span>
-                      ))}
+                </Link>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════ ESTADÍSTICAS ════ */}
+      <section className="relative bg-pm-navy py-20 overflow-hidden">
+        <div className="absolute inset-0 bg-grid opacity-40" />
+        <div className="absolute -top-20 left-1/4 w-96 h-96 bg-pm-red/15 rounded-full blur-[100px] animate-glow-pulse" />
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">Una comunidad en movimiento</h2>
+            <p className="text-white/50 text-base">Cifras que demuestran nuestra experiencia y compromiso</p>
+          </Reveal>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            {STATS.map((s, i) => (
+              <Reveal key={s.label} delay={i * 80}>
+                <div className="bg-white/5 border border-white/10 rounded-3xl p-7 text-center backdrop-blur hover:bg-white/10 transition-colors">
+                  <div className="text-4xl sm:text-5xl font-black text-white mb-2">
+                    <CountUp end={s.end} prefix={s.prefix} suffix={s.suffix} />
+                  </div>
+                  <div className="text-white/50 text-sm leading-tight">{s.label}</div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════ AUDIENCIAS ════ */}
+      <section className="bg-white py-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal className="text-center mb-12">
+            <span className="inline-block text-pm-red text-xs font-black uppercase tracking-widest mb-3">¿Quién eres?</span>
+            <h2 className="text-3xl sm:text-4xl font-black text-pm-navy mb-3">Una experiencia para cada perfil</h2>
+            <p className="text-gray-500 text-base max-w-xl mx-auto">Elige tu perfil y descubre las actividades pensadas para ti.</p>
+          </Reveal>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {AUDIENCIAS.map((a, i) => (
+              <Reveal key={a.nombre} delay={i * 70}>
+                <Link href={a.href}
+                  className={`group block h-full bg-gradient-to-br ${a.grad} rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl`}>
+                  <span className="text-4xl mb-4 inline-block">{a.icon}</span>
+                  <h3 className="text-lg font-black text-white mb-2">{a.nombre}</h3>
+                  <p className="text-white/70 text-sm leading-relaxed mb-4">{a.desc}</p>
+                  <span className="text-white text-sm font-bold inline-flex items-center gap-1">
+                    Ver más <span className="transition-transform group-hover:translate-x-1">→</span>
+                  </span>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════ GALERÍA DINÁMICA (marquesina) ════ */}
+      <section className="bg-pm-bg py-20 overflow-hidden">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mb-10">
+          <Reveal className="text-center">
+            <span className="inline-block text-pm-red text-xs font-black uppercase tracking-widest mb-3">Imagina la experiencia</span>
+            <h2 className="text-3xl sm:text-4xl font-black text-pm-navy mb-3">Disciplinas que vas a vivir</h2>
+            <p className="text-gray-500 text-base max-w-xl mx-auto">Un universo de movimiento esperándote.</p>
+          </Reveal>
+        </div>
+
+        {/* Marquesina */}
+        <div className="relative">
+          {/* Difuminados laterales */}
+          <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-pm-bg to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-pm-bg to-transparent z-10 pointer-events-none" />
+
+          <div className="marquee-track gap-5">
+            {[...GALERIA, ...GALERIA].map((g, i) => (
+              <div
+                key={i}
+                className={`relative w-64 h-72 shrink-0 rounded-3xl bg-gradient-to-br ${g.grad} overflow-hidden group cursor-default`}
+              >
+                <div className="absolute -top-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+                  <span className="text-6xl group-hover:scale-110 transition-transform duration-300">{g.icon}</span>
+                  <span className="text-white font-black text-lg tracking-wide">{g.label}</span>
+                </div>
+                <div className="absolute inset-x-0 bottom-0 h-1.5 bg-white/20" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════ POR QUÉ ELEGIRNOS ════ */}
+      <section className="bg-white py-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal className="text-center mb-12">
+            <span className="inline-block text-pm-red text-xs font-black uppercase tracking-widest mb-3">La diferencia</span>
+            <h2 className="text-3xl sm:text-4xl font-black text-pm-navy mb-3">¿Por qué Planeta Movimiento?</h2>
+          </Reveal>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {RAZONES.map((r, i) => (
+              <Reveal key={r.titulo} delay={i * 70}>
+                <div className="h-full bg-pm-bg border border-gray-100 rounded-3xl p-6 hover:shadow-lg hover:border-pm-red/20 transition-all">
+                  <div className="w-12 h-12 bg-pm-red-light rounded-2xl flex items-center justify-center text-2xl mb-4">
+                    {r.icon}
+                  </div>
+                  <h3 className="font-black text-pm-navy text-base mb-2">{r.titulo}</h3>
+                  <p className="text-gray-500 text-sm leading-relaxed">{r.desc}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════ RESEÑAS ════ */}
+      <section className="bg-pm-bg py-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal className="text-center mb-12">
+            <div className="flex items-center justify-center gap-1 mb-3">
+              {Array.from({ length: 5 }).map((_, i) => <span key={i} className="text-pm-red text-xl">★</span>)}
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-black text-pm-navy mb-3">Lo que dicen de nosotros</h2>
+            <p className="text-gray-500 text-base">Familias, colegios y empresas que ya confían en nosotros</p>
+          </Reveal>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {RESENAS.map((r, i) => (
+              <Reveal key={r.nombre} delay={i * 80}>
+                <div className="h-full bg-white rounded-3xl p-7 shadow-sm border border-gray-100 flex flex-col">
+                  <div className="flex gap-0.5 mb-4">
+                    {Array.from({ length: r.estrellas }).map((_, j) => <span key={j} className="text-pm-red">★</span>)}
+                  </div>
+                  <p className="text-gray-600 text-sm leading-relaxed mb-6 flex-1">&ldquo;{r.texto}&rdquo;</p>
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 bg-pm-navy rounded-full flex items-center justify-center text-white font-black text-sm shrink-0">
+                      {r.nombre.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                    </div>
+                    <div>
+                      <div className="font-black text-pm-navy text-sm">{r.nombre}</div>
+                      <div className="text-gray-400 text-xs">{r.rol}</div>
                     </div>
                   </div>
                 </div>
-                <p className="text-gray-600 text-sm leading-relaxed">&ldquo;{r.texto}&rdquo;</p>
-              </div>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA final */}
-      <section className="bg-pm-red py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-black text-white mb-4">¿Listo para empezar?</h2>
-          <p className="text-white/80 mb-8">Reserva tu actividad en minutos y únete a nuestra comunidad.</p>
-          <Link href="/reservar" className="bg-white text-pm-red hover:bg-pm-red-light font-bold px-10 py-3.5 rounded-full transition-colors inline-block">
-            Hacer una reserva
-          </Link>
+      {/* ════ CTA FINAL ════ */}
+      <section className="relative bg-pm-red overflow-hidden py-20">
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-white/10 rounded-full blur-[100px] animate-orb" />
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-pm-navy/30 rounded-full blur-[100px] animate-orb-rev" />
+        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <Reveal>
+            <h2 className="text-3xl sm:text-5xl font-black text-white mb-4 leading-tight">
+              ¿Listo para empezar la aventura?
+            </h2>
+            <p className="text-white/80 text-lg mb-10 max-w-xl mx-auto">
+              Reserva tu actividad o solicita información sin compromiso. Estamos deseando conocerte.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/reservar"
+                className="bg-white text-pm-red hover:bg-pm-navy hover:text-white font-black px-10 py-4 rounded-2xl transition-all shadow-xl hover:-translate-y-0.5">
+                Reservar ahora
+              </Link>
+              <a href="https://wa.me/34969000000" target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 bg-pm-navy/30 hover:bg-pm-navy/50 backdrop-blur border-2 border-white/30 text-white font-bold px-10 py-4 rounded-2xl transition-all hover:-translate-y-0.5">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                Solicitar información
+              </a>
+            </div>
+          </Reveal>
         </div>
       </section>
+
     </main>
   )
 }
