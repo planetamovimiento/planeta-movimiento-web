@@ -1,43 +1,87 @@
 import { getAdminUser, can } from '@/lib/admin/auth'
-import { getRows } from '@/lib/admin/data'
-import { AdminHeader, SetupNotice, Metric } from '@/components/admin/ui'
-import FormulariosClient from '../formularios/FormulariosClient'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { AdminHeader } from '@/components/admin/ui'
+import { TEMPORADA_ACTUAL, type Alumno, type Grupo, type EstadoGeneral, type EstadoPago } from '@/lib/club/constants'
+import ClubInscripcionesClient from './ClubInscripcionesClient'
+
+type SubRow = {
+  id: string; nombre: string | null; email: string | null; telefono: string | null
+  mensaje: string | null; datos: Record<string, unknown> | null; created_at: string
+}
+type GestionRow = {
+  submission_id: string; grupo: string | null; estado_general: string | null; temporada: string | null
+  pagos: Record<string, string> | null; observaciones: string | null; fecha_alta: string | null; fecha_baja: string | null
+}
+
+async function safe<T>(fn: () => Promise<{ data: T[] | null; error: unknown }>): Promise<{ rows: T[]; ok: boolean }> {
+  try {
+    const { data, error } = await fn()
+    if (error) return { rows: [], ok: false }
+    return { rows: data ?? [], ok: true }
+  } catch {
+    return { rows: [], ok: false }
+  }
+}
+
+function str(v: unknown): string {
+  return typeof v === 'string' ? v : ''
+}
 
 export default async function ClubPage() {
   const admin = await getAdminUser()
-  const { rows, ok } = await getRows('form_submissions')
+  const db = createAdminClient()
 
-  // Solo solicitudes del Club Deportivo Origen
-  const club = (rows as Record<string, unknown>[]).filter(r => r.tipo === 'inscripcion_club')
-  const nuevas = club.filter(r => r.estado === 'nueva').length
+  const [subsRes, gestionRes, gruposRes] = await Promise.all([
+    safe<SubRow>(() => db.from('form_submissions').select('id, nombre, email, telefono, mensaje, datos, created_at')
+      .eq('tipo', 'inscripcion_club').order('created_at', { ascending: false }).limit(2000) as never),
+    safe<GestionRow>(() => db.from('club_gestion').select('*') as never),
+    safe<Grupo>(() => db.from('club_grupos').select('*').order('orden', { ascending: true }) as never),
+  ])
+
+  const gestionMap = new Map(gestionRes.rows.map(g => [g.submission_id, g]))
+
+  const alumnos: Alumno[] = subsRes.rows.map(s => {
+    const d = (s.datos ?? {}) as Record<string, unknown>
+    const g = gestionMap.get(s.id)
+    const completo = str(s.nombre)
+    const nombre = str(d.nombre) || completo.split(' ')[0] || ''
+    const apellidos = str(d.apellidos) || completo.split(' ').slice(1).join(' ')
+    return {
+      id: s.id,
+      nombre,
+      apellidos,
+      nombreCompleto: completo || `${nombre} ${apellidos}`.trim(),
+      actividad: str(d.actividad),
+      fechaNacimiento: str(d.fechaNacimiento),
+      tutorLegal: str(d.tutorLegal),
+      nivel: str(d.nivel),
+      telefono: str(s.telefono),
+      email: str(s.email),
+      mensaje: str(s.mensaje),
+      created_at: s.created_at,
+      grupo: g?.grupo ?? str(d.nivel),
+      estado_general: (g?.estado_general as EstadoGeneral) ?? 'pendiente',
+      temporada: g?.temporada ?? TEMPORADA_ACTUAL,
+      pagos: (g?.pagos as Record<string, EstadoPago>) ?? {},
+      observaciones: g?.observaciones ?? '',
+      fecha_alta: g?.fecha_alta ?? null,
+      fecha_baja: g?.fecha_baja ?? null,
+    }
+  })
 
   return (
     <>
       <AdminHeader
-        titulo="Club Deportivo Origen · Solicitudes"
-        subtitulo="Inscripciones y solicitudes de las actividades del club — gestión manual"
+        titulo="Inscripciones · Club Deportivo Origen"
+        subtitulo="Gestión manual de alumnos: grupos, temporada y estado mensual de pago"
       />
-      <div className="p-6 lg:p-8 space-y-6">
-        {!ok && <SetupNotice />}
-
-        <div className="bg-pm-navy text-white rounded-2xl p-5 flex items-start gap-4">
-          <span className="text-3xl">🏅</span>
-          <div className="text-sm">
-            <div className="font-black mb-1">Área del Club Deportivo Origen</div>
-            <p className="text-white/60 leading-relaxed">
-              Estas solicitudes son de las actividades del club (gimnasia acrobática, aéreos, escuela infantil,
-              jiu-jitsu, bienestar, circo inclusivo). <strong className="text-white">No son ventas</strong>: se gestionan
-              manualmente dando de alta al alumno tras contactar con la familia.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          <Metric label="Solicitudes nuevas" valor={nuevas} tono="red" />
-          <Metric label="Total solicitudes club" valor={club.length} tono="navy" />
-        </div>
-
-        <FormulariosClient rows={club as never} puedeEditar={admin ? can.edit(admin.role) : false} />
+      <div className="p-4 lg:p-6">
+        <ClubInscripcionesClient
+          alumnos={alumnos}
+          grupos={gruposRes.rows}
+          puedeEditar={admin ? can.edit(admin.role) : false}
+          gestionOk={gestionRes.ok}
+        />
       </div>
     </>
   )

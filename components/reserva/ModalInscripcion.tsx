@@ -62,6 +62,8 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose }: Pr
       mensaje: form.notas,
       datos: {
         actividad: servicio,
+        nombre: form.nombre,
+        apellidos: form.apellidos,
         fechaNacimiento: form.fechaNacimiento,
         tutorLegal: form.tutorLegal,
         experienciaPrevia: form.experiencia,
