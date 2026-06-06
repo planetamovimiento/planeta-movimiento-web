@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import ConfiguradorTalleres from './ConfiguradorTalleres'
+import { Galeria } from '@/components/ui/Galeria'
 
 export const metadata = {
   title: 'Talleres de Circo para Eventos — Ayuntamientos, Empresas, AMPAs | Planeta Movimiento',
@@ -194,6 +195,8 @@ export default function TalleresPage() {
         </div>
       </section>
 
+      {/* Galería de fotos */}
+      <Galeria slug="talleres" titulo="Nuestros talleres en acción" subtitulo="Imágenes reales de talleres en ferias, fiestas y eventos" fondo="bg-pm-bg" />
     </main>
   )
 }

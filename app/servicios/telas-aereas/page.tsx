@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { BotonApuntarme } from './InscripcionModal'
 import TabsDescripcion from './TabsDescripcion'
+import { Galeria } from '@/components/ui/Galeria'
 
 export const metadata = {
   title: 'Escuela de aéreos — Telas y Aro | Planeta Movimiento',
@@ -165,6 +166,9 @@ export default function TelasAereasPage() {
         {/* Tabs descripción + calendario morado */}
         <TabsDescripcion />
       </div>
+
+      {/* Galería de fotos */}
+      <Galeria slug="telas-aereas" titulo="Galería" subtitulo="Telas y aro aéreo: figuras, fuerza y trabajo en altura" fondo="bg-pm-bg" />
     </main>
   )
 }

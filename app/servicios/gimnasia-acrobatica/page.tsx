@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { BotonApuntarme } from './InscripcionModal'
 import TabsDescripcion from './TabsDescripcion'
+import { Galeria } from '@/components/ui/Galeria'
 
 export const metadata = {
   title: 'Gimnasia acrobática y trampolín — Planeta Movimiento',
@@ -153,6 +154,9 @@ export default function GimnasiaAcrobaticaPage() {
         {/* Tabs de descripción + calendario */}
         <TabsDescripcion />
       </div>
+
+      {/* Galería de fotos */}
+      <Galeria slug="gimnasia-acrobatica" titulo="Galería" subtitulo="Momentos reales de nuestras clases de gimnasia acrobática y trampolín" fondo="bg-pm-bg" />
     </main>
   )
 }
