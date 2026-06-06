@@ -74,7 +74,6 @@ export default function Navbar() {
               src="/logo.png"
               alt="Planeta Movimiento"
               className="h-11 w-auto object-contain"
-              style={{ mixBlendMode: 'screen' }}
             />
             <div className="leading-tight hidden sm:block">
               <span className="text-white font-bold text-sm">Planeta</span>
