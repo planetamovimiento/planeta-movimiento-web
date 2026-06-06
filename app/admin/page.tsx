@@ -1,129 +1,121 @@
-'use client'
+import Link from 'next/link'
+import { getAdminUser } from '@/lib/admin/auth'
+import { getDashboard } from '@/lib/admin/data'
+import { AdminHeader, Metric, EstadoBadge, EmptyState, SetupNotice } from '@/components/admin/ui'
 
-import { useState } from 'react'
-import MetricCard from '@/components/admin/MetricCard'
-import ReservaCard from '@/components/admin/ReservaCard'
+export default async function DashboardPage() {
+  const admin = await getAdminUser()
+  const d = await getDashboard()
+  const hoy = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())
 
-type NavItem = { label: string; icon: React.ReactNode; id: string }
-
-const NAV_ITEMS: NavItem[] = [
-  {
-    id: 'dashboard', label: 'Dashboard',
-    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>,
-  },
-  {
-    id: 'reservas', label: 'Reservas',
-    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>,
-  },
-  {
-    id: 'calendario', label: 'Calendario',
-    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>,
-  },
-  {
-    id: 'servicios', label: 'Servicios',
-    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>,
-  },
-  {
-    id: 'clientes', label: 'Clientes',
-    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>,
-  },
-  {
-    id: 'ajustes', label: 'Ajustes',
-    icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>,
-  },
-]
-
-const RESERVAS_MOCK = [
-  { numero: 'PM-2026-1421', clienteNombre: 'Ana García', servicioNombre: 'Cumpleaños', fecha: '2026-06-07', hora_inicio: '11:00', estado: 'confirmada' as const, total: 18000 },
-  { numero: 'PM-2026-1420', clienteNombre: 'Carlos López', servicioNombre: 'Acrobacia', fecha: '2026-06-07', hora_inicio: '10:00', estado: 'pendiente' as const, total: 1200 },
-  { numero: 'PM-2026-1419', clienteNombre: 'María Sanz', servicioNombre: 'Circo', fecha: '2026-06-06', hora_inicio: '17:30', estado: 'pagada' as const, total: 1200 },
-  { numero: 'PM-2026-1418', clienteNombre: 'Pedro Ruiz', servicioNombre: 'Empresa', fecha: '2026-06-05', hora_inicio: '10:00', estado: 'pendiente' as const, total: 30000 },
-  { numero: 'PM-2026-1417', clienteNombre: 'Laura Martín', servicioNombre: 'Campamento', fecha: '2026-06-04', hora_inicio: '09:00', estado: 'cancelada' as const, total: 20000 },
-]
-
-export default function AdminPage() {
-  const [activeNav, setActiveNav] = useState('dashboard')
-
-  const today = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())
+  const eur = (n: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n)
 
   return (
-    <div className="min-h-screen flex bg-pm-bg">
-      {/* Sidebar */}
-      <aside className="w-64 bg-pm-navy text-white flex flex-col shrink-0">
-        <div className="p-6 border-b border-white/10">
-          <div className="font-black text-xl tracking-tight">
-            <span className="text-pm-red">PM</span> Admin
-          </div>
-          <div className="text-gray-400 text-xs mt-1">Planeta Movimiento</div>
+    <>
+      <AdminHeader
+        titulo={`Hola, ${admin?.nombre?.split(' ')[0] || 'admin'} 👋`}
+        subtitulo={hoy.charAt(0).toUpperCase() + hoy.slice(1)}
+        accion={<Link href="/admin/reservas" className="bg-pm-red hover:bg-pm-red-dark text-white font-bold px-5 py-2.5 rounded-xl transition-colors text-sm hidden sm:inline-block">Ver reservas</Link>}
+      />
+
+      <div className="p-6 lg:p-8 space-y-8">
+        {!d.ok && <SetupNotice />}
+
+        {/* Métricas */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Metric label="Reservas hoy" valor={d.reservasHoy} tono="navy" />
+          <Metric label="Pendientes" valor={d.pendientes} sub="Requieren confirmación" tono="amber" />
+          <Metric label="Ingresos (pagado)" valor={eur(d.ingresos)} tono="green" />
+          <Metric label="Solicitudes nuevas" valor={d.formsNuevos} tono="red" />
         </div>
-        <nav className="flex-1 p-4 space-y-1">
-          {NAV_ITEMS.map(item => (
-            <button
-              key={item.id}
-              onClick={() => setActiveNav(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                activeNav === item.id
-                  ? 'bg-pm-red text-white'
-                  : 'text-gray-300 hover:bg-white/10 hover:text-white'
-              }`}
-            >
-              {item.icon}
-              {item.label}
-            </button>
-          ))}
-        </nav>
-      </aside>
 
-      {/* Main */}
-      <div className="flex-1 flex flex-col overflow-auto">
-        {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-black text-pm-navy">Buenos días 👋</h1>
-            <p className="text-sm text-gray-500 capitalize">{today}</p>
-          </div>
-          <button className="bg-pm-red hover:bg-pm-red-dark text-white font-bold px-5 py-2.5 rounded-xl transition-colors text-sm">
-            + Nueva reserva
-          </button>
-        </header>
-
-        <div className="p-8 space-y-8">
-          {/* Métricas */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <MetricCard label="Reservas hoy" valor="3" tendencia="↑ 1 vs ayer" positivo />
-            <MetricCard label="Esta semana" valor="12" />
-            <MetricCard label="Ingresos mes" valor="1.847€" tendencia="↑ 14% vs mes anterior" positivo />
-            <MetricCard label="Pendientes de confirmar" valor="2" tendencia="Requieren atención" positivo={false} />
-          </div>
-
-          {/* Tabla */}
-          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Reservas recientes */}
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="font-bold text-pm-navy">Reservas recientes</h2>
-              <button className="text-sm text-pm-red font-semibold hover:underline">Ver todas</button>
+              <h2 className="font-black text-pm-navy">Reservas recientes</h2>
+              <Link href="/admin/reservas" className="text-sm text-pm-red font-semibold hover:underline">Ver todas →</Link>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-50 text-left">
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Nº Reserva</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Cliente</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Servicio</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado</th>
-                    <th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {RESERVAS_MOCK.map(r => (
-                    <ReservaCard key={r.numero} reserva={r} />
-                  ))}
-                </tbody>
-              </table>
+            {d.recientes.length === 0 ? (
+              <EmptyState titulo="Aún no hay reservas" desc="Las reservas que se realicen en la web aparecerán aquí." />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wider">
+                      <th className="px-5 py-3 font-semibold">Cliente</th>
+                      <th className="px-5 py-3 font-semibold">Servicio</th>
+                      <th className="px-5 py-3 font-semibold">Fecha</th>
+                      <th className="px-5 py-3 font-semibold">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {d.recientes.map(b => (
+                      <tr key={b.id} className="hover:bg-gray-50">
+                        <td className="px-5 py-3 font-semibold text-pm-navy">{b.cliente_nombre || '—'}</td>
+                        <td className="px-5 py-3 text-gray-600">{b.servicio || '—'}</td>
+                        <td className="px-5 py-3 text-gray-600">{b.fecha || '—'}</td>
+                        <td className="px-5 py-3"><EstadoBadge estado={b.estado_reserva} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Servicios más reservados */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <h2 className="font-black text-pm-navy mb-4">Más reservados</h2>
+            {d.topServicios.length === 0 ? (
+              <p className="text-gray-400 text-sm">Sin datos todavía.</p>
+            ) : (
+              <div className="space-y-3">
+                {d.topServicios.map(([nombre, n], i) => {
+                  const max = d.topServicios[0][1]
+                  return (
+                    <div key={nombre}>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-pm-navy font-semibold">{i + 1}. {nombre}</span>
+                        <span className="text-gray-400">{n}</span>
+                      </div>
+                      <div className="bg-gray-100 rounded-full h-1.5">
+                        <div className="bg-pm-red h-1.5 rounded-full" style={{ width: `${(n / max) * 100}%` }} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {/* Alertas */}
+            <div className="mt-6 pt-6 border-t border-gray-100 space-y-2">
+              <h3 className="text-xs font-black text-gray-400 uppercase tracking-wider mb-2">Alertas</h3>
+              {d.pendientes > 0 && <div className="text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2">⏳ {d.pendientes} reserva(s) pendiente(s) de confirmar</div>}
+              {d.enEspera > 0 && <div className="text-sm text-purple-700 bg-purple-50 rounded-lg px-3 py-2">📋 {d.enEspera} en lista de espera</div>}
+              {d.formsNuevos > 0 && <div className="text-sm text-pm-red bg-pm-red-light rounded-lg px-3 py-2">✉️ {d.formsNuevos} solicitud(es) sin leer</div>}
+              {d.pendientes === 0 && d.enEspera === 0 && d.formsNuevos === 0 && <div className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2">✓ Todo al día</div>}
             </div>
           </div>
+        </div>
+
+        {/* Accesos rápidos */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {[
+            { href: '/admin/reservas', icon: '📋', label: 'Reservas' },
+            { href: '/admin/formularios', icon: '✉️', label: 'Solicitudes' },
+            { href: '/admin/calendario', icon: '🗓️', label: 'Calendario' },
+            { href: '/admin/clientes', icon: '👥', label: 'Clientes' },
+            { href: '/admin/servicios', icon: '🎪', label: 'Servicios' },
+            { href: '/admin/productos', icon: '🛒', label: 'Productos' },
+          ].map(a => (
+            <Link key={a.href} href={a.href} className="bg-white border border-gray-100 rounded-2xl p-4 text-center hover:shadow-md hover:border-pm-red/20 transition-all">
+              <div className="text-2xl mb-1">{a.icon}</div>
+              <div className="text-xs font-bold text-pm-navy">{a.label}</div>
+            </Link>
+          ))}
         </div>
       </div>
-    </div>
+    </>
   )
 }
