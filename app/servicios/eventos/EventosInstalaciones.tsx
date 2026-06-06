@@ -141,21 +141,32 @@ export function ReservaDiasSinCole({ onClose = () => {} }: { onClose?: () => voi
 // ──────────────────────────────────────────────────────────────────────────────
 // DOMINGOS EN FAMILIA
 // ──────────────────────────────────────────────────────────────────────────────
-function generarDomingos(n: number): string[] {
-  const domingos: string[] = []
-  const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
-  let cursor = new Date(hoy)
-  while (domingos.length < n) {
-    if (cursor.getDay() === 0 && cursor > hoy) {
-      domingos.push(cursor.toISOString().slice(0, 10))
-    }
-    cursor.setDate(cursor.getDate() + 1)
+const MESES_DOM = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+
+function isoLocal(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function domingosDeMes(year: number, month: number): string[] {
+  const res: string[] = []
+  const d = new Date(year, month, 1)
+  while (d.getMonth() === month) {
+    if (d.getDay() === 0) res.push(isoLocal(d))
+    d.setDate(d.getDate() + 1)
   }
-  return domingos
+  return res
 }
 
 export function ReservaDomingos({ onClose = () => {} }: { onClose?: () => void }) {
-  const domingos = useMemo(() => generarDomingos(8), [])
+  const hoy = useMemo(() => { const h = new Date(); h.setHours(0, 0, 0, 0); return h }, [])
+  const [viewY, setViewY] = useState(hoy.getFullYear())
+  const [viewM, setViewM] = useState(hoy.getMonth())
+  const domingos = useMemo(() => domingosDeMes(viewY, viewM), [viewY, viewM])
+  const canPrev = viewY > hoy.getFullYear() || (viewY === hoy.getFullYear() && viewM > hoy.getMonth())
+
+  function prevMes() { if (viewM === 0) { setViewM(11); setViewY(y => y - 1) } else setViewM(m => m - 1) }
+  function nextMes() { if (viewM === 11) { setViewM(0); setViewY(y => y + 1) } else setViewM(m => m + 1) }
+
   const [fecha, setFecha]   = useState('')
   const [ninos, setNinos]   = useState(1)
   const [form, setForm]     = useState({ nombre: '', email: '', telefono: '' })
@@ -181,20 +192,38 @@ export function ReservaDomingos({ onClose = () => {} }: { onClose?: () => void }
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <label className="block text-xs font-bold text-pm-navy mb-2">Elige el domingo *</label>
+
+        {/* Navegador de mes */}
+        <div className="flex items-center justify-between mb-3">
+          <button type="button" onClick={prevMes} disabled={!canPrev}
+            className="w-9 h-9 flex items-center justify-center rounded-xl border-2 border-gray-200 text-pm-navy disabled:opacity-30 disabled:cursor-not-allowed hover:border-green-400 transition-colors">
+            ‹
+          </button>
+          <span className="font-black text-pm-navy text-sm">{MESES_DOM[viewM]} {viewY}</span>
+          <button type="button" onClick={nextMes}
+            className="w-9 h-9 flex items-center justify-center rounded-xl border-2 border-gray-200 text-pm-navy hover:border-green-400 transition-colors">
+            ›
+          </button>
+        </div>
+
         <div className="grid grid-cols-2 gap-2">
           {domingos.map(d => {
             const obj = new Date(d + 'T12:00:00')
+            const pasado = obj < hoy
             return (
-              <button key={d} type="button" onClick={() => setFecha(d)}
+              <button key={d} type="button" disabled={pasado} onClick={() => setFecha(d)}
                 className={`px-3 py-2.5 rounded-xl border-2 text-sm transition-all text-center ${
-                  fecha === d ? 'border-green-500 bg-green-50 text-green-800' : 'border-gray-200 hover:border-green-400 text-pm-navy'
+                  pasado ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
+                  : fecha === d ? 'border-green-500 bg-green-50 text-green-800'
+                  : 'border-gray-200 hover:border-green-400 text-pm-navy'
                 }`}>
-                <div className="font-black">{obj.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</div>
+                <div className="font-black">{obj.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}</div>
                 <div className="text-xs text-gray-400">11:00 – 13:00</div>
               </button>
             )
           })}
         </div>
+        <p className="text-xs text-gray-400 mt-2 text-center">Desliza entre meses con las flechas para ver todos los domingos.</p>
       </div>
 
       <div>
