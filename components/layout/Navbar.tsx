@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState } from 'react'
 
 const NAV_ITEMS = [
@@ -68,14 +69,16 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 shrink-0">
-            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M20 2L4 10V22C4 30.8 11.2 39.1 20 41C28.8 39.1 36 30.8 36 22V10L20 2Z" fill="#1A2A5E"/>
-              <path d="M20 2L4 10V22C4 30.8 11.2 39.1 20 41C28.8 39.1 36 30.8 36 22V10L20 2Z" stroke="#D42B2B" strokeWidth="1.5"/>
-              <text x="20" y="26" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold" fontStyle="italic">PM</text>
-              <ellipse cx="20" cy="20" rx="14" ry="5" stroke="#D42B2B" strokeWidth="1.2" fill="none" transform="rotate(-20 20 20)"/>
-            </svg>
-            <div className="leading-tight">
+          <Link href="/" className="flex items-center gap-2 shrink-0">
+            <Image
+              src="/logo.png"
+              alt="Planeta Movimiento"
+              width={48}
+              height={48}
+              className="h-10 w-auto object-contain drop-shadow-sm"
+              priority
+            />
+            <div className="leading-tight hidden sm:block">
               <span className="text-white font-bold text-sm">Planeta</span>
               <span className="text-pm-red font-bold text-sm ml-1">Movimiento</span>
             </div>
