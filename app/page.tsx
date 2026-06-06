@@ -13,11 +13,11 @@ export const metadata = {
 // ─── Datos ────────────────────────────────────────────────────────────────────
 // foto: ruta de la imagen real (déjala en /public/fotos). Vacío = panel sobrio temporal.
 const SERVICIOS = [
-  { nombre: 'Club Deportivo', desc: 'Clases semanales de circo, acrobacia, aéreos y artes marciales.', href: '/club', foto: '', grad: 'from-pm-navy to-pm-navy-md', span: 'lg:col-span-2' },
+  { nombre: 'Club Deportivo', desc: 'Clases semanales de circo, acrobacia, aéreos y artes marciales.', href: '/club', foto: '/fotos/gimnasia-acrobatica/1.webp', grad: 'from-pm-navy to-pm-navy-md', span: 'lg:col-span-2' },
   { nombre: 'Cumpleaños', desc: 'Fiestas inolvidables con actividad guiada y merienda.', href: '/servicios/cumpleanos', foto: '', grad: 'from-pm-red to-pm-red-dark', span: '' },
   { nombre: 'Campamentos', desc: 'Escuela de Superhéroes en Navidad, Semana Santa y verano.', href: '/servicios/campamentos', foto: '', grad: 'from-amber-500 to-orange-600', span: '' },
   { nombre: 'Eventos', desc: 'Animación para bodas, comuniones y celebraciones.', href: '/servicios/eventos', foto: '', grad: 'from-purple-600 to-indigo-700', span: '' },
-  { nombre: 'Talleres de Circo', desc: 'Talleres a medida para ayuntamientos y empresas.', href: '/servicios/talleres', foto: '', grad: 'from-pm-red to-purple-700', span: '' },
+  { nombre: 'Talleres de Circo', desc: 'Talleres a medida para ayuntamientos y empresas.', href: '/servicios/talleres', foto: '/fotos/talleres/1.webp', grad: 'from-pm-red to-purple-700', span: '' },
   { nombre: 'Excursiones Escolares', desc: '4 horas de actividad por estaciones para grupos.', href: '/servicios/excursiones', foto: '', grad: 'from-pm-red to-orange-600', span: '' },
   { nombre: 'Extraescolares', desc: 'Multideporte en tu propio colegio. Para AMPAs.', href: '/servicios/extraescolares', foto: '', grad: 'from-blue-600 to-pm-navy', span: '' },
   { nombre: 'Formación', desc: 'Curso de Monitor Juvenil con titulación oficial.', href: '/servicios/monitor-juvenil', foto: '', grad: 'from-emerald-600 to-teal-700', span: 'lg:col-span-2' },
@@ -38,14 +38,14 @@ const AUDIENCIAS = [
 ]
 
 const GALERIA = [
-  { label: 'Acrobacia', foto: '', grad: 'from-pm-red to-pm-red-dark' },
-  { label: 'Telas aéreas', foto: '', grad: 'from-purple-600 to-indigo-800' },
-  { label: 'Parkour', foto: '', grad: 'from-slate-700 to-pm-navy' },
-  { label: 'Malabares', foto: '', grad: 'from-amber-500 to-orange-600' },
-  { label: 'Campamentos', foto: '', grad: 'from-emerald-600 to-teal-700' },
-  { label: 'Cumpleaños', foto: '', grad: 'from-pink-500 to-pm-red' },
-  { label: 'Equilibrios', foto: '', grad: 'from-cyan-600 to-blue-700' },
-  { label: 'Jiu-Jitsu', foto: '', grad: 'from-slate-800 to-pm-navy-md' },
+  { label: 'Acrobacia', foto: '/fotos/gimnasia-acrobatica/1.webp', grad: 'from-pm-red to-pm-red-dark' },
+  { label: 'Telas aéreas', foto: '/fotos/telas-aereas/1.webp', grad: 'from-purple-600 to-indigo-800' },
+  { label: 'Trampolín', foto: '/fotos/gimnasia-acrobatica/2.webp', grad: 'from-slate-700 to-pm-navy' },
+  { label: 'Talleres', foto: '/fotos/talleres/1.webp', grad: 'from-amber-500 to-orange-600' },
+  { label: 'Acrobacia', foto: '/fotos/gimnasia-acrobatica/3.webp', grad: 'from-emerald-600 to-teal-700' },
+  { label: 'Talleres', foto: '/fotos/talleres/4.webp', grad: 'from-pink-500 to-pm-red' },
+  { label: 'Aéreos', foto: '/fotos/telas-aereas/2.webp', grad: 'from-cyan-600 to-blue-700' },
+  { label: 'Talleres', foto: '/fotos/talleres/7.webp', grad: 'from-slate-800 to-pm-navy-md' },
 ]
 
 const RAZONES = [
