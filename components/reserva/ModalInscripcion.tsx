@@ -181,19 +181,30 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose }: Pr
               </div>
             </div>
 
+            {/* Fecha de nacimiento del participante — justo bajo el nombre para que no haya dudas */}
             <div>
-              <label className="block text-xs font-semibold text-pm-navy mb-1.5">Email *</label>
+              <label className="block text-xs font-semibold text-pm-navy mb-1.5">Fecha de nacimiento del participante *</label>
               <input
                 required
-                type="email"
-                value={form.email}
-                onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                type="date"
+                value={form.fechaNacimiento}
+                onChange={e => setForm(f => ({ ...f, fechaNacimiento: e.target.value }))}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"
-                placeholder="ana@ejemplo.com"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-pm-navy mb-1.5">Email *</label>
+                <input
+                  required
+                  type="email"
+                  value={form.email}
+                  onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"
+                  placeholder="ana@ejemplo.com"
+                />
+              </div>
               <div>
                 <label className="block text-xs font-semibold text-pm-navy mb-1.5">Teléfono *</label>
                 <input
@@ -203,16 +214,6 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose }: Pr
                   onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"
                   placeholder="600 000 000"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-pm-navy mb-1.5">Fecha de nacimiento *</label>
-                <input
-                  required
-                  type="date"
-                  value={form.fechaNacimiento}
-                  onChange={e => setForm(f => ({ ...f, fechaNacimiento: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"
                 />
               </div>
             </div>
