@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { TALLERES } from './config'
+import { getTalleres } from '@/lib/talleres/store'
 import TalleresClient from './TalleresClient'
 
 export const metadata = {
@@ -8,10 +8,12 @@ export const metadata = {
     'Formaciones de corta duración y alta intensidad en Telas Aéreas, Backflip, Verticales y Jiu-Jitsu. Para alumnos del club y público externo. Fines de semana en Cuenca.',
 }
 
-const abiertos    = TALLERES.filter(t => t.estado === 'abierto' || t.estado === 'ultimas').length
-const proximamente = TALLERES.filter(t => t.estado === 'proximamente').length
+export const dynamic = 'force-dynamic'
 
-export default function TalleresIntensivosPage() {
+export default async function TalleresIntensivosPage() {
+  const TALLERES = await getTalleres()
+  const abiertos = TALLERES.filter(t => t.estado === 'abierto' || t.estado === 'ultimas').length
+  const proximamente = TALLERES.filter(t => t.estado === 'proximamente').length
   return (
     <main className="bg-pm-bg min-h-screen">
 

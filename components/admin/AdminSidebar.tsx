@@ -15,7 +15,10 @@ const GRUPOS: Grupo[] = [
   },
   {
     titulo: 'Club Deportivo Origen',
-    items: [{ href: '/admin/club', label: 'Solicitudes inscripción', icon: '🏅' }],
+    items: [
+      { href: '/admin/club', label: 'Solicitudes inscripción', icon: '🏅' },
+      { href: '/admin/talleres-intensivos', label: 'Talleres intensivos', icon: '🎯' },
+    ],
   },
   {
     titulo: 'Empresa',
