@@ -27,7 +27,7 @@ export default function EducacionForm() {
       </div>
       <div>
         <label className="block text-sm font-semibold text-pm-navy mb-1">Teléfono</label>
-        <input type="tel" required placeholder="969 000 000" className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-pm-red" />
+        <input type="tel" required placeholder="657 604 665" className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-pm-red" />
       </div>
       <div>
         <label className="block text-sm font-semibold text-pm-navy mb-1">Programa de interés</label>

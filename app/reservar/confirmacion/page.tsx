@@ -80,8 +80,8 @@ function ConfirmacionContent() {
       {/* Banner inferior */}
       <div className="mt-8 text-center text-sm text-gray-500">
         ¿Tienes alguna duda? Escríbenos a{' '}
-        <a href="mailto:info@planetamovimiento.es" className="text-pm-red font-medium hover:underline">
-          info@planetamovimiento.es
+        <a href="mailto:info@planetamovimiento.com" className="text-pm-red font-medium hover:underline">
+          info@planetamovimiento.com
         </a>
       </div>
     </main>

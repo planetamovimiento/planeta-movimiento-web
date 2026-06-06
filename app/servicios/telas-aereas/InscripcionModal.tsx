@@ -28,7 +28,7 @@ export function BotonApuntarme() {
       </button>
       {open && (
         <ModalInscripcion
-          servicio="Escuela de aéreos — Telas, Aro y Trapecio"
+          servicio="Escuela de aéreos — Telas y Aro"
           niveles={NIVELES}
           modalidades={MODALIDADES}
           onClose={() => setOpen(false)}

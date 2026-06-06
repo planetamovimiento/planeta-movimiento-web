@@ -95,7 +95,7 @@ export default function FormExtraescolar() {
         </div>
         <div>
           <label className="block text-xs font-bold text-pm-navy mb-1.5">Teléfono *</label>
-          <input required type="tel" placeholder="969 000 000"
+          <input required type="tel" placeholder="657 604 665"
             value={form.telefono} onChange={e => setForm(f => ({...f, telefono: e.target.value}))}
             className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"/>
         </div>

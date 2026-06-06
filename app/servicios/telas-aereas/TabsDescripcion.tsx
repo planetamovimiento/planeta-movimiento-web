@@ -73,11 +73,10 @@ export default function TabsDescripcion() {
 
             <div className="mt-6 pt-6 border-t border-gray-100">
               <h3 className="text-pm-navy font-black text-base mb-3">Disciplinas que trabajamos</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
                   { nombre: 'Telas aéreas', desc: 'Figuras, subidas y caídas controladas', icon: '🎗️' },
                   { nombre: 'Aro aéreo', desc: 'Equilibrio y coreografía en el aro', icon: '⭕' },
-                  { nombre: 'Trapecio fijo', desc: 'Fuerza y técnica en el trapecio', icon: '🎪' },
                 ].map(d => (
                   <div key={d.nombre} className="bg-purple-50 border border-purple-100 rounded-xl p-4">
                     <div className="text-2xl mb-2">{d.icon}</div>

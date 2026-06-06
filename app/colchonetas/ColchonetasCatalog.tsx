@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { submitForm } from '@/lib/forms/actions'
 import { PRODUCTOS, type Producto, type Color, type Variante } from './productos'
 
-const WHATSAPP = '34969000000'
+const WHATSAPP = '34657604665'
 const CART_KEY = 'pm_cart_colchonetas'
 
 // ─── Tipos del carrito ────────────────────────────────────────────────────────

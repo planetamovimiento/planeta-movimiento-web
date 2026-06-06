@@ -12,7 +12,7 @@ const TITULAR = {
   marca: 'Planeta Movimiento',
   nif: 'B16346256',
   domicilio: 'Polígono Los Palancares, 8, 16004 Cuenca (España)',
-  telefonos: '657 60 64 65 / 630 41 25 95',
+  telefonos: '657 604 665',
   email: 'info@planetamovimiento.com',
   instalaciones: 'Polígono Los Palancares, 8, 16004 Cuenca',
 }
