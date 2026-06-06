@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { useState } from 'react'
 
 const NAV_ITEMS = [
@@ -70,13 +69,11 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src="/logo.png"
               alt="Planeta Movimiento"
-              width={48}
-              height={48}
               className="h-10 w-auto object-contain drop-shadow-sm"
-              priority
             />
             <div className="leading-tight hidden sm:block">
               <span className="text-white font-bold text-sm">Planeta</span>
