@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Hero from '@/components/home/Hero'
 import Reveal from '@/components/home/Reveal'
 import CountUp from '@/components/home/CountUp'
+import { Foto } from '@/components/ui/Foto'
 
 export const metadata = {
   title: 'Planeta Movimiento — Circo, deporte y ocio en Cuenca',
@@ -10,15 +11,16 @@ export const metadata = {
 }
 
 // ─── Datos ────────────────────────────────────────────────────────────────────
+// foto: ruta de la imagen real (déjala en /public/fotos). Vacío = panel sobrio temporal.
 const SERVICIOS = [
-  { nombre: 'Club Deportivo', desc: 'Clases semanales de circo, acrobacia, aéreos y artes marciales.', href: '/club', icon: '🏅', grad: 'from-pm-navy to-pm-navy-md', span: 'lg:col-span-2' },
-  { nombre: 'Cumpleaños', desc: 'Fiestas inolvidables con actividad guiada y merienda.', href: '/servicios/cumpleanos', icon: '🎂', grad: 'from-pm-red to-pm-red-dark', span: '' },
-  { nombre: 'Campamentos', desc: 'Escuela de Superhéroes en Navidad, Semana Santa y verano.', href: '/servicios/campamentos', icon: '🏕️', grad: 'from-amber-500 to-orange-600', span: '' },
-  { nombre: 'Eventos', desc: 'Animación para bodas, comuniones y celebraciones.', href: '/servicios/eventos', icon: '🎉', grad: 'from-purple-600 to-indigo-700', span: '' },
-  { nombre: 'Talleres de Circo', desc: 'Talleres a medida para ayuntamientos y empresas.', href: '/servicios/talleres', icon: '🎪', grad: 'from-pm-red to-purple-700', span: '' },
-  { nombre: 'Excursiones Escolares', desc: '4 horas de actividad por estaciones para grupos.', href: '/servicios/excursiones', icon: '🎒', grad: 'from-pm-red to-orange-600', span: '' },
-  { nombre: 'Extraescolares', desc: 'Multideporte en tu propio colegio. Para AMPAs.', href: '/servicios/extraescolares', icon: '🏃', grad: 'from-blue-600 to-pm-navy', span: '' },
-  { nombre: 'Formación', desc: 'Curso de Monitor Juvenil con titulación oficial.', href: '/servicios/monitor-juvenil', icon: '🎓', grad: 'from-emerald-600 to-teal-700', span: 'lg:col-span-2' },
+  { nombre: 'Club Deportivo', desc: 'Clases semanales de circo, acrobacia, aéreos y artes marciales.', href: '/club', foto: '', grad: 'from-pm-navy to-pm-navy-md', span: 'lg:col-span-2' },
+  { nombre: 'Cumpleaños', desc: 'Fiestas inolvidables con actividad guiada y merienda.', href: '/servicios/cumpleanos', foto: '', grad: 'from-pm-red to-pm-red-dark', span: '' },
+  { nombre: 'Campamentos', desc: 'Escuela de Superhéroes en Navidad, Semana Santa y verano.', href: '/servicios/campamentos', foto: '', grad: 'from-amber-500 to-orange-600', span: '' },
+  { nombre: 'Eventos', desc: 'Animación para bodas, comuniones y celebraciones.', href: '/servicios/eventos', foto: '', grad: 'from-purple-600 to-indigo-700', span: '' },
+  { nombre: 'Talleres de Circo', desc: 'Talleres a medida para ayuntamientos y empresas.', href: '/servicios/talleres', foto: '', grad: 'from-pm-red to-purple-700', span: '' },
+  { nombre: 'Excursiones Escolares', desc: '4 horas de actividad por estaciones para grupos.', href: '/servicios/excursiones', foto: '', grad: 'from-pm-red to-orange-600', span: '' },
+  { nombre: 'Extraescolares', desc: 'Multideporte en tu propio colegio. Para AMPAs.', href: '/servicios/extraescolares', foto: '', grad: 'from-blue-600 to-pm-navy', span: '' },
+  { nombre: 'Formación', desc: 'Curso de Monitor Juvenil con titulación oficial.', href: '/servicios/monitor-juvenil', foto: '', grad: 'from-emerald-600 to-teal-700', span: 'lg:col-span-2' },
 ]
 
 const STATS = [
@@ -29,28 +31,28 @@ const STATS = [
 ]
 
 const AUDIENCIAS = [
-  { nombre: 'Familias', desc: 'Cumpleaños, campamentos y actividades para disfrutar juntos.', icon: '👨‍👩‍👧‍👦', href: '/actividades', grad: 'from-pm-red to-pm-red-dark' },
-  { nombre: 'Colegios y AMPAs', desc: 'Excursiones, extraescolares y programas educativos.', icon: '🏫', href: '/actividades', grad: 'from-blue-600 to-pm-navy' },
-  { nombre: 'Empresas', desc: 'Team building, talleres y eventos corporativos.', icon: '💼', href: '/actividades', grad: 'from-slate-700 to-pm-navy' },
-  { nombre: 'Ayuntamientos', desc: 'Talleres y programas para eventos municipales.', icon: '🏛️', href: '/actividades', grad: 'from-emerald-600 to-teal-700' },
+  { nombre: 'Familias', desc: 'Cumpleaños, campamentos y actividades para disfrutar juntos.', href: '/actividades', grad: 'from-pm-red to-pm-red-dark' },
+  { nombre: 'Colegios y AMPAs', desc: 'Excursiones, extraescolares y programas educativos.', href: '/actividades', grad: 'from-blue-600 to-pm-navy' },
+  { nombre: 'Empresas', desc: 'Team building, talleres y eventos corporativos.', href: '/actividades', grad: 'from-slate-700 to-pm-navy' },
+  { nombre: 'Ayuntamientos', desc: 'Talleres y programas para eventos municipales.', href: '/actividades', grad: 'from-emerald-600 to-teal-700' },
 ]
 
 const GALERIA = [
-  { label: 'Acrobacia', icon: '🤸', grad: 'from-pm-red to-pm-red-dark' },
-  { label: 'Telas aéreas', icon: '🎪', grad: 'from-purple-600 to-indigo-800' },
-  { label: 'Parkour', icon: '🏃', grad: 'from-slate-700 to-pm-navy' },
-  { label: 'Malabares', icon: '🤹', grad: 'from-amber-500 to-orange-600' },
-  { label: 'Campamentos', icon: '🏕️', grad: 'from-emerald-600 to-teal-700' },
-  { label: 'Cumpleaños', icon: '🎂', grad: 'from-pink-500 to-pm-red' },
-  { label: 'Equilibrios', icon: '⚖️', grad: 'from-cyan-600 to-blue-700' },
-  { label: 'Jiu-Jitsu', icon: '🥋', grad: 'from-slate-800 to-pm-navy-md' },
+  { label: 'Acrobacia', foto: '', grad: 'from-pm-red to-pm-red-dark' },
+  { label: 'Telas aéreas', foto: '', grad: 'from-purple-600 to-indigo-800' },
+  { label: 'Parkour', foto: '', grad: 'from-slate-700 to-pm-navy' },
+  { label: 'Malabares', foto: '', grad: 'from-amber-500 to-orange-600' },
+  { label: 'Campamentos', foto: '', grad: 'from-emerald-600 to-teal-700' },
+  { label: 'Cumpleaños', foto: '', grad: 'from-pink-500 to-pm-red' },
+  { label: 'Equilibrios', foto: '', grad: 'from-cyan-600 to-blue-700' },
+  { label: 'Jiu-Jitsu', foto: '', grad: 'from-slate-800 to-pm-navy-md' },
 ]
 
 const RAZONES = [
-  { titulo: 'Monitores certificados', desc: 'Profesionales titulados y con años de experiencia en circo y deporte.', icon: '🎓' },
-  { titulo: 'Instalaciones seguras', desc: 'Material homologado, colchonetas profesionales y protocolos de seguridad.', icon: '🛡️' },
-  { titulo: 'Para todas las edades', desc: 'Desde los 2 años hasta adultos. Una actividad perfecta para cada etapa.', icon: '👶' },
-  { titulo: 'Metodología propia', desc: 'Aprendizaje a través del juego con la temática Escuela de Superhéroes.', icon: '⚡' },
+  { titulo: 'Monitores certificados', desc: 'Profesionales titulados y con años de experiencia en circo y deporte.' },
+  { titulo: 'Instalaciones seguras', desc: 'Material homologado, colchonetas profesionales y protocolos de seguridad.' },
+  { titulo: 'Para todas las edades', desc: 'Desde los 2 años hasta adultos. Una actividad perfecta para cada etapa.' },
+  { titulo: 'Metodología propia', desc: 'Aprendizaje a través del juego con la temática Escuela de Superhéroes.' },
 ]
 
 const COLABORADORES = [
@@ -106,18 +108,15 @@ export default function HomePage() {
               <Reveal key={s.nombre} delay={i * 60} className={s.span}>
                 <Link
                   href={s.href}
-                  className={`group relative block h-full bg-gradient-to-br ${s.grad} rounded-3xl p-7 overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl`}
+                  className="group block h-full bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
                 >
-                  {/* Glow decorativo */}
-                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500" />
-
-                  <div className="relative flex flex-col h-full">
-                    <span className="text-4xl mb-4 inline-block group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300">{s.icon}</span>
-                    <h3 className="text-xl font-black text-white mb-2">{s.nombre}</h3>
-                    <p className="text-white/70 text-sm leading-relaxed mb-4 flex-1">{s.desc}</p>
-                    <span className="inline-flex items-center gap-1.5 text-white font-bold text-sm">
+                  <Foto src={s.foto} alt={s.nombre} gradient={s.grad} className={s.span ? 'h-48' : 'h-40'} />
+                  <div className="p-6">
+                    <h3 className="text-lg font-black text-pm-navy mb-1 group-hover:text-pm-red transition-colors">{s.nombre}</h3>
+                    <p className="text-gray-500 text-sm leading-relaxed mb-3">{s.desc}</p>
+                    <span className="inline-flex items-center gap-1.5 text-pm-red font-bold text-sm">
                       Descubrir
-                      <span className="transition-transform group-hover:translate-x-1">→</span>
+                      <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7"/></svg>
                     </span>
                   </div>
                 </Link>
@@ -164,11 +163,11 @@ export default function HomePage() {
               <Reveal key={a.nombre} delay={i * 70}>
                 <Link href={a.href}
                   className={`group block h-full bg-gradient-to-br ${a.grad} rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl`}>
-                  <span className="text-4xl mb-4 inline-block">{a.icon}</span>
                   <h3 className="text-lg font-black text-white mb-2">{a.nombre}</h3>
                   <p className="text-white/70 text-sm leading-relaxed mb-4">{a.desc}</p>
-                  <span className="text-white text-sm font-bold inline-flex items-center gap-1">
-                    Ver más <span className="transition-transform group-hover:translate-x-1">→</span>
+                  <span className="text-white text-sm font-bold inline-flex items-center gap-1.5">
+                    Ver más
+                    <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7"/></svg>
                   </span>
                 </Link>
               </Reveal>
@@ -195,16 +194,10 @@ export default function HomePage() {
 
           <div className="marquee-track gap-5">
             {[...GALERIA, ...GALERIA].map((g, i) => (
-              <div
-                key={i}
-                className={`relative w-64 h-72 shrink-0 rounded-3xl bg-gradient-to-br ${g.grad} overflow-hidden group cursor-default`}
-              >
-                <div className="absolute -top-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl" />
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-                  <span className="text-6xl group-hover:scale-110 transition-transform duration-300">{g.icon}</span>
-                  <span className="text-white font-black text-lg tracking-wide">{g.label}</span>
-                </div>
-                <div className="absolute inset-x-0 bottom-0 h-1.5 bg-white/20" />
+              <div key={i} className="relative w-64 h-72 shrink-0 rounded-3xl overflow-hidden group cursor-default">
+                <Foto src={g.foto} alt={g.label} gradient={g.grad} className="absolute inset-0" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+                <span className="absolute bottom-5 left-5 text-white font-black text-lg tracking-wide">{g.label}</span>
               </div>
             ))}
           </div>
@@ -222,8 +215,8 @@ export default function HomePage() {
             {RAZONES.map((r, i) => (
               <Reveal key={r.titulo} delay={i * 70}>
                 <div className="h-full bg-pm-bg border border-gray-100 rounded-3xl p-6 hover:shadow-lg hover:border-pm-red/20 transition-all">
-                  <div className="w-12 h-12 bg-pm-red-light rounded-2xl flex items-center justify-center text-2xl mb-4">
-                    {r.icon}
+                  <div className="w-12 h-12 bg-pm-red-light rounded-2xl flex items-center justify-center mb-4">
+                    <svg className="w-6 h-6 text-pm-red" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                   </div>
                   <h3 className="font-black text-pm-navy text-base mb-2">{r.titulo}</h3>
                   <p className="text-gray-500 text-sm leading-relaxed">{r.desc}</p>

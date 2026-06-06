@@ -1,0 +1,12 @@
+# Carpeta de fotos
+
+Deja aquí las fotos reales del proyecto. Nombres sugeridos:
+
+- hero.jpg (portada)
+- cumpleanos.jpg, campamentos.jpg, eventos.jpg, talleres.jpg
+- excursiones.jpg, extraescolares.jpg, monitor.jpg
+- club.jpg, gimnasia-acrobatica.jpg, telas-aereas.jpg, escuela-infantil.jpg
+- jiu-jitsu.jpg, escuela-bienestar.jpg, circo-inclusivo.jpg
+- galeria-1.jpg ... galeria-8.jpg
+
+Formato recomendado: JPG/WebP, horizontal, min 1200px de ancho.
