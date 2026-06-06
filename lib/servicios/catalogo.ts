@@ -168,6 +168,14 @@ export const CATALOGO_SERVICIOS: ServicioCatalogo[] = [
     botonTexto: 'Descubre e inscríbete', botonAccion: 'externo', enlace: 'https://www.arkhe.com',
   },
   {
+    id: 'piea', icon: '🌿', ...D,
+    nombre: 'PIEA · Envejecimiento Activo', entidad: 'empresa', categoria: 'Ocio', tipo: 'taller',
+    descripcionCorta: 'Programas de movimiento en residencias y talleres para mayores.',
+    descripcionLarga: 'Programa de Integración y Envejecimiento Activo: actividad física y dinamización en residencias y talleres (bingo musical, arte, estimulación cognitiva, ergonomía) para ayuntamientos y entidades.',
+    edad: 'Personas mayores', precioDesde: 200, horarios: '1 h/sesión', estado: 'activo',
+    botonTexto: 'Solicitar información', botonAccion: 'presupuesto', enlace: '/servicios/piea',
+  },
+  {
     id: 'colchonetas', icon: '🛒', ...D,
     nombre: 'Colchonetas', entidad: 'empresa', categoria: 'Tienda', tipo: 'producto',
     descripcionCorta: 'Colchonetas profesionales: Nube Portátil, Dual Impact y Quitamiedos.',

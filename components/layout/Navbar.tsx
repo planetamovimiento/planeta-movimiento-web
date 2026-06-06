@@ -26,6 +26,7 @@ const NAV_ITEMS = [
       { label: 'Campamentos', href: '/servicios/campamentos', desc: 'Campamentos de verano llenos de movimiento' },
       { label: 'Eventos y celebraciones', href: '/servicios/eventos', desc: 'Animación para todo tipo de eventos' },
       { label: 'Talleres participativos', href: '/servicios/talleres', desc: 'Talleres puntuales para grupos y familias' },
+      { label: 'PIEA · Envejecimiento activo', href: '/servicios/piea', desc: 'Programas para mayores, residencias y ayuntamientos' },
     ],
   },
   {

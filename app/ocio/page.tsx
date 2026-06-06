@@ -43,6 +43,15 @@ const SERVICIOS = [
     grad: 'from-pm-red to-purple-700',
     badge: 'A medida',
   },
+  {
+    nombre: 'PIEA · Envejecimiento Activo',
+    href: '/servicios/piea',
+    desc: 'Programas de movimiento en residencias y talleres para mayores. Vitalidad, participación y bienestar para entidades y ayuntamientos.',
+    precio: 'Talleres desde 200 €',
+    detalle: 'Residencias, centros de día y ayuntamientos',
+    grad: 'from-emerald-600 to-teal-700',
+    badge: 'Mayores',
+  },
 ]
 
 const EN_INSTALACIONES = [

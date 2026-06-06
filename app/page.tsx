@@ -57,6 +57,7 @@ const RAZONES = [
 
 const COLABORADORES = [
   { nombre: 'CADIG Crisol', tipo: 'Circo inclusivo' },
+  { nombre: 'Residencia Sagrado Corazón', tipo: 'Envejecimiento activo' },
   { nombre: 'ARKHE', tipo: 'Formación juvenil' },
   { nombre: 'Academia Adamas', tipo: 'Jiu-Jitsu · Madrid' },
   { nombre: 'Club Deportivo Origen', tipo: 'Entidad deportiva' },
