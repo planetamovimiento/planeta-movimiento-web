@@ -155,9 +155,10 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose }: Pr
             </div>
 
             {/* ── 2. Datos personales ── */}
+            <p className="text-xs text-gray-400 -mb-1">Datos de la persona que se inscribe (el participante)</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-pm-navy mb-1.5">Nombre *</label>
+                <label className="block text-xs font-semibold text-pm-navy mb-1.5">Nombre del participante *</label>
                 <input
                   required
                   type="text"
@@ -168,7 +169,7 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose }: Pr
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-pm-navy mb-1.5">Apellidos *</label>
+                <label className="block text-xs font-semibold text-pm-navy mb-1.5">Apellidos del participante *</label>
                 <input
                   required
                   type="text"
