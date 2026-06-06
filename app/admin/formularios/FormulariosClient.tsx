@@ -16,6 +16,7 @@ const TIPOS_LABEL: Record<string, string> = {
   contacto: 'Contacto', inscripcion: 'Inscripción', inscripcion_club: 'Inscripción Club',
   colegio: 'Colegio', extraescolar: 'Extraescolar', ayuntamiento: 'Ayuntamiento', empresa: 'Empresa',
   'piea-residencias': 'PIEA · Residencias', 'piea-talleres': 'PIEA · Talleres mayores',
+  licitaciones: 'Licitaciones / contratos',
 }
 
 export default function FormulariosClient({ rows, puedeEditar }: { rows: Row[]; puedeEditar: boolean }) {

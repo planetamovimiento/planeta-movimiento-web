@@ -52,6 +52,15 @@ const SERVICIOS = [
     grad: 'from-emerald-600 to-teal-700',
     badge: 'Mayores',
   },
+  {
+    nombre: 'Licitaciones y contratos públicos',
+    href: '/servicios/licitaciones',
+    desc: 'Diseñamos, gestionamos y ejecutamos programas deportivos, educativos y sociales para administraciones mediante contratos y licitaciones.',
+    precio: 'Proyectos a medida',
+    detalle: 'Ayuntamientos, diputaciones y entidades públicas',
+    grad: 'from-slate-700 to-pm-navy',
+    badge: 'Administraciones',
+  },
 ]
 
 const EN_INSTALACIONES = [

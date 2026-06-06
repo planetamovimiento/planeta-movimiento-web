@@ -176,6 +176,14 @@ export const CATALOGO_SERVICIOS: ServicioCatalogo[] = [
     botonTexto: 'Solicitar información', botonAccion: 'presupuesto', enlace: '/servicios/piea',
   },
   {
+    id: 'licitaciones', icon: '🏛️', ...D,
+    nombre: 'Licitaciones y contratos públicos', entidad: 'empresa', categoria: 'Ocio', tipo: 'taller',
+    descripcionCorta: 'Programas deportivos, educativos y sociales para administraciones mediante contratos y licitaciones.',
+    descripcionLarga: 'Diseño, gestión y ejecución de programas para ayuntamientos, diputaciones, residencias y entidades: envejecimiento activo, ocio municipal, ludotecas y programas deportivos, mediante contratos menores, de servicios, anuales, plurianuales y licitaciones.',
+    edad: 'Administraciones y entidades', horarios: 'Proyectos a medida', estado: 'activo',
+    botonTexto: 'Hablemos de tu proyecto', botonAccion: 'formulario', enlace: '/servicios/licitaciones',
+  },
+  {
     id: 'colchonetas', icon: '🛒', ...D,
     nombre: 'Colchonetas', entidad: 'empresa', categoria: 'Tienda', tipo: 'producto',
     descripcionCorta: 'Colchonetas profesionales: Nube Portátil, Dual Impact y Quitamiedos.',
