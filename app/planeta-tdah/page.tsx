@@ -7,7 +7,7 @@ export const metadata = {
     'Planeta TDAH: la primera plataforma web gamificada para personas con TDAH y sus familias. Convierte tu rutina en una aventura. Tu universo. Tu foco. Tu poder.',
 }
 
-const PLANETA_TDAH_URL = 'https://www.planetatdah.com'
+const PLANETA_TDAH_URL = 'https://planetatdah.com/ref/GKSUYP'
 
 const FUNCIONALIDADES = [
   { icon: '🦸', titulo: 'Camino del Héroe', desc: 'Minijuego con héroes que evolucionan por nivel, una mascota que cuidas, misiones diarias y personalizadas, tienda con monedas y logros.' },
