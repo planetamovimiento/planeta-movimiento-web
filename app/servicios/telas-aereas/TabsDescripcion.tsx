@@ -38,7 +38,7 @@ export default function TabsDescripcion() {
   const [tab, setTab] = useState<'descripcion' | 'info'>('descripcion')
 
   return (
-    <div className="mt-10">
+    <div className="mt-10 flex flex-col">
       {/* Tabs */}
       <div className="border-b border-gray-200 flex gap-1">
         {(['descripcion', 'info'] as const).map((t) => (
@@ -152,8 +152,8 @@ export default function TabsDescripcion() {
         )}
       </div>
 
-      {/* Calendario */}
-      <div className="mt-4">
+      {/* Calendario — colocado arriba, justo bajo el botón Apuntarme */}
+      <div className="order-first mb-6">
         <div className="bg-pm-navy rounded-2xl overflow-hidden">
           <div className="px-6 py-4 flex items-center justify-between">
             <h3 className="text-white font-black text-sm tracking-wider uppercase">

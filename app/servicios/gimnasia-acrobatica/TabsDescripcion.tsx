@@ -37,7 +37,7 @@ export default function TabsDescripcion() {
   const [tab, setTab] = useState<'descripcion' | 'info'>('descripcion')
 
   return (
-    <div className="mt-10">
+    <div className="mt-10 flex flex-col">
       {/* Tabs */}
       <div className="border-b border-gray-200 flex gap-1">
         <button
@@ -130,8 +130,8 @@ export default function TabsDescripcion() {
         )}
       </div>
 
-      {/* Calendario */}
-      <div className="mt-4">
+      {/* Calendario — colocado arriba, justo bajo el botón Apuntarme */}
+      <div className="order-first mb-6">
         <div className="bg-pm-navy rounded-2xl overflow-hidden">
           {/* Cabecera */}
           <div className="px-6 py-4 flex items-center justify-between">
