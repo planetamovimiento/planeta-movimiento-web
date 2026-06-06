@@ -1,7 +1,12 @@
 import Link from 'next/link'
 
 const links = [
-  'Cumpleaños', 'Campamentos', 'Acrobacia', 'Circo', 'Club', 'Empresas'
+  { label: 'Cumpleaños', href: '/servicios/cumpleanos' },
+  { label: 'Campamentos', href: '/servicios/campamentos' },
+  { label: 'Eventos', href: '/servicios/eventos' },
+  { label: 'Talleres', href: '/servicios/talleres' },
+  { label: 'Club', href: '/club' },
+  { label: 'Colchonetas', href: '/colchonetas' },
 ]
 
 export default function Footer() {
@@ -39,8 +44,8 @@ export default function Footer() {
             <h3 className="text-sm font-semibold uppercase tracking-wider text-white/50 mb-4">Actividades</h3>
             <div className="grid grid-cols-2 gap-2">
               {links.map((link) => (
-                <Link key={link} href="#" className="text-white/70 text-sm hover:text-pm-red transition-colors">
-                  {link}
+                <Link key={link.label} href={link.href} className="text-white/70 text-sm hover:text-pm-red transition-colors">
+                  {link.label}
                 </Link>
               ))}
             </div>
@@ -50,15 +55,16 @@ export default function Footer() {
           <div>
             <h3 className="text-sm font-semibold uppercase tracking-wider text-white/50 mb-4">Contacto</h3>
             <div className="space-y-2 text-sm text-white/70">
-              <p>Cuenca, España</p>
-              <p>info@planetamovimiento.es</p>
-              <p>+34 900 000 000</p>
+              <p>Polígono Los Palancares, 8 · 16004 Cuenca</p>
+              <p><a href="mailto:info@planetamovimiento.com" className="hover:text-pm-red transition-colors">info@planetamovimiento.com</a></p>
+              <p><a href="tel:+34657606465" className="hover:text-pm-red transition-colors">657 60 64 65</a> · <a href="tel:+34630412595" className="hover:text-pm-red transition-colors">630 41 25 95</a></p>
             </div>
           </div>
         </div>
 
-        <div className="border-t border-white/10 mt-10 pt-6 text-center text-sm text-white/40">
-          © {new Date().getFullYear()} Planeta Movimiento. Todos los derechos reservados.
+        <div className="border-t border-white/10 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-white/40">
+          <span>© {new Date().getFullYear()} Planeta Carlos S.L. · Planeta Movimiento. Todos los derechos reservados.</span>
+          <Link href="/terminos-y-condiciones" className="hover:text-pm-red transition-colors">Términos y Condiciones</Link>
         </div>
       </div>
     </footer>
