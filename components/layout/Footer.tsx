@@ -64,7 +64,11 @@ export default function Footer() {
 
         <div className="border-t border-white/10 mt-10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-white/40">
           <span>© {new Date().getFullYear()} Planeta Carlos S.L. · Planeta Movimiento. Todos los derechos reservados.</span>
-          <Link href="/terminos-y-condiciones" className="hover:text-pm-red transition-colors">Términos y Condiciones</Link>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 justify-center">
+            <Link href="/terminos-y-condiciones" className="hover:text-pm-red transition-colors">Términos y Condiciones</Link>
+            <Link href="/politica-privacidad" className="hover:text-pm-red transition-colors">Privacidad</Link>
+            <Link href="/politica-cookies" className="hover:text-pm-red transition-colors">Cookies</Link>
+          </div>
         </div>
       </div>
     </footer>
