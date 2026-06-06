@@ -1,46 +1,59 @@
 import Link from 'next/link'
 
 export const metadata = {
-  title: 'Ocio y diversión — Planeta Movimiento Cuenca',
-  description: 'Cumpleaños, talleres, eventos y campamentos de circo en Cuenca. Diversión para toda la familia con Planeta Movimiento.',
+  title: 'Ocio y tiempo libre — Planeta Movimiento Cuenca',
+  description:
+    'Cumpleaños, campamentos, eventos y talleres de circo en Cuenca. Diversión para toda la familia con Planeta Movimiento.',
 }
 
-const TALLERES = [
+const SERVICIOS = [
   {
-    nombre: 'Taller de Malabares',
-    fecha: '15 jun 2026',
-    precio: '12€/persona',
-    plazas: 12,
-    desc: 'Aprende los fundamentos del malabarismo con pelotas y pañuelos. Apto para todos los niveles.',
-    badge: 'bg-blue-500',
+    nombre: 'Celebración de Cumpleaños',
+    href: '/servicios/cumpleanos',
+    desc: '2 horas de actividad guiada, juegos en grupo y merienda incluida en nuestras instalaciones.',
+    precio: 'Desde 11 € / participante',
+    detalle: 'Reserva online con fianza de 50 €',
+    grad: 'from-pm-red to-pm-red-dark',
+    badge: 'Reserva online',
   },
   {
-    nombre: 'Taller de Acrobacia familiar',
-    fecha: '22 jun 2026',
-    precio: '10€/persona',
-    plazas: 8,
-    desc: 'Acrobacias y equilibrios en pareja y grupo. Perfecto para familias con niños desde 5 años.',
-    badge: 'bg-green-500',
+    nombre: 'Campamentos',
+    href: '/servicios/campamentos',
+    desc: 'Escuela de Superhéroes en Navidad, Semana Santa y 8 semanas de verano. Días sueltos o semanas completas.',
+    precio: '30 € / día · 95 € / semana',
+    detalle: 'Descuento hermanos y horario ampliado',
+    grad: 'from-pm-navy to-pm-navy-md',
+    badge: 'Reserva online',
   },
   {
-    nombre: 'Taller de Circo en verano',
-    fecha: '1 jul 2026',
-    precio: '15€/persona',
-    plazas: 15,
-    desc: 'Un recorrido por las principales disciplinas del circo: malabares, acrobacia y equilibrio.',
-    badge: 'bg-pm-red',
+    nombre: 'Eventos y celebraciones',
+    href: '/servicios/eventos',
+    desc: 'Animación infantil para bodas, comuniones y fiestas. Y eventos en el centro: Días Sin Cole, Domingos en Familia y Halloween.',
+    precio: 'Desde 150 € + IVA',
+    detalle: 'A domicilio o en nuestras instalaciones',
+    grad: 'from-purple-700 to-indigo-800',
+    badge: 'Presupuesto',
+  },
+  {
+    nombre: 'Talleres de Circo',
+    href: '/servicios/talleres',
+    desc: 'Talleres participativos a medida para ferias, fiestas y grandes grupos. Configura los módulos y obtén presupuesto al instante.',
+    precio: 'Presupuesto a medida',
+    detalle: 'Para ayuntamientos, empresas y AMPAs',
+    grad: 'from-pm-red to-purple-700',
+    badge: 'A medida',
   },
 ]
 
-const EVENTOS = [
-  { nombre: 'Noche de circo en la plaza', fecha: '20 jun 2026', desc: 'Espectáculo abierto al público con actuaciones de alumnos avanzados.' },
-  { nombre: 'Feria de las artes de Cuenca', fecha: '5 jul 2026', desc: 'Participamos con un stand de actividades circenses gratuitas para toda la familia.' },
-  { nombre: 'Festival de fin de temporada', fecha: '15 sep 2026', desc: 'Gran gala de clausura con actuaciones de todos los niveles del club.' },
+const EN_INSTALACIONES = [
+  { nombre: 'Días Sin Cole', desc: 'Festivos escolares de 9:00 a 14:00 con la Escuela de Superhéroes.', precio: '30 € + IVA / niño' },
+  { nombre: 'Domingos en Familia', desc: 'Práctica libre en familia los domingos de 11:00 a 13:00.', precio: '15 € / niño · adultos gratis' },
+  { nombre: 'Noche de Halloween', desc: 'Fiesta de pijamas temática anual para mayores de 10 años.', precio: 'Plazas limitadas' },
 ]
 
 export default function OcioPage() {
   return (
-    <main>
+    <main className="bg-pm-bg min-h-screen">
       {/* HERO */}
       <section className="bg-pm-navy text-white py-20 px-4 border-t-4 border-pm-red">
         <div className="max-w-5xl mx-auto">
@@ -50,134 +63,86 @@ export default function OcioPage() {
             <span className="text-white">Ocio</span>
           </nav>
           <h1 className="text-4xl md:text-6xl font-black mb-4 leading-tight">
-            Ocio y diversión<br/>para toda la familia
+            Ocio y tiempo libre<br />para toda la familia
           </h1>
-          <p className="text-gray-300 text-xl max-w-2xl mb-8">
-            Cumpleaños mágicos, talleres abiertos, eventos especiales y campamentos de verano en nuestras instalaciones de Cuenca.
+          <p className="text-white/65 text-xl max-w-2xl mb-8">
+            Cumpleaños, campamentos, eventos y talleres de circo en nuestras instalaciones de Cuenca.
+            Diversión activa para todas las edades.
           </p>
           <div className="flex flex-wrap gap-3">
-            <span className="bg-white/10 text-white text-sm font-semibold px-4 py-2 rounded-full">Sin edad mínima</span>
+            <span className="bg-white/10 text-white text-sm font-semibold px-4 py-2 rounded-full">Todas las edades</span>
             <span className="bg-white/10 text-white text-sm font-semibold px-4 py-2 rounded-full">Reserva online</span>
             <span className="bg-white/10 text-white text-sm font-semibold px-4 py-2 rounded-full">En Cuenca</span>
           </div>
         </div>
       </section>
 
-      {/* CUMPLEAÑOS */}
-      <section className="bg-white py-20 px-4">
+      {/* SERVICIOS */}
+      <section className="py-16 px-4">
         <div className="max-w-5xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl font-black text-pm-navy mb-4">🎂 Cumpleaños circense</h2>
-              <p className="text-gray-600 mb-4">
-                Celebra el cumpleaños de tu peque con una experiencia única de circo. Nuestros monitores organizan la fiesta perfecta para que los niños se diviertan y aprendan al mismo tiempo.
-              </p>
-              <p className="text-gray-600 mb-6">
-                Adaptamos la actividad a la edad del cumpleañero y del grupo de invitados. Disponible todos los fines de semana con reserva previa.
-              </p>
-              <h3 className="font-bold text-pm-navy mb-3">Incluye:</h3>
-              <ul className="space-y-2 mb-6">
-                {[
-                  'Monitor circense especializado',
-                  'Materiales y equipamiento',
-                  '90 minutos de actividad',
-                  'Decoración temática opcional',
-                  'Zona merienda disponible',
-                ].map((item) => (
-                  <li key={item} className="flex items-center gap-3 text-gray-700">
-                    <span className="text-pm-red font-black">✓</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="bg-pm-red-light border-2 border-pm-red rounded-2xl p-8 text-center">
-              <div className="text-5xl mb-4">🎉</div>
-              <div className="text-pm-navy text-sm font-semibold uppercase tracking-wider mb-2">Precio desde</div>
-              <div className="text-5xl font-black text-pm-red mb-1">15€</div>
-              <div className="text-gray-500 text-sm mb-6">por persona · mínimo 8 niños</div>
-              <Link href="/reservar" className="block bg-pm-red hover:bg-pm-red-dark text-white font-black py-3 rounded-xl transition-colors">
-                Reservar cumpleaños
-              </Link>
-              <p className="text-gray-400 text-xs mt-3">Consulta disponibilidad sin compromiso</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* TALLERES */}
-      <section className="bg-pm-bg py-20 px-4">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-black text-pm-navy mb-3 text-center">Talleres próximos</h2>
-          <p className="text-gray-500 text-center mb-10">Sesiones puntuales abiertas al público. Reserva tu plaza.</p>
-          <div className="grid sm:grid-cols-3 gap-6">
-            {TALLERES.map((t) => (
-              <div key={t.nombre} className="bg-white rounded-2xl overflow-hidden shadow-sm">
-                <div className={`${t.badge} text-white px-4 py-2 flex items-center gap-2`}>
-                  <span className="text-xs font-black uppercase tracking-wider">📅 {t.fecha}</span>
+          <h2 className="text-3xl font-black text-pm-navy mb-3 text-center">Nuestros servicios de ocio</h2>
+          <p className="text-gray-500 text-center mb-10">Elige tu plan y reserva o solicita presupuesto en minutos</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {SERVICIOS.map(s => (
+              <Link key={s.nombre} href={s.href}
+                className="group bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-lg hover:-translate-y-1 transition-all">
+                <div className={`bg-gradient-to-br ${s.grad} px-6 py-5 text-white flex items-center justify-between`}>
+                  <h3 className="text-xl font-black">{s.nombre}</h3>
+                  <span className="bg-white/20 text-white text-xs font-bold px-2.5 py-1 rounded-full">{s.badge}</span>
                 </div>
                 <div className="p-6">
-                  <h3 className="font-black text-pm-navy text-lg mb-2">{t.nombre}</h3>
-                  <p className="text-gray-500 text-sm mb-4">{t.desc}</p>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-pm-red font-black text-xl">{t.precio}</span>
-                    <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">{t.plazas} plazas</span>
+                  <p className="text-gray-600 text-sm leading-relaxed mb-4">{s.desc}</p>
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <div className="text-pm-navy font-black text-lg">{s.precio}</div>
+                      <div className="text-xs text-gray-400">{s.detalle}</div>
+                    </div>
+                    <span className="text-sm font-black text-pm-red flex items-center gap-1">
+                      Ver más
+                      <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7"/></svg>
+                    </span>
                   </div>
-                  <Link href="/reservar" className="block text-center bg-pm-red hover:bg-pm-red-dark text-white font-bold py-2.5 rounded-xl transition-colors text-sm">
-                    Reservar
-                  </Link>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CAMPAMENTOS */}
-      <section className="bg-pm-navy py-20 px-4 text-white">
-        <div className="max-w-5xl mx-auto text-center">
-          <div className="text-5xl mb-4">⛺</div>
-          <h2 className="text-4xl font-black mb-4">Campamentos de verano</h2>
-          <p className="text-gray-300 text-xl max-w-2xl mx-auto mb-6">
-            Semanas completas de circo, acrobacia, juegos y convivencia. Una experiencia que los niños recordarán para siempre.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4 mb-8">
-            <div className="bg-white/10 rounded-xl px-6 py-4 text-center">
-              <div className="font-black text-2xl text-pm-red mb-1">Julio</div>
-              <div className="text-gray-300 text-sm">Semanas 1, 2 y 3</div>
-            </div>
-            <div className="bg-white/10 rounded-xl px-6 py-4 text-center">
-              <div className="font-black text-2xl text-pm-red mb-1">Agosto</div>
-              <div className="text-gray-300 text-sm">Semanas 1 y 2</div>
-            </div>
-            <div className="bg-white/10 rounded-xl px-6 py-4 text-center">
-              <div className="font-black text-2xl text-pm-red mb-1">Desde 95€</div>
-              <div className="text-gray-300 text-sm">por semana</div>
-            </div>
-          </div>
-          <Link href="/reservar" className="inline-block bg-pm-red hover:bg-pm-red-dark text-white font-black px-10 py-4 rounded-xl transition-colors text-lg">
-            Reservar campamento
-          </Link>
-        </div>
-      </section>
-
-      {/* EVENTOS ESPECIALES */}
-      <section className="bg-pm-bg py-20 px-4">
+      {/* EVENTOS EN EL CENTRO */}
+      <section className="bg-white py-16 px-4">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-black text-pm-navy mb-3 text-center">Eventos especiales</h2>
-          <p className="text-gray-500 text-center mb-10">Próximas citas en el calendario</p>
-          <div className="space-y-4">
-            {EVENTOS.map((ev) => (
-              <div key={ev.nombre} className="bg-white rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 shadow-sm">
-                <div className="shrink-0 bg-pm-red text-white text-center rounded-xl px-4 py-2 text-sm font-bold min-w-[110px]">
-                  {ev.fecha}
-                </div>
-                <div>
-                  <h3 className="font-black text-pm-navy text-lg">{ev.nombre}</h3>
-                  <p className="text-gray-500 text-sm mt-1">{ev.desc}</p>
-                </div>
+          <h2 className="text-3xl font-black text-pm-navy mb-3 text-center">Eventos en nuestro centro</h2>
+          <p className="text-gray-500 text-center mb-10">Experiencias especiales organizadas en Planeta Movimiento</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {EN_INSTALACIONES.map(e => (
+              <div key={e.nombre} className="bg-pm-bg rounded-2xl border border-gray-100 p-6">
+                <h3 className="font-black text-pm-navy text-lg mb-2">{e.nombre}</h3>
+                <p className="text-gray-500 text-sm leading-relaxed mb-4">{e.desc}</p>
+                <div className="text-pm-red font-bold text-sm">{e.precio}</div>
               </div>
             ))}
+          </div>
+          <div className="text-center mt-8">
+            <Link href="/servicios/eventos" className="inline-block bg-pm-navy hover:bg-pm-navy-md text-white font-bold px-8 py-3.5 rounded-xl transition-colors">
+              Ver todos los eventos del centro
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="bg-pm-red py-16 px-4 text-white text-center">
+        <div className="max-w-2xl mx-auto">
+          <h2 className="text-3xl font-black mb-3">¿Listo para divertirte?</h2>
+          <p className="text-red-100 mb-8">Reserva tu cumpleaños o campamento, o solicita presupuesto para tu evento.</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/servicios/cumpleanos" className="bg-white text-pm-red hover:bg-pm-red-light font-black px-8 py-3.5 rounded-xl transition-colors">
+              Reservar cumpleaños
+            </Link>
+            <Link href="/actividades" className="border-2 border-white/40 text-white hover:bg-white/10 font-bold px-8 py-3.5 rounded-xl transition-colors">
+              Ver todas las actividades
+            </Link>
           </div>
         </div>
       </section>
