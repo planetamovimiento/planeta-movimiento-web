@@ -6,6 +6,12 @@ import { NextResponse, type NextRequest } from 'next/server'
  * La AUTORIZACIÓN por rol (admin_users) se valida en app/admin/layout.tsx.
  */
 export async function middleware(request: NextRequest) {
+  // Bypass de login SOLO en desarrollo local (variable ADMIN_DEV_BYPASS=true).
+  // Nunca se activa en producción (NODE_ENV === 'production').
+  if (process.env.NODE_ENV !== 'production' && process.env.ADMIN_DEV_BYPASS === 'true') {
+    return NextResponse.next({ request })
+  }
+
   let response = NextResponse.next({ request })
 
   const supabase = createServerClient(

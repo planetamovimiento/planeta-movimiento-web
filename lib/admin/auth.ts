@@ -15,6 +15,12 @@ export type AdminUser = {
  * Comprueba sesión de Supabase Auth + pertenencia a admin_users (activo).
  */
 export async function getAdminUser(): Promise<AdminUser | null> {
+  // Acceso directo SOLO en desarrollo local (sin login) si ADMIN_DEV_BYPASS=true.
+  // Protegido: nunca en producción.
+  if (process.env.NODE_ENV !== 'production' && process.env.ADMIN_DEV_BYPASS === 'true') {
+    return { id: 'dev-local', email: 'zumitolol@gmail.com', nombre: 'Administrador (local)', role: 'principal' }
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user?.email) return null
