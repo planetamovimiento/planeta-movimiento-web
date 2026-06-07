@@ -1,18 +1,24 @@
 import { getAdminUser, can } from '@/lib/admin/auth'
-import { getBookings } from '@/lib/admin/data'
-import { AdminHeader, SetupNotice } from '@/components/admin/ui'
-import ReservasTable from './ReservasTable'
+import { getRegistrosCRM } from '@/lib/crm/data'
+import { AdminHeader } from '@/components/admin/ui'
+import ReservasCRMClient from './ReservasCRMClient'
 
 export default async function ReservasPage() {
   const admin = await getAdminUser()
-  const { rows, ok } = await getBookings()
+  const { registros, gestionOk } = await getRegistrosCRM()
 
   return (
     <>
-      <AdminHeader titulo="Reservas" subtitulo={`${rows.length} reservas en total`} />
-      <div className="p-6 lg:p-8 space-y-6">
-        {!ok && <SetupNotice />}
-        <ReservasTable reservas={rows} puedeEditar={admin ? can.edit(admin.role) : false} />
+      <AdminHeader
+        titulo="Reservas · CRM de empresa"
+        subtitulo="Clientes, reservas, cobros y contrataciones de todos los servicios"
+      />
+      <div className="p-4 lg:p-6">
+        <ReservasCRMClient
+          registros={registros}
+          puedeEditar={admin ? can.edit(admin.role) : false}
+          gestionOk={gestionOk}
+        />
       </div>
     </>
   )
