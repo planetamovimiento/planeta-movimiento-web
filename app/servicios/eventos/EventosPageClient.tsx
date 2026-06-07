@@ -5,6 +5,7 @@ import { useState } from 'react'
 import CalculadoraEventos from './CalculadoraEventos'
 import { ReservaDiasSinCole, ReservaDomingos, ReservaHalloween, ReservaMananaMagica } from './EventosInstalaciones'
 import type { MananaMagica } from '@/lib/eventos/manana-magica'
+import type { EventoCentroCfg } from '@/lib/eventos/centro'
 
 // ─── Datos ────────────────────────────────────────────────────────────────────
 const TIPOS_EVENTO = [
@@ -172,7 +173,7 @@ function PanelExterno() {
 }
 
 // ─── Panel Días Sin Cole ──────────────────────────────────────────────────────
-function PanelDiasSinCole() {
+function PanelDiasSinCole({ cfg }: { cfg: EventoCentroCfg }) {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10">
@@ -218,7 +219,7 @@ function PanelDiasSinCole() {
               <div className="font-black text-base">⚡ Reservar plaza</div>
               <div className="text-amber-100 text-xs mt-0.5">Elige el día y completa la solicitud</div>
             </div>
-            <div className="p-5"><ReservaDiasSinCole /></div>
+            <div className="p-5"><ReservaDiasSinCole cfg={cfg} /></div>
           </div>
         </div>
       </div>
@@ -227,7 +228,7 @@ function PanelDiasSinCole() {
 }
 
 // ─── Panel Domingos ───────────────────────────────────────────────────────────
-function PanelDomingos() {
+function PanelDomingos({ cfg }: { cfg: EventoCentroCfg }) {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10">
@@ -283,7 +284,7 @@ function PanelDomingos() {
               <div className="font-black text-base">🗓 Reservar domingo</div>
               <div className="text-emerald-100 text-xs mt-0.5">Elige la semana y completa la solicitud</div>
             </div>
-            <div className="p-5"><ReservaDomingos /></div>
+            <div className="p-5"><ReservaDomingos cfg={cfg} /></div>
           </div>
         </div>
       </div>
@@ -337,7 +338,7 @@ function PanelMananaMagica({ cfg }: { cfg: MananaMagica }) {
 }
 
 // ─── Panel Halloween ──────────────────────────────────────────────────────────
-function PanelHalloween() {
+function PanelHalloween({ cfg }: { cfg: EventoCentroCfg }) {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10">
@@ -384,7 +385,7 @@ function PanelHalloween() {
               <div className="font-black text-base text-orange-400">🧟 Reservar plaza — 2026</div>
               <div className="text-orange-300/60 text-xs mt-0.5">Plazas muy limitadas · Respuesta en 24h</div>
             </div>
-            <div className="p-5"><ReservaHalloween /></div>
+            <div className="p-5"><ReservaHalloween cfg={cfg} /></div>
           </div>
         </div>
       </div>
@@ -393,7 +394,9 @@ function PanelHalloween() {
 }
 
 // ─── Página principal (cliente) ───────────────────────────────────────────────
-export default function EventosPageClient({ mananaMagica }: { mananaMagica: MananaMagica }) {
+export default function EventosPageClient({ mananaMagica, diasSinCole, domingos, halloween }: {
+  mananaMagica: MananaMagica; diasSinCole: EventoCentroCfg; domingos: EventoCentroCfg; halloween: EventoCentroCfg
+}) {
   const [tabPrincipal, setTabPrincipal] = useState<TabPrincipal>('externo')
   const [tabCentro, setTabCentro]       = useState<TabCentro>('diassinc')
 
@@ -486,10 +489,10 @@ export default function EventosPageClient({ mananaMagica }: { mananaMagica: Mana
             </div>
           </div>
 
-          {tabCentro === 'diassinc'  && <PanelDiasSinCole />}
-          {tabCentro === 'domingos'  && <PanelDomingos />}
+          {tabCentro === 'diassinc'  && <PanelDiasSinCole cfg={diasSinCole} />}
+          {tabCentro === 'domingos'  && <PanelDomingos cfg={domingos} />}
           {tabCentro === 'manana'    && <PanelMananaMagica cfg={mananaMagica} />}
-          {tabCentro === 'halloween' && <PanelHalloween />}
+          {tabCentro === 'halloween' && <PanelHalloween cfg={halloween} />}
         </>
       )}
 

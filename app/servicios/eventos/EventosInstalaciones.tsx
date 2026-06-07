@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { submitBooking } from '@/lib/forms/actions'
 import type { MananaMagica } from '@/lib/eventos/manana-magica'
+import { parseFechasDSC, type EventoCentroCfg } from '@/lib/eventos/centro'
 
 // ─── Días Sin Cole ─────────────────────────────────────────────────────────
 // Configurar aquí cada temporada
@@ -58,15 +59,18 @@ function Exito({ onClose }: { onClose: () => void }) {
 // ──────────────────────────────────────────────────────────────────────────────
 // DÍAS SIN COLE
 // ──────────────────────────────────────────────────────────────────────────────
-export function ReservaDiasSinCole({ onClose = () => {} }: { onClose?: () => void }) {
+export function ReservaDiasSinCole({ cfg, onClose = () => {} }: { cfg?: EventoCentroCfg; onClose?: () => void }) {
   const [fecha, setFecha]      = useState('')
   const [ninos, setNinos]       = useState(1)
   const [form, setForm]         = useState({ nombre: '', email: '', telefono: '' })
   const [enviando, setEnviando] = useState(false)
   const [listo, setListo]       = useState(false)
 
-  const precioBase = 30
-  const precioConIva = Math.round(precioBase * (1 + IVA) * ninos * 100) / 100
+  const fechasDSC = cfg ? parseFechasDSC(cfg.fechas) : DIAS_SIN_COLE
+  const precioBase = cfg ? cfg.precio : 30
+  const precioConIva = (cfg && cfg.ivaIncluido)
+    ? Math.round(precioBase * ninos * 100) / 100
+    : Math.round(precioBase * (1 + IVA) * ninos * 100) / 100
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault(); setEnviando(true)
@@ -87,7 +91,7 @@ export function ReservaDiasSinCole({ onClose = () => {} }: { onClose?: () => voi
       <div>
         <label className="block text-xs font-bold text-pm-navy mb-2">Elige el día *</label>
         <div className="grid grid-cols-1 gap-2">
-          {DIAS_SIN_COLE.map(d => {
+          {fechasDSC.map(d => {
             const pasado = new Date(d.fecha + 'T12:00:00') < new Date()
             return (
               <button key={d.fecha} type="button" disabled={pasado}
@@ -158,7 +162,8 @@ function domingosDeMes(year: number, month: number): string[] {
   return res
 }
 
-export function ReservaDomingos({ onClose = () => {} }: { onClose?: () => void }) {
+export function ReservaDomingos({ cfg, onClose = () => {} }: { cfg?: EventoCentroCfg; onClose?: () => void }) {
+  const precioNino = cfg ? cfg.precio : 15
   const hoy = useMemo(() => { const h = new Date(); h.setHours(0, 0, 0, 0); return h }, [])
   const [viewY, setViewY] = useState(hoy.getFullYear())
   const [viewM, setViewM] = useState(hoy.getMonth())
@@ -174,7 +179,7 @@ export function ReservaDomingos({ onClose = () => {} }: { onClose?: () => void }
   const [enviando, setEnviando] = useState(false)
   const [listo, setListo]   = useState(false)
 
-  const total = ninos * 15
+  const total = ninos * precioNino
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault(); setEnviando(true)
@@ -240,7 +245,7 @@ export function ReservaDomingos({ onClose = () => {} }: { onClose?: () => void }
       {fecha && (
         <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-sm">
           <div className="flex justify-between text-green-800">
-            <span>{ninos} niño{ninos > 1 ? 's' : ''} × 15 € · Adultos gratis</span>
+            <span>{ninos} niño{ninos > 1 ? 's' : ''} × {precioNino} € · Adultos gratis</span>
             <strong>{total} €</strong>
           </div>
         </div>
@@ -263,7 +268,9 @@ export function ReservaDomingos({ onClose = () => {} }: { onClose?: () => void }
 // ──────────────────────────────────────────────────────────────────────────────
 const PLAZAS_HALLOWEEN = 20
 
-export function ReservaHalloween({ onClose = () => {} }: { onClose?: () => void }) {
+export function ReservaHalloween({ cfg, onClose = () => {} }: { cfg?: EventoCentroCfg; onClose?: () => void }) {
+  const PLAZAS = cfg?.plazas || PLAZAS_HALLOWEEN
+  const evento = cfg?.evento || 'Apocalipsis Zombie'
   const [ninos, setNinos]   = useState(1)
   const [form, setForm]     = useState({ nombre: '', email: '', telefono: '', edades: '', notas: '' })
   const [enviando, setEnviando] = useState(false)
@@ -275,7 +282,7 @@ export function ReservaHalloween({ onClose = () => {} }: { onClose?: () => void 
       servicio: 'Noche de Halloween',
       cliente_nombre: form.nombre, cliente_email: form.email, cliente_telefono: form.telefono,
       participantes: ninos, observaciones: form.notas,
-      datos: { edades: form.edades, numNinos: ninos, evento: 'Apocalipsis Zombie' },
+      datos: { edades: form.edades, numNinos: ninos, evento },
     })
     setEnviando(false); setListo(true)
   }
@@ -291,7 +298,7 @@ export function ReservaHalloween({ onClose = () => {} }: { onClose?: () => void 
           <div>📅 Noche del 31 de octubre al 1 de noviembre</div>
           <div>🕙 22:00 – 09:00 del día siguiente</div>
           <div>👦 Edad mínima: 10 años</div>
-          <div>🎯 Plazas limitadas: {PLAZAS_HALLOWEEN} máximo</div>
+          <div>🎯 Plazas limitadas: {PLAZAS} máximo</div>
         </div>
       </div>
 
@@ -300,7 +307,7 @@ export function ReservaHalloween({ onClose = () => {} }: { onClose?: () => void 
         <div className="flex items-center gap-4">
           <button type="button" onClick={() => setNinos(n => Math.max(1, n-1))} className="w-9 h-9 bg-orange-900/40 border border-orange-500/40 rounded-xl font-bold text-lg text-orange-300 hover:border-orange-400 transition-colors">−</button>
           <div className="flex-1 text-center text-3xl font-black text-white">{ninos}</div>
-          <button type="button" onClick={() => setNinos(n => Math.min(PLAZAS_HALLOWEEN, n+1))} className="w-9 h-9 bg-orange-900/40 border border-orange-500/40 rounded-xl font-bold text-lg text-orange-300 hover:border-orange-400 transition-colors">+</button>
+          <button type="button" onClick={() => setNinos(n => Math.min(PLAZAS, n+1))} className="w-9 h-9 bg-orange-900/40 border border-orange-500/40 rounded-xl font-bold text-lg text-orange-300 hover:border-orange-400 transition-colors">+</button>
         </div>
       </div>
 

@@ -4,8 +4,11 @@ import { getServicio } from '@/lib/servicios/store'
 import { AdminHeader, EstadoBadge } from '@/components/admin/ui'
 import EditorServicio from './EditorServicio'
 import { getAdminUser, can } from '@/lib/admin/auth'
-import { getMananaMagica } from '@/lib/eventos/store'
+import { getMananaMagica, getEventoCentro } from '@/lib/eventos/store'
 import EditorMananaMagica from '@/app/admin/manana-magica/EditorMananaMagica'
+import EditorEventoCentro from './EditorEventoCentro'
+import { EVENTOS_CENTRO_IDS, type EventoCentroId } from '@/lib/eventos/centro'
+import { CATALOGO_MAP } from '@/lib/servicios/catalogo'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,6 +32,29 @@ export default async function EditarServicioPage({ params }: { params: Promise<{
             <span className="text-pm-navy font-semibold">Mañanas Mágicas</span>
           </div>
           <EditorMananaMagica inicial={cfg} puedeEditar={admin ? can.edit(admin.role) : false} />
+        </div>
+      </>
+    )
+  }
+
+  // Eventos en el centro (Días Sin Cole, Domingos, Halloween): editor de fechas/precios.
+  if ((EVENTOS_CENTRO_IDS as readonly string[]).includes(id)) {
+    const admin = await getAdminUser()
+    const cfg = await getEventoCentro(id as EventoCentroId)
+    const base = CATALOGO_MAP.get(id)
+    return (
+      <>
+        <AdminHeader
+          titulo={<span className="flex items-center gap-2"><span>{base?.icon}</span> {base?.nombre}</span>}
+          subtitulo="Empresa · Eventos en el centro · Datos editables"
+        />
+        <div className="p-6 lg:p-8">
+          <div className="flex items-center gap-3 mb-6 text-sm">
+            <Link href="/admin/servicios" className="text-gray-500 hover:text-pm-red">← Servicios</Link>
+            <span className="text-gray-300">/</span>
+            <span className="text-pm-navy font-semibold">{base?.nombre}</span>
+          </div>
+          <EditorEventoCentro id={id} inicial={cfg} puedeEditar={admin ? can.edit(admin.role) : false} />
         </div>
       </>
     )

@@ -1,4 +1,4 @@
-import { getMananaMagica } from '@/lib/eventos/store'
+import { getMananaMagica, getEventoCentro } from '@/lib/eventos/store'
 import EventosPageClient from './EventosPageClient'
 
 export const metadata = {
@@ -8,6 +8,11 @@ export const metadata = {
 }
 
 export default async function EventosPage() {
-  const mananaMagica = await getMananaMagica()
-  return <EventosPageClient mananaMagica={mananaMagica} />
+  const [mananaMagica, diasSinCole, domingos, halloween] = await Promise.all([
+    getMananaMagica(),
+    getEventoCentro('dias-sin-cole'),
+    getEventoCentro('domingos'),
+    getEventoCentro('halloween'),
+  ])
+  return <EventosPageClient mananaMagica={mananaMagica} diasSinCole={diasSinCole} domingos={domingos} halloween={halloween} />
 }
