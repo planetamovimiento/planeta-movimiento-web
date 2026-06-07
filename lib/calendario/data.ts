@@ -2,7 +2,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getRegistrosCRM } from '@/lib/crm/data'
 import { getEventoCentro, getMananaMagica } from '@/lib/eventos/store'
 import { parseFechasDSC } from '@/lib/eventos/centro'
-import { SEMANAS_VERANO, FECHAS_NAVIDAD, FECHAS_SEMANA_SANTA } from '@/app/servicios/campamentos/config'
+import { getCampamentosConfig } from '@/lib/campamentos/store'
+import { semanasResueltas, parseFechasLista } from '@/lib/campamentos/editable'
 import type { EventoCalendario } from './constants'
 
 /** Días (YYYY-MM-DD) entre dos fechas inclusive. */
@@ -37,14 +38,18 @@ export async function getEventosCalendario(): Promise<{ eventos: EventoCalendari
     }
   } catch { /* sin CRM */ }
 
-  // 2) CAMPAMENTOS programados (todo el año)
-  for (const s of SEMANAS_VERANO) {
-    for (const d of rango(s.inicio, s.fin)) {
-      out.push({ id: `v-${d}`, fecha: d, titulo: `Verano · Sem. ${s.id} (${s.elemento})`, servicio: 'Campamento de Verano', categoria: 'Campamentos', tipo: 'programado' })
+  // 2) CAMPAMENTOS programados (todo el año), según la config editable
+  try {
+    const camp = await getCampamentosConfig()
+    for (const s of semanasResueltas(camp)) {
+      if (!s.inicio || !s.fin) continue
+      for (const d of rango(s.inicio, s.fin)) {
+        out.push({ id: `v-${d}`, fecha: d, titulo: `Verano · Sem. ${s.id} (${s.elemento})`, servicio: 'Campamento de Verano', categoria: 'Campamentos', tipo: 'programado' })
+      }
     }
-  }
-  for (const d of FECHAS_NAVIDAD) out.push({ id: `n-${d}`, fecha: d, titulo: 'Campamento de Navidad', servicio: 'Campamento de Navidad', categoria: 'Campamentos', tipo: 'programado' })
-  for (const d of FECHAS_SEMANA_SANTA) out.push({ id: `s-${d}`, fecha: d, titulo: 'Campamento de Semana Santa', servicio: 'Campamento de Semana Santa', categoria: 'Campamentos', tipo: 'programado' })
+    for (const d of parseFechasLista(camp.navidadFechas)) out.push({ id: `n-${d}`, fecha: d, titulo: 'Campamento de Navidad', servicio: 'Campamento de Navidad', categoria: 'Campamentos', tipo: 'programado' })
+    for (const d of parseFechasLista(camp.ssantaFechas)) out.push({ id: `s-${d}`, fecha: d, titulo: 'Campamento de Semana Santa', servicio: 'Campamento de Semana Santa', categoria: 'Campamentos', tipo: 'programado' })
+  } catch { /* sin config */ }
 
   // 3) EVENTOS DEL CENTRO programados
   try {

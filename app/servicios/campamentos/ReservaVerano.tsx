@@ -3,38 +3,35 @@
 import { useState, useMemo } from 'react'
 import { submitBooking } from '@/lib/forms/actions'
 import FormularioCampamento, { type PayloadCampamento, textoParticipantes } from './FormularioCampamento'
-import {
-  SEMANAS_VERANO, diasDeSemana, formatDia, formatFechaLarga,
-  PRECIO_DIA_SUELTO, PRECIO_SEMANA, PRECIO_MATINAL, PRECIO_VESPERTINO,
-  DESCUENTO_HERMANOS, CUPON_HERMANOS,
-} from './config'
+import { formatDia, formatFechaLarga } from './config'
+import { semanasResueltas, diasDeSemana, type CampamentosConfig, type SemanaVerano } from '@/lib/campamentos/editable'
 
 const DIAS_SEMANA = ['L', 'M', 'X', 'J', 'V']
 
 // ─── Cálculo de precio (por niño) ──────────────────────────────────────────────
-function calcularPrecio(diasSeleccionados: Set<string>, cuponAplicado: boolean, matinal: boolean, vespertino: boolean) {
+function calcularPrecio(cfg: CampamentosConfig, semanas: SemanaVerano[], diasSeleccionados: Set<string>, cuponAplicado: boolean, matinal: boolean, vespertino: boolean) {
   let base = 0
   let numDias = 0
   const desglose: { label: string; precio: number }[] = []
 
-  for (const semana of SEMANAS_VERANO) {
+  for (const semana of semanas) {
     const dias = diasDeSemana(semana)
     const seleccionados = dias.filter(d => diasSeleccionados.has(d))
     if (seleccionados.length === 0) continue
     numDias += seleccionados.length
     if (seleccionados.length === 5) {
-      base += PRECIO_SEMANA
-      desglose.push({ label: `Semana ${semana.id} — ${semana.elemento} (semana completa)`, precio: PRECIO_SEMANA })
+      base += cfg.precioSemana
+      desglose.push({ label: `Semana ${semana.id} — ${semana.elemento} (semana completa)`, precio: cfg.precioSemana })
     } else {
-      const precio = seleccionados.length * PRECIO_DIA_SUELTO
+      const precio = seleccionados.length * cfg.precioDiaSuelto
       base += precio
       desglose.push({ label: `Semana ${semana.id} — ${semana.elemento} (${seleccionados.length} día${seleccionados.length > 1 ? 's' : ''})`, precio })
     }
   }
 
-  const descuento = cuponAplicado ? Math.round(base * DESCUENTO_HERMANOS) : 0
-  const matinalCost = matinal ? PRECIO_MATINAL * numDias : 0
-  const vespertinoCost = vespertino ? PRECIO_VESPERTINO * numDias : 0
+  const descuento = cuponAplicado ? Math.round(base * (cfg.descuentoHermanos / 100)) : 0
+  const matinalCost = matinal ? cfg.precioMatinal * numDias : 0
+  const vespertinoCost = vespertino ? cfg.precioVespertino * numDias : 0
   if (matinalCost) desglose.push({ label: `Matinal (8:00–9:00) · ${numDias} día${numDias > 1 ? 's' : ''}`, precio: matinalCost })
   if (vespertinoCost) desglose.push({ label: `Vespertino (14:00–15:00) · ${numDias} día${numDias > 1 ? 's' : ''}`, precio: vespertinoCost })
 
@@ -44,7 +41,8 @@ function calcularPrecio(diasSeleccionados: Set<string>, cuponAplicado: boolean, 
 }
 
 // ─── Componente principal ─────────────────────────────────────────────────────
-export default function ReservaVerano() {
+export default function ReservaVerano({ cfg }: { cfg: CampamentosConfig }) {
+  const SEMANAS = useMemo(() => semanasResueltas(cfg), [cfg])
   const [diasSeleccionados, setDiasSeleccionados] = useState<Set<string>>(new Set())
   const [matinal, setMatinal]     = useState(false)   // entrada 8:00
   const [ampliacion, setAmpliacion] = useState(false) // salida 15:00
@@ -56,8 +54,8 @@ export default function ReservaVerano() {
   const [enviando, setEnviando] = useState(false)
 
   const { subtotal, descuento, total, desglose } = useMemo(
-    () => calcularPrecio(diasSeleccionados, cuponAplicado, matinal, ampliacion),
-    [diasSeleccionados, cuponAplicado, matinal, ampliacion]
+    () => calcularPrecio(cfg, SEMANAS, diasSeleccionados, cuponAplicado, matinal, ampliacion),
+    [cfg, SEMANAS, diasSeleccionados, cuponAplicado, matinal, ampliacion]
   )
 
   function toggleDia(dia: string) {
@@ -68,7 +66,7 @@ export default function ReservaVerano() {
     })
   }
 
-  function toggleSemana(semana: typeof SEMANAS_VERANO[0]) {
+  function toggleSemana(semana: SemanaVerano) {
     const dias = diasDeSemana(semana)
     const todosSeleccionados = dias.every(d => diasSeleccionados.has(d))
     setDiasSeleccionados(prev => {
@@ -80,7 +78,7 @@ export default function ReservaVerano() {
   }
 
   function aplicarCupon() {
-    if (cupon.trim().toUpperCase() === CUPON_HERMANOS) {
+    if (cupon.trim().toUpperCase() === cfg.cuponHermanos.toUpperCase()) {
       setCuponAplicado(true); setCuponError(false)
     } else {
       setCuponError(true); setCuponAplicado(false)
@@ -105,7 +103,7 @@ export default function ReservaVerano() {
         numDias: dias.length,
         matinal: matinal ? 'Sí (8:00–9:00)' : 'No',
         vespertino: ampliacion ? 'Sí (14:00–15:00)' : 'No',
-        cuponHermanos: cuponAplicado ? 'Aplicado (-15%)' : 'No',
+        cuponHermanos: cuponAplicado ? `Aplicado (-${cfg.descuentoHermanos}%)` : 'No',
         participantes: textoParticipantes(p.participantes),
         numNinos: n,
       },
@@ -151,7 +149,7 @@ export default function ReservaVerano() {
           </div>
         </div>
 
-        {SEMANAS_VERANO.map(semana => {
+        {SEMANAS.map(semana => {
           const dias = diasDeSemana(semana)
           const seleccionados = dias.filter(d => diasSeleccionados.has(d))
           const todosSelec = seleccionados.length === 5
@@ -175,7 +173,7 @@ export default function ReservaVerano() {
                 <div className="flex items-center gap-2">
                   {esSemanaCompleta && (
                     <span className={`text-xs font-black px-2 py-0.5 rounded-full ${todosSelec ? 'bg-white/20 text-white' : 'bg-green-100 text-green-700'}`}>
-                      95 € ✓
+                      {cfg.precioSemana} € ✓
                     </span>
                   )}
                   <button
@@ -216,7 +214,7 @@ export default function ReservaVerano() {
               {seleccionados.length > 0 && (
                 <div className={`${semana.colorLight} px-4 py-2 text-xs ${semana.colorText} font-semibold flex justify-between`}>
                   <span>{seleccionados.length === 5 ? '✓ Semana completa (ahorro incluido)' : `${seleccionados.length} día${seleccionados.length > 1 ? 's' : ''} suelto${seleccionados.length > 1 ? 's' : ''}`}</span>
-                  <span className="font-black">{seleccionados.length === 5 ? PRECIO_SEMANA : seleccionados.length * PRECIO_DIA_SUELTO} €</span>
+                  <span className="font-black">{seleccionados.length === 5 ? cfg.precioSemana : seleccionados.length * cfg.precioDiaSuelto} €</span>
                 </div>
               )}
             </div>
@@ -236,13 +234,13 @@ export default function ReservaVerano() {
                 className={`border-2 rounded-xl p-3 text-left transition-all ${matinal ? 'border-pm-red bg-pm-red-light' : 'border-gray-200 hover:border-pm-red/40'}`}>
                 <div className={`font-bold text-sm ${matinal ? 'text-pm-red' : 'text-pm-navy'}`}>Matinal</div>
                 <div className="text-xs text-gray-500 mt-0.5">Entrada de 8:00 a 9:00</div>
-                <div className="text-xs font-bold text-pm-red mt-1">+5 € por niño y día</div>
+                <div className="text-xs font-bold text-pm-red mt-1">+{cfg.precioMatinal} € por niño y día</div>
               </button>
               <button onClick={() => setAmpliacion(!ampliacion)}
                 className={`border-2 rounded-xl p-3 text-left transition-all ${ampliacion ? 'border-pm-red bg-pm-red-light' : 'border-gray-200 hover:border-pm-red/40'}`}>
                 <div className={`font-bold text-sm ${ampliacion ? 'text-pm-red' : 'text-pm-navy'}`}>Vespertino</div>
                 <div className="text-xs text-gray-500 mt-0.5">Salida de 14:00 a 15:00</div>
-                <div className="text-xs font-bold text-pm-red mt-1">+5 € por niño y día</div>
+                <div className="text-xs font-bold text-pm-red mt-1">+{cfg.precioVespertino} € por niño y día</div>
               </button>
             </div>
           </div>
@@ -262,13 +260,13 @@ export default function ReservaVerano() {
           {/* Cupón hermanos */}
           <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
             <div className="font-black text-pm-navy text-sm mb-1">🏷️ Cupón de hermanos</div>
-            <div className="text-xs text-gray-500 mb-3">Si tus hijos vienen juntos, aplica un 15% de descuento</div>
+            <div className="text-xs text-gray-500 mb-3">Si tus hijos vienen juntos, aplica un {cfg.descuentoHermanos}% de descuento</div>
             {cuponAplicado ? (
               <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-sm rounded-xl px-4 py-2.5">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
                 </svg>
-                <span className="font-bold">Cupón HERMANOS aplicado — 15% de descuento</span>
+                <span className="font-bold">Cupón {cfg.cuponHermanos} aplicado — {cfg.descuentoHermanos}% de descuento</span>
                 <button onClick={() => { setCuponAplicado(false); setCupon('') }} className="ml-auto text-xs underline text-green-600">Quitar</button>
               </div>
             ) : (
@@ -277,7 +275,7 @@ export default function ReservaVerano() {
                   type="text"
                   value={cupon}
                   onChange={e => { setCupon(e.target.value.toUpperCase()); setCuponError(false) }}
-                  placeholder="Ej. HERMANOS"
+                  placeholder={`Ej. ${cfg.cuponHermanos}`}
                   className={`flex-1 border rounded-xl px-3 py-2 text-sm focus:outline-none ${cuponError ? 'border-pm-red bg-pm-red-light' : 'border-gray-200 focus:border-pm-red'}`}
                 />
                 <button onClick={aplicarCupon}
@@ -286,7 +284,7 @@ export default function ReservaVerano() {
                 </button>
               </div>
             )}
-            {cuponError && <p className="text-xs text-pm-red mt-1">Cupón no válido. Prueba con "HERMANOS".</p>}
+            {cuponError && <p className="text-xs text-pm-red mt-1">Cupón no válido. Prueba con &quot;{cfg.cuponHermanos}&quot;.</p>}
           </div>
 
           {/* Resumen de precio */}
@@ -306,7 +304,7 @@ export default function ReservaVerano() {
             )}
             {cuponAplicado && (
               <div className="flex justify-between text-green-600 text-sm">
-                <span>Descuento hermanos (15%)</span>
+                <span>Descuento hermanos ({cfg.descuentoHermanos}%)</span>
                 <span className="font-semibold">− {descuento * numNinos} €</span>
               </div>
             )}

@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAdminUser, can, logActivity } from '@/lib/admin/auth'
 
-const PERMITIDOS = ['dias-sin-cole', 'domingos', 'halloween', 'manana-magica']
+const PERMITIDOS = ['dias-sin-cole', 'domingos', 'halloween', 'manana-magica', 'campamentos']
 
 /** Guarda la configuración editable de un evento del centro en eventos_config. */
 export async function guardarEventoConfig(id: string, contenido: Record<string, unknown>, estado: string) {

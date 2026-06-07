@@ -3,9 +3,10 @@
 import { useState } from 'react'
 import { submitBooking } from '@/lib/forms/actions'
 import FormularioCampamento, { type PayloadCampamento, textoParticipantes } from './FormularioCampamento'
-import { FECHAS_SEMANA_SANTA, formatFechaLarga } from './config'
+import { parseFechasLista, type CampamentosConfig } from '@/lib/campamentos/editable'
 
-export default function ReservaSemanaSanta() {
+export default function ReservaSemanaSanta({ cfg }: { cfg: CampamentosConfig }) {
+  const FECHAS_SEMANA_SANTA = parseFechasLista(cfg.ssantaFechas)
   const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set())
   const [numNinos, setNumNinos] = useState(1)
   const [paso, setPaso] = useState<'seleccion' | 'datos' | 'confirmado'>('seleccion')

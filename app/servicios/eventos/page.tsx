@@ -1,6 +1,8 @@
 import { getMananaMagica, getEventoCentro } from '@/lib/eventos/store'
 import EventosPageClient from './EventosPageClient'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata = {
   title: 'Eventos y celebraciones — Planeta Movimiento',
   description:
