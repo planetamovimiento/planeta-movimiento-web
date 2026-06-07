@@ -29,6 +29,7 @@ export async function guardarGestionCRM(origen: string, origenId: string, patch:
 
   await logActivity({ actorEmail: admin.email, accion: 'Gestión CRM actualizada', entidad: 'crm', entidadId: `${origen}:${origenId}` })
   revalidatePath('/admin/reservas')
+  revalidatePath('/admin/calendario')
   return { ok: true }
 }
 

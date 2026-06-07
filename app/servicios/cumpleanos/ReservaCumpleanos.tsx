@@ -204,7 +204,7 @@ export default function ReservaCumpleanos() {
   const [paso, setPaso] = useState<1 | 2 | 3>(1) // 1=fecha, 2=detalles, 3=confirmado
 
   // Estado del formulario de datos personales
-  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', notas: '' })
+  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', notas: '', cumpleanero: '', edad: '' })
   const [enviando, setEnviando] = useState(false)
 
   const slots = useMemo(() => fechaSeleccionada ? getSlotsDelDia(fechaSeleccionada) : [], [fechaSeleccionada])
@@ -220,7 +220,7 @@ export default function ReservaCumpleanos() {
   }
 
   function canConfirmar() {
-    return tieneTarta !== null && form.nombre && form.email && form.telefono
+    return tieneTarta !== null && form.nombre && form.email && form.telefono && form.cumpleanero
   }
 
   async function handleReservar(e: React.FormEvent) {
@@ -237,6 +237,8 @@ export default function ReservaCumpleanos() {
       precio: precio?.total,
       observaciones: form.notas,
       datos: {
+        cumpleanero: form.cumpleanero,
+        edad: form.edad ? `Cumple ${form.edad}` : '',
         meriendas: 'Cada niño elige su opción el día del cumpleaños',
         traeTarta: tieneTarta ? 'Sí' : 'No (tarta decorativa + juego extra)',
       },
@@ -264,7 +266,7 @@ export default function ReservaCumpleanos() {
           <div><span className="text-gray-500">Participantes:</span> <strong>{participantes}</strong></div>
           <div><span className="text-gray-500">Total estimado:</span> <strong>{precio?.total} €</strong></div>
         </div>
-        <button onClick={() => { setPaso(1); setFechaSeleccionada(null); setSlotSeleccionado(null); setTieneTarta(null); setForm({ nombre: '', email: '', telefono: '', notas: '' }) }}
+        <button onClick={() => { setPaso(1); setFechaSeleccionada(null); setSlotSeleccionado(null); setTieneTarta(null); setForm({ nombre: '', email: '', telefono: '', notas: '', cumpleanero: '', edad: '' }) }}
           className="text-pm-red underline text-sm">
           Hacer otra reserva
         </button>
@@ -450,7 +452,17 @@ export default function ReservaCumpleanos() {
               <span className="font-bold text-sm">Datos de contacto</span>
             </div>
             <div className="space-y-3">
-              <input required type="text" placeholder="Nombre completo *"
+              <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3">
+                <input required type="text" placeholder="Nombre del cumpleañero/a *"
+                  value={form.cumpleanero} onChange={e => setForm(f => ({ ...f, cumpleanero: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"
+                />
+                <input type="number" min={1} placeholder="Edad que cumple"
+                  value={form.edad} onChange={e => setForm(f => ({ ...f, edad: e.target.value }))}
+                  className="w-full sm:w-40 border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"
+                />
+              </div>
+              <input required type="text" placeholder="Nombre completo del contacto *"
                 value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"
               />

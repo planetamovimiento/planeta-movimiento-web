@@ -26,11 +26,13 @@ export async function getEventosCalendario(): Promise<{ eventos: EventoCalendari
     for (const r of registros) {
       const f = (r.fecha_realizacion || '').slice(0, 10)
       if (!f) continue
-      if (r.estado_reserva === 'cancelada') continue
+      if (r.estado_reserva === 'cancelada') continue   // las canceladas NO aparecen en el calendario
+      const cumpleanero = r.categoria === 'Cumpleaños' ? String((r.datos as Record<string, unknown>)?.cumpleanero ?? '') : ''
+      const nombre = cumpleanero || r.cliente_nombre
       out.push({
         id: `r-${r.origen}-${r.id}`, fecha: f,
-        titulo: r.cliente_nombre ? `${r.servicio} · ${r.cliente_nombre}` : r.servicio,
-        servicio: r.servicio, categoria: r.categoria, tipo: 'reserva', detalle: r.cliente_nombre,
+        titulo: nombre ? `${r.servicio} · ${nombre}` : r.servicio,
+        servicio: r.servicio, categoria: r.categoria, tipo: 'reserva', detalle: nombre,
       })
     }
   } catch { /* sin CRM */ }
