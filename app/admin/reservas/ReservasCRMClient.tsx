@@ -71,7 +71,7 @@ export default function ReservasCRMClient({ registros, puedeEditar, gestionOk }:
     const proximos = (cat: string) => lista
       .filter(r => r.categoria === cat && r.fecha_realizacion && r.fecha_realizacion >= HOY && r.estado_reserva !== 'cancelada')
       .sort((a, b) => (a.fecha_realizacion || '').localeCompare(b.fecha_realizacion || ''))
-    return { activas, pendientes, pagosPend, ingMes, ingAnio, cumple: proximos('Cumpleaños'), campa: proximos('Campamentos'), eventos: proximos('Eventos') }
+    return { activas, pendientes, pagosPend, ingMes, ingAnio, cumple: proximos('Cumpleaños'), talleres: proximos('Talleres'), eventos: proximos('Eventos') }
   }, [lista])
 
   const hayFiltros = !!(q || fCategoria || fServicio || fReserva || fPago || fMes)
@@ -140,7 +140,7 @@ export default function ReservasCRMClient({ registros, puedeEditar, gestionOk }:
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Proximo titulo="Próximos cumpleaños" icon="🎂" items={dash.cumple} />
-        <Proximo titulo="Próximos campamentos" icon="🏕️" items={dash.campa} />
+        <Proximo titulo="Próximos talleres" icon="🎯" items={dash.talleres} />
         <Proximo titulo="Próximos eventos" icon="🎉" items={dash.eventos} />
       </div>
 
