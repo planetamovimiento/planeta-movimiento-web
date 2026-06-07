@@ -136,6 +136,14 @@ export const CATALOGO_SERVICIOS: ServicioCatalogo[] = [
     botonTexto: 'Solicitar presupuesto', botonAccion: 'presupuesto', enlace: '/servicios/eventos',
   },
   {
+    id: 'manana-magica', icon: '✨', ...D,
+    nombre: 'Mañanas Mágicas', entidad: 'empresa', categoria: 'Eventos', tipo: 'evento',
+    descripcionCorta: 'Jornada temática con un personaje invitado distinto cada mes.',
+    descripcionLarga: 'Mañana temática en nuestras instalaciones: show del personaje del mes, manualidades, actividades deportivas, pintacaras y photocall. El personaje cambia cada mes.',
+    edad: 'Infantil y primaria', precioDesde: 30, horarios: '11:00 – 13:00', estado: 'activo',
+    botonTexto: 'Editar personaje del mes', botonAccion: 'reserva', enlace: '/servicios/eventos',
+  },
+  {
     id: 'talleres', icon: '🎪', ...D,
     nombre: 'Talleres de Circo', entidad: 'empresa', categoria: 'Eventos', tipo: 'taller',
     descripcionCorta: 'Talleres a medida para ayuntamientos, empresas y AMPAs.',
