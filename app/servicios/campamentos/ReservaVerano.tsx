@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { submitBooking } from '@/lib/forms/actions'
+import FormularioCampamento, { type PayloadCampamento, textoParticipantes } from './FormularioCampamento'
 import {
   SEMANAS_VERANO, diasDeSemana, formatDia, formatFechaLarga,
   PRECIO_DIA_SUELTO, PRECIO_SEMANA, PRECIO_MATINAL, PRECIO_VESPERTINO,
@@ -51,7 +52,6 @@ export default function ReservaVerano() {
   const [cupon, setCupon]         = useState('')
   const [cuponAplicado, setCuponAplicado] = useState(false)
   const [cuponError, setCuponError] = useState(false)
-  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', notas: '' })
   const [paso, setPaso] = useState<'seleccion' | 'datos' | 'confirmado'>('seleccion')
   const [enviando, setEnviando] = useState(false)
 
@@ -87,26 +87,27 @@ export default function ReservaVerano() {
     }
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  async function onEnviar(p: PayloadCampamento) {
     setEnviando(true)
     const dias = Array.from(diasSeleccionados).sort()
+    const n = p.participantes.length
     await submitBooking({
       servicio: 'Campamento de Verano',
-      cliente_nombre: form.nombre,
-      cliente_email: form.email,
-      cliente_telefono: form.telefono,
+      cliente_nombre: p.contacto.nombre,
+      cliente_email: p.contacto.email,
+      cliente_telefono: p.contacto.telefono,
       fecha: dias[0],
-      participantes: numNinos,
-      precio: total * numNinos,
-      observaciones: form.notas,
+      participantes: n,
+      precio: total * n,
+      observaciones: p.notas,
       datos: {
         diasSeleccionados: dias.join(', '),
         numDias: dias.length,
         matinal: matinal ? 'Sí (8:00–9:00)' : 'No',
         vespertino: ampliacion ? 'Sí (14:00–15:00)' : 'No',
         cuponHermanos: cuponAplicado ? 'Aplicado (-15%)' : 'No',
-        numNinos,
+        participantes: textoParticipantes(p.participantes),
+        numNinos: n,
       },
     })
     setEnviando(false)
@@ -323,37 +324,13 @@ export default function ReservaVerano() {
             </button>
           )}
 
-          {/* Formulario datos */}
+          {/* Datos de contacto + participantes (hermanos) */}
           {paso === 'datos' && (
-            <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
-              <div className="font-black text-pm-navy text-sm mb-2">Datos de contacto</div>
-              <input required type="text" placeholder="Nombre completo *"
-                value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"
-              />
-              <input required type="email" placeholder="Email *"
-                value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"
-              />
-              <input required type="tel" placeholder="Teléfono *"
-                value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"
-              />
-              <textarea rows={2} placeholder="Notas (alergias, necesidades especiales...)"
-                value={form.notas} onChange={e => setForm(f => ({ ...f, notas: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red resize-none"
-              />
-              <div className="flex gap-2">
-                <button type="button" onClick={() => setPaso('seleccion')}
-                  className="flex-none border border-gray-200 text-gray-600 text-sm font-bold px-4 py-3 rounded-xl hover:border-pm-red transition-colors">
-                  ← Volver
-                </button>
-                <button type="submit" disabled={!form.nombre || !form.email || !form.telefono || enviando}
-                  className="flex-1 bg-pm-red hover:bg-pm-red-dark disabled:opacity-50 text-white font-black text-sm py-3 rounded-xl transition-colors">
-                  {enviando ? 'Enviando...' : `Reservar campamento — ${total * numNinos} €`}
-                </button>
-              </div>
-            </form>
+            <FormularioCampamento
+              numNinos={numNinos} setNumNinos={setNumNinos} total={total * numNinos}
+              color="red" enviando={enviando}
+              onVolver={() => setPaso('seleccion')} onSubmit={onEnviar}
+            />
           )}
         </>
       )}
