@@ -14,6 +14,13 @@ const HOY = new Date().toISOString().slice(0, 10)
 const MES = HOY.slice(0, 7)
 const ANIO = HOY.slice(0, 4)
 
+/** Patch al cambiar el estado de pago: si pasa a 'Pagado', el importe pagado iguala al total. */
+function patchPago(r: Registro, estado: string): Partial<Registro> {
+  const patch: Partial<Registro> = { estado_pago: estado }
+  if (estado === 'pagado') patch.pagado = r.total ?? r.pagado ?? null
+  return patch
+}
+
 export default function ReservasCRMClient({ registros, puedeEditar, gestionOk }: {
   registros: Registro[]; puedeEditar: boolean; gestionOk: boolean
 }) {
@@ -220,7 +227,7 @@ export default function ReservasCRMClient({ registros, puedeEditar, gestionOk }:
                       <td className="px-3 py-2.5">
                         <div className="flex items-center gap-1.5">
                           <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${badgePago(r.estado_pago)}`} />
-                          <select value={r.estado_pago} disabled={!puedeEditar} onChange={e => aplicar(r, { estado_pago: e.target.value })}
+                          <select value={r.estado_pago} disabled={!puedeEditar} onChange={e => aplicar(r, patchPago(r, e.target.value))}
                             className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:border-pm-red disabled:opacity-60">
                             {ESTADOS_PAGO.map(e => <option key={e.id} value={e.id}>{e.label}</option>)}
                           </select>
@@ -315,12 +322,12 @@ function FichaCliente({ r, todas, puedeEditar, onClose, onGestion, onCobrar }: {
             <div className="text-xs font-black text-pm-navy uppercase tracking-wider mb-2">Ficha económica</div>
             <div className="grid grid-cols-3 gap-2 mb-3">
               <CampoNum label="Total €" value={r.total} disabled={!puedeEditar} onSave={v => onGestion({ total: v })} />
-              <div><div className="text-[11px] text-gray-400">Pagado</div><div className="font-black text-green-600">{eur(r.pagado)}</div></div>
+              <div><div className="text-[11px] text-gray-400">Pagado</div><div className="font-black text-green-600">{eur(r.estado_pago === 'pagado' ? (r.pagado ?? r.total) : r.pagado)}</div></div>
               <div><div className="text-[11px] text-gray-400">Pendiente</div><div className={`font-black ${pend > 0 ? 'text-pm-red' : 'text-gray-400'}`}>{eur(pend)}</div></div>
             </div>
             <div className="flex items-center gap-2 mb-1">
               <span className={`w-2.5 h-2.5 rounded-full ${badgePago(r.estado_pago)}`} />
-              <select value={r.estado_pago} disabled={!puedeEditar} onChange={e => onGestion({ estado_pago: e.target.value })}
+              <select value={r.estado_pago} disabled={!puedeEditar} onChange={e => onGestion(patchPago(r, e.target.value))}
                 className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:border-pm-red disabled:opacity-60">
                 {ESTADOS_PAGO.map(e => <option key={e.id} value={e.id}>{e.label}</option>)}
               </select>

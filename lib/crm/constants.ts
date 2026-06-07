@@ -73,7 +73,9 @@ export function eur(n: number | null | undefined): string {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(Number(n))
 }
 
-export function pendienteDe(r: { total: number | null; pagado: number | null }): number {
+export function pendienteDe(r: { total: number | null; pagado: number | null; estado_pago?: string }): number {
+  // El pendiente depende del estado de pago: 'pagado' o 'no aplica' nunca dejan pendiente.
+  if (r.estado_pago === 'pagado' || r.estado_pago === 'na') return 0
   const t = Number(r.total) || 0
   const p = Number(r.pagado) || 0
   return Math.max(0, t - p)
