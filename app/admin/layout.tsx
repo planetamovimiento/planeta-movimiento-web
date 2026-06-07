@@ -9,12 +9,16 @@ export const metadata = {
 }
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  // Bypass de login en desarrollo local (ADMIN_DEV_BYPASS). Nunca en producción.
+  const bypass = process.env.NODE_ENV !== 'production' && process.env.ADMIN_DEV_BYPASS === 'true'
 
-  // Sin sesión → es la página de login (se renderiza sola, sin chrome)
-  if (!user) {
-    return <>{children}</>
+  let userEmail = ''
+  if (!bypass) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    // Sin sesión → es la página de login (se renderiza sola, sin chrome)
+    if (!user) return <>{children}</>
+    userEmail = user.email ?? ''
   }
 
   const admin = await getAdminUser()
@@ -27,7 +31,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className="text-5xl mb-4">🚫</div>
           <h1 className="text-xl font-black text-pm-navy mb-2">Acceso no autorizado</h1>
           <p className="text-gray-500 text-sm mb-6">
-            La cuenta <strong>{user.email}</strong> no tiene permisos para acceder al panel.
+            La cuenta <strong>{userEmail}</strong> no tiene permisos para acceder al panel.
             Pide a un administrador principal que te añada.
           </p>
           <div className="flex gap-3 justify-center">
