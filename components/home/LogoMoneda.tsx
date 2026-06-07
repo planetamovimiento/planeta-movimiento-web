@@ -2,9 +2,11 @@
 
 import { useRef, useState } from 'react'
 
-// Grosor de la extrusión del logo (px) y nº de capas que forman el canto
-const T = 22
-const CAPAS = 26
+// Grosor de la extrusión del logo (px) y nº de capas que forman el canto.
+// Muchas capas con espaciado < 1px para que el canto se vea SÓLIDO (sin gaps
+// transparentes) incluso girado casi de perfil.
+const T = 90
+const CAPAS = 100
 const PASO = T / (CAPAS - 1)
 
 /**
@@ -58,7 +60,7 @@ export default function LogoMoneda() {
           const cara = i === CAPAS - 1 || i === 0   // delantera y trasera a todo color
           // Capas intermedias: oscurecidas para simular el material del canto,
           // un poco más oscuras cuanto más al fondo, para dar volumen.
-          const brillo = 0.22 + (i / CAPAS) * 0.18
+          const brillo = 0.15 + (i / CAPAS) * 0.32
           return (
             // eslint-disable-next-line @next/next/no-img-element
             <img
