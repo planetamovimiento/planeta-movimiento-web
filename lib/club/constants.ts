@@ -52,6 +52,23 @@ export function labelEstadoGeneral(id: string): string {
 /** Grupos base por defecto (también se siembran en la BD). */
 export const GRUPOS_BASE = ['Iniciación 1', 'Iniciación 2', 'Iniciación 3', 'Medio 1', 'Medio 2', 'Medio 3', 'Avanzado']
 
+/**
+ * Actividades del Club (nombres canónicos cortos para el panel).
+ * Siempre aparecen en el filtro aunque todavía no tengan alumnos
+ * (p. ej. «Circo Inclusivo» para la temporada 26/27 en adelante).
+ * Privadas (solo panel, nunca web pública): Gimnasia Rítmica y Colegio Isaac Albéniz.
+ */
+export const ACTIVIDADES_CLUB = [
+  'Escuela de aéreos',
+  'Escuela de Bienestar',
+  'Escuela infantil',
+  'Gimnasia Acrobática',
+  'Gimnasia Rítmica',
+  'Jiu-Jitsu Brasileño',
+  'Colegio Isaac Albéniz',
+  'Circo Inclusivo',
+]
+
 // ── Tipos de datos ────────────────────────────────────────────────────────────
 
 export type Grupo = { id: string; actividad: string | null; nombre: string; orden: number }

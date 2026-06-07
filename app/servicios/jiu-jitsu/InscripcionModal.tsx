@@ -21,7 +21,7 @@ export function BotonApuntarme() {
       </button>
       {open && (
         <ModalInscripcion
-          servicio="Jiu-Jitsu Brasileño — Academia Adamas"
+          servicio="Jiu-Jitsu Brasileño"
           niveles={NIVELES}
           modalidades={MODALIDADES}
           onClose={() => setOpen(false)}

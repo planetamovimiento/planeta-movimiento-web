@@ -28,7 +28,7 @@ export function BotonApuntarme() {
       </button>
       {open && (
         <ModalInscripcion
-          servicio="Gimnasia acrobática y trampolín"
+          servicio="Gimnasia Acrobática"
           niveles={NIVELES}
           modalidades={MODALIDADES}
           onClose={() => setOpen(false)}

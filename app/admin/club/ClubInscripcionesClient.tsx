@@ -4,7 +4,7 @@ import { useState, useMemo, useTransition, useCallback } from 'react'
 import { Metric, EmptyState } from '@/components/admin/ui'
 import { waCliente } from '@/lib/whatsapp'
 import {
-  MESES_TEMPORADA, ESTADO_PAGO_META, CICLO_PAGO, ESTADOS_GENERAL, GRUPOS_BASE, TEMPORADAS,
+  MESES_TEMPORADA, ESTADO_PAGO_META, CICLO_PAGO, ESTADOS_GENERAL, GRUPOS_BASE, TEMPORADAS, ACTIVIDADES_CLUB,
   labelEstadoGeneral, mesActualKey, edadDe, fechaCorta,
   type Alumno, type Grupo, type EstadoPago, type EstadoGeneral,
 } from '@/lib/club/constants'
@@ -47,7 +47,7 @@ export default function ClubInscripcionesClient({
 
   // ── Derivados ──────────────────────────────────────────────────────────────
   const actividades = useMemo(
-    () => Array.from(new Set(lista.map(a => a.actividad).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'es')),
+    () => Array.from(new Set([...ACTIVIDADES_CLUB, ...lista.map(a => a.actividad)].filter(Boolean))).sort((a, b) => a.localeCompare(b, 'es')),
     [lista]
   )
 

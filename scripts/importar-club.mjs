@@ -18,19 +18,19 @@ const COMMIT = process.argv.includes('commit')
 
 // ── Config por hoja ───────────────────────────────────────────────────────────
 const SHEETS = [
-  { sheet: 'gimnasia acrobatica', actividad: 'Gimnasia acrobática y trampolín', privada: false, mode: 'sections',
+  { sheet: 'gimnasia acrobatica', actividad: 'Gimnasia Acrobática', privada: false, mode: 'sections',
     cols: { nombre: 1, apellidos: 2, tutor: 3, telefono: 4, dias: 5, fnac: 6 } },
-  { sheet: 'telas aéreas', actividad: 'Escuela de aéreos — Telas y Aro', privada: false, mode: 'sections',
+  { sheet: 'telas aéreas', actividad: 'Escuela de aéreos', privada: false, mode: 'sections',
     cols: { nombre: 1, apellidos: 2, tutor: 3, telefono: 4, dias: 5, fnac: 6 } },
-  { sheet: 'escuela infantil', actividad: 'Escuela Infantil — Grupos de 3 a 5 años', privada: false, mode: 'flat', grupoNorm: 'infantil',
+  { sheet: 'escuela infantil', actividad: 'Escuela infantil', privada: false, mode: 'flat', grupoNorm: 'infantil',
     cols: { nombre: 1, apellidos: 2, tutor: 3, telefono: 4, grupo: 5, dias: 6, fnac: 7, email: 8 } },
-  { sheet: 'escuela bienestar', actividad: 'Escuela de Bienestar — Gimnasia para tod@s', privada: false, mode: 'flat',
+  { sheet: 'escuela bienestar', actividad: 'Escuela de Bienestar', privada: false, mode: 'flat',
     cols: { nombre: 1, apellidos: 2, telefono: 3, fnac: 4 } },
-  { sheet: 'Escuela BBJ Adamas', actividad: 'Jiu-Jitsu Brasileño — Academia Adamas', privada: false, mode: 'flat',
+  { sheet: 'Escuela BBJ Adamas', actividad: 'Jiu-Jitsu Brasileño', privada: false, mode: 'flat',
     cols: { nombreCompleto: 1, email: 2, fnac: 3, telefono: 4 } },
   { sheet: 'gimnasia ritmica', actividad: 'Gimnasia Rítmica', privada: true, mode: 'flat',
     cols: { nombre: 1, apellidos: 2, tutor: 3, telefono: 4, anio: 5 } },
-  { sheet: 'extraescolar Isaac Albeniz', actividad: 'Extraescolares Isaac Albéniz', privada: true, mode: 'flat',
+  { sheet: 'extraescolar Isaac Albeniz', actividad: 'Colegio Isaac Albéniz', privada: true, mode: 'flat',
     cols: { nombre: 1, apellidos: 2, tutor: 3, telefono: 4, edad: 5 } },
 ]
 

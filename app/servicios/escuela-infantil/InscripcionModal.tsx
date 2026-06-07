@@ -25,7 +25,7 @@ export function BotonApuntarme() {
       </button>
       {open && (
         <ModalInscripcion
-          servicio="Escuela Infantil — Grupos de 3 a 5 años"
+          servicio="Escuela infantil"
           niveles={NIVELES}
           modalidades={MODALIDADES}
           onClose={() => setOpen(false)}
