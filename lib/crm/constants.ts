@@ -51,6 +51,7 @@ export type Registro = {
   cliente_nombre: string
   cliente_email: string
   cliente_telefono: string
+  entidad: string
   fecha_reserva: string        // created_at
   fecha_realizacion: string | null
   hora: string

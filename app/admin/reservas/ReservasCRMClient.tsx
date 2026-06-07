@@ -22,6 +22,7 @@ export default function ReservasCRMClient({ registros, puedeEditar, gestionOk }:
   const [error, setError] = useState('')
 
   const [q, setQ] = useState('')
+  const [fCategoria, setFCategoria] = useState('')
   const [fServicio, setFServicio] = useState('')
   const [fReserva, setFReserva] = useState('')
   const [fPago, setFPago] = useState('')
@@ -32,6 +33,11 @@ export default function ReservasCRMClient({ registros, puedeEditar, gestionOk }:
   const detalle = lista.find(r => keyOf(r) === detalleKey) ?? null
 
   const servicios = useMemo(() => Array.from(new Set(lista.map(r => r.servicio).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'es')), [lista])
+  const categorias = useMemo(() => {
+    const m = new Map<string, number>()
+    lista.forEach(r => m.set(r.categoria, (m.get(r.categoria) || 0) + 1))
+    return Array.from(m.entries()).sort((a, b) => a[0].localeCompare(b[0], 'es'))
+  }, [lista])
   const meses = useMemo(() => Array.from(new Set(lista.map(r => (r.fecha_realizacion || r.fecha_reserva || '').slice(0, 7)).filter(Boolean))).sort().reverse(), [lista])
 
   const filtradas = useMemo(() => lista.filter(r => {
@@ -39,6 +45,7 @@ export default function ReservasCRMClient({ registros, puedeEditar, gestionOk }:
       const t = q.trim().toLowerCase()
       if (!`${r.cliente_nombre} ${r.cliente_email} ${r.cliente_telefono} ${r.servicio} ${r.numero}`.toLowerCase().includes(t)) return false
     }
+    if (fCategoria && r.categoria !== fCategoria) return false
     if (fServicio && r.servicio !== fServicio) return false
     if (fReserva && r.estado_reserva !== fReserva) return false
     if (fPago && r.estado_pago !== fPago) return false
@@ -60,8 +67,8 @@ export default function ReservasCRMClient({ registros, puedeEditar, gestionOk }:
     return { activas, pendientes, pagosPend, ingMes, ingAnio, cumple: proximos('Cumpleaños'), campa: proximos('Campamentos'), eventos: proximos('Eventos') }
   }, [lista])
 
-  const hayFiltros = !!(q || fServicio || fReserva || fPago || fMes)
-  const limpiar = () => { setQ(''); setFServicio(''); setFReserva(''); setFPago(''); setFMes('') }
+  const hayFiltros = !!(q || fCategoria || fServicio || fReserva || fPago || fMes)
+  const limpiar = () => { setQ(''); setFCategoria(''); setFServicio(''); setFReserva(''); setFPago(''); setFMes('') }
 
   // ── Mutaciones ─────────────────────────────────────────────────────────────────
   const patchLocal = useCallback((key: string, patch: Partial<Registro>) => {
@@ -130,6 +137,20 @@ export default function ReservasCRMClient({ registros, puedeEditar, gestionOk }:
         <Proximo titulo="Próximos eventos" icon="🎉" items={dash.eventos} />
       </div>
 
+      {/* Pestañas por categoría */}
+      <div className="flex flex-wrap gap-2">
+        <button onClick={() => setFCategoria('')}
+          className={`text-sm rounded-full border px-3.5 py-1.5 font-semibold transition-colors ${fCategoria === '' ? 'bg-pm-navy border-pm-navy text-white' : 'bg-white border-gray-200 text-pm-navy hover:border-pm-navy'}`}>
+          Todos <span className={fCategoria === '' ? 'text-white/70' : 'text-gray-400'}>{lista.length}</span>
+        </button>
+        {categorias.map(([cat, n]) => (
+          <button key={cat} onClick={() => setFCategoria(cat === fCategoria ? '' : cat)}
+            className={`text-sm rounded-full border px-3.5 py-1.5 font-semibold transition-colors ${fCategoria === cat ? 'bg-pm-red border-pm-red text-white' : 'bg-white border-gray-200 text-pm-navy hover:border-pm-red'}`}>
+            {cat} <span className={fCategoria === cat ? 'text-white/80' : 'text-pm-red'}>{n}</span>
+          </button>
+        ))}
+      </div>
+
       {/* Filtros */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-wrap items-center gap-2.5">
         <input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar cliente, email, teléfono, servicio, nº…"
@@ -184,6 +205,7 @@ export default function ReservasCRMClient({ registros, puedeEditar, gestionOk }:
                       <td className="px-4 py-2.5">
                         <div className="font-semibold text-pm-navy whitespace-nowrap">{r.cliente_nombre || 'Sin nombre'}</div>
                         <div className="text-xs text-gray-400">{r.servicio} · <span className="text-gray-300">{r.numero}</span></div>
+                        {r.entidad && <div className="text-xs text-gray-400">🏢 {r.entidad}</div>}
                       </td>
                       <td className="px-3 py-2.5 whitespace-nowrap text-gray-600 text-xs">{fechaCorta(r.fecha_realizacion)}{r.hora ? ` · ${r.hora}` : ''}</td>
                       <td className="px-3 py-2.5 text-center text-gray-600">{r.participantes ?? '—'}</td>
@@ -332,6 +354,15 @@ function FichaCliente({ r, todas, puedeEditar, onClose, onGestion, onCobrar }: {
             )}
           </div>
 
+          {/* Entidad contratante (eventos, licitaciones, colegios…) */}
+          {r.entidad && (
+            <div className="bg-pm-navy/5 border border-pm-navy/10 rounded-xl p-3">
+              <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Entidad contratante</div>
+              <div className="text-pm-navy font-black">🏢 {r.entidad}</div>
+              <div className="text-xs text-gray-500 mt-0.5">Contacto: {r.cliente_nombre || '—'}{r.cliente_telefono ? ` · ${r.cliente_telefono}` : ''}</div>
+            </div>
+          )}
+
           {/* Datos */}
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             <Dato k="Email" v={r.cliente_email || '—'} />
@@ -341,6 +372,25 @@ function FichaCliente({ r, todas, puedeEditar, onClose, onGestion, onCobrar }: {
             <Dato k="Solicitado el" v={fechaCorta(r.fecha_reserva)} />
             <Dato k="Categoría" v={r.categoria} />
           </div>
+
+          {/* Detalles del servicio (semana/días/extras de campamentos, pack de eventos, medidas de colchonetas…) */}
+          {(() => {
+            const detalles = Object.entries(r.datos || {}).filter(([k, v]) => !k.startsWith('__') && v != null && String(v) !== '')
+            if (detalles.length === 0) return null
+            return (
+              <div>
+                <div className="text-xs font-black text-pm-navy uppercase tracking-wider mb-2">Detalles del servicio</div>
+                <div className="bg-pm-bg rounded-xl p-3 grid grid-cols-2 gap-x-3 gap-y-2">
+                  {detalles.map(([k, v]) => (
+                    <div key={k}>
+                      <div className="text-[11px] text-gray-400">{humanizar(k)}</div>
+                      <div className="text-sm text-pm-navy font-medium break-words">{String(v)}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
 
           {/* Observaciones */}
           <div>
@@ -379,6 +429,12 @@ function FichaCliente({ r, todas, puedeEditar, onClose, onGestion, onCobrar }: {
 
 function Dato({ k, v }: { k: string; v: string }) {
   return <div><div className="text-xs font-bold text-gray-400 uppercase tracking-wider">{k}</div><div className="text-pm-navy font-semibold break-words">{v}</div></div>
+}
+
+/** Convierte una clave de datos (camelCase / snake) en una etiqueta legible. */
+function humanizar(k: string): string {
+  const s = k.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[_-]/g, ' ').trim()
+  return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
 function CampoNum({ label, value, disabled, onSave }: { label: string; value: number | null; disabled: boolean; onSave: (v: number | null) => void }) {

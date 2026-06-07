@@ -12,6 +12,31 @@ async function safe<T>(fn: () => Promise<{ data: T[] | null; error: unknown }>):
 const str = (v: unknown) => (typeof v === 'string' ? v : v == null ? '' : String(v))
 const num = (v: unknown) => { const n = Number(v); return isNaN(n) ? null : n }
 
+/** Convierte importes en texto («950 €», «1.200,50 €») o número a number. */
+function importe(v: unknown): number | null {
+  if (typeof v === 'number') return isNaN(v) ? null : v
+  if (typeof v !== 'string') return null
+  let s = v.replace(/[^\d.,]/g, '')
+  if (!s) return null
+  if (s.includes('.') && s.includes(',')) s = s.replace(/\./g, '').replace(',', '.')
+  else if (s.includes(',')) s = s.replace(',', '.')
+  const n = Number(s)
+  return isNaN(n) ? null : n
+}
+
+/** Separa el texto libre del JSON que las reservas guardan al final de observaciones. */
+function parseObs(obs: string): { mensaje: string; datos: Record<string, unknown> } {
+  if (!obs) return { mensaje: '', datos: {} }
+  const m = obs.match(/\{[\s\S]*\}\s*$/)
+  if (m && m.index != null) {
+    try {
+      const d = JSON.parse(m[0])
+      if (d && typeof d === 'object') return { mensaje: obs.slice(0, m.index).trim(), datos: d as Record<string, unknown> }
+    } catch { /* no era JSON */ }
+  }
+  return { mensaje: obs, datos: {} }
+}
+
 // ── Etiqueta de servicio para formularios (por tipo) ─────────────────────────────
 const SERVICIO_FORM: Record<string, string> = {
   presupuesto: 'Talleres Participativos',
@@ -46,7 +71,8 @@ const MAP_RESERVA_FORM: Record<string, string> = { nueva: 'nueva', leida: 'revis
 const MAP_RESERVA_ORDER: Record<string, string> = { nuevo: 'nueva', preparando: 'en_curso', enviado: 'en_curso', entregado: 'finalizada', cancelado: 'cancelada' }
 const MAP_PAGO_BOOKING: Record<string, string> = { pagado: 'pagado', pendiente: 'pendiente', fallido: 'impagado', reembolsado: 'na', parcial: 'parcial' }
 
-const firstNum = (d: Record<string, unknown>, keys: string[]) => { for (const k of keys) { const n = num(d[k]); if (n != null) return n } return null }
+const firstNum = (d: Record<string, unknown>, keys: string[]) => { for (const k of keys) { const n = importe(d[k]); if (n != null) return n } return null }
+const firstStr = (d: Record<string, unknown>, keys: string[]) => { for (const k of keys) { const s = str(d[k]); if (s) return s } return '' }
 
 export async function getRegistrosCRM(): Promise<{ registros: Registro[]; ok: boolean; gestionOk: boolean }> {
   const db = createAdminClient()
@@ -65,15 +91,17 @@ export async function getRegistrosCRM(): Promise<{ registros: Registro[]; ok: bo
   // BOOKINGS
   for (const b of bk.rows) {
     const servicio = str(b.servicio) || 'Reserva'
+    const { mensaje, datos } = parseObs(str(b.observaciones))
     out.push(base({
       origen: 'booking', id: str(b.id), numero: str(b.numero) || 'PM-' + str(b.id).slice(0, 6),
       servicio, categoria: categoriaDe(servicio),
       cliente_nombre: str(b.cliente_nombre), cliente_email: str(b.cliente_email), cliente_telefono: str(b.cliente_telefono),
+      entidad: firstStr(datos, ['entidad', 'empresa', 'centro']),
       fecha_reserva: str(b.created_at), fecha_realizacion: b.fecha ? str(b.fecha) : null, hora: str(b.hora),
       participantes: num(b.participantes), total: num(b.precio), pagado: null,
       estado_reserva: MAP_RESERVA_BOOKING[str(b.estado_reserva)] || 'nueva',
       estado_pago: MAP_PAGO_BOOKING[str(b.estado_pago)] || 'pendiente',
-      observaciones: str(b.notas_internas), mensaje: str(b.observaciones), datos: {},
+      observaciones: str(b.notas_internas), mensaje, datos,
     }, gestion))
   }
 
@@ -85,7 +113,8 @@ export async function getRegistrosCRM(): Promise<{ registros: Registro[]; ok: bo
     out.push(base({
       origen: 'form', id: str(f.id), numero: 'F-' + str(f.id).slice(0, 6),
       servicio, categoria: categoriaDe(servicio + ' ' + tipo),
-      cliente_nombre: str(f.nombre) || str(datos.entidad) || str(datos.contacto), cliente_email: str(f.email), cliente_telefono: str(f.telefono),
+      cliente_nombre: str(f.nombre) || firstStr(datos, ['contacto', 'persona', 'entidad']), cliente_email: str(f.email), cliente_telefono: str(f.telefono),
+      entidad: firstStr(datos, ['entidad', 'empresa', 'centro', 'colegio', 'ayuntamiento']),
       fecha_reserva: str(f.created_at), fecha_realizacion: datos.fecha ? str(datos.fecha) : null, hora: str(datos.hora),
       participantes: firstNum(datos, ['participantes', 'asistentes', 'alumnos', 'numParticipantes']),
       total: firstNum(datos, ['precio', 'total', 'importe', 'presupuesto', 'precioEstimado']), pagado: null,
@@ -101,6 +130,7 @@ export async function getRegistrosCRM(): Promise<{ registros: Registro[]; ok: bo
       origen: 'order', id: str(o.id), numero: 'P-' + str(o.id).slice(0, 6),
       servicio, categoria: 'Colchonetas',
       cliente_nombre: str(o.cliente_nombre), cliente_email: str(o.cliente_email), cliente_telefono: str(o.cliente_telefono),
+      entidad: '',
       fecha_reserva: str(o.created_at), fecha_realizacion: null, hora: '',
       participantes: null, total: num(o.total), pagado: null,
       estado_reserva: MAP_RESERVA_ORDER[str(o.estado)] || 'nueva', estado_pago: 'pendiente',
