@@ -14,9 +14,9 @@ const MASK = {
   WebkitMaskPosition: 'center', maskPosition: 'center',
 } as const
 
-/** Azul de marca interpolado por profundidad (t: 0 fondo oscuro → 1 frente claro). */
-function azul(t: number): string {
-  const a = [20, 36, 95], b = [96, 165, 250]   // #14245f → #60a5fa
+/** Color del canto (grafito metálico) interpolado por profundidad (0 fondo → 1 frente). */
+function canto(t: number): string {
+  const a = [38, 42, 52], b = [120, 128, 140]   // #262a34 → #788090
   const m = (i: number) => Math.round(a[i] + (b[i] - a[i]) * t)
   return `rgb(${m(0)}, ${m(1)}, ${m(2)})`
 }
@@ -48,14 +48,14 @@ export default function LogoMoneda() {
   // El cuerpo no depende del giro → se memoiza para que arrastrar sea fluido
   const cuerpo = useMemo(() => Array.from({ length: CAPAS }, (_, i) => {
     const z = -T / 2 + i * PASO
-    return <div key={i} className="absolute inset-0" style={{ ...MASK, transform: `translateZ(${z}px)`, background: azul(i / (CAPAS - 1)) }} />
+    return <div key={i} className="absolute inset-0" style={{ ...MASK, transform: `translateZ(${z}px)`, background: canto(i / (CAPAS - 1)) }} />
   }), [])
 
   return (
     <div className="relative mb-8 select-none flex justify-center" style={{ perspective: '1400px' }}>
       {/* Halo de luz */}
       <div className="absolute inset-0 -z-10 flex items-center justify-center">
-        <div className="w-64 h-64 sm:w-80 sm:h-80 rounded-full bg-blue-500/30 blur-[80px] animate-glow-pulse" />
+        <div className="w-64 h-64 sm:w-80 sm:h-80 rounded-full bg-pm-red/30 blur-[80px] animate-glow-pulse" />
       </div>
 
       <div
