@@ -58,7 +58,7 @@ export default function ReservasCRMClient({ registros, puedeEditar, gestionOk }:
     if (fPago && r.estado_pago !== fPago) return false
     if (fMes && (r.fecha_realizacion || r.fecha_reserva || '').slice(0, 7) !== fMes) return false
     return true
-  }), [lista, q, fServicio, fReserva, fPago, fMes])
+  }), [lista, q, fCategoria, fServicio, fReserva, fPago, fMes])
 
   // ── Dashboard ────────────────────────────────────────────────────────────────
   const dash = useMemo(() => {
