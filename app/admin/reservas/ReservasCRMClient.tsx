@@ -6,7 +6,7 @@ import { waCliente } from '@/lib/whatsapp'
 import {
   ESTADOS_RESERVA, ESTADOS_PAGO, ESTADOS_ACTIVOS, ESTADOS_PENDIENTES, METODOS_PAGO,
   labelReserva, labelPago, badgePago, eur, pendienteDe, fechaCorta,
-  type Registro, type Pago,
+  type Registro,
 } from '@/lib/crm/constants'
 import { guardarGestionCRM, registrarPagoCRM } from './actions'
 
@@ -65,9 +65,11 @@ export default function ReservasCRMClient({ registros, puedeEditar, gestionOk }:
     const activas = lista.filter(r => ESTADOS_ACTIVOS.includes(r.estado_reserva)).length
     const pendientes = lista.filter(r => ESTADOS_PENDIENTES.includes(r.estado_reserva)).length
     const pagosPend = lista.filter(r => ['pendiente', 'impagado', 'parcial'].includes(r.estado_pago)).reduce((s, r) => s + pendienteDe(r), 0)
-    const todosPagos: Pago[] = lista.flatMap(r => r.pagos || [])
-    const ingMes = todosPagos.filter(p => (p.fecha || '').slice(0, 7) === MES).reduce((s, p) => s + (Number(p.importe) || 0), 0)
-    const ingAnio = todosPagos.filter(p => (p.fecha || '').slice(0, 4) === ANIO).reduce((s, p) => s + (Number(p.importe) || 0), 0)
+    // Importe cobrado de una reserva: total si está 'Pagado', el parcial si lo hay.
+    const cobrado = (r: Registro) => r.estado_pago === 'pagado' ? (Number(r.pagado) || Number(r.total) || 0) : (Number(r.pagado) || 0)
+    // Mes: por fecha de realización del servicio. Año: por fecha de realización o de alta.
+    const ingMes = lista.reduce((s, r) => ((r.fecha_realizacion || '').slice(0, 7) === MES ? s + cobrado(r) : s), 0)
+    const ingAnio = lista.reduce((s, r) => ((r.fecha_realizacion || r.fecha_reserva || '').slice(0, 4) === ANIO ? s + cobrado(r) : s), 0)
     const proximos = (cat: string) => lista
       .filter(r => r.categoria === cat && r.fecha_realizacion && r.fecha_realizacion >= HOY && r.estado_reserva !== 'cancelada')
       .sort((a, b) => (a.fecha_realizacion || '').localeCompare(b.fecha_realizacion || ''))
