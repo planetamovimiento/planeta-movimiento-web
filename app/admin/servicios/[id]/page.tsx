@@ -9,6 +9,7 @@ import EditorMananaMagica from '@/app/admin/manana-magica/EditorMananaMagica'
 import EditorEventoCentro from './EditorEventoCentro'
 import { EVENTOS_CENTRO_IDS, type EventoCentroId } from '@/lib/eventos/centro'
 import { CATALOGO_MAP } from '@/lib/servicios/catalogo'
+import { getTalleres } from '@/lib/talleres/store'
 
 export const dynamic = 'force-dynamic'
 
@@ -55,6 +56,47 @@ export default async function EditarServicioPage({ params }: { params: Promise<{
             <span className="text-pm-navy font-semibold">{base?.nombre}</span>
           </div>
           <EditorEventoCentro id={id} inicial={cfg} puedeEditar={admin ? can.edit(admin.role) : false} />
+        </div>
+      </>
+    )
+  }
+
+  // Talleres Intensivos: lista de talleres (cada uno editable), integrada en Servicios.
+  if (id === 'talleres-intensivos') {
+    const talleres = await getTalleres()
+    return (
+      <>
+        <AdminHeader
+          titulo={<span className="flex items-center gap-2"><span>🎯</span> Talleres Intensivos</span>}
+          subtitulo="Club Deportivo Origen · Edita fechas, precios, plazas y abre inscripciones"
+        />
+        <div className="p-6 lg:p-8 space-y-6">
+          <div className="flex items-center gap-3 text-sm">
+            <Link href="/admin/servicios" className="text-gray-500 hover:text-pm-red">← Servicios</Link>
+            <span className="text-gray-300">/</span>
+            <span className="text-pm-navy font-semibold">Talleres Intensivos</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {talleres.map(t => (
+              <Link key={t.id} href={`/admin/talleres-intensivos/${t.id}`}
+                className="group bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md hover:border-pm-red/30 transition-all">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{t.icon}</span>
+                    <div>
+                      <div className="font-black text-pm-navy text-sm group-hover:text-pm-red transition-colors">{t.nombre}</div>
+                      <div className="text-xs text-gray-400">{t.fecha || 'Sin fecha'} · {t.precio}</div>
+                    </div>
+                  </div>
+                  <EstadoBadge estado={t.estado === 'abierto' ? 'activo' : t.estado === 'proximamente' ? 'proximamente' : t.estado === 'completo' ? 'completo' : 'ultimas'} />
+                </div>
+                <div className="flex items-center justify-between text-xs text-gray-400">
+                  <span>Plazas: {t.plazasLibres}/{t.plazasTotal}</span>
+                  <span className="font-bold text-pm-red">Editar →</span>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       </>
     )
