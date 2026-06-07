@@ -24,6 +24,7 @@ const GRUPOS: Grupo[] = [
     titulo: 'Empresa',
     items: [
       { href: '/admin/reservas',    label: 'Reservas',            icon: '📋' },
+      { href: '/admin/manana-magica', label: 'Mañanas Mágicas',   icon: '✨' },
       { href: '/admin/pagos',       label: 'Pagos',               icon: '💳', soloPrincipal: true },
       { href: '/admin/productos',   label: 'Productos y pedidos', icon: '🛒' },
       { href: '/admin/formularios', label: 'Solicitudes',         icon: '✉️' },

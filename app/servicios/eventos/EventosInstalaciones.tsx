@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { submitBooking } from '@/lib/forms/actions'
+import type { MananaMagica } from '@/lib/eventos/manana-magica'
 
 // ─── Días Sin Cole ─────────────────────────────────────────────────────────
 // Configurar aquí cada temporada
@@ -315,6 +316,74 @@ export function ReservaHalloween({ onClose = () => {} }: { onClose?: () => void 
         className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">
         {enviando ? 'Enviando...' : '🧟 Reservar plaza'}
       </button>
+    </form>
+  )
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// MAÑANAS MÁGICAS (personaje editable desde el admin)
+// ──────────────────────────────────────────────────────────────────────────────
+export function ReservaMananaMagica({ cfg, onClose = () => {} }: { cfg: MananaMagica; onClose?: () => void }) {
+  const [ninos, setNinos] = useState(1)
+  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', edades: '' })
+  const [enviando, setEnviando] = useState(false)
+  const [listo, setListo] = useState(false)
+
+  const desc = cfg.descuentoHermanos / 100
+  const total = Math.round((cfg.precio + Math.max(0, ninos - 1) * cfg.precio * (1 - desc)) * 100) / 100
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault(); setEnviando(true)
+    await submitBooking({
+      servicio: 'Mañana Mágica',
+      cliente_nombre: form.nombre, cliente_email: form.email, cliente_telefono: form.telefono,
+      fecha: cfg.fecha || undefined, participantes: ninos, precio: total,
+      datos: { personaje: cfg.personaje, tematica: cfg.tematica, horario: cfg.horario, fecha: cfg.fechaTexto, edades: form.edades, numNinos: ninos },
+    })
+    setEnviando(false); setListo(true)
+  }
+
+  if (listo) return <Exito onClose={onClose} />
+  const completo = cfg.estado === 'completo'
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="bg-fuchsia-50 border border-fuchsia-200 rounded-xl p-4 text-sm">
+        <div className="font-black text-fuchsia-700 mb-1">{cfg.emoji} {cfg.personaje}</div>
+        <div className="space-y-1 text-fuchsia-900/70 text-xs">
+          <div>📅 {cfg.fechaTexto}</div>
+          <div>🕙 {cfg.horario}</div>
+          <div>👧 {cfg.edades}</div>
+          <div>💰 {cfg.precio} € / niño · Hermanos −{cfg.descuentoHermanos}%</div>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-xs font-bold text-pm-navy mb-2">Número de niños *</label>
+        <div className="flex items-center gap-4">
+          <button type="button" onClick={() => setNinos(n => Math.max(1, n - 1))} className="w-9 h-9 bg-fuchsia-50 border border-fuchsia-200 rounded-xl font-bold text-lg hover:border-fuchsia-400 transition-colors">−</button>
+          <div className="flex-1 text-center text-3xl font-black text-pm-navy">{ninos}</div>
+          <button type="button" onClick={() => setNinos(n => n + 1)} className="w-9 h-9 bg-fuchsia-50 border border-fuchsia-200 rounded-xl font-bold text-lg hover:border-fuchsia-400 transition-colors">+</button>
+        </div>
+      </div>
+
+      <div className="bg-fuchsia-50 border border-fuchsia-200 rounded-xl p-3 text-sm">
+        <div className="flex justify-between text-fuchsia-800">
+          <span>{ninos} niño{ninos > 1 ? 's' : ''}{ninos > 1 ? ` (hermanos −${cfg.descuentoHermanos}%)` : ''}</span>
+          <strong>{total} €</strong>
+        </div>
+      </div>
+
+      <input required type="text" placeholder="Nombre *" value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-fuchsia-500" />
+      <input required type="email" placeholder="Email *" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-fuchsia-500" />
+      <input required type="tel" placeholder="Teléfono *" value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-fuchsia-500" />
+      <input type="text" placeholder="Edad(es) de los niños" value={form.edades} onChange={e => setForm(f => ({ ...f, edades: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-fuchsia-500" />
+
+      <button type="submit" disabled={completo || !form.nombre || !form.email || !form.telefono || enviando}
+        className="w-full bg-fuchsia-600 hover:bg-fuchsia-700 disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">
+        {completo ? 'Plazas completas' : enviando ? 'Enviando...' : `✨ Reservar — ${total} €`}
+      </button>
+      <p className="text-center text-xs text-gray-400">Plazas limitadas · Pendiente de confirmación de disponibilidad</p>
     </form>
   )
 }

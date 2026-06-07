@@ -57,7 +57,7 @@ function categoriaDe(servicio: string): string {
   const s = servicio.toLowerCase()
   if (s.includes('cumpleañ')) return 'Cumpleaños'
   if (s.includes('campamento')) return 'Campamentos'
-  if (s.includes('días sin cole') || s.includes('domingos') || s.includes('halloween') || s.startsWith('evento')) return 'Eventos'
+  if (s.includes('días sin cole') || s.includes('domingos') || s.includes('halloween') || s.includes('mágica') || s.includes('magica') || s.startsWith('evento')) return 'Eventos'
   if (s.includes('taller')) return 'Talleres'
   if (s.includes('excursi') || s.includes('extraescolar')) return 'Educación'
   if (s.includes('piea')) return 'PIEA'
