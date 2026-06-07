@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import LogoMoneda from './LogoMoneda'
 
 export default function Hero() {
   return (
@@ -27,20 +28,8 @@ export default function Hero() {
           Centro de referencia en Cuenca · Circo, deporte y ocio
         </span>
 
-        {/* Logo protagonista con glow */}
-        <div className="relative mb-8">
-          {/* Halo de luz tras el logo */}
-          <div className="absolute inset-0 -z-10 flex items-center justify-center">
-            <div className="w-64 h-64 sm:w-80 sm:h-80 rounded-full bg-pm-red/30 blur-[80px] animate-glow-pulse" />
-          </div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo.png"
-            alt="Planeta Movimiento"
-            className="w-44 h-44 sm:w-56 sm:h-56 object-contain animate-float drop-shadow-2xl"
-            style={{ filter: 'drop-shadow(0 20px 40px rgba(212,43,43,0.35))' }}
-          />
-        </div>
+        {/* Logo protagonista — gira como una moneda con el ratón */}
+        <LogoMoneda />
 
         {/* Titular */}
         <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-white leading-[1.05] mb-6 max-w-4xl">
