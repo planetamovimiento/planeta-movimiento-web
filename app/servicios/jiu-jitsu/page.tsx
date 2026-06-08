@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { Galeria } from '@/components/ui/Galeria'
+import { fotoPrincipal, fotosDe } from '@/lib/fotos'
 import { waNegocio } from '@/lib/whatsapp'
 import { BotonApuntarme } from './InscripcionModal'
 import TabsDescripcion from './TabsDescripcion'
@@ -10,6 +12,8 @@ export const metadata = {
 }
 
 export default function JiuJitsuPage() {
+  const principal = fotoPrincipal('jiu-jitsu')
+  const miniaturas = fotosDe('jiu-jitsu').slice(1, 4)
   return (
     <main className="bg-white min-h-screen">
       {/* Breadcrumb */}
@@ -30,43 +34,62 @@ export default function JiuJitsuPage() {
 
           {/* COLUMNA IZQUIERDA */}
           <div className="space-y-3">
-            {/* Imagen principal — estética marcial oscura */}
+            {/* Imagen principal — foto real (o cartel marcial si aún no hay foto) */}
             <div className="relative bg-slate-900 rounded-2xl overflow-hidden aspect-[4/3] flex items-center justify-center">
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-pm-red/30" />
-
-              {/* Contenido cartel */}
-              <div className="relative text-center px-6 space-y-4">
-                <div className="text-white/10 font-black text-8xl leading-none select-none">BJJ</div>
-                <div className="text-white font-black text-lg tracking-widest uppercase">Jiu-Jitsu Brasileño</div>
-                <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-xl px-4 py-2">
-                  <div className="w-6 h-6 bg-slate-700 rounded-md flex items-center justify-center text-white font-black text-xs">A</div>
-                  <span className="text-white/80 text-sm font-semibold">Academia Adamas · Madrid</span>
-                </div>
-                <div className="text-pm-red font-black text-2xl tracking-wide">Arte marcial de suelo</div>
-                <div className="text-white/40 text-xs">www.planetamovimiento.com</div>
-              </div>
-
-              <button className="absolute top-3 right-3 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-colors">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/>
-                </svg>
-              </button>
+              {principal ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={principal} alt="Jiu-Jitsu Brasileño" className="absolute inset-0 w-full h-full object-cover" />
+              ) : (
+                <>
+                  <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-pm-red/30" />
+                  <div className="relative text-center px-6 space-y-4">
+                    <div className="text-white/10 font-black text-8xl leading-none select-none">BJJ</div>
+                    <div className="text-white font-black text-lg tracking-widest uppercase">Jiu-Jitsu Brasileño</div>
+                    <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-xl px-4 py-2">
+                      <div className="w-6 h-6 bg-slate-700 rounded-md flex items-center justify-center text-white font-black text-xs">A</div>
+                      <span className="text-white/80 text-sm font-semibold">Academia Adamas · Madrid</span>
+                    </div>
+                    <div className="text-pm-red font-black text-2xl tracking-wide">Arte marcial de suelo</div>
+                  </div>
+                </>
+              )}
+              {principal && (
+                <>
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-900/25 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-6">
+                    <div className="text-white/50 font-black text-xs tracking-[0.2em] uppercase mb-1">Academia Adamas · Madrid</div>
+                    <div className="text-white font-black text-2xl leading-tight">Jiu-Jitsu Brasileño</div>
+                    <div className="text-pm-red font-bold text-sm mt-1">Arte marcial de suelo</div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Miniaturas */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-xl border-2 border-pm-red aspect-square bg-slate-900 flex items-center justify-center cursor-pointer">
-                <span className="text-white/30 text-xs font-black">BJJ</span>
+            {miniaturas.length > 0 ? (
+              <div className="grid grid-cols-3 gap-3">
+                {miniaturas.map((src, i) => (
+                  <div key={src} className="rounded-xl overflow-hidden aspect-square bg-slate-100">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt={`Jiu-Jitsu ${i + 2}`} loading="lazy" className="w-full h-full object-cover" />
+                  </div>
+                ))}
               </div>
-              <div className="rounded-xl border-2 border-gray-200 aspect-square bg-slate-100 flex items-center justify-center cursor-pointer hover:border-pm-red transition-colors">
-                <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
+            ) : (
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-xl border-2 border-pm-red aspect-square bg-slate-900 flex items-center justify-center">
+                  <span className="text-white/30 text-xs font-black">BJJ</span>
+                </div>
+                <div className="rounded-xl border-2 border-gray-200 aspect-square bg-slate-100 flex items-center justify-center">
+                  <svg className="w-6 h-6 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                </div>
+                <div className="rounded-xl border-2 border-gray-200 aspect-square bg-slate-50 flex items-center justify-center">
+                  <span className="text-3xl">🥋</span>
+                </div>
               </div>
-              <div className="rounded-xl border-2 border-gray-200 aspect-square bg-slate-50 flex items-center justify-center cursor-pointer hover:border-pm-red transition-colors">
-                <span className="text-3xl">🥋</span>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* COLUMNA DERECHA */}
@@ -161,6 +184,7 @@ export default function JiuJitsuPage() {
         {/* Tabs + Calendario */}
         <TabsDescripcion />
       </div>
+      <Galeria slug="jiu-jitsu" titulo="Galería" subtitulo="Jiu-Jitsu Brasileño · Academia Adamas" fondo="bg-pm-bg" />
     </main>
   )
 }

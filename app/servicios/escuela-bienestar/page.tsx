@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Galeria } from '@/components/ui/Galeria'
 import { waNegocio } from '@/lib/whatsapp'
 import { BotonApuntarme } from './InscripcionModal'
 import TabsDescripcion from './TabsDescripcion'
@@ -172,6 +173,7 @@ export default function EscuelaBienestarPage() {
         {/* Tabs + Calendario */}
         <TabsDescripcion />
       </div>
+      <Galeria slug="escuela-bienestar" titulo="Galería" subtitulo="Pilates, yoga y movimiento para adultos" fondo="bg-pm-bg" />
     </main>
   )
 }

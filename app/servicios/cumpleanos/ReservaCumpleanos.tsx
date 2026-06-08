@@ -54,11 +54,19 @@ function formatDate(date: Date): string {
   return new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(date)
 }
 
+/** Fecha en formato YYYY-MM-DD en hora LOCAL (evita el desfase de toISOString/UTC). */
+function ymdLocal(date: Date): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, '0')
+  const d = String(date.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
 // ─── Mini calendario ──────────────────────────────────────────────────────────
 const DIAS = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 
-function Calendario({ selected, onSelect }: { selected: Date | null; onSelect: (d: Date) => void }) {
+function Calendario({ selected, onSelect, estaCompleto }: { selected: Date | null; onSelect: (d: Date) => void; estaCompleto: (d: Date) => boolean }) {
   const hoy = new Date(); hoy.setHours(0, 0, 0, 0)
   const [viewYear, setViewYear]   = useState(hoy.getFullYear())
   const [viewMonth, setViewMonth] = useState(hoy.getMonth())
@@ -117,19 +125,24 @@ function Calendario({ selected, onSelect }: { selected: Date | null; onSelect: (
           if (!dia) return <div key={i} />
           const fecha = new Date(viewYear, viewMonth, dia)
           const pasado = fecha < hoy
+          const completo = !pasado && estaCompleto(fecha)
+          const bloqueado = pasado || completo
           const esHoy  = fecha.getTime() === hoy.getTime()
           const selec  = selected?.getTime() === fecha.getTime()
           const esFS   = esFindeSemanaOFestivo(fecha)
 
           return (
-            <button key={i} disabled={pasado}
-              onClick={() => onSelect(fecha)}
+            <button key={i} disabled={bloqueado}
+              onClick={() => !bloqueado && onSelect(fecha)}
+              title={completo ? 'Sin huecos disponibles' : undefined}
               className={`
                 h-9 w-full rounded-lg text-xs font-semibold transition-all
-                ${pasado ? 'text-gray-200 cursor-not-allowed' : 'cursor-pointer'}
+                ${pasado ? 'text-gray-200 cursor-not-allowed' : ''}
+                ${completo ? 'text-gray-300 line-through bg-gray-50 cursor-not-allowed' : ''}
+                ${!bloqueado ? 'cursor-pointer' : ''}
                 ${selec  ? 'bg-pm-red text-white shadow-md' : ''}
-                ${!selec && !pasado && esFS  ? 'bg-green-50 text-green-700 hover:bg-green-100' : ''}
-                ${!selec && !pasado && !esFS ? 'bg-gray-50 text-gray-700 hover:bg-pm-red-light hover:text-pm-red' : ''}
+                ${!selec && !bloqueado && esFS  ? 'bg-green-50 text-green-700 hover:bg-green-100' : ''}
+                ${!selec && !bloqueado && !esFS ? 'bg-gray-50 text-gray-700 hover:bg-pm-red-light hover:text-pm-red' : ''}
                 ${esHoy && !selec ? 'ring-2 ring-pm-red ring-offset-1' : ''}
               `}
             >
@@ -140,9 +153,10 @@ function Calendario({ selected, onSelect }: { selected: Date | null; onSelect: (
       </div>
 
       {/* Leyenda */}
-      <div className="flex gap-4 mt-3 text-xs text-gray-500">
+      <div className="flex flex-wrap gap-4 mt-3 text-xs text-gray-500">
         <span className="flex items-center gap-1"><span className="w-3 h-3 bg-gray-100 rounded inline-block"/>Lun–Jue</span>
         <span className="flex items-center gap-1"><span className="w-3 h-3 bg-green-100 rounded inline-block"/>Vie–Dom/Fest.</span>
+        <span className="flex items-center gap-1"><span className="w-3 h-3 bg-gray-50 border border-gray-200 rounded inline-block"/><span className="line-through">Completo</span></span>
       </div>
     </div>
   )
@@ -196,7 +210,7 @@ function ResumenPrecio({ fecha, participantes }: { fecha: Date; participantes: n
 }
 
 // ─── Componente principal ─────────────────────────────────────────────────────
-export default function ReservaCumpleanos() {
+export default function ReservaCumpleanos({ ocupados = {} }: { ocupados?: Record<string, string[]> }) {
   const [fechaSeleccionada, setFechaSeleccionada] = useState<Date | null>(null)
   const [slotSeleccionado, setSlotSeleccionado]   = useState<string | null>(null)
   const [participantes, setParticipantes]          = useState<number>(13)
@@ -206,6 +220,17 @@ export default function ReservaCumpleanos() {
   // Estado del formulario de datos personales
   const [form, setForm] = useState({ nombre: '', email: '', telefono: '', notas: '', cumpleanero: '', edad: '' })
   const [enviando, setEnviando] = useState(false)
+  const [ocupadosLocal, setOcupadosLocal] = useState<Record<string, string[]>>({})
+
+  // Huecos ya reservados (del servidor + los que acabas de reservar en esta sesión).
+  // Se comparan por HORA DE INICIO (HH:MM) para casar formatos antiguos y nuevos.
+  const horaInicio = (s: string) => s.match(/\d{1,2}:\d{2}/)?.[0] ?? s
+  const inicioTomados = (date: Date): string[] => {
+    const k = ymdLocal(date)
+    return [...(ocupados[k] ?? []), ...(ocupadosLocal[k] ?? [])]
+  }
+  const slotTomado = (date: Date, slot: string) => inicioTomados(date).includes(horaInicio(slot))
+  const diaCompleto = (date: Date) => { const t = getSlotsDelDia(date); return t.length > 0 && t.every(s => slotTomado(date, s)) }
 
   const slots = useMemo(() => fechaSeleccionada ? getSlotsDelDia(fechaSeleccionada) : [], [fechaSeleccionada])
   const precio = useMemo(() => fechaSeleccionada ? calcularPrecio(fechaSeleccionada, participantes) : null, [fechaSeleccionada, participantes])
@@ -225,14 +250,21 @@ export default function ReservaCumpleanos() {
 
   async function handleReservar(e: React.FormEvent) {
     e.preventDefault()
+    if (!fechaSeleccionada || !slotSeleccionado) return
+    // Seguridad anti-duplicado: si el hueco se ocupó mientras rellenabas los datos, no continúes
+    if (slotTomado(fechaSeleccionada, slotSeleccionado)) {
+      alert('Vaya, ese horario acaba de ocuparse. Por favor, elige otra fecha u horario disponible.')
+      setSlotSeleccionado(null); setPaso(1); return
+    }
     setEnviando(true)
+    const fechaStr = ymdLocal(fechaSeleccionada)
     await submitBooking({
       servicio: 'Cumpleaños',
       cliente_nombre: form.nombre,
       cliente_email: form.email,
       cliente_telefono: form.telefono,
-      fecha: fechaSeleccionada ? fechaSeleccionada.toISOString().slice(0, 10) : undefined,
-      hora: slotSeleccionado ?? undefined,
+      fecha: fechaStr,
+      hora: slotSeleccionado,
       participantes,
       precio: precio?.total,
       observaciones: form.notas,
@@ -243,6 +275,7 @@ export default function ReservaCumpleanos() {
         traeTarta: tieneTarta ? 'Sí' : 'No (tarta decorativa + juego extra)',
       },
     })
+    setOcupadosLocal(prev => ({ ...prev, [fechaStr]: [...(prev[fechaStr] ?? []), horaInicio(slotSeleccionado)] }))
     setEnviando(false)
     setPaso(3)
   }
@@ -284,7 +317,7 @@ export default function ReservaCumpleanos() {
           <span className="font-bold text-sm">Elige fecha y horario</span>
         </div>
         <div className="p-5">
-          <Calendario selected={fechaSeleccionada} onSelect={handleFechaSelect} />
+          <Calendario selected={fechaSeleccionada} onSelect={handleFechaSelect} estaCompleto={diaCompleto} />
 
           {/* Slots */}
           {fechaSeleccionada && (
@@ -293,19 +326,27 @@ export default function ReservaCumpleanos() {
                 Horarios disponibles — {formatDate(fechaSeleccionada)}
               </div>
               <div className="flex flex-col gap-2">
-                {slots.map(slot => (
-                  <button key={slot} onClick={() => setSlotSeleccionado(slot)}
-                    className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all text-sm font-semibold ${
-                      slotSeleccionado === slot
-                        ? 'border-pm-red bg-pm-red-light text-pm-red'
-                        : 'border-gray-200 hover:border-pm-red/40 text-pm-navy'
-                    }`}>
-                    <span>🕐 {slot}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${slotSeleccionado === slot ? 'bg-pm-red text-white' : 'bg-green-100 text-green-700'}`}>
-                      Disponible
-                    </span>
-                  </button>
-                ))}
+                {slots.map(slot => {
+                  const tomado = fechaSeleccionada ? slotTomado(fechaSeleccionada, slot) : false
+                  const activo = slotSeleccionado === slot
+                  return (
+                    <button key={slot} type="button" disabled={tomado} onClick={() => !tomado && setSlotSeleccionado(slot)}
+                      className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all text-sm font-semibold ${
+                        tomado
+                          ? 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed'
+                          : activo
+                            ? 'border-pm-red bg-pm-red-light text-pm-red'
+                            : 'border-gray-200 hover:border-pm-red/40 text-pm-navy'
+                      }`}>
+                      <span>🕐 {slot}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        tomado ? 'bg-gray-200 text-gray-500' : activo ? 'bg-pm-red text-white' : 'bg-green-100 text-green-700'
+                      }`}>
+                        {tomado ? 'Completo' : 'Disponible'}
+                      </span>
+                    </button>
+                  )
+                })}
               </div>
               <p className="text-xs text-gray-400 mt-2">
                 Las horas se muestran en horario Europe/Madrid

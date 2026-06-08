@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ESTADOS_MM, type EstadoMM } from '@/lib/eventos/manana-magica'
 import { ELEMENTOS, type CampamentosConfig, type SemanaCfg, type Elemento } from '@/lib/campamentos/editable'
+import { SubirImagen } from '@/components/admin/SubirImagen'
 import { guardarEventoConfig } from '../evento-actions'
 
 const input = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red'
@@ -25,9 +26,12 @@ export default function EditorCampamentos({ inicial, puedeEditar }: { inicial: C
       precioMatinal: Number(f.precioMatinal) || 0, precioVespertino: Number(f.precioVespertino) || 0,
       descuentoHermanos: Number(f.descuentoHermanos) || 0, cuponHermanos: f.cuponHermanos,
       navidadFechas: f.navidadFechas, navidadHorario: f.navidadHorario, navidadEstado: f.navidadEstado,
+      navidadDescripcion: f.navidadDescripcion, navidadImagen: f.navidadImagen,
       ssantaFechas: f.ssantaFechas, ssantaHorario: f.ssantaHorario, ssantaEstado: f.ssantaEstado,
+      ssantaDescripcion: f.ssantaDescripcion, ssantaImagen: f.ssantaImagen,
       veranoSemanas: f.veranoSemanas.map((s, i) => ({ id: i + 1, elemento: s.elemento, inicio: s.inicio, fin: s.fin })),
       veranoHorario: f.veranoHorario, veranoEstado: f.veranoEstado,
+      veranoDescripcion: f.veranoDescripcion, veranoImagen: f.veranoImagen,
     }
     const r = await guardarEventoConfig('campamentos', contenido, 'abierto')
     setGuardando(false)
@@ -70,6 +74,8 @@ export default function EditorCampamentos({ inicial, puedeEditar }: { inicial: C
             <div><label className={label}>Estado</label><EstadoSel value={f.navidadEstado} onChange={v => set('navidadEstado', v)} /></div>
           </div>
         </div>
+        <div><label className={label}>Descripción</label><textarea rows={3} value={f.navidadDescripcion} disabled={!puedeEditar} onChange={e => set('navidadDescripcion', e.target.value)} className={`${input} resize-none`} /></div>
+        <div><label className={label}>Imagen</label><SubirImagen value={f.navidadImagen} onChange={url => set('navidadImagen', url)} carpeta="campamentos" /></div>
       </section>
 
       {/* SEMANA SANTA */}
@@ -82,6 +88,8 @@ export default function EditorCampamentos({ inicial, puedeEditar }: { inicial: C
             <div><label className={label}>Estado</label><EstadoSel value={f.ssantaEstado} onChange={v => set('ssantaEstado', v)} /></div>
           </div>
         </div>
+        <div><label className={label}>Descripción</label><textarea rows={3} value={f.ssantaDescripcion} disabled={!puedeEditar} onChange={e => set('ssantaDescripcion', e.target.value)} className={`${input} resize-none`} /></div>
+        <div><label className={label}>Imagen</label><SubirImagen value={f.ssantaImagen} onChange={url => set('ssantaImagen', url)} carpeta="campamentos" /></div>
       </section>
 
       {/* VERANO */}
@@ -91,6 +99,8 @@ export default function EditorCampamentos({ inicial, puedeEditar }: { inicial: C
           <div><label className={label}>Horario</label><input value={f.veranoHorario} disabled={!puedeEditar} onChange={e => set('veranoHorario', e.target.value)} className={input} /></div>
           <div><label className={label}>Estado</label><EstadoSel value={f.veranoEstado} onChange={v => set('veranoEstado', v)} /></div>
         </div>
+        <div><label className={label}>Descripción</label><textarea rows={3} value={f.veranoDescripcion} disabled={!puedeEditar} onChange={e => set('veranoDescripcion', e.target.value)} className={`${input} resize-none`} /></div>
+        <div><label className={label}>Imagen</label><SubirImagen value={f.veranoImagen} onChange={url => set('veranoImagen', url)} carpeta="campamentos" /></div>
         <div className="space-y-2 pt-1">
           {f.veranoSemanas.map((s, i) => (
             <div key={i} className="grid grid-cols-[auto_1fr_1fr_1fr_auto] items-center gap-2 bg-pm-bg rounded-xl p-2.5">

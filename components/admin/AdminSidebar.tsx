@@ -33,9 +33,10 @@ const GRUPOS: Grupo[] = [
   {
     titulo: 'General',
     items: [
-      { href: '/admin/clientes',        label: 'Clientes',        icon: '👥' },
-      { href: '/admin/administradores', label: 'Administradores', icon: '🔐', soloPrincipal: true },
-      { href: '/admin/actividad',       label: 'Actividad',       icon: '📝' },
+      { href: '/admin/clientes',        label: 'Clientes',         icon: '👥' },
+      { href: '/admin/balance',         label: 'Balance Económico', icon: '💰' },
+      { href: '/admin/administradores', label: 'Administradores',  icon: '🔐', soloPrincipal: true },
+      { href: '/admin/actividad',       label: 'Actividad',        icon: '📝' },
     ],
   },
 ]

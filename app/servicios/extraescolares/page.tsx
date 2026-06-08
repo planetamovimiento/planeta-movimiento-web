@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Galeria } from '@/components/ui/Galeria'
 import FormExtraescolar from './FormExtraescolar'
 
 export const metadata = {
@@ -437,6 +438,7 @@ export default function ExtraescolaresPage() {
         </div>
       </section>
 
+      <Galeria slug="extraescolares" titulo="Galería" subtitulo="Multideporte y circo en el cole" fondo="bg-pm-bg" />
     </main>
   )
 }

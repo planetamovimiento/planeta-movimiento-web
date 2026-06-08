@@ -43,6 +43,9 @@ export const can = {
   managePayments: (r: AdminRole) => r === 'principal',
   edit:           (r: AdminRole) => r === 'principal' || r === 'gestor',
   view:           (_r: AdminRole) => true,
+  // Balance económico: principal hace todo; gestor crea/edita; lectura solo ve.
+  manageFinance:  (r: AdminRole) => r === 'principal',                 // borrar, importar, categorías
+  editFinance:    (r: AdminRole) => r === 'principal' || r === 'gestor', // crear/editar
 }
 
 /** Registra una acción en el log de actividad */

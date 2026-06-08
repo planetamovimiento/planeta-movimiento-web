@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Galeria } from '@/components/ui/Galeria'
 import { BotonColaboracion } from './FormColaboracion'
 
 export const metadata = {
@@ -413,6 +414,7 @@ export default function CircoInclusivoPage() {
         </div>
       </section>
 
+      <Galeria slug="circo-inclusivo" titulo="Galería" subtitulo="Circo adaptado y psicomotricidad en acción" fondo="bg-pm-bg" />
     </main>
   )
 }

@@ -21,14 +21,20 @@ export type CampamentosConfig = {
   navidadFechas: string        // una fecha YYYY-MM-DD por línea
   navidadHorario: string
   navidadEstado: EstadoMM
+  navidadDescripcion: string
+  navidadImagen: string
   // Semana Santa
   ssantaFechas: string
   ssantaHorario: string
   ssantaEstado: EstadoMM
+  ssantaDescripcion: string
+  ssantaImagen: string
   // Verano
   veranoSemanas: SemanaCfg[]
   veranoHorario: string
   veranoEstado: EstadoMM
+  veranoDescripcion: string
+  veranoImagen: string
   updatedAt?: string | null
   updatedBy?: string | null
 }
@@ -38,8 +44,14 @@ export const CAMPAMENTOS_DEFAULT: CampamentosConfig = {
   descuentoHermanos: 15, cuponHermanos: 'HERMANOS',
   navidadFechas: ['2025-12-26', '2025-12-27', '2025-12-28', '2025-12-29', '2025-12-30'].join('\n'),
   navidadHorario: '9:00 – 14:00', navidadEstado: 'abierto',
+  navidadDescripcion: 'Durante estos días los niños vivirán una aventura única en nuestra Escuela de Superhéroes, llena de retos, actividades y dinámicas que desarrollan sus habilidades motrices mientras se lo pasan en grande.',
+  navidadImagen: '/fotos/campamento-navidad/1.webp',
   ssantaFechas: ['2026-03-30', '2026-03-31', '2026-04-01', '2026-04-02', '2026-04-03'].join('\n'),
   ssantaHorario: '9:00 – 14:00', ssantaEstado: 'abierto',
+  ssantaDescripcion: 'El campamento de Semana Santa sigue el mismo formato de Escuela de Superhéroes: jornadas de movimiento, creatividad y juego en equipo con todas las disciplinas del club.',
+  ssantaImagen: '/fotos/campamento-semana-santa/1.webp',
+  veranoDescripcion: 'Ocho semanas de Escuela de Superhéroes. Cada semana trabaja un elemento y un sentido a través de experiencias sensoriales, exploración, creatividad y juego.',
+  veranoImagen: '/fotos/campamento-verano/1.webp',
   veranoSemanas: [
     { id: 1, elemento: 'Tierra', inicio: '2026-06-22', fin: '2026-06-26' },
     { id: 2, elemento: 'Agua', inicio: '2026-06-29', fin: '2026-07-03' },

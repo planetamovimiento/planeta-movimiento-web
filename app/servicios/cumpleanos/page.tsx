@@ -1,5 +1,13 @@
 import Link from 'next/link'
+import { Galeria } from '@/components/ui/Galeria'
+import { VideoYoutube } from '@/components/ui/VideoYoutube'
 import ReservaCumpleanos from './ReservaCumpleanos'
+import { getCumpleanosOcupados } from '@/lib/cumpleanos/disponibilidad'
+
+export const dynamic = 'force-dynamic'
+
+// 🎥 Enlace del vídeo explicativo de YouTube (déjalo vacío para ocultar la sección).
+const VIDEO_CUMPLE = 'https://www.youtube.com/shorts/HsIbAnQt6qc'
 
 export const metadata = {
   title: 'Celebración de Cumpleaños — Planeta Movimiento Cuenca',
@@ -18,7 +26,8 @@ const incluye = [
 
 const noIncluye = ['La tarta (podéis traerla vosotros)']
 
-export default function CumpleanosPage() {
+export default async function CumpleanosPage() {
+  const ocupados = await getCumpleanosOcupados()
   return (
     <main className="bg-pm-bg min-h-screen">
       {/* Breadcrumb */}
@@ -155,13 +164,15 @@ export default function CumpleanosPage() {
                 <div className="text-red-200 text-xs mt-0.5">Fianza de 50 € para confirmar la fecha</div>
               </div>
               <div className="p-5">
-                <ReservaCumpleanos />
+                <ReservaCumpleanos ocupados={ocupados} />
               </div>
             </div>
           </div>
 
         </div>
       </div>
+      <VideoYoutube url={VIDEO_CUMPLE} titulo="Cómo es un cumpleaños en Planeta Movimiento" subtitulo="Dale al play y descúbrelo en vídeo" fondo="bg-white" />
+      <Galeria slug="cumpleanos" titulo="Galería" subtitulo="Cumpleaños llenos de circo y diversión" fondo="bg-pm-bg" />
     </main>
   )
 }

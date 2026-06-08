@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Galeria } from '@/components/ui/Galeria'
 
 export const metadata = {
   title: 'Curso Monitor de Actividades Juveniles 2026 — Planeta Movimiento × ARKHE',
@@ -459,6 +460,7 @@ export default function MonitorJuvenilPage() {
         </div>
       </section>
 
+      <Galeria slug="monitor-juvenil" titulo="Galería" subtitulo="Formación de monitores de actividades juveniles" fondo="bg-pm-bg" />
     </main>
   )
 }

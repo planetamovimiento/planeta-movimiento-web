@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { Galeria } from '@/components/ui/Galeria'
 import { useState } from 'react'
 import CalculadoraEventos from './CalculadoraEventos'
 import { ReservaDiasSinCole, ReservaDomingos, ReservaHalloween, ReservaMananaMagica } from './EventosInstalaciones'
@@ -496,6 +497,7 @@ export default function EventosPageClient({ mananaMagica, diasSinCole, domingos,
         </>
       )}
 
+      <Galeria slug="eventos" titulo="Galería" subtitulo="Animación y espectáculos en tus eventos" fondo="bg-pm-bg" />
     </main>
   )
 }

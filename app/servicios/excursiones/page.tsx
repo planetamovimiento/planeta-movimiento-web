@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Galeria } from '@/components/ui/Galeria'
 import { waNegocio } from '@/lib/whatsapp'
 import FormExcursion from './FormExcursion'
 
@@ -367,6 +368,7 @@ export default function ExcursionesPage() {
         </div>
       </section>
 
+      <Galeria slug="excursiones" titulo="Galería" subtitulo="Jornadas de circo y acrobacia para grupos escolares" fondo="bg-pm-bg" />
     </main>
   )
 }

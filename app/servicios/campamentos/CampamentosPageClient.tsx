@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import ReservaNavidad from './ReservaNavidad'
-import ReservaSemanaSanta from './ReservaSemanaSanta'
+import { Galeria } from '@/components/ui/Galeria'
+import ReservaBloque from './ReservaBloque'
 import ReservaVerano from './ReservaVerano'
 import { semanasResueltas, parseFechasLista, type CampamentosConfig } from '@/lib/campamentos/editable'
 
@@ -113,16 +113,29 @@ export default function CampamentosPageClient({ cfg }: { cfg: CampamentosConfig 
                   ))}
                 </div>
               </div>
+              {cfg.navidadImagen && (
+                <div className="rounded-2xl overflow-hidden shadow-sm border border-gray-100 relative aspect-[16/9]">
+                  <img src={cfg.navidadImagen} alt="Campamento de Navidad" className="absolute inset-0 w-full h-full object-cover" />
+                </div>
+              )}
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <h3 className="font-black text-pm-navy text-lg mb-3">¿Qué incluye?</h3>
-                <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                  Durante {navDias.length} días los niños vivirán una aventura única en nuestra <strong className="text-pm-navy">Escuela de Superhéroes</strong>,
-                  llena de retos, actividades y dinámicas que desarrollan sus habilidades motrices mientras se lo pasan en grande.
-                </p>
+                <p className="text-gray-600 text-sm leading-relaxed mb-4 whitespace-pre-line">{cfg.navidadDescripcion}</p>
                 <div className="grid grid-cols-2 gap-2">
                   {['Gimnasia acrobática', 'Parkour', 'Telas aéreas', 'Equilibrios', 'Circo y malabares', 'Dinámicas lúdicas'].map(a => (
                     <div key={a} className="flex items-center gap-2 text-sm text-gray-700"><span className="text-blue-600 font-bold">✓</span>{a}</div>
                   ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-center">
+                  <div className="text-2xl font-black text-blue-800">{cfg.precioDiaSuelto} €</div>
+                  <div className="text-blue-600 text-xs">día suelto</div>
+                </div>
+                <div className="bg-blue-600 border border-blue-700 rounded-xl p-4 text-center">
+                  <div className="text-2xl font-black text-white">{cfg.precioSemana} €</div>
+                  <div className="text-blue-100 text-xs">semana completa</div>
+                  <div className="text-xs text-blue-200 mt-0.5">vs {cfg.precioDiaSuelto * 5} € en días sueltos</div>
                 </div>
               </div>
             </div>
@@ -130,9 +143,11 @@ export default function CampamentosPageClient({ cfg }: { cfg: CampamentosConfig 
               <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
                 <div className="bg-blue-600 text-white px-5 py-4">
                   <div className="font-black text-base">⛄ Reservar Campamento de Navidad</div>
-                  <div className="text-blue-200 text-xs mt-0.5">Elige los días y completa la solicitud</div>
+                  <div className="text-blue-200 text-xs mt-0.5">Elige los días y paga tu reserva</div>
                 </div>
-                <div className="p-5"><ReservaNavidad cfg={cfg} /></div>
+                <div className="p-5 max-h-[80vh] overflow-y-auto">
+                  <ReservaBloque cfg={cfg} servicio="Campamento de Navidad" fechas={navDias} horario={cfg.navidadHorario} color="blue" nombreCorto="Navidad" />
+                </div>
               </div>
             </div>
           </div>
@@ -152,16 +167,29 @@ export default function CampamentosPageClient({ cfg }: { cfg: CampamentosConfig 
                   ))}
                 </div>
               </div>
+              {cfg.ssantaImagen && (
+                <div className="rounded-2xl overflow-hidden shadow-sm border border-gray-100 relative aspect-[16/9]">
+                  <img src={cfg.ssantaImagen} alt="Campamento de Semana Santa" className="absolute inset-0 w-full h-full object-cover" />
+                </div>
+              )}
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <h3 className="font-black text-pm-navy text-lg mb-3">¿Qué incluye?</h3>
-                <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                  El campamento de Semana Santa sigue el mismo formato de <strong className="text-pm-navy">Escuela de Superhéroes</strong>:
-                  {' '}{ssDias.length} jornadas de movimiento, creatividad y juego en equipo con todas las disciplinas del club.
-                </p>
+                <p className="text-gray-600 text-sm leading-relaxed mb-4 whitespace-pre-line">{cfg.ssantaDescripcion}</p>
                 <div className="grid grid-cols-2 gap-2">
                   {['Gimnasia acrobática', 'Parkour', 'Telas aéreas', 'Equilibrios', 'Circo y malabares', 'Dinámicas lúdicas'].map(a => (
                     <div key={a} className="flex items-center gap-2 text-sm text-gray-700"><span className="text-violet-600 font-bold">✓</span>{a}</div>
                   ))}
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-violet-50 border border-violet-200 rounded-xl p-4 text-center">
+                  <div className="text-2xl font-black text-violet-800">{cfg.precioDiaSuelto} €</div>
+                  <div className="text-violet-600 text-xs">día suelto</div>
+                </div>
+                <div className="bg-violet-600 border border-violet-700 rounded-xl p-4 text-center">
+                  <div className="text-2xl font-black text-white">{cfg.precioSemana} €</div>
+                  <div className="text-violet-100 text-xs">semana completa</div>
+                  <div className="text-xs text-violet-200 mt-0.5">vs {cfg.precioDiaSuelto * 5} € en días sueltos</div>
                 </div>
               </div>
             </div>
@@ -169,9 +197,11 @@ export default function CampamentosPageClient({ cfg }: { cfg: CampamentosConfig 
               <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
                 <div className="bg-violet-600 text-white px-5 py-4">
                   <div className="font-black text-base">🌸 Reservar Semana Santa</div>
-                  <div className="text-violet-200 text-xs mt-0.5">Elige los días y completa la solicitud</div>
+                  <div className="text-violet-200 text-xs mt-0.5">Elige los días y paga tu reserva</div>
                 </div>
-                <div className="p-5"><ReservaSemanaSanta cfg={cfg} /></div>
+                <div className="p-5 max-h-[80vh] overflow-y-auto">
+                  <ReservaBloque cfg={cfg} servicio="Campamento de Semana Santa" fechas={ssDias} horario={cfg.ssantaHorario} color="violet" nombreCorto="Semana Santa" />
+                </div>
               </div>
             </div>
           </div>
@@ -204,6 +234,18 @@ export default function CampamentosPageClient({ cfg }: { cfg: CampamentosConfig 
                   </div>
                 </div>
               </div>
+
+              {cfg.veranoImagen && (
+                <div className="rounded-2xl overflow-hidden shadow-sm border border-gray-100 relative aspect-[16/9]">
+                  <img src={cfg.veranoImagen} alt="Campamento de Verano" className="absolute inset-0 w-full h-full object-cover" />
+                </div>
+              )}
+              {cfg.veranoDescripcion && (
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                  <h3 className="font-black text-pm-navy text-lg mb-3">¿Qué incluye?</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">{cfg.veranoDescripcion}</p>
+                </div>
+              )}
 
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <h3 className="font-black text-pm-navy text-base mb-4">Calendario de semanas</h3>
@@ -248,6 +290,7 @@ export default function CampamentosPageClient({ cfg }: { cfg: CampamentosConfig 
           </div>
         )}
       </div>
+      <Galeria slug="campamentos" titulo="Galería de campamentos" subtitulo="Navidad, Semana Santa y Verano · Escuela de Superhéroes" fondo="bg-white" />
     </main>
   )
 }
