@@ -107,7 +107,7 @@ export default function HomePage() {
           </Reveal>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {SERVICIOS.map((s, i) => (
+            {SERVICIOS.slice(0, 5).map((s, i) => (
               <Reveal key={s.nombre} delay={i * 60} className={s.span}>
                 <Link
                   href={s.href}
@@ -126,6 +126,14 @@ export default function HomePage() {
               </Reveal>
             ))}
           </div>
+
+          <Reveal className="text-center mt-10">
+            <Link href="/actividades"
+              className="inline-flex items-center gap-2 bg-pm-red hover:bg-pm-red-dark text-white font-black px-7 py-3.5 rounded-xl transition-colors shadow-sm">
+              Ver todas nuestras actividades
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7"/></svg>
+            </Link>
+          </Reveal>
         </div>
       </section>
 
