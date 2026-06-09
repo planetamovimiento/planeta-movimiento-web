@@ -8,6 +8,7 @@ export type AdminRole = 'principal' | 'gestor' | 'lectura'
 
 export type SeccionId =
   | 'club'
+  | 'circo-inclusivo'
   | 'reservas'
   | 'pagos'
   | 'productos'
@@ -32,6 +33,7 @@ export type SeccionMeta = {
 /** Orden y agrupación = el que se muestra en la barra lateral. */
 export const SECCIONES: SeccionMeta[] = [
   { id: 'club',            label: 'Inscripciones Club',  icon: '🏅', href: '/admin/club',            grupo: 'Club Deportivo Origen' },
+  { id: 'circo-inclusivo', label: 'Circo Inclusivo',     icon: '🤸', href: '/admin/circo-inclusivo',  grupo: 'Club Deportivo Origen' },
   { id: 'reservas',        label: 'Reservas',            icon: '📋', href: '/admin/reservas',         grupo: 'Empresa' },
   { id: 'pagos',           label: 'Pagos',               icon: '💳', href: '/admin/pagos',            grupo: 'Empresa' },
   { id: 'productos',       label: 'Productos y pedidos', icon: '🛒', href: '/admin/productos',        grupo: 'Empresa' },
