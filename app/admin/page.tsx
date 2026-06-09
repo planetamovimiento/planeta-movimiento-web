@@ -1,12 +1,17 @@
 import Link from 'next/link'
 import { getAdminUser } from '@/lib/admin/auth'
 import { getDashboard } from '@/lib/admin/data'
+import { puedeVerSeccion, type SeccionId } from '@/lib/admin/secciones'
 import { AdminHeader, Metric, EstadoBadge, EmptyState, SetupNotice } from '@/components/admin/ui'
 
 export default async function DashboardPage() {
   const admin = await getAdminUser()
   const d = await getDashboard()
   const hoy = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())
+
+  // Visibilidad por permisos. Sin acceso a Balance ni Pagos → no se muestra ningún dato económico.
+  const ver = (id: SeccionId) => !!admin && puedeVerSeccion(admin.role, admin.secciones, id)
+  const verFinanzas = ver('balance') || ver('pagos')
 
   const eur = (n: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n)
 
@@ -15,7 +20,7 @@ export default async function DashboardPage() {
       <AdminHeader
         titulo={`Hola, ${admin?.nombre?.split(' ')[0] || 'admin'} 👋`}
         subtitulo={hoy.charAt(0).toUpperCase() + hoy.slice(1)}
-        accion={<Link href="/admin/reservas" className="bg-pm-red hover:bg-pm-red-dark text-white font-bold px-5 py-2.5 rounded-xl transition-colors text-sm hidden sm:inline-block">Ver reservas</Link>}
+        accion={ver('reservas') ? <Link href="/admin/reservas" className="bg-pm-red hover:bg-pm-red-dark text-white font-bold px-5 py-2.5 rounded-xl transition-colors text-sm hidden sm:inline-block">Ver reservas</Link> : null}
       />
 
       <div className="p-6 lg:p-8 space-y-8">
@@ -27,7 +32,7 @@ export default async function DashboardPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Metric label="Reservas hoy" valor={d.reservasHoy} tono="navy" />
             <Metric label="Pendientes" valor={d.pendientes} sub="Requieren confirmación" tono="amber" />
-            <Metric label="Ingresos (pagado)" valor={eur(d.ingresos)} tono="green" />
+            {verFinanzas && <Metric label="Ingresos (pagado)" valor={eur(d.ingresos)} tono="green" />}
             <Metric label="Solicitudes empresa" valor={d.formsNuevos} tono="red" />
           </div>
         </div>
@@ -114,14 +119,14 @@ export default async function DashboardPage() {
 
         {/* Accesos rápidos */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {[
-            { href: '/admin/club', icon: '🏅', label: 'Club · Solicitudes' },
-            { href: '/admin/reservas', icon: '📋', label: 'Reservas' },
-            { href: '/admin/formularios', icon: '✉️', label: 'Solicitudes' },
-            { href: '/admin/calendario', icon: '🗓️', label: 'Calendario' },
-            { href: '/admin/clientes', icon: '👥', label: 'Clientes' },
-            { href: '/admin/productos', icon: '🛒', label: 'Productos' },
-          ].map(a => (
+          {([
+            { href: '/admin/club', icon: '🏅', label: 'Club · Solicitudes', id: 'club' },
+            { href: '/admin/reservas', icon: '📋', label: 'Reservas', id: 'reservas' },
+            { href: '/admin/formularios', icon: '✉️', label: 'Solicitudes', id: 'formularios' },
+            { href: '/admin/calendario', icon: '🗓️', label: 'Calendario', id: 'calendario' },
+            { href: '/admin/clientes', icon: '👥', label: 'Clientes', id: 'clientes' },
+            { href: '/admin/productos', icon: '🛒', label: 'Productos', id: 'productos' },
+          ] as const).filter(a => ver(a.id)).map(a => (
             <Link key={a.href} href={a.href} className="bg-white border border-gray-100 rounded-2xl p-4 text-center hover:shadow-md hover:border-pm-red/20 transition-all">
               <div className="text-2xl mb-1">{a.icon}</div>
               <div className="text-xs font-bold text-pm-navy">{a.label}</div>
