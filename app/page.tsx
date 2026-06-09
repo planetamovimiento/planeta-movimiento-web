@@ -246,6 +246,37 @@ export default function HomePage() {
             </div>
           </Reveal>
         </div>
+
+        {/* ── Ubicación / Google Maps ── */}
+        <Reveal className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
+          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-[1fr_1.4fr] text-left">
+            <div className="p-7 sm:p-9 flex flex-col justify-center">
+              <span className="text-pm-red text-xs font-black uppercase tracking-widest mb-2">Dónde estamos</span>
+              <h3 className="text-2xl font-black text-pm-navy mb-3">Planeta Movimiento</h3>
+              <p className="flex items-start gap-2.5 text-gray-600 leading-relaxed">
+                <svg className="w-5 h-5 text-pm-red shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                <span>Polígono Los Palancares, 8<br />16004 · Cuenca</span>
+              </p>
+              <a href="https://www.google.com/maps/dir/?api=1&destination=Pol%C3%ADgono%20Los%20Palancares%208%2C%2016004%20Cuenca"
+                target="_blank" rel="noopener noreferrer"
+                className="mt-6 inline-flex items-center justify-center gap-2 bg-pm-navy hover:bg-pm-navy-md text-white font-black px-6 py-3.5 rounded-xl transition-colors self-start">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                Cómo llegar
+              </a>
+            </div>
+            <div className="relative min-h-[280px] md:min-h-[340px]">
+              <iframe
+                title="Ubicación de Planeta Movimiento en Cuenca"
+                src="https://www.google.com/maps?q=Pol%C3%ADgono+Los+Palancares+8%2C+16004+Cuenca&output=embed"
+                className="absolute inset-0 h-full w-full"
+                style={{ border: 0 }}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </Reveal>
       </section>
 
     </main>

@@ -49,13 +49,14 @@ export default async function CumpleanosPage() {
           {/* ── COLUMNA IZQUIERDA ── */}
           <div className="space-y-6">
 
-            {/* Imagen principal */}
+            {/* Imagen principal — foto real de cumpleaños */}
             <div className="relative bg-pm-navy rounded-2xl overflow-hidden aspect-[16/9]">
-              <div className="absolute inset-0 bg-gradient-to-br from-pm-navy via-pm-navy-md to-pm-red/40" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/fotos/cumpleanos/1.webp" alt="Cumpleaños en Planeta Movimiento" className="absolute inset-0 w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-pm-navy/90 via-pm-navy/45 to-pm-navy/20" />
               <div className="relative h-full flex flex-col items-center justify-center text-center px-8">
-                <div className="text-6xl mb-3">🎂</div>
-                <div className="text-white font-black text-3xl mb-2">Celebración de<br/>cumpleaños</div>
-                <div className="text-white/60 text-sm">Planeta Movimiento · Cuenca</div>
+                <div className="text-white font-black text-3xl mb-2 [text-shadow:0_2px_16px_rgba(0,0,0,0.5)]">Celebración de<br/>cumpleaños</div>
+                <div className="text-white/85 text-sm [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">Planeta Movimiento · Cuenca</div>
               </div>
             </div>
 

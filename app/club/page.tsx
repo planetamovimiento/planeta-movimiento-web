@@ -17,12 +17,6 @@ const DISCIPLINAS = [
     href: '/servicios/gimnasia-acrobatica',
   },
   {
-    nombre: 'Parkour',
-    desc: 'Desplazamiento acrobático: saltos, equilibrios y control del cuerpo en el espacio. Superación y confianza.',
-    edad: 'Desde 6 años', foto: '', grad: 'from-slate-700 to-pm-navy',
-    href: '#inscripcion',
-  },
-  {
     nombre: 'Telas Aéreas',
     desc: 'Técnica aérea en tela: figuras, envolturas y trabajo de altura con progresión adaptada y total seguridad.',
     edad: 'Desde 6 años', foto: '/fotos/telas-aereas/1.webp', grad: 'from-purple-700 to-indigo-800',
@@ -31,25 +25,25 @@ const DISCIPLINAS = [
   {
     nombre: 'Escuela Infantil',
     desc: 'Movimiento, psicomotricidad y primeras habilidades circenses para los más pequeños a través del juego.',
-    edad: '3 a 5 años', foto: '', grad: 'from-amber-400 to-orange-500',
+    edad: '3 a 5 años', foto: '/fotos/escuela-infantil/1.webp', grad: 'from-amber-400 to-orange-500',
     href: '/servicios/escuela-infantil',
   },
   {
     nombre: 'Escuela de Bienestar',
     desc: 'Pilates, Yoga y Baile para adultos. Cuerpo y mente en equilibrio, lunes, miércoles y viernes.',
-    edad: 'Adultos', foto: '', grad: 'from-teal-600 to-cyan-700',
+    edad: 'Adultos', foto: '/fotos/escuela-bienestar/1.webp', grad: 'from-teal-600 to-cyan-700',
     href: '/servicios/escuela-bienestar',
   },
   {
     nombre: 'Jiu-Jitsu Brasileño',
     desc: 'Arte marcial de suelo en colaboración con Academia Adamas (Madrid). Disciplina, técnica y confianza. Sábados 11:30-13:30.',
-    edad: '+16 años · 60 €/mes', foto: '', grad: 'from-slate-800 to-pm-navy',
+    edad: '+16 años · 60 €/mes', foto: '/fotos/jiu-jitsu/1.webp', grad: 'from-slate-800 to-pm-navy',
     href: '/servicios/jiu-jitsu',
   },
   {
     nombre: 'Circo Inclusivo',
     desc: 'Circo adaptado y psicomotricidad para personas con discapacidad intelectual. Inclusión real a través del movimiento. Con CADIG Crisol.',
-    edad: 'Adultos', foto: '', grad: 'from-indigo-700 to-purple-800',
+    edad: 'Adultos', foto: '/fotos/circo-inclusivo/1.webp', grad: 'from-indigo-700 to-purple-800',
     href: '/servicios/circo-inclusivo',
   },
 ]

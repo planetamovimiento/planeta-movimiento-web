@@ -71,14 +71,6 @@ export default async function TalleresIntensivosPage() {
                   <div className="text-3xl mb-2">{t.icon}</div>
                   <div className="font-black text-sm leading-tight">{t.nombre}</div>
                   <div className="text-white/60 text-xs mt-1">{t.subtitulo}</div>
-                  <div className={`absolute bottom-3 right-3 text-xs font-bold px-2 py-0.5 rounded-full border ${
-                    t.estado === 'abierto'      ? 'bg-green-500/20 border-green-400/30 text-green-300' :
-                    t.estado === 'ultimas'      ? 'bg-amber-500/20 border-amber-400/30 text-amber-300' :
-                    t.estado === 'completo'     ? 'bg-gray-500/20 border-gray-400/30 text-gray-300'   :
-                                                  'bg-blue-500/20 border-blue-400/30 text-blue-300'
-                  }`}>
-                    {t.estado === 'abierto' ? 'Abierto' : t.estado === 'ultimas' ? 'Últimas' : t.estado === 'completo' ? 'Completo' : 'Próximamente'}
-                  </div>
                 </div>
               ))}
             </div>
