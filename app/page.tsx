@@ -13,17 +13,6 @@ export const metadata = {
 }
 
 // ─── Datos ────────────────────────────────────────────────────────────────────
-// foto: ruta de la imagen real (déjala en /public/fotos). Vacío = panel sobrio temporal.
-const SERVICIOS = [
-  { nombre: 'Club Deportivo', desc: 'Clases semanales de circo, acrobacia, aéreos y artes marciales.', href: '/club', foto: '/fotos/gimnasia-acrobatica/1.webp', grad: 'from-pm-navy to-pm-navy-md', span: 'lg:col-span-2' },
-  { nombre: 'Cumpleaños', desc: 'Fiestas inolvidables con actividad guiada y merienda.', href: '/servicios/cumpleanos', foto: '', grad: 'from-pm-red to-pm-red-dark', span: '' },
-  { nombre: 'Campamentos', desc: 'Escuela de Superhéroes en Navidad, Semana Santa y verano.', href: '/servicios/campamentos', foto: '', grad: 'from-amber-500 to-orange-600', span: '' },
-  { nombre: 'Eventos', desc: 'Animación para bodas, comuniones y celebraciones.', href: '/servicios/eventos', foto: '', grad: 'from-purple-600 to-indigo-700', span: '' },
-  { nombre: 'Talleres de Circo', desc: 'Talleres a medida para ayuntamientos y empresas.', href: '/servicios/talleres', foto: '/fotos/talleres/1.webp', grad: 'from-pm-red to-purple-700', span: '' },
-  { nombre: 'Excursiones Escolares', desc: '4 horas de actividad por estaciones para grupos.', href: '/servicios/excursiones', foto: '', grad: 'from-pm-red to-orange-600', span: '' },
-  { nombre: 'Extraescolares', desc: 'Multideporte en tu propio colegio. Para AMPAs.', href: '/servicios/extraescolares', foto: '', grad: 'from-blue-600 to-pm-navy', span: '' },
-  { nombre: 'Formación', desc: 'Curso de Monitor Juvenil con titulación oficial.', href: '/servicios/monitor-juvenil', foto: '', grad: 'from-emerald-600 to-teal-700', span: 'lg:col-span-2' },
-]
 
 const STATS = [
   { end: 2000, prefix: '+', suffix: '', label: 'Familias confían en nosotros' },
@@ -95,45 +84,51 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ════ SERVICIOS DESTACADOS ════ */}
-      <section className="bg-pm-bg py-20" id="servicios">
+      {/* ════ SERVICIOS — invitación a explorar (+Actividades) ════ */}
+      <section className="bg-pm-bg py-20 sm:py-24" id="servicios">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Reveal className="text-center mb-12">
-            <span className="inline-block text-pm-red text-xs font-black uppercase tracking-widest mb-3">Todo en un mismo lugar</span>
-            <h2 className="text-3xl sm:text-4xl font-black text-pm-navy mb-3">Nuestros servicios</h2>
-            <p className="text-gray-500 text-base max-w-xl mx-auto">
-              Desde clases regulares hasta eventos a medida. Descubre todo lo que podemos ofrecerte.
-            </p>
-          </Reveal>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {SERVICIOS.slice(0, 5).map((s, i) => (
-              <Reveal key={s.nombre} delay={i * 60} className={s.span}>
-                <Link
-                  href={s.href}
-                  className="group block h-full bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-                >
-                  <Foto src={s.foto} alt={s.nombre} gradient={s.grad} className={s.span ? 'h-48' : 'h-40'} />
-                  <div className="p-6">
-                    <h3 className="text-lg font-black text-pm-navy mb-1 group-hover:text-pm-red transition-colors">{s.nombre}</h3>
-                    <p className="text-gray-500 text-sm leading-relaxed mb-3">{s.desc}</p>
-                    <span className="inline-flex items-center gap-1.5 text-pm-red font-bold text-sm">
-                      Descubrir
-                      <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7"/></svg>
-                    </span>
+            {/* Texto + llamada a la acción */}
+            <Reveal>
+              <span className="inline-block text-pm-red text-xs font-black uppercase tracking-widest mb-4">Todo en un mismo lugar</span>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-pm-navy leading-[1.1] mb-5">
+                Descubre todo lo que<br className="hidden sm:block" /> podemos ofrecerte
+              </h2>
+              <p className="text-gray-500 text-base sm:text-lg leading-relaxed mb-8 max-w-md">
+                Club deportivo, cumpleaños, campamentos, eventos, talleres, excursiones y formación.
+                Decenas de actividades de circo y movimiento para todas las edades, reunidas en un solo lugar.
+              </p>
+              <Link href="/actividades"
+                className="group inline-flex items-center gap-2.5 bg-pm-red hover:bg-pm-red-dark text-white font-black text-base sm:text-lg px-8 py-4 rounded-2xl shadow-lg shadow-pm-red/25 transition-all hover:-translate-y-0.5">
+                Ver todas nuestras actividades
+                <svg className="w-5 h-5 transition-transform group-hover:translate-x-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+              </Link>
+            </Reveal>
+
+            {/* Composición visual de fotos */}
+            <Reveal delay={120}>
+              <div className="relative">
+                <div className="grid grid-cols-5 grid-rows-6 gap-3 sm:gap-4 h-[340px] sm:h-[460px]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/fotos/gimnasia-acrobatica/1.webp" alt="Gimnasia acrobática en Planeta Movimiento" loading="lazy" className="col-span-3 row-span-6 h-full w-full object-cover rounded-3xl shadow-lg" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/fotos/telas-aereas/1.webp" alt="Telas aéreas" loading="lazy" className="col-span-2 row-span-3 h-full w-full object-cover rounded-2xl shadow-lg" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/fotos/cumpleanos/1.webp" alt="Cumpleaños" loading="lazy" className="col-span-2 row-span-3 h-full w-full object-cover rounded-2xl shadow-lg" />
+                </div>
+                {/* Badge flotante */}
+                <div className="absolute -bottom-4 -left-3 sm:-left-5 bg-white rounded-2xl shadow-xl px-5 py-3 flex items-center gap-3 border border-gray-100">
+                  <span className="text-2xl">🎪</span>
+                  <div>
+                    <div className="font-black text-pm-navy text-sm leading-none">+15 actividades</div>
+                    <div className="text-gray-400 text-xs mt-0.5">para todas las edades</div>
                   </div>
-                </Link>
-              </Reveal>
-            ))}
-          </div>
+                </div>
+              </div>
+            </Reveal>
 
-          <Reveal className="text-center mt-10">
-            <Link href="/actividades"
-              className="inline-flex items-center gap-2 bg-pm-red hover:bg-pm-red-dark text-white font-black px-7 py-3.5 rounded-xl transition-colors shadow-sm">
-              Ver todas nuestras actividades
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7"/></svg>
-            </Link>
-          </Reveal>
+          </div>
         </div>
       </section>
 
