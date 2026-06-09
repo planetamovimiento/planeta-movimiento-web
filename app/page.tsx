@@ -84,54 +84,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ════ SERVICIOS — invitación a explorar (+Actividades) ════ */}
-      <section className="bg-pm-bg py-20 sm:py-24" id="servicios">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-
-            {/* Texto + llamada a la acción */}
-            <Reveal>
-              <span className="inline-block text-pm-red text-xs font-black uppercase tracking-widest mb-4">Todo en un mismo lugar</span>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-pm-navy leading-[1.1] mb-5">
-                Descubre todo lo que<br className="hidden sm:block" /> podemos ofrecerte
-              </h2>
-              <p className="text-gray-500 text-base sm:text-lg leading-relaxed mb-8 max-w-md">
-                Club deportivo, cumpleaños, campamentos, eventos, talleres, excursiones y formación.
-                Decenas de actividades de circo y movimiento para todas las edades, reunidas en un solo lugar.
-              </p>
-              <Link href="/actividades"
-                className="group inline-flex items-center gap-2.5 bg-pm-red hover:bg-pm-red-dark text-white font-black text-base sm:text-lg px-8 py-4 rounded-2xl shadow-lg shadow-pm-red/25 transition-all hover:-translate-y-0.5">
-                Ver todas nuestras actividades
-                <svg className="w-5 h-5 transition-transform group-hover:translate-x-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-              </Link>
-            </Reveal>
-
-            {/* Composición visual de fotos */}
-            <Reveal delay={120}>
-              <div className="relative">
-                <div className="grid grid-cols-5 grid-rows-6 gap-3 sm:gap-4 h-[340px] sm:h-[460px]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/fotos/gimnasia-acrobatica/1.webp" alt="Gimnasia acrobática en Planeta Movimiento" loading="lazy" className="col-span-3 row-span-6 h-full w-full object-cover rounded-3xl shadow-lg" />
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/fotos/telas-aereas/1.webp" alt="Telas aéreas" loading="lazy" className="col-span-2 row-span-3 h-full w-full object-cover rounded-2xl shadow-lg" />
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/fotos/cumpleanos/1.webp" alt="Cumpleaños" loading="lazy" className="col-span-2 row-span-3 h-full w-full object-cover rounded-2xl shadow-lg" />
-                </div>
-                {/* Badge flotante */}
-                <div className="absolute -bottom-4 -left-3 sm:-left-5 bg-white rounded-2xl shadow-xl px-5 py-3 flex items-center gap-3 border border-gray-100">
-                  <span className="text-2xl">🎪</span>
-                  <div>
-                    <div className="font-black text-pm-navy text-sm leading-none">+15 actividades</div>
-                    <div className="text-gray-400 text-xs mt-0.5">para todas las edades</div>
-                  </div>
-                </div>
-              </div>
-            </Reveal>
-
-          </div>
-        </div>
-      </section>
-
       {/* ════ ESTADÍSTICAS ════ */}
       <section className="relative bg-pm-navy py-20 overflow-hidden">
         <div className="absolute inset-0 bg-grid opacity-40" />
