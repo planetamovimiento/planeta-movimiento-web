@@ -1,21 +1,23 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import LogoMoneda from './LogoMoneda'
 
 export default function Hero() {
   return (
     <section className="relative overflow-hidden bg-pm-navy">
-      {/* ── Capas de fondo ─────────────────────────────────────────────── */}
-      {/* Degradado base */}
-      <div className="absolute inset-0 bg-gradient-to-b from-pm-navy via-pm-navy-md to-pm-navy" />
-
-      {/* Rejilla sutil */}
-      <div className="absolute inset-0 bg-grid opacity-60" />
-
-      {/* Orbes de luz animados */}
-      <div className="absolute -top-32 -left-32 w-[480px] h-[480px] rounded-full bg-pm-red/25 blur-[120px] animate-orb" />
-      <div className="absolute -bottom-40 -right-24 w-[520px] h-[520px] rounded-full bg-blue-500/20 blur-[130px] animate-orb-rev" />
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-pm-red/10 blur-[100px] animate-glow-pulse" />
-
+      {/* ── Fondo: foto del centro ─────────────────────────────────────── */}
+      <Image
+        src="/hero.webp"
+        alt="Planeta Movimiento — actividad con familias en nuestro centro de Cuenca"
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover object-center"
+      />
+      {/* Degradado elegante: oscuro arriba (logo), foto visible en el centro, navy abajo */}
+      <div className="absolute inset-0 bg-gradient-to-b from-pm-navy/92 via-pm-navy/45 to-pm-navy" />
+      {/* Tinte sutil para cohesión de marca y legibilidad */}
+      <div className="absolute inset-0 bg-pm-navy/10" />
       {/* Viñeta inferior para fundir con la siguiente sección */}
       <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-pm-navy to-transparent" />
 
@@ -32,13 +34,13 @@ export default function Hero() {
         <LogoMoneda />
 
         {/* Titular */}
-        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-white leading-[1.05] mb-6 max-w-4xl">
+        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black text-white leading-[1.05] mb-6 max-w-4xl [text-shadow:0_2px_24px_rgba(0,0,0,0.45)]">
           Donde el movimiento<br />
           <span className="text-shimmer">se convierte en aventura</span>
         </h1>
 
         {/* Subtítulo */}
-        <p className="text-white/60 text-base sm:text-lg max-w-2xl mb-10 leading-relaxed">
+        <p className="text-white/80 text-base sm:text-lg max-w-2xl mb-10 leading-relaxed [text-shadow:0_1px_12px_rgba(0,0,0,0.5)]">
           Circo, acrobacia, campamentos, eventos y formación para todas las edades.
           Un espacio único en Cuenca donde aprender, jugar y superarse no tiene límites.
         </p>
