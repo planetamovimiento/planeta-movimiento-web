@@ -1,4 +1,4 @@
-import { getAdminUser, can } from '@/lib/admin/auth'
+import { requireSeccion, can } from '@/lib/admin/auth'
 import { getClientes } from '@/lib/clientes/data'
 import { AdminHeader } from '@/components/admin/ui'
 import ClientesClient from './ClientesClient'
@@ -6,7 +6,7 @@ import ClientesClient from './ClientesClient'
 export const dynamic = 'force-dynamic'
 
 export default async function ClientesPage() {
-  const admin = await getAdminUser()
+  const admin = await requireSeccion('clientes')
   const { clientes } = await getClientes()
 
   return (

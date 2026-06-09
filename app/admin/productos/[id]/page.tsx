@@ -3,11 +3,13 @@ import { notFound } from 'next/navigation'
 import { getProducto } from '@/lib/productos/store'
 import { AdminHeader, EstadoBadge } from '@/components/admin/ui'
 import EditorProducto from './EditorProducto'
+import { requireSeccion } from '@/lib/admin/auth'
 
 export const dynamic = 'force-dynamic'
 
 export default async function EditarProductoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  await requireSeccion('productos')
   const producto = await getProducto(id)
   if (!producto) notFound()
 

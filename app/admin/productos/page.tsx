@@ -2,10 +2,12 @@ import Link from 'next/link'
 import { getRows } from '@/lib/admin/data'
 import { getProductos } from '@/lib/productos/store'
 import { AdminHeader, EstadoBadge, EmptyState, SetupNotice } from '@/components/admin/ui'
+import { requireSeccion } from '@/lib/admin/auth'
 
 export const dynamic = 'force-dynamic'
 
 export default async function ProductosPage() {
+  await requireSeccion('productos')
   const productos = await getProductos()
   const { rows: pedidos, ok } = await getRows('product_orders')
   const eur = (n: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(n || 0)

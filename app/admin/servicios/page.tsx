@@ -2,10 +2,12 @@ import { getServicios } from '@/lib/servicios/store'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { AdminHeader, SetupNotice } from '@/components/admin/ui'
 import ServiciosClient from './ServiciosClient'
+import { requireSeccion } from '@/lib/admin/auth'
 
 export const dynamic = 'force-dynamic'
 
 export default async function ServiciosPage() {
+  await requireSeccion('servicios')
   const servicios = await getServicios()
 
   // ¿Está la migración aplicada? (columna contenido en services)

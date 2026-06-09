@@ -3,49 +3,32 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import type { AdminRole } from '@/lib/admin/auth'
+import { SECCIONES, puedeVerSeccion, type AdminRole, type SeccionMeta } from '@/lib/admin/secciones'
 
-type Item = { href: string; label: string; icon: string; soloPrincipal?: boolean }
-type Grupo = { titulo: string | null; items: Item[] }
-
-const GRUPOS: Grupo[] = [
-  {
-    titulo: null,
-    items: [{ href: '/admin', label: 'Dashboard', icon: '📊' }],
-  },
-  {
-    titulo: 'Club Deportivo Origen',
-    items: [
-      { href: '/admin/club', label: 'Inscripciones Club', icon: '🏅' },
-    ],
-  },
-  {
-    titulo: 'Empresa',
-    items: [
-      { href: '/admin/reservas',    label: 'Reservas',            icon: '📋' },
-      { href: '/admin/pagos',       label: 'Pagos',               icon: '💳', soloPrincipal: true },
-      { href: '/admin/productos',   label: 'Productos y pedidos', icon: '🛒' },
-      { href: '/admin/formularios', label: 'Solicitudes',         icon: '✉️' },
-      { href: '/admin/calendario',  label: 'Calendario',          icon: '🗓️' },
-      { href: '/admin/servicios',   label: 'Servicios',           icon: '🎪' },
-    ],
-  },
-  {
-    titulo: 'General',
-    items: [
-      { href: '/admin/clientes',        label: 'Clientes',         icon: '👥' },
-      { href: '/admin/balance',         label: 'Balance Económico', icon: '💰' },
-      { href: '/admin/administradores', label: 'Administradores',  icon: '🔐', soloPrincipal: true },
-      { href: '/admin/actividad',       label: 'Actividad',        icon: '📝' },
-    ],
-  },
-]
-
-export default function AdminSidebar({ role, email, nombre }: { role: AdminRole; email: string; nombre: string | null }) {
+export default function AdminSidebar(
+  { role, secciones, email, nombre }:
+  { role: AdminRole; secciones: string[] | null; email: string; nombre: string | null },
+) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
 
   const roleLabel = role === 'principal' ? 'Administrador principal' : role === 'gestor' ? 'Gestor' : 'Solo lectura'
+
+  // Secciones visibles para este usuario, agrupadas conservando el orden de SECCIONES.
+  const visibles = SECCIONES.filter(s => puedeVerSeccion(role, secciones, s.id))
+  const grupos: { titulo: string | null; items: SeccionMeta[] }[] = []
+  for (const s of visibles) {
+    const ultimo = grupos[grupos.length - 1]
+    if (ultimo && ultimo.titulo === s.grupo) ultimo.items.push(s)
+    else grupos.push({ titulo: s.grupo, items: [s] })
+  }
+
+  const linkClass = (href: string, exact = false) => {
+    const active = exact ? pathname === href : pathname.startsWith(href)
+    return `flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+      active ? 'bg-pm-red text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
+    }`
+  }
 
   return (
     <>
@@ -69,31 +52,29 @@ export default function AdminSidebar({ role, email, nombre }: { role: AdminRole;
         </div>
 
         <nav className="flex-1 p-3 space-y-4 overflow-y-auto">
-          {GRUPOS.map((grupo, gi) => {
-            const items = grupo.items.filter(i => !i.soloPrincipal || role === 'principal')
-            if (items.length === 0) return null
-            return (
-              <div key={gi}>
-                {grupo.titulo && (
-                  <div className="px-4 pb-1.5 text-xs font-black text-white/30 uppercase tracking-wider">{grupo.titulo}</div>
-                )}
-                <div className="space-y-1">
-                  {items.map(item => {
-                    const active = item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(item.href)
-                    return (
-                      <Link key={item.href} href={item.href} onClick={() => setOpen(false)}
-                        className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
-                          active ? 'bg-pm-red text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
-                        }`}>
-                        <span className="text-base">{item.icon}</span>
-                        {item.label}
-                      </Link>
-                    )
-                  })}
-                </div>
+          {/* Dashboard — siempre disponible */}
+          <div className="space-y-1">
+            <Link href="/admin" onClick={() => setOpen(false)} className={linkClass('/admin', true)}>
+              <span className="text-base">📊</span>
+              Dashboard
+            </Link>
+          </div>
+
+          {grupos.map((grupo, gi) => (
+            <div key={gi}>
+              {grupo.titulo && (
+                <div className="px-4 pb-1.5 text-xs font-black text-white/30 uppercase tracking-wider">{grupo.titulo}</div>
+              )}
+              <div className="space-y-1">
+                {grupo.items.map(item => (
+                  <Link key={item.id} href={item.href} onClick={() => setOpen(false)} className={linkClass(item.href)}>
+                    <span className="text-base">{item.icon}</span>
+                    {item.label}
+                  </Link>
+                ))}
               </div>
-            )
-          })}
+            </div>
+          ))}
         </nav>
 
         {/* Usuario */}

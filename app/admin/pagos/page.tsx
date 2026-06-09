@@ -1,11 +1,9 @@
-import { redirect } from 'next/navigation'
-import { getAdminUser, can } from '@/lib/admin/auth'
+import { requireSeccion } from '@/lib/admin/auth'
 import { getRows } from '@/lib/admin/data'
 import { AdminHeader, EstadoBadge, EmptyState, SetupNotice, Metric } from '@/components/admin/ui'
 
 export default async function PagosPage() {
-  const admin = await getAdminUser()
-  if (!admin || !can.managePayments(admin.role)) redirect('/admin')
+  await requireSeccion('pagos')
 
   const { rows, ok } = await getRows('payments', 'fecha')
   const eur = (n: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(n || 0)

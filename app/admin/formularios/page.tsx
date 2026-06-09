@@ -1,10 +1,10 @@
-import { getAdminUser, can } from '@/lib/admin/auth'
+import { requireSeccion, can } from '@/lib/admin/auth'
 import { getRows } from '@/lib/admin/data'
 import { AdminHeader, SetupNotice } from '@/components/admin/ui'
 import FormulariosClient from './FormulariosClient'
 
 export default async function FormulariosPage() {
-  const admin = await getAdminUser()
+  const admin = await requireSeccion('formularios')
   const { rows, ok } = await getRows('form_submissions')
 
   // Solo solicitudes de la EMPRESA (las del Club tienen su propia área)

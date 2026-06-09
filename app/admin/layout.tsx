@@ -46,7 +46,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // Autorizado → panel completo
   return (
     <div className="min-h-screen flex bg-pm-bg">
-      <AdminSidebar role={admin.role} email={admin.email} nombre={admin.nombre} />
+      <AdminSidebar role={admin.role} secciones={admin.secciones} email={admin.email} nombre={admin.nombre} />
       <div className="flex-1 min-w-0 flex flex-col">
         {children}
       </div>

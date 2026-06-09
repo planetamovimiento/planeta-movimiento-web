@@ -1,10 +1,10 @@
-import { getAdminUser, can } from '@/lib/admin/auth'
+import { requireSeccion, can } from '@/lib/admin/auth'
 import { getRegistrosCRM } from '@/lib/crm/data'
 import { AdminHeader } from '@/components/admin/ui'
 import ReservasCRMClient from './ReservasCRMClient'
 
 export default async function ReservasPage() {
-  const admin = await getAdminUser()
+  const admin = await requireSeccion('reservas')
   const { registros, gestionOk } = await getRegistrosCRM()
 
   return (

@@ -1,7 +1,9 @@
 import { getRows } from '@/lib/admin/data'
 import { AdminHeader, EmptyState, SetupNotice } from '@/components/admin/ui'
+import { requireSeccion } from '@/lib/admin/auth'
 
 export default async function ActividadPage() {
+  await requireSeccion('actividad')
   const { rows, ok } = await getRows('activity_log')
 
   return (

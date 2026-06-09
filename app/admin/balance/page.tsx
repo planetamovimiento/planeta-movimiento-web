@@ -1,4 +1,4 @@
-import { getAdminUser } from '@/lib/admin/auth'
+import { requireSeccion } from '@/lib/admin/auth'
 import { getBalanceData } from '@/lib/balance/data'
 import { AdminHeader } from '@/components/admin/ui'
 import BalanceClient from './BalanceClient'
@@ -6,7 +6,7 @@ import BalanceClient from './BalanceClient'
 export const dynamic = 'force-dynamic'
 
 export default async function BalancePage() {
-  const admin = await getAdminUser()
+  const admin = await requireSeccion('balance')
   const data = await getBalanceData()
 
   return (

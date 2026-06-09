@@ -1,4 +1,4 @@
-import { getAdminUser, can } from '@/lib/admin/auth'
+import { requireSeccion, can } from '@/lib/admin/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { AdminHeader } from '@/components/admin/ui'
 import { TEMPORADA_ACTUAL, type Alumno, type Grupo, type EstadoGeneral, type EstadoPago } from '@/lib/club/constants'
@@ -28,7 +28,7 @@ function str(v: unknown): string {
 }
 
 export default async function ClubPage() {
-  const admin = await getAdminUser()
+  const admin = await requireSeccion('club')
   const db = createAdminClient()
 
   const [subsRes, gestionRes, gruposRes] = await Promise.all([

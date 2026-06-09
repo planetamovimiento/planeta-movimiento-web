@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { getServicio } from '@/lib/servicios/store'
 import { AdminHeader, EstadoBadge } from '@/components/admin/ui'
 import EditorServicio from './EditorServicio'
-import { getAdminUser, can } from '@/lib/admin/auth'
+import { getAdminUser, requireSeccion, can } from '@/lib/admin/auth'
 import { getMananaMagica, getEventoCentro } from '@/lib/eventos/store'
 import EditorMananaMagica from '@/app/admin/manana-magica/EditorMananaMagica'
 import EditorEventoCentro from './EditorEventoCentro'
@@ -17,6 +17,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function EditarServicioPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  await requireSeccion('servicios')
 
   // Mañanas Mágicas usa su editor especial (personaje del mes), integrado en Servicios.
   if (id === 'manana-magica') {

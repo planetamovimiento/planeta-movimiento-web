@@ -1,4 +1,4 @@
-import { getAdminUser, can } from '@/lib/admin/auth'
+import { requireSeccion, can } from '@/lib/admin/auth'
 import { getEventosCalendario } from '@/lib/calendario/data'
 import { AdminHeader } from '@/components/admin/ui'
 import CalendarioClient from './CalendarioClient'
@@ -6,7 +6,7 @@ import CalendarioClient from './CalendarioClient'
 export const dynamic = 'force-dynamic'
 
 export default async function CalendarioPage() {
-  const admin = await getAdminUser()
+  const admin = await requireSeccion('calendario')
   const { eventos, ok } = await getEventosCalendario()
 
   const servicios = Array.from(new Set(eventos.map(e => e.servicio).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'es'))
