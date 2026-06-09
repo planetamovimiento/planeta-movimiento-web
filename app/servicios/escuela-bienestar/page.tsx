@@ -1,16 +1,20 @@
 import Link from 'next/link'
 import { Galeria } from '@/components/ui/Galeria'
+import { fotosDe } from '@/lib/fotos'
 import { waNegocio } from '@/lib/whatsapp'
 import { BotonApuntarme } from './InscripcionModal'
 import TabsDescripcion from './TabsDescripcion'
 
 export const metadata = {
-  title: 'Escuela de Bienestar — Gimnasia para Tod@s | Planeta Movimiento',
+  title: 'Escuela de Bienestar — Pilates, Yoga y Baile en Cuenca | Planeta Movimiento',
   description:
     'Encuentra el equilibrio entre cuerpo y mente. Pilates, Yoga, Baile y Movimiento para adultos en Cuenca. Clases lunes, miércoles y viernes.',
 }
 
 export default function EscuelaBienestarPage() {
+  const fotos = fotosDe('escuela-bienestar')
+  const principal = fotos[0]
+  const miniaturas = fotos.slice(1, 4)
   return (
     <main className="bg-white min-h-screen">
       {/* Breadcrumb */}
@@ -31,55 +35,33 @@ export default function EscuelaBienestarPage() {
 
           {/* COLUMNA IZQUIERDA — Imágenes */}
           <div className="space-y-3">
-            {/* Cartel principal — teal/azul con foto de clase */}
-            <div className="relative bg-teal-700 rounded-2xl overflow-hidden aspect-[4/3] flex items-center justify-center">
-              <div className="absolute inset-0 bg-gradient-to-br from-teal-800 via-teal-600 to-cyan-400 opacity-90" />
-              <div className="relative text-center px-6 space-y-3">
-                <div className="text-white/20 font-black text-7xl leading-none select-none">25/26</div>
-                <div className="text-white font-black text-lg tracking-widest uppercase">Temporada</div>
-                {/* Frase del cartel */}
-                <div className="bg-white/10 rounded-xl px-4 py-3 mt-2">
-                  <p className="text-white/80 text-xs uppercase tracking-widest font-semibold mb-1">
-                    Cada desafío es una
-                  </p>
-                  <p className="text-white font-black text-base uppercase tracking-wider">
-                    oportunidad para crecer
-                  </p>
-                </div>
-                <div className="mt-3">
-                  <span className="text-teal-200 font-black text-2xl tracking-wide">Gimnasia para</span>
-                  <br />
-                  <span className="text-white font-black text-3xl tracking-wide">TOD@S</span>
-                </div>
-                <div className="text-teal-200 text-xs mt-2">www.planetamovimiento.com</div>
-              </div>
-              <button className="absolute top-3 right-3 bg-white/20 hover:bg-white/30 rounded-full p-2 transition-colors">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/>
-                </svg>
-              </button>
+            {/* Foto principal */}
+            <div className="relative bg-teal-700 rounded-2xl overflow-hidden aspect-[4/3]">
+              {principal ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={principal} alt="Escuela de Bienestar — Pilates, Yoga y Movimiento para adultos en Cuenca" className="absolute inset-0 w-full h-full object-cover" />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-teal-800 via-teal-600 to-cyan-400" />
+              )}
             </div>
 
             {/* Miniaturas */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-xl border-2 border-pm-red aspect-square bg-teal-700 flex items-center justify-center cursor-pointer">
-                <span className="text-white/40 text-xs font-bold">25/26</span>
+            {miniaturas.length > 0 && (
+              <div className="grid grid-cols-3 gap-3">
+                {miniaturas.map((src, i) => (
+                  <div key={src} className="rounded-xl overflow-hidden border-2 border-gray-200 aspect-square">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt={`Escuela de Bienestar — foto ${i + 2}`} className="w-full h-full object-cover" />
+                  </div>
+                ))}
               </div>
-              <div className="rounded-xl border-2 border-gray-200 aspect-square bg-teal-100 flex items-center justify-center cursor-pointer hover:border-pm-red transition-colors">
-                <svg className="w-6 h-6 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
-              </div>
-              <div className="rounded-xl border-2 border-gray-200 aspect-square bg-cyan-50 flex items-center justify-center cursor-pointer hover:border-pm-red transition-colors">
-                <span className="text-3xl">🧘</span>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* COLUMNA DERECHA — Info */}
           <div className="flex flex-col">
             <h1 className="text-3xl sm:text-4xl font-black text-pm-navy leading-tight mb-5">
-              Gimnasia para tod@s
+              Escuela de Bienestar
             </h1>
 
             {/* Descripción fiel al original */}
