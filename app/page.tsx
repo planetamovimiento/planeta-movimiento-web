@@ -232,7 +232,7 @@ export default function HomePage() {
               Reserva tu actividad o solicita información sin compromiso. Estamos deseando conocerte.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/reservar"
+              <Link href="/ocio"
                 className="bg-white text-pm-red hover:bg-pm-navy hover:text-white font-black px-10 py-4 rounded-2xl transition-all shadow-xl hover:-translate-y-0.5">
                 Reservar ahora
               </Link>

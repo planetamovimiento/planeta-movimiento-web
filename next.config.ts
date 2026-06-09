@@ -13,6 +13,13 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      // El botón general de "Reservar" lleva al apartado de Ocio. Esta redirección
+      // captura cualquier enlace antiguo o guardado a /reservar.
+      { source: "/reservar", destination: "/ocio", permanent: false },
+    ];
+  },
 };
 
 export default nextConfig;

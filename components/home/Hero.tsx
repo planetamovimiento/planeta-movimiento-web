@@ -46,7 +46,7 @@ export default function Hero() {
         {/* CTAs */}
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto justify-center mb-6">
           <Link
-            href="/reservar"
+            href="/ocio"
             className="group relative bg-pm-red hover:bg-pm-red-dark text-white font-black px-8 py-4 rounded-2xl transition-all shadow-lg shadow-pm-red/30 hover:shadow-pm-red/50 hover:-translate-y-0.5"
           >
             Reservar ahora

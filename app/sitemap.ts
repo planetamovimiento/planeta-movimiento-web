@@ -26,7 +26,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     p('/club/talleres-intensivos', 0.7, 'monthly'),
     p('/colchonetas', 0.7, 'monthly'),
     p('/planeta-tdah', 0.6, 'monthly'),
-    p('/reservar', 0.6, 'monthly'),
     p('/terminos-y-condiciones', 0.2, 'yearly'),
     p('/politica-privacidad', 0.2, 'yearly'),
     p('/politica-cookies', 0.2, 'yearly'),
