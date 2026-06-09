@@ -79,11 +79,11 @@ const SERVICIOS: Servicio[] = [
     id: 'gimnasia-acrobatica',
     nombre: 'Gimnasia Acrobática y Trampolín',
     desc: 'Acrobacias, saltos y trampolín. Disciplina de suelo con progresión por niveles.',
-    edad: 'Desde 4 años',
+    edad: 'Desde 6 años',
     href: '/servicios/gimnasia-acrobatica',
     icon: '🤸',
     grad: 'from-pm-red to-pm-red-dark',
-    tags: ['2-5', '6-15'],
+    tags: ['6-15'],
   },
   {
     id: 'telas-aereas',

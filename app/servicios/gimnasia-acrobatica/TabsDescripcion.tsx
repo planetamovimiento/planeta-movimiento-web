@@ -100,7 +100,7 @@ export default function TabsDescripcion() {
           <div className="space-y-6">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
-                { label: 'Edad mínima', valor: '5 años' },
+                { label: 'Edad mínima', valor: '6 años' },
                 { label: 'Duración sesión', valor: '60 – 90 min' },
                 { label: 'Inicio', valor: 'Septiembre' },
                 { label: 'Seguro', valor: 'Incluido' },

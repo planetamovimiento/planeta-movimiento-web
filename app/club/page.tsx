@@ -13,7 +13,7 @@ const DISCIPLINAS = [
   {
     nombre: 'Gimnasia Acrobática',
     desc: 'Técnica de suelo, volteos, figuras y composición corporal en grupo. Disciplina reglada con progresión por niveles.',
-    edad: 'Desde 4 años', foto: '/fotos/gimnasia-acrobatica/1.webp', grad: 'from-pm-red to-pm-red-dark',
+    edad: 'Desde 6 años', foto: '/fotos/gimnasia-acrobatica/1.webp', grad: 'from-pm-red to-pm-red-dark',
     href: '/servicios/gimnasia-acrobatica',
   },
   {

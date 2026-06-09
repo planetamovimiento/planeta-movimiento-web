@@ -53,9 +53,9 @@ export const CATALOGO_SERVICIOS: ServicioCatalogo[] = [
   {
     id: 'gimnasia-acrobatica', icon: '🤸', ...D,
     nombre: 'Gimnasia acrobática y trampolín', entidad: 'club', categoria: 'Club', tipo: 'clase',
-    descripcionCorta: 'Acrobacias, saltos y trampolín para todas las edades.',
+    descripcionCorta: 'Acrobacias, saltos y trampolín desde los 6 años.',
     descripcionLarga: 'Disciplina de suelo y trampolín: volteos, figuras, fuerza y control corporal con progresión por niveles.',
-    edad: 'Desde 4 años', horarios: 'Consultar horarios', estado: 'activo',
+    edad: 'Desde 6 años', horarios: 'Consultar horarios', estado: 'activo',
     botonTexto: 'Solicitar inscripción', botonAccion: 'formulario', enlace: '/servicios/gimnasia-acrobatica',
     profesores: 'Equipo técnico del club', niveles: 'Iniciación · Intermedio · Avanzado · Competición',
   },

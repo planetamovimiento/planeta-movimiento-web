@@ -93,7 +93,7 @@ export default function GimnasiaAcrobaticaPage() {
             {/* Badges rápidos */}
             <div className="flex flex-wrap gap-2 mb-8">
               {[
-                { icon: '🧒', texto: 'Desde 5 años' },
+                { icon: '🧒', texto: 'Desde 6 años' },
                 { icon: '⏱', texto: '60 – 90 min' },
                 { icon: '📅', texto: 'Lun – Vie' },
                 { icon: '🛡', texto: 'Seguro incluido' },
