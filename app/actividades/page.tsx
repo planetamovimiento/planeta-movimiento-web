@@ -264,6 +264,26 @@ const CATEGORIAS: {
   },
 ]
 
+// ─── Foto coherente por servicio (de /public/fotos, optimizadas desde Imagenes_web) ──
+const FOTO_SERVICIO: Record<string, string> = {
+  'cumpleanos':          '/fotos/cumpleanos/1.webp',
+  'domingos':            '/fotos/eventos/1.webp',
+  'diassinc':            '/fotos/campamentos/2.webp',
+  'halloween':           '/fotos/eventos/3.webp',
+  'campamentos':         '/fotos/campamentos/1.webp',
+  'gimnasia-acrobatica': '/fotos/gimnasia-acrobatica/1.webp',
+  'telas-aereas':        '/fotos/telas-aereas/1.webp',
+  'escuela-infantil':    '/fotos/escuela-infantil/1.webp',
+  'bienestar':           '/fotos/escuela-bienestar/1.webp',
+  'jiujitsu':            '/fotos/jiu-jitsu/1.webp',
+  'circo-inclusivo':     '/fotos/circo-inclusivo/1.webp',
+  'extraescolares':      '/fotos/extraescolares/1.webp',
+  'excursiones':         '/fotos/excursiones/1.webp',
+  'monitor':             '/fotos/monitor-juvenil/1.webp',
+  'talleres':            '/fotos/talleres/1.webp',
+  'eventos-ext':         '/fotos/eventos/2.webp',
+}
+
 // ─── Tarjeta de servicio ──────────────────────────────────────────────────────
 function TarjetaServicio({ s, cat }: { s: Servicio; cat: typeof CATEGORIAS[0] }) {
   return (
@@ -271,10 +291,18 @@ function TarjetaServicio({ s, cat }: { s: Servicio; cat: typeof CATEGORIAS[0] })
       className="group flex flex-col bg-white border-2 border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:border-gray-200 transition-all duration-200 hover:-translate-y-0.5">
 
       {/* Visual */}
-      <div className={`relative bg-gradient-to-br ${s.grad} h-28 flex items-center justify-center`}>
-        <span className="text-5xl">{s.icon}</span>
+      <div className={`relative bg-gradient-to-br ${s.grad} h-28 flex items-center justify-center overflow-hidden`}>
+        {FOTO_SERVICIO[s.id] ? (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={FOTO_SERVICIO[s.id]} alt={s.nombre} className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
+          </>
+        ) : (
+          <span className="text-5xl">{s.icon}</span>
+        )}
         {s.destacado && (
-          <span className="absolute top-3 right-3 bg-white/20 text-white text-xs font-black px-2 py-0.5 rounded-full">
+          <span className="absolute top-3 right-3 bg-black/45 backdrop-blur-sm text-white text-xs font-black px-2 py-0.5 rounded-full">
             ⭐ Destacado
           </span>
         )}
