@@ -286,16 +286,19 @@ const FOTO_SERVICIO: Record<string, string> = {
 
 // ─── Tarjeta de servicio ──────────────────────────────────────────────────────
 function TarjetaServicio({ s, cat }: { s: Servicio; cat: typeof CATEGORIAS[0] }) {
+  const [imgError, setImgError] = useState(false)
+  const foto = FOTO_SERVICIO[s.id]
   return (
     <Link href={s.href}
       className="group flex flex-col bg-white border-2 border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:border-gray-200 transition-all duration-200 hover:-translate-y-0.5">
 
       {/* Visual */}
       <div className={`relative bg-gradient-to-br ${s.grad} h-28 flex items-center justify-center overflow-hidden`}>
-        {FOTO_SERVICIO[s.id] ? (
+        {foto && !imgError ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={FOTO_SERVICIO[s.id]} alt={s.nombre} className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+            <img src={foto} alt={s.nombre} onError={() => setImgError(true)}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
           </>
         ) : (
