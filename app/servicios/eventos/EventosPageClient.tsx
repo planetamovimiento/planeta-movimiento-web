@@ -173,6 +173,12 @@ function PanelExterno() {
   )
 }
 
+/** Etiqueta de precio a partir de la config editable (respeta IVA). null si precio 0. */
+function precioLabel(cfg: EventoCentroCfg): string | null {
+  if (!cfg.precio) return null
+  return `${cfg.precio} €${cfg.ivaIncluido ? '' : ' + IVA'} / niño`
+}
+
 // ─── Panel Días Sin Cole ──────────────────────────────────────────────────────
 function PanelDiasSinCole({ cfg }: { cfg: EventoCentroCfg }) {
   return (
@@ -186,10 +192,11 @@ function PanelDiasSinCole({ cfg }: { cfg: EventoCentroCfg }) {
               En los festivos escolares abrimos nuestras instalaciones para que los niños vivan una mañana épica de la Escuela de Superhéroes mientras las familias concilian.
             </p>
             <div className="flex flex-wrap gap-2">
-              {['9:00 – 14:00', '30 € + IVA / niño', 'Desde 4 años', 'Festivos escolares'].map(b => (
+              {[cfg.horario, precioLabel(cfg), cfg.edad, 'Festivos escolares'].filter(Boolean).map(b => (
                 <span key={b} className="bg-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-full">{b}</span>
               ))}
             </div>
+            {cfg.nota && <p className="text-amber-100 text-xs mt-3">ℹ {cfg.nota}</p>}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -241,7 +248,7 @@ function PanelDomingos({ cfg }: { cfg: EventoCentroCfg }) {
               Práctica libre dentro de nuestras instalaciones. Sin clases, sin presión — solo movimiento, juego y tiempo de calidad en familia.
             </p>
             <div className="flex flex-wrap gap-2">
-              {['Todos los domingos','11:00 – 13:00','15 € / niño','Adultos gratis'].map(b => (
+              {['Todos los domingos', cfg.horario, precioLabel(cfg), 'Adultos gratis'].filter(Boolean).map(b => (
                 <span key={b} className="bg-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-full">{b}</span>
               ))}
             </div>
@@ -260,8 +267,8 @@ function PanelDomingos({ cfg }: { cfg: EventoCentroCfg }) {
               <h3 className="font-black text-pm-navy text-sm mb-3">👶 Edades</h3>
               <div className="space-y-3">
                 <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-sm">
-                  <div className="font-bold text-green-700">Desde 2 años</div>
-                  <div className="text-xs text-green-600">15 € por niño</div>
+                  <div className="font-bold text-green-700">{cfg.edad}</div>
+                  <div className="text-xs text-green-600">{precioLabel(cfg) ?? 'Consultar precio'}</div>
                 </div>
                 <div className="bg-pm-bg border border-gray-200 rounded-xl p-3 text-sm">
                   <div className="font-bold text-pm-navy">Menores de 2 años</div>
@@ -348,12 +355,12 @@ function PanelHalloween({ cfg }: { cfg: EventoCentroCfg }) {
             <div className="text-5xl mb-3">🧟🎃👻</div>
             <div className="text-orange-400 font-black text-xs uppercase tracking-widest mb-1">Evento anual especial</div>
             <h2 className="text-3xl font-black mb-1">Noche de Halloween</h2>
-            <div className="text-orange-400 font-black text-lg mb-3">«Apocalipsis Zombie»</div>
+            {cfg.evento && <div className="text-orange-400 font-black text-lg mb-3">«{cfg.evento}»</div>}
             <p className="text-gray-300 text-sm leading-relaxed mb-4">
               Una noche épica e inolvidable. Fiesta de pijamas temática, gymkana zombie, actividades nocturnas, película de terror y desayuno con churros al amanecer.
             </p>
             <div className="flex flex-wrap gap-2">
-              {['31 oct → 1 nov','22:00 – 09:00','Mín. 10 años','20 plazas'].map(b => (
+              {[cfg.fechas, cfg.horario, cfg.edad, cfg.plazas ? `${cfg.plazas} plazas` : '', precioLabel(cfg)].filter(Boolean).map(b => (
                 <span key={b} className="bg-orange-500/20 border border-orange-500/30 text-orange-300 text-xs font-bold px-3 py-1.5 rounded-full">{b}</span>
               ))}
             </div>

@@ -125,7 +125,7 @@ export function ReservaDiasSinCole({ cfg, onClose = () => {} }: { cfg?: EventoCe
       {fecha && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm">
           <div className="flex justify-between text-amber-800">
-            <span>{ninos} niño{ninos > 1 ? 's' : ''} × 30 € + IVA</span>
+            <span>{ninos} niño{ninos > 1 ? 's' : ''} × {precioBase} €{cfg?.ivaIncluido ? '' : ' + IVA'}</span>
             <strong>{precioConIva} €</strong>
           </div>
         </div>
