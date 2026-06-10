@@ -24,7 +24,7 @@ export default function AdminSidebar(
   }
 
   const linkClass = (href: string, exact = false) => {
-    const active = exact ? pathname === href : pathname.startsWith(href)
+    const active = exact ? pathname === href : (pathname === href || pathname.startsWith(href + '/'))
     return `flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
       active ? 'bg-pm-red text-white' : 'text-white/70 hover:bg-white/10 hover:text-white'
     }`

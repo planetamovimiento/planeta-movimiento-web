@@ -68,7 +68,7 @@ export default async function InformePage(
         {/* Cabecera */}
         <div className="flex items-center gap-4 border-b-2 border-pm-red pb-4 mb-5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="Planeta Movimiento" className="h-14 w-auto" />
+          <img src="/logo-origen.png" alt="Club Deportivo Origen" className="h-16 w-auto" />
           <div className="flex-1">
             <div className="font-black text-pm-navy text-lg leading-tight">Planeta Movimiento</div>
             <div className="text-xs text-gray-500">Club Deportivo Origen · Circo Inclusivo y Psicomotricidad</div>
