@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { ESTADOS_MM } from '@/lib/eventos/manana-magica'
 import type { EventoCentroCfg } from '@/lib/eventos/centro'
 import { guardarEventoConfig } from '../evento-actions'
+import EditorFechas from './EditorFechas'
 
 export default function EditorEventoCentro({ id, inicial, puedeEditar }: { id: string; inicial: EventoCentroCfg; puedeEditar: boolean }) {
   const [f, setF] = useState<EventoCentroCfg>(inicial)
@@ -63,11 +64,17 @@ export default function EditorEventoCentro({ id, inicial, puedeEditar }: { id: s
         </div>
       )}
 
-      {(esDSC || esHalloween) && (
+      {esDSC && (
         <div>
-          <label className={label}>{esDSC ? 'Fechas (una por línea: AAAA-MM-DD = Etiqueta)' : 'Fechas (texto visible)'}</label>
-          <textarea rows={esDSC ? 8 : 2} value={f.fechas} disabled={!puedeEditar} onChange={e => set('fechas', e.target.value)} className={`${input} resize-none font-mono text-xs`} />
-          {esDSC && <p className="text-[11px] text-gray-400 mt-1">Ej: <code>2026-12-07 = Puente Constitución</code>. Estas son las fechas que el cliente podrá elegir en la web.</p>}
+          <label className={label}>Días disponibles (fecha + etiqueta)</label>
+          <EditorFechas value={f.fechas} conEtiqueta disabled={!puedeEditar} onChange={v => set('fechas', v)} />
+          <p className="text-[11px] text-gray-400 mt-1.5">Añade cada día con su etiqueta (ej. «Puente Constitución»). Son las fechas que el cliente podrá elegir en la web.</p>
+        </div>
+      )}
+      {esHalloween && (
+        <div>
+          <label className={label}>Fechas (texto visible)</label>
+          <textarea rows={2} value={f.fechas} disabled={!puedeEditar} onChange={e => set('fechas', e.target.value)} className={`${input} resize-none`} />
         </div>
       )}
 

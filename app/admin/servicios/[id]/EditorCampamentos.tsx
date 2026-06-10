@@ -5,6 +5,7 @@ import { ESTADOS_MM, type EstadoMM } from '@/lib/eventos/manana-magica'
 import { ELEMENTOS, type CampamentosConfig, type SemanaCfg, type Elemento } from '@/lib/campamentos/editable'
 import { SubirImagen } from '@/components/admin/SubirImagen'
 import { guardarEventoConfig } from '../evento-actions'
+import EditorFechas from './EditorFechas'
 
 const input = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red'
 const label = 'block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5'
@@ -68,7 +69,7 @@ export default function EditorCampamentos({ inicial, puedeEditar }: { inicial: C
       <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
         <h3 className="font-black text-pm-navy">⛄ Campamento de Navidad</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label className={label}>Fechas (una por línea, AAAA-MM-DD)</label><textarea rows={5} value={f.navidadFechas} disabled={!puedeEditar} onChange={e => set('navidadFechas', e.target.value)} className={`${input} resize-none font-mono text-xs`} /></div>
+          <div><label className={label}>Fechas del campamento</label><EditorFechas value={f.navidadFechas} disabled={!puedeEditar} onChange={v => set('navidadFechas', v)} /></div>
           <div className="space-y-3">
             <div><label className={label}>Horario</label><input value={f.navidadHorario} disabled={!puedeEditar} onChange={e => set('navidadHorario', e.target.value)} className={input} /></div>
             <div><label className={label}>Estado</label><EstadoSel value={f.navidadEstado} onChange={v => set('navidadEstado', v)} /></div>
@@ -82,7 +83,7 @@ export default function EditorCampamentos({ inicial, puedeEditar }: { inicial: C
       <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
         <h3 className="font-black text-pm-navy">🌸 Campamento de Semana Santa</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><label className={label}>Fechas (una por línea, AAAA-MM-DD)</label><textarea rows={5} value={f.ssantaFechas} disabled={!puedeEditar} onChange={e => set('ssantaFechas', e.target.value)} className={`${input} resize-none font-mono text-xs`} /></div>
+          <div><label className={label}>Fechas del campamento</label><EditorFechas value={f.ssantaFechas} disabled={!puedeEditar} onChange={v => set('ssantaFechas', v)} /></div>
           <div className="space-y-3">
             <div><label className={label}>Horario</label><input value={f.ssantaHorario} disabled={!puedeEditar} onChange={e => set('ssantaHorario', e.target.value)} className={input} /></div>
             <div><label className={label}>Estado</label><EstadoSel value={f.ssantaEstado} onChange={v => set('ssantaEstado', v)} /></div>
