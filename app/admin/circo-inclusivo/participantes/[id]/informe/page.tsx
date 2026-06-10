@@ -70,8 +70,8 @@ export default async function InformePage(
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo-origen.png" alt="Club Deportivo Origen" className="h-16 w-auto" />
           <div className="flex-1">
-            <div className="font-black text-pm-navy text-lg leading-tight">Planeta Movimiento</div>
-            <div className="text-xs text-gray-500">Club Deportivo Origen · Circo Inclusivo y Psicomotricidad</div>
+            <div className="font-black text-pm-navy text-lg leading-tight">Club Deportivo Origen</div>
+            <div className="text-xs text-gray-500">Circo Inclusivo y Psicomotricidad</div>
           </div>
           <div className="text-right">
             <div className="font-black text-pm-red uppercase text-sm">{titulo}</div>
@@ -92,11 +92,19 @@ export default async function InformePage(
         {aMostrar.length === 0 ? (
           <p className="text-gray-400 italic">Este participante todavía no tiene evaluaciones de este tipo.</p>
         ) : (
-          aMostrar.map(ev => <EvaluacionImpresa key={ev.id} ev={ev} />)
+          <>
+            <div className="mb-4 border border-gray-200 rounded-lg px-4 py-2 bg-gray-50">
+              <div className="text-xs font-black text-pm-navy uppercase tracking-wide mb-1">Escala de valoración</div>
+              <div className="flex flex-wrap gap-x-5 gap-y-0.5 text-xs text-gray-600">
+                {ESCALA.map(s => <span key={s.valor}><strong className="text-pm-red">{s.valor}</strong> · {s.label}</span>)}
+              </div>
+            </div>
+            {aMostrar.map(ev => <EvaluacionImpresa key={ev.id} ev={ev} />)}
+          </>
         )}
 
         <div className="mt-8 pt-4 border-t border-gray-200 flex justify-between text-xs text-gray-500">
-          <span>Planeta Movimiento · Club Deportivo Origen</span>
+          <span>Club Deportivo Origen</span>
           <span>Documento generado el {fechaLarga(new Date().toISOString())}</span>
         </div>
       </div>
