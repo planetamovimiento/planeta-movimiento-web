@@ -38,4 +38,5 @@ export type AlumnoFamilia = {
   pagos: Record<string, string>
   observaciones_familia: string
   foto_url: string
+  whatsapp_url: string
 }

@@ -15,6 +15,7 @@ type GestionPatch = {
   observaciones_familia?: string | null
   foto_url?: string | null
   horario?: string | null
+  whatsapp_url?: string | null
   fecha_alta?: string | null
   fecha_baja?: string | null
 }
@@ -89,6 +90,18 @@ export async function fijarHorarioGrupo(id: string, horario: string) {
 
   const db = createAdminClient()
   const { error } = await db.from('club_grupos').update({ horario: horario.trim() || null }).eq('id', id)
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath('/admin/club')
+  return { ok: true }
+}
+
+export async function fijarWhatsappGrupo(id: string, url: string) {
+  const admin = await getAdminUser()
+  if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
+
+  const db = createAdminClient()
+  const { error } = await db.from('club_grupos').update({ whatsapp_url: url.trim() || null }).eq('id', id)
   if (error) return { ok: false, error: error.message }
 
   revalidatePath('/admin/club')

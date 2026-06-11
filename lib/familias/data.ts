@@ -16,14 +16,14 @@ async function idsDeFamilia(familiaId: string): Promise<string[]> {
   }
 }
 
-/** Horario por defecto del grupo (prioriza el grupo de la misma actividad, luego global). */
-function horarioDeGrupo(grupos: Row[], nombreGrupo: string, actividad: string): string {
+/** Valor por defecto del grupo (prioriza el grupo de la misma actividad, luego global). */
+function valorDeGrupo(grupos: Row[], nombreGrupo: string, actividad: string, key: string): string {
   if (!nombreGrupo) return ''
   const match =
     grupos.find(g => str(g.nombre) === nombreGrupo && str(g.actividad) === actividad) ??
     grupos.find(g => str(g.nombre) === nombreGrupo && !g.actividad) ??
     grupos.find(g => str(g.nombre) === nombreGrupo)
-  return str(match?.horario)
+  return str(match?.[key])
 }
 
 function construir(s: Row, g: Row | undefined, grupos: Row[]): AlumnoFamilia {
@@ -31,22 +31,23 @@ function construir(s: Row, g: Row | undefined, grupos: Row[]): AlumnoFamilia {
   const completo = str(s.nombre)
   const nombre = str(d.nombre) || completo.split(' ')[0] || ''
   const apellidos = str(d.apellidos) || completo.split(' ').slice(1).join(' ')
+  const actividad = str(d.actividad)
   // El grupo del admin = grupo guardado, o el nivel de la inscripción como respaldo.
   const grupo = str(g?.grupo) || str(d.nivel)
-  // El horario = el manual del alumno, o el horario por defecto de su grupo.
-  const horario = str(g?.horario) || horarioDeGrupo(grupos, grupo, str(d.actividad))
+  // Horario y WhatsApp = el manual del alumno, o el por defecto de su grupo.
   return {
     id: String(s.id),
     nombre,
     apellidos,
-    actividad: str(d.actividad),
+    actividad,
     grupo,
-    horario,
+    horario: str(g?.horario) || valorDeGrupo(grupos, grupo, actividad, 'horario'),
     temporada: str(g?.temporada) || TEMPORADA_ACTUAL,
     estado_general: str(g?.estado_general) || 'pendiente',
     pagos: (g?.pagos as Record<string, string>) ?? {},
     observaciones_familia: str(g?.observaciones_familia),
     foto_url: str(g?.foto_url),
+    whatsapp_url: str(g?.whatsapp_url) || valorDeGrupo(grupos, grupo, actividad, 'whatsapp_url'),
   }
 }
 
@@ -59,7 +60,7 @@ export async function getAlumnosDeFamilia(familiaId: string): Promise<AlumnoFami
     const [subs, gest, grup] = await Promise.all([
       db.from('form_submissions').select('id, nombre, datos').in('id', ids),
       db.from('club_gestion').select('*').in('submission_id', ids),
-      db.from('club_grupos').select('nombre, actividad, horario'),
+      db.from('club_grupos').select('nombre, actividad, horario, whatsapp_url'),
     ])
     const gMap = new Map((gest.data ?? []).map(g => [String((g as Row).submission_id), g as Row]))
     const grupos = (grup.data ?? []) as Row[]
@@ -80,7 +81,7 @@ export async function getAlumnoDeFamilia(familiaId: string, submissionId: string
     const [subRes, gRes, grupRes] = await Promise.all([
       db.from('form_submissions').select('id, nombre, datos').eq('id', submissionId).maybeSingle(),
       db.from('club_gestion').select('*').eq('submission_id', submissionId).maybeSingle(),
-      db.from('club_grupos').select('nombre, actividad, horario'),
+      db.from('club_grupos').select('nombre, actividad, horario, whatsapp_url'),
     ])
     if (!subRes.data) return null
     return construir(subRes.data as Row, (gRes.data as Row) ?? undefined, (grupRes.data ?? []) as Row[])

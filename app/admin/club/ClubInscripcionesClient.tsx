@@ -8,7 +8,7 @@ import {
   labelEstadoGeneral, mesActualKey, edadDe, fechaCorta,
   type Alumno, type Grupo, type EstadoPago, type EstadoGeneral,
 } from '@/lib/club/constants'
-import { guardarGestion, setPagoMes, crearGrupo, renombrarGrupo, eliminarGrupo, fijarHorarioGrupo } from './actions'
+import { guardarGestion, setPagoMes, crearGrupo, renombrarGrupo, eliminarGrupo, fijarHorarioGrupo, fijarWhatsappGrupo } from './actions'
 import ImportarModal from './ImportarModal'
 import { SubirImagen } from '@/components/admin/SubirImagen'
 
@@ -394,6 +394,11 @@ export default function ClubInscripcionesClient({
             if (r.ok) setGrupos(prev => prev.map(g => g.id === id ? { ...g, horario } : g))
             else setError(r.error || 'No se pudo guardar el horario')
           })}
+          onWhatsapp={(id, whatsapp_url) => startTransition(async () => {
+            const r = await fijarWhatsappGrupo(id, whatsapp_url)
+            if (r.ok) setGrupos(prev => prev.map(g => g.id === id ? { ...g, whatsapp_url } : g))
+            else setError(r.error || 'No se pudo guardar el enlace')
+          })}
         />
       )}
     </div>
@@ -423,6 +428,7 @@ function FichaAlumno({ a, puedeEditar, gruposActividad, onClose, onGestion, onPa
   const [obs, setObs] = useState(a.observaciones)
   const [obsFam, setObsFam] = useState(a.observaciones_familia)
   const [horario, setHorario] = useState(a.horario)
+  const [whatsapp, setWhatsapp] = useState(a.whatsapp_url)
   const edad = edadDe(a.fechaNacimiento)
 
   return (
@@ -516,6 +522,15 @@ function FichaAlumno({ a, puedeEditar, gruposActividad, onClose, onGestion, onPa
               </div>
             </div>
             <div className="mt-3">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Enlace al grupo de WhatsApp <span className="text-gray-300 normal-case">(opcional · anula el del grupo)</span></label>
+              <input value={whatsapp} disabled={!puedeEditar} onChange={e => setWhatsapp(e.target.value)} placeholder="https://chat.whatsapp.com/…"
+                className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-pm-red disabled:opacity-60" />
+              {puedeEditar && whatsapp !== a.whatsapp_url && (
+                <button onClick={() => onGestion({ whatsapp_url: whatsapp })} className="mt-1.5 bg-pm-navy text-white text-xs font-bold px-3 py-1.5 rounded-lg">Guardar enlace</button>
+              )}
+            </div>
+
+            <div className="mt-3">
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Observaciones visibles para la familia</label>
               <textarea value={obsFam} disabled={!puedeEditar} onChange={e => setObsFam(e.target.value)} rows={2}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pm-red resize-none disabled:opacity-60"
@@ -590,13 +605,14 @@ function Dato({ k, v }: { k: string; v: string }) {
 }
 
 // ─── Modal de gestión de grupos ────────────────────────────────────────────────
-function ModalGrupos({ grupos, actividades, onClose, onCrear, onRenombrar, onEliminar, onHorario }: {
+function ModalGrupos({ grupos, actividades, onClose, onCrear, onRenombrar, onEliminar, onHorario, onWhatsapp }: {
   grupos: Grupo[]; actividades: string[]
   onClose: () => void
   onCrear: (nombre: string, actividad: string | null) => void
   onRenombrar: (id: string, nombre: string) => void
   onEliminar: (id: string) => void
   onHorario: (id: string, horario: string) => void
+  onWhatsapp: (id: string, url: string) => void
 }) {
   const [nuevo, setNuevo] = useState('')
   const [nuevaAct, setNuevaAct] = useState('')
@@ -633,11 +649,11 @@ function ModalGrupos({ grupos, actividades, onClose, onCrear, onRenombrar, onEli
           </div>
 
           {/* Globales */}
-          <FilaGrupos titulo="Grupos globales" items={globales} onRenombrar={onRenombrar} onEliminar={onEliminar} onHorario={onHorario} />
+          <FilaGrupos titulo="Grupos globales" items={globales} onRenombrar={onRenombrar} onEliminar={onEliminar} onHorario={onHorario} onWhatsapp={onWhatsapp} />
 
           {/* Por actividad */}
           {porActividad.map(({ act, items }) => (
-            <FilaGrupos key={act} titulo={act} items={items} onRenombrar={onRenombrar} onEliminar={onEliminar} onHorario={onHorario} />
+            <FilaGrupos key={act} titulo={act} items={items} onRenombrar={onRenombrar} onEliminar={onEliminar} onHorario={onHorario} onWhatsapp={onWhatsapp} />
           ))}
         </div>
       </div>
@@ -645,24 +661,31 @@ function ModalGrupos({ grupos, actividades, onClose, onCrear, onRenombrar, onEli
   )
 }
 
-function FilaGrupos({ titulo, items, onRenombrar, onEliminar, onHorario }: {
-  titulo: string; items: Grupo[]; onRenombrar: (id: string, nombre: string) => void; onEliminar: (id: string) => void; onHorario: (id: string, horario: string) => void
+function FilaGrupos({ titulo, items, onRenombrar, onEliminar, onHorario, onWhatsapp }: {
+  titulo: string; items: Grupo[]; onRenombrar: (id: string, nombre: string) => void; onEliminar: (id: string) => void; onHorario: (id: string, horario: string) => void; onWhatsapp: (id: string, url: string) => void
 }) {
   if (items.length === 0) return null
+  const inp = 'border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-pm-red'
   return (
     <div>
-      <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-2">{titulo} <span className="text-gray-300 font-medium normal-case">· nombre · horario</span></div>
-      <div className="space-y-1.5">
+      <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-2">{titulo}</div>
+      <div className="space-y-2">
         {items.map(g => (
-          <div key={g.id} className="flex items-center gap-2">
-            <input defaultValue={g.nombre} onBlur={e => { if (e.target.value.trim() && e.target.value !== g.nombre) onRenombrar(g.id, e.target.value.trim()) }}
-              className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-pm-red" title="Nombre del grupo" />
-            <input defaultValue={g.horario ?? ''} placeholder="Horario" onBlur={e => { if (e.target.value !== (g.horario ?? '')) onHorario(g.id, e.target.value.trim()) }}
-              className="w-40 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-pm-red" title="Horario por defecto del grupo (se muestra a las familias)" />
-            <button onClick={() => { if (confirm(`¿Eliminar el grupo «${g.nombre}»?`)) onEliminar(g.id) }}
-              className="text-gray-300 hover:text-red-500 transition-colors p-1.5" title="Eliminar grupo">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-            </button>
+          <div key={g.id} className="border border-gray-100 rounded-xl p-2 space-y-1.5">
+            <div className="flex items-center gap-2">
+              <input defaultValue={g.nombre} onBlur={e => { if (e.target.value.trim() && e.target.value !== g.nombre) onRenombrar(g.id, e.target.value.trim()) }}
+                className={`${inp} flex-1`} title="Nombre del grupo" />
+              <button onClick={() => { if (confirm(`¿Eliminar el grupo «${g.nombre}»?`)) onEliminar(g.id) }}
+                className="text-gray-300 hover:text-red-500 transition-colors p-1.5 shrink-0" title="Eliminar grupo">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input defaultValue={g.horario ?? ''} placeholder="Horario (ej. L y X · 16:00-17:00)" onBlur={e => { if (e.target.value !== (g.horario ?? '')) onHorario(g.id, e.target.value.trim()) }}
+                className={inp} title="Horario por defecto del grupo (visible para las familias)" />
+              <input defaultValue={g.whatsapp_url ?? ''} placeholder="URL del grupo de WhatsApp" onBlur={e => { if (e.target.value !== (g.whatsapp_url ?? '')) onWhatsapp(g.id, e.target.value.trim()) }}
+                className={inp} title="Enlace al grupo de WhatsApp (visible para las familias)" />
+            </div>
           </div>
         ))}
       </div>

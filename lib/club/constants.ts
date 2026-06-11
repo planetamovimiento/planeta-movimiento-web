@@ -71,7 +71,7 @@ export const ACTIVIDADES_CLUB = [
 
 // ── Tipos de datos ────────────────────────────────────────────────────────────
 
-export type Grupo = { id: string; actividad: string | null; nombre: string; orden: number; horario?: string | null }
+export type Grupo = { id: string; actividad: string | null; nombre: string; orden: number; horario?: string | null; whatsapp_url?: string | null }
 
 export type Alumno = {
   id: string
@@ -96,6 +96,7 @@ export type Alumno = {
   observaciones_familia: string
   foto_url: string
   horario: string
+  whatsapp_url: string
   fecha_alta: string | null
   fecha_baja: string | null
 }
