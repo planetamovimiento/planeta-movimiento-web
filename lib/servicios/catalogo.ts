@@ -57,7 +57,7 @@ export const CATALOGO_SERVICIOS: ServicioCatalogo[] = [
     descripcionLarga: 'Disciplina de suelo y trampolín: volteos, figuras, fuerza y control corporal con progresión por niveles.',
     edad: 'Desde 6 años', horarios: 'Consultar horarios', estado: 'activo',
     botonTexto: 'Solicitar inscripción', botonAccion: 'formulario', enlace: '/servicios/gimnasia-acrobatica',
-    profesores: 'Equipo técnico del club', niveles: 'Iniciación · Intermedio · Avanzado · Competición',
+    profesores: 'Equipo técnico del club', niveles: 'Iniciación · Intermedio · Avanzado',
   },
   {
     id: 'telas-aereas', icon: '🎪', ...D,

@@ -51,8 +51,7 @@ const DISCIPLINAS = [
 const NIVELES = [
   { nombre: 'Iniciación',  desc: 'Primeros pasos. Sin experiencia necesaria. Juego y descubrimiento.', color: 'bg-gray-100 border-gray-300',  text: 'text-gray-700' },
   { nombre: 'Intermedio',  desc: 'Consolidación de habilidades básicas. Pequeñas rutinas y combinaciones.', color: 'bg-pm-red-light border-pm-red/30', text: 'text-pm-red' },
-  { nombre: 'Avanzado',    desc: 'Técnica depurada, combinaciones complejas y trabajo coreográfico.', color: 'bg-pm-red/80 border-pm-red', text: 'text-white' },
-  { nombre: 'Competición', desc: 'Preparación para exhibiciones y competiciones. Entrenamientos intensivos.', color: 'bg-pm-red border-pm-red-dark', text: 'text-white' },
+  { nombre: 'Avanzado',    desc: 'Técnica depurada, combinaciones complejas y trabajo coreográfico.', color: 'bg-pm-red border-pm-red-dark', text: 'text-white' },
 ]
 
 const VALORES = [
@@ -98,6 +97,8 @@ export default function ClubPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-origen.png" alt="Club Deportivo Origen" className="block h-20 w-auto bg-white rounded-2xl p-2.5 mb-6" />
               <span className="inline-block bg-pm-red text-white text-xs font-black px-3 py-1 rounded-full mb-5">
                 Temporada 2025-26 abierta
               </span>
@@ -122,8 +123,8 @@ export default function ClubPage() {
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4">
               {[
-                { valor: '7', label: 'Disciplinas' },
-                { valor: '4', label: 'Niveles de progresión' },
+                { valor: '6', label: 'Disciplinas' },
+                { valor: '3', label: 'Niveles de progresión' },
                 { valor: 'Todas', label: 'Edades y capacidades' },
                 { valor: '+10', label: 'Años de experiencia' },
               ].map(({ valor, label }) => (
@@ -185,7 +186,7 @@ export default function ClubPage() {
               Grupos reducidos y progresión personalizada.
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {DISCIPLINAS.map(d => <TarjetaDisciplina key={d.nombre} d={d} />)}
           </div>
         </div>
@@ -196,7 +197,7 @@ export default function ClubPage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-black text-pm-navy text-center mb-3">Sistema de niveles</h2>
           <p className="text-gray-500 text-sm text-center mb-10">Progresa de forma estructurada con objetivos claros en cada etapa</p>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {NIVELES.map((nivel, i) => (
               <div key={nivel.nombre} className="relative">
                 {i < NIVELES.length - 1 && (
