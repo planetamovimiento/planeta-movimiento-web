@@ -103,9 +103,7 @@ export default function CampamentosPageClient({ cfg }: { cfg: CampamentosConfig 
         {panelActivo === 'navidad' && (
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10">
             <div className="space-y-6">
-              <div className="bg-gradient-to-br from-blue-700 to-blue-900 rounded-2xl p-8 text-white text-center">
-                <div className="text-5xl mb-3">⛄🦸❄️</div>
-                <h2 className="text-3xl font-black mb-2">Campamento de Navidad</h2>
+              <div className="bg-gradient-to-br from-blue-700 to-blue-900 rounded-2xl p-8 text-white text-center">                <h2 className="text-3xl font-black mb-2">Campamento de Navidad</h2>
                 <p className="text-blue-200 text-sm mb-4">Escuela de Superhéroes · Edición Invierno</p>
                 <div className="flex flex-wrap justify-center gap-3">
                   {[`${navDias.length} días`, cfg.navidadHorario, rangoCorto(navDias), 'Desde 4 años'].map(b => (
@@ -157,9 +155,7 @@ export default function CampamentosPageClient({ cfg }: { cfg: CampamentosConfig 
         {panelActivo === 'semanasanta' && (
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10">
             <div className="space-y-6">
-              <div className="bg-gradient-to-br from-violet-700 to-violet-900 rounded-2xl p-8 text-white text-center">
-                <div className="text-5xl mb-3">🌸🦸🌺</div>
-                <h2 className="text-3xl font-black mb-2">Campamento de Semana Santa</h2>
+              <div className="bg-gradient-to-br from-violet-700 to-violet-900 rounded-2xl p-8 text-white text-center">                <h2 className="text-3xl font-black mb-2">Campamento de Semana Santa</h2>
                 <p className="text-violet-200 text-sm mb-4">Escuela de Superhéroes · Edición Primavera</p>
                 <div className="flex flex-wrap justify-center gap-3">
                   {[`${ssDias.length} días`, cfg.ssantaHorario, rangoCorto(ssDias), 'Desde 4 años'].map(b => (
@@ -212,9 +208,7 @@ export default function CampamentosPageClient({ cfg }: { cfg: CampamentosConfig 
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_460px] gap-10">
             <div className="space-y-6">
               <div className="bg-gradient-to-br from-pm-navy to-pm-navy-md rounded-2xl p-8 text-white">
-                <div className="text-center mb-6">
-                  <div className="text-5xl mb-3">☀️🦸🌊</div>
-                  <h2 className="text-3xl font-black mb-2">Campamento de Verano</h2>
+                <div className="text-center mb-6">                  <h2 className="text-3xl font-black mb-2">Campamento de Verano</h2>
                   <p className="text-white/65 text-sm mb-4">Escuela de Superhéroes · {SEMANAS.length} semanas</p>
                   <div className="flex flex-wrap justify-center gap-2">
                     {[SEMANAS.length ? `${dcorta(SEMANAS[0].inicio)} – ${dcorta(SEMANAS[SEMANAS.length - 1].fin)}` : '', 'L – V', cfg.veranoHorario, `${SEMANAS.length} semanas`, 'Desde 4 años'].filter(Boolean).map(b => (

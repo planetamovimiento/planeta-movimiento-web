@@ -11,15 +11,16 @@ export const FOTOS: Record<string, string[]> = {
   'circo-inclusivo': ['/fotos/circo-inclusivo/1.webp', '/fotos/circo-inclusivo/2.webp', '/fotos/circo-inclusivo/3.webp', '/fotos/circo-inclusivo/4.webp'],
   'cumpleanos': ['/fotos/cumpleanos/1.webp', '/fotos/cumpleanos/2.webp', '/fotos/cumpleanos/3.webp', '/fotos/cumpleanos/4.webp', '/fotos/cumpleanos/5.webp', '/fotos/cumpleanos/6.webp', '/fotos/cumpleanos/7.webp'],
   'escuela-bienestar': ['/fotos/escuela-bienestar/1.webp', '/fotos/escuela-bienestar/2.webp', '/fotos/escuela-bienestar/3.webp', '/fotos/escuela-bienestar/4.webp'],
-  'escuela-infantil': ['/fotos/escuela-infantil/1.webp', '/fotos/escuela-infantil/2.webp', '/fotos/escuela-infantil/3.webp', '/fotos/escuela-infantil/4.webp', '/fotos/escuela-infantil/5.webp', '/fotos/escuela-infantil/6.webp', '/fotos/escuela-infantil/7.webp', '/fotos/escuela-infantil/8.webp'],
-  'eventos': ['/fotos/eventos/1.webp', '/fotos/eventos/2.webp', '/fotos/eventos/3.webp', '/fotos/eventos/4.webp'],
+  'escuela-infantil': ['/fotos/escuela-infantil/1.webp', '/fotos/escuela-infantil/2.webp', '/fotos/escuela-infantil/3.webp', '/fotos/escuela-infantil/4.webp'],
+  'eventos': ['/fotos/eventos/1.webp', '/fotos/eventos/2.webp', '/fotos/eventos/3.webp', '/fotos/eventos/4.webp', '/fotos/eventos/5.webp', '/fotos/eventos/6.webp', '/fotos/eventos/7.webp', '/fotos/eventos/8.webp'],
   'excursiones': ['/fotos/excursiones/1.webp', '/fotos/excursiones/2.webp', '/fotos/excursiones/3.webp'],
-  'extraescolares': ['/fotos/extraescolares/1.webp', '/fotos/extraescolares/2.webp'],
+  'extraescolares': ['/fotos/extraescolares/1.webp', '/fotos/extraescolares/2.webp', '/fotos/extraescolares/3.webp'],
   'gimnasia-acrobatica': ['/fotos/gimnasia-acrobatica/1.webp', '/fotos/gimnasia-acrobatica/2.webp', '/fotos/gimnasia-acrobatica/3.webp', '/fotos/gimnasia-acrobatica/4.webp'],
-  'jiu-jitsu': ['/fotos/jiu-jitsu/1.webp', '/fotos/jiu-jitsu/2.webp', '/fotos/jiu-jitsu/3.webp'],
-  'monitor-juvenil': ['/fotos/monitor-juvenil/1.webp', '/fotos/monitor-juvenil/2.webp', '/fotos/monitor-juvenil/3.webp', '/fotos/monitor-juvenil/4.webp', '/fotos/monitor-juvenil/5.webp', '/fotos/monitor-juvenil/6.webp'],
-  'talleres': ['/fotos/talleres/1.webp', '/fotos/talleres/2.webp', '/fotos/talleres/3.webp', '/fotos/talleres/4.webp', '/fotos/talleres/5.webp', '/fotos/talleres/6.webp', '/fotos/talleres/7.webp', '/fotos/talleres/8.webp', '/fotos/talleres/9.webp', '/fotos/talleres/10.webp', '/fotos/talleres/11.webp', '/fotos/talleres/12.webp', '/fotos/talleres/13.webp', '/fotos/talleres/14.webp', '/fotos/talleres/15.webp', '/fotos/talleres/16.webp'],
-  'telas-aereas': ['/fotos/telas-aereas/1.webp', '/fotos/telas-aereas/2.webp', '/fotos/telas-aereas/3.webp'],
+  'jiu-jitsu': ['/fotos/jiu-jitsu/1.webp', '/fotos/jiu-jitsu/2.webp', '/fotos/jiu-jitsu/3.webp', '/fotos/jiu-jitsu/4.webp'],
+  'monitor-juvenil': ['/fotos/monitor-juvenil/1.webp', '/fotos/monitor-juvenil/2.webp', '/fotos/monitor-juvenil/3.webp'],
+  'talleres': ['/fotos/talleres/1.webp', '/fotos/talleres/2.webp', '/fotos/talleres/3.webp', '/fotos/talleres/4.webp', '/fotos/talleres/5.webp', '/fotos/talleres/6.webp', '/fotos/talleres/7.webp', '/fotos/talleres/8.webp', '/fotos/talleres/9.webp', '/fotos/talleres/10.webp', '/fotos/talleres/11.webp', '/fotos/talleres/12.webp', '/fotos/talleres/13.webp', '/fotos/talleres/14.webp'],
+  'talleres-intensivos': ['/fotos/talleres-intensivos/1.webp', '/fotos/talleres-intensivos/2.webp', '/fotos/talleres-intensivos/3.webp', '/fotos/talleres-intensivos/4.webp'],
+  'telas-aereas': ['/fotos/telas-aereas/1.webp', '/fotos/telas-aereas/2.webp', '/fotos/telas-aereas/3.webp', '/fotos/telas-aereas/4.webp'],
 }
 
 /** Primera foto (principal) de un servicio, o '' si no hay. */

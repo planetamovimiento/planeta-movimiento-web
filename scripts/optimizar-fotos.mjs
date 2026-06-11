@@ -9,7 +9,7 @@
 import sharp from 'sharp'
 import convert from 'heic-convert'
 import { readdirSync, statSync, mkdirSync, existsSync, rmSync, writeFileSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, basename } from 'node:path'
 
 const ORIGEN = 'Imagenes_web'
 const DESTINO = 'public/fotos'
@@ -40,6 +40,16 @@ const MAP = {
 
 const esImagen = f => /\.(jpe?g|png|webp|heic|heif)$/i.test(f)
 
+// Las portadas (fichero cuyo nombre empieza por "portada") van primero; el resto
+// en orden natural por ruta. Así "portada X.jpg" se convierte en la foto 1 del
+// servicio (la que usan fotoPrincipal() y las portadas de los campamentos).
+const esPortada = f => /^portada/i.test(basename(f))
+function ordenar(a, b) {
+  const pa = esPortada(a), pb = esPortada(b)
+  if (pa !== pb) return pa ? -1 : 1
+  return a.localeCompare(b, 'es', { numeric: true })
+}
+
 // Lee imágenes recursivamente (incluye subcarpetas). Devuelve rutas completas.
 function ficherosDe(dir) {
   if (!existsSync(dir)) return []
@@ -50,7 +60,7 @@ function ficherosDe(dir) {
     if (st.isDirectory()) out.push(...ficherosDe(full))
     else if (esImagen(e) && st.isFile()) out.push(full)
   }
-  return out.sort()
+  return out.sort(ordenar)
 }
 
 const resumen = {}
