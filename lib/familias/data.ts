@@ -6,7 +6,7 @@ type Row = Record<string, unknown>
 const str = (v: unknown): string => (typeof v === 'string' ? v : '')
 
 /** submission_id de los alumnos vinculados a una familia. */
-async function idsDeFamilia(familiaId: string): Promise<string[]> {
+export async function idsDeFamilia(familiaId: string): Promise<string[]> {
   const db = createAdminClient()
   try {
     const { data } = await db.from('club_familia_alumnos').select('submission_id').eq('familia_id', familiaId)

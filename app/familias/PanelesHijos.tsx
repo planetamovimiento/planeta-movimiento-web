@@ -1,7 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { Avatar, BadgeEstadoGeneral, CirculosMeses } from './ui'
+import { guardarFotoHijo, quitarFotoHijo } from './actions'
 import type { AlumnoFamilia } from '@/lib/familias/tipos'
 
 export default function PanelesHijos({ alumnos }: { alumnos: AlumnoFamilia[] }) {
@@ -37,6 +39,8 @@ export default function PanelesHijos({ alumnos }: { alumnos: AlumnoFamilia[] }) 
                   <BadgeEstadoGeneral estado={a.estado_general} />
                 </div>
 
+                <FotoHijo submissionId={a.id} foto={a.foto_url} nombre={a.nombre} />
+
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <Dato label="Grupo" valor={a.grupo || '—'} />
                   <Dato label="Horario" valor={a.horario || '—'} />
@@ -62,12 +66,14 @@ export default function PanelesHijos({ alumnos }: { alumnos: AlumnoFamilia[] }) 
                   <CirculosMeses pagos={a.pagos} />
                 </div>
 
-                {a.observaciones_familia && (
-                  <div className="bg-pm-red-light border border-pm-red/20 rounded-2xl p-4">
-                    <div className="text-xs font-black text-pm-red uppercase tracking-wider mb-1.5">Información importante</div>
+                <div className={`rounded-2xl border p-4 ${a.observaciones_familia ? 'bg-pm-red-light border-pm-red/20' : 'bg-pm-bg border-gray-100'}`}>
+                  <div className={`text-xs font-black uppercase tracking-wider mb-1.5 ${a.observaciones_familia ? 'text-pm-red' : 'text-gray-400'}`}>Observaciones</div>
+                  {a.observaciones_familia ? (
                     <p className="text-sm text-pm-navy leading-relaxed whitespace-pre-line">{a.observaciones_familia}</p>
-                  </div>
-                )}
+                  ) : (
+                    <p className="text-sm text-gray-400">Sin observaciones por el momento.</p>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -82,6 +88,58 @@ function Dato({ label, valor }: { label: string; valor: string }) {
     <div className="bg-pm-bg rounded-xl border border-gray-100 p-3">
       <div className="text-xs text-gray-400">{label}</div>
       <div className="font-semibold text-pm-navy text-sm break-words">{valor}</div>
+    </div>
+  )
+}
+
+/** Foto de perfil del hijo, editable por la familia (sube/cambia/quita). */
+function FotoHijo({ submissionId, foto, nombre }: { submissionId: string; foto: string; nombre: string }) {
+  const router = useRouter()
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [pending, startTransition] = useTransition()
+  const [error, setError] = useState('')
+
+  function subir(file: File) {
+    setError('')
+    const fd = new FormData()
+    fd.append('file', file)
+    startTransition(async () => {
+      const r = await guardarFotoHijo(submissionId, fd)
+      if (r.ok) router.refresh()
+      else setError(r.error || 'No se pudo subir la imagen')
+    })
+  }
+
+  function quitar() {
+    setError('')
+    startTransition(async () => {
+      const r = await quitarFotoHijo(submissionId)
+      if (r.ok) router.refresh()
+      else setError(r.error || 'No se pudo quitar la imagen')
+    })
+  }
+
+  return (
+    <div className="flex items-center gap-4">
+      <Avatar foto={foto} nombre={nombre} size="lg" />
+      <div className="min-w-0">
+        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Foto de perfil</div>
+        <div className="flex flex-wrap items-center gap-3">
+          <button type="button" onClick={() => inputRef.current?.click()} disabled={pending}
+            className="inline-flex items-center gap-2 bg-pm-navy hover:bg-pm-navy/90 text-white font-bold px-4 py-2 rounded-xl text-sm transition-colors disabled:opacity-50">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 9a2 2 0 012-2h.93a2 2 0 001.66-.9l.82-1.2A2 2 0 0110.07 4h3.86a2 2 0 011.66.9l.82 1.2a2 2 0 001.66.9H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3" strokeWidth={1.8} /></svg>
+            {pending ? 'Subiendo…' : foto ? 'Cambiar foto' : 'Subir foto'}
+          </button>
+          {foto && !pending && (
+            <button type="button" onClick={quitar} className="text-xs font-bold text-gray-400 hover:text-pm-red transition-colors">
+              Quitar
+            </button>
+          )}
+        </div>
+        {error && <p className="text-xs text-pm-red mt-1.5">{error}</p>}
+      </div>
+      <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden"
+        onChange={e => { const f = e.target.files?.[0]; if (f) subir(f); e.target.value = '' }} />
     </div>
   )
 }
