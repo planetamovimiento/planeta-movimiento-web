@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { formatPrice } from '@/lib/utils'
-import { SERVICIOS_MOCK } from './StepServicio'
+import { montoReserva, eurosFmt, type ServicioReserva } from '@/lib/reservas/monto'
 
 export type DatosForm = {
   nombre: string
@@ -20,15 +19,17 @@ type Props = {
   onDatos: (d: DatosForm) => void
   onSubmit: () => void
   onBack: () => void
-  servicioId: string | null
+  servicio: ServicioReserva | null
   fecha: string | null
   hora: string | null
+  loading?: boolean
+  error?: string
 }
 
-export default function StepDatos({ datos, onDatos, onSubmit, onBack, servicioId, fecha, hora }: Props) {
+export default function StepDatos({ datos, onDatos, onSubmit, onBack, servicio, fecha, hora, loading, error }: Props) {
   const [errors, setErrors] = useState<Partial<Record<keyof DatosForm, string>>>({})
 
-  const servicio = SERVICIOS_MOCK.find(s => s.id === servicioId)
+  const monto = servicio ? montoReserva(servicio) : null
 
   function set(key: keyof DatosForm, value: string | boolean) {
     onDatos({ ...datos, [key]: value })
@@ -122,7 +123,7 @@ export default function StepDatos({ datos, onDatos, onSubmit, onBack, servicioId
               className="mt-0.5 accent-pm-red w-4 h-4"
             />
             <span className="text-sm text-gray-600">
-              Acepto las <a href="/legal/condiciones" className="text-pm-red underline">condiciones de uso</a> y la <a href="/legal/privacidad" className="text-pm-red underline">política de privacidad</a> *
+              Acepto las <a href="/terminos-y-condiciones" className="text-pm-red underline">condiciones de uso</a> y la <a href="/politica-privacidad" className="text-pm-red underline">política de privacidad</a> *
             </span>
           </label>
           {errors.acepta && <p className="text-xs text-red-500">{errors.acepta}</p>}
@@ -138,7 +139,7 @@ export default function StepDatos({ datos, onDatos, onSubmit, onBack, servicioId
                   <span className="text-2xl">{servicio.icon}</span>
                   <div>
                     <div className="font-semibold text-pm-navy">{servicio.nombre}</div>
-                    <div className="text-sm text-gray-500">{servicio.duracion_min} min</div>
+                    {servicio.edad && <div className="text-sm text-gray-500">{servicio.edad}</div>}
                   </div>
                 </div>
                 {fecha && (
@@ -151,28 +152,42 @@ export default function StepDatos({ datos, onDatos, onSubmit, onBack, servicioId
                     <span className="font-medium text-gray-800">Hora:</span> {hora}
                   </div>
                 )}
-                <div className="pt-3 border-t border-gray-100">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-600">Precio estimado</span>
-                    <span className="font-bold text-pm-navy text-lg">{formatPrice(servicio.precio_base)}</span>
+                {monto && monto.cents > 0 && (
+                  <div className="pt-3 border-t border-gray-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-600">{monto.esSenal ? 'Señal de reserva' : 'A pagar ahora'}</span>
+                      <span className="font-bold text-pm-navy text-lg">{eurosFmt(monto.euros)}</span>
+                    </div>
+                    {monto.esSenal && monto.totalReferencia != null && monto.totalReferencia > monto.euros && (
+                      <p className="text-xs text-gray-500 mb-2">El resto se abona en el centro.</p>
+                    )}
+                    <span className="inline-block bg-pm-red-light text-pm-red text-xs font-semibold px-2 py-1 rounded-full">Pago seguro con tarjeta · Redsys</span>
                   </div>
-                  <span className="inline-block bg-pm-red-light text-pm-red text-xs font-semibold px-2 py-1 rounded-full">Pago en el centro</span>
-                </div>
+                )}
               </div>
             )}
           </div>
         </div>
       </div>
 
+      {error && (
+        <div className="mt-6 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">{error}</div>
+      )}
+
       <div className="flex justify-between mt-8">
-        <button onClick={onBack} className="px-6 py-3 border-2 border-gray-200 text-gray-600 font-bold rounded-xl hover:border-gray-300 transition-colors">
+        <button onClick={onBack} disabled={loading} className="px-6 py-3 border-2 border-gray-200 text-gray-600 font-bold rounded-xl hover:border-gray-300 transition-colors disabled:opacity-50">
           ← Volver
         </button>
         <button
           onClick={handleSubmit}
-          className="px-8 py-3 bg-pm-red text-white font-bold rounded-xl hover:bg-pm-red-dark transition-colors"
+          disabled={loading}
+          className="px-8 py-3 bg-pm-red text-white font-bold rounded-xl hover:bg-pm-red-dark transition-colors disabled:opacity-60"
         >
-          Confirmar reserva
+          {loading
+            ? 'Redirigiendo al pago…'
+            : monto && monto.cents > 0
+              ? `Pagar ${eurosFmt(monto.euros)} y reservar`
+              : 'Confirmar reserva'}
         </button>
       </div>
     </div>

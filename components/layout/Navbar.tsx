@@ -130,7 +130,7 @@ export default function Navbar() {
           {/* CTA + hamburger */}
           <div className="flex items-center gap-3">
             <Link
-              href="/ocio"
+              href="/reservar"
               className="bg-pm-red hover:bg-pm-red-dark text-white text-sm font-semibold px-5 py-2 rounded-full transition-colors"
             >
               Reservar
