@@ -52,8 +52,13 @@ function TarjetaServicio({ servicio, slots, puedeEditar, onChange }: {
   puedeEditar: boolean
   onChange: (slots: SlotSemanal[]) => void
 }) {
+  // Cumpleaños es el único servicio exclusivo (1 reserva por franja). El resto
+  // usa una capacidad común (plazas máximas) que se aplica a todas sus franjas.
+  const esExclusivo = servicio.id === 'cumpleanos'
   const [pending, start] = useTransition()
   const [msg, setMsg] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null)
+  const [capacidad, setCapacidad] = useState<number>(() =>
+    esExclusivo ? 1 : (slots.find(s => s.plazas > 0)?.plazas ?? 10))
 
   function setSlot(i: number, patch: Partial<SlotSemanal>) {
     onChange(slots.map((s, idx) => (idx === i ? { ...s, ...patch } : s)))
@@ -63,8 +68,13 @@ function TarjetaServicio({ servicio, slots, puedeEditar, onChange }: {
     const dias = s.dias.includes(dia) ? s.dias.filter(d => d !== dia) : [...s.dias, dia].sort((a, b) => a - b)
     setSlot(i, { dias })
   }
+  function setCap(v: number) {
+    const n = esExclusivo ? 1 : Math.max(1, Math.round(v) || 1)
+    setCapacidad(n)
+    onChange(slots.map(s => ({ ...s, plazas: n })))
+  }
   function addSlot() {
-    onChange([...slots, { dias: [], horaInicio: '', horaFin: '', plazas: 1 }])
+    onChange([...slots, { dias: [], horaInicio: '', horaFin: '', plazas: esExclusivo ? 1 : capacidad }])
   }
   function delSlot(i: number) {
     onChange(slots.filter((_, idx) => idx !== i))
@@ -86,6 +96,22 @@ function TarjetaServicio({ servicio, slots, puedeEditar, onChange }: {
       </div>
 
       <div className="p-5 space-y-4">
+        {/* Capacidad del servicio */}
+        <div className="flex items-center gap-3 flex-wrap">
+          {esExclusivo ? (
+            <span className="inline-flex items-center gap-2 bg-pm-navy/5 text-pm-navy text-xs font-bold px-3 py-2 rounded-lg border border-pm-navy/10">
+              🔒 Reserva exclusiva · 1 reserva por franja
+            </span>
+          ) : (
+            <label className="flex items-center gap-2">
+              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Plazas máximas por franja</span>
+              <input type="number" min={1} disabled={!puedeEditar} value={capacidad}
+                onChange={e => setCap(Number(e.target.value))}
+                className="w-24 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pm-red disabled:opacity-50" />
+            </label>
+          )}
+        </div>
+
         {slots.length === 0 && (
           <p className="text-sm text-gray-400 italic">Sin franjas. Añade una para permitir la reserva online de este servicio.</p>
         )}
@@ -121,12 +147,6 @@ function TarjetaServicio({ servicio, slots, puedeEditar, onChange }: {
                 <input type="time" disabled={!puedeEditar} value={s.horaFin}
                   onChange={e => setSlot(i, { horaFin: e.target.value })}
                   className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pm-red disabled:opacity-50" />
-              </label>
-              <label className="text-sm">
-                <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Plazas</span>
-                <input type="number" min={1} disabled={!puedeEditar} value={s.plazas}
-                  onChange={e => setSlot(i, { plazas: Math.max(1, Number(e.target.value) || 1) })}
-                  className="w-24 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pm-red disabled:opacity-50" />
               </label>
               {puedeEditar && (
                 <button type="button" onClick={() => delSlot(i)}
