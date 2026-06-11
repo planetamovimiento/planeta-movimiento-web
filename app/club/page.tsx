@@ -97,15 +97,17 @@ export default function ClubPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo-origen.png" alt="Club Deportivo Origen" className="block h-20 w-auto bg-white rounded-2xl p-2.5 mb-6" />
               <span className="inline-block bg-pm-red text-white text-xs font-black px-3 py-1 rounded-full mb-5">
                 Temporada 2025-26 abierta
               </span>
               <div className="text-pm-red text-sm font-black uppercase tracking-widest mb-2">Deporte · Salud · Comunidad</div>
-              <h1 className="text-4xl sm:text-5xl font-black leading-tight mb-4">
-                Club Deportivo<br/>Origen
-              </h1>
+              <div className="flex items-center gap-4 sm:gap-6 mb-4">
+                <h1 className="text-4xl sm:text-5xl font-black leading-tight">
+                  Club Deportivo<br/>Origen
+                </h1>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo-origen.png" alt="Club Deportivo Origen" className="h-20 sm:h-28 w-auto shrink-0 invert" />
+              </div>
               <p className="text-white/65 text-base leading-relaxed mb-8 max-w-lg">
                 Acercamos el circo, la acrobacia y el movimiento a todas las edades como herramienta de salud,
                 inclusión y crecimiento personal. Más que un club: una comunidad en movimiento.
