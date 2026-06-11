@@ -1,4 +1,4 @@
-import { requireSeccion } from '@/lib/admin/auth'
+import { requireSeccion, can } from '@/lib/admin/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { AdminHeader } from '@/components/admin/ui'
 import type { Familia } from '@/lib/familias/tipos'
@@ -14,9 +14,9 @@ async function safe<T>(fn: () => Promise<{ data: T[] | null; error: unknown }>):
 }
 
 export default async function FamiliasPage() {
-  await requireSeccion('familias')
-  // Sincroniza automáticamente las cuentas familiares con el CRM al abrir la sección.
-  await sincronizarFamilias()
+  const admin = await requireSeccion('familias')
+  // Sincroniza automáticamente las cuentas con el CRM (solo quien puede editar).
+  if (can.edit(admin.role)) await sincronizarFamilias()
   const db = createAdminClient()
 
   const [famsRes, linksRes, subsRes] = await Promise.all([
@@ -45,7 +45,7 @@ export default async function FamiliasPage() {
         subtitulo="Cuentas de familias, alumnos vinculados y acceso al portal privado"
       />
       <div className="p-4 lg:p-8">
-        <FamiliasClient familias={familias} links={links} alumnos={alumnos} migrado={famsRes.ok && linksRes.ok} />
+        <FamiliasClient familias={familias} links={links} alumnos={alumnos} migrado={famsRes.ok && linksRes.ok} puedeEditar={can.edit(admin.role)} />
       </div>
     </>
   )

@@ -7,12 +7,12 @@ import { ESTADOS_FAMILIA, type Familia, type EstadoFamilia } from '@/lib/familia
 
 export type AlumnoLite = { id: string; nombre: string; actividad: string; email: string }
 type Link = { familia_id: string; submission_id: string }
-type Props = { familias: Familia[]; links: Link[]; alumnos: AlumnoLite[]; migrado: boolean }
+type Props = { familias: Familia[]; links: Link[]; alumnos: AlumnoLite[]; migrado: boolean; puedeEditar: boolean }
 
 const fechaHora = (s?: string | null) => (s ? new Date(s).toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Nunca')
 type Resultado = { ok: boolean; error?: string | null }
 
-export default function FamiliasClient({ familias, links, alumnos, migrado }: Props) {
+export default function FamiliasClient({ familias, links, alumnos, migrado, puedeEditar }: Props) {
   const router = useRouter()
   const [q, setQ] = useState('')
   const [pending, startTransition] = useTransition()
@@ -56,9 +56,11 @@ export default function FamiliasClient({ familias, links, alumnos, migrado }: Pr
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-wrap items-center gap-2">
         <input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar por nombre o correo…"
           className="flex-1 min-w-[200px] border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pm-red" />
-        <button onClick={generar} disabled={pending} className="bg-pm-red hover:bg-pm-red-dark disabled:opacity-50 text-white font-bold px-4 py-2 rounded-xl text-sm whitespace-nowrap">
-          {pending ? 'Procesando…' : '↻ Generar / actualizar desde CRM'}
-        </button>
+        {puedeEditar && (
+          <button onClick={generar} disabled={pending} className="bg-pm-red hover:bg-pm-red-dark disabled:opacity-50 text-white font-bold px-4 py-2 rounded-xl text-sm whitespace-nowrap">
+            {pending ? 'Procesando…' : '↻ Generar / actualizar desde CRM'}
+          </button>
+        )}
       </div>
       {error && <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">{error}</div>}
       {msg && <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-sm text-green-700">{msg}</div>}
@@ -84,7 +86,7 @@ export default function FamiliasClient({ familias, links, alumnos, migrado }: Pr
             return (
               <CardFamilia key={f.id} familia={f} vinculados={vinculados} disponibles={disponibles}
                 abierta={abierta === f.id} onToggle={() => setAbierta(abierta === f.id ? null : f.id)}
-                pending={pending} correr={correr} />
+                pending={pending} correr={correr} puedeEditar={puedeEditar} />
             )
           })}
         </div>
@@ -93,9 +95,9 @@ export default function FamiliasClient({ familias, links, alumnos, migrado }: Pr
   )
 }
 
-function CardFamilia({ familia, vinculados, disponibles, abierta, onToggle, pending, correr }: {
+function CardFamilia({ familia, vinculados, disponibles, abierta, onToggle, pending, correr, puedeEditar }: {
   familia: Familia; vinculados: AlumnoLite[]; disponibles: AlumnoLite[]
-  abierta: boolean; onToggle: () => void; pending: boolean; correr: (fn: () => Promise<Resultado>) => void
+  abierta: boolean; onToggle: () => void; pending: boolean; correr: (fn: () => Promise<Resultado>) => void; puedeEditar: boolean
 }) {
   const [nombre, setNombre] = useState(familia.nombre ?? '')
   const [telefono, setTelefono] = useState(familia.telefono ?? '')
@@ -115,10 +117,14 @@ function CardFamilia({ familia, vinculados, disponibles, abierta, onToggle, pend
         </div>
         <span className="text-xs text-gray-400 hidden lg:block">Últ. acceso: {fechaHora(familia.ultimo_acceso)}</span>
         <span className="text-xs font-semibold bg-pm-bg border border-gray-200 rounded-full px-2 py-0.5 whitespace-nowrap">{vinculados.length} alumno(s)</span>
-        <select value={familia.estado} disabled={pending} onChange={e => correr(() => cambiarEstadoFamilia(familia.id, e.target.value as EstadoFamilia))}
-          className={`text-xs font-semibold border rounded-lg px-2 py-1.5 ${estadoMeta?.color ?? ''}`}>
-          {ESTADOS_FAMILIA.map(e => <option key={e.valor} value={e.valor}>{e.label}</option>)}
-        </select>
+        {puedeEditar ? (
+          <select value={familia.estado} disabled={pending} onChange={e => correr(() => cambiarEstadoFamilia(familia.id, e.target.value as EstadoFamilia))}
+            className={`text-xs font-semibold border rounded-lg px-2 py-1.5 ${estadoMeta?.color ?? ''}`}>
+            {ESTADOS_FAMILIA.map(e => <option key={e.valor} value={e.valor}>{e.label}</option>)}
+          </select>
+        ) : (
+          <span className={`text-xs font-semibold border rounded-full px-2.5 py-1 ${estadoMeta?.color ?? ''}`}>{estadoMeta?.label ?? familia.estado}</span>
+        )}
         <button onClick={onToggle} className="text-xs font-bold text-pm-navy border border-gray-200 rounded-lg px-3 py-1.5 hover:border-pm-red">{abierta ? 'Cerrar' : 'Gestionar'}</button>
       </div>
 
@@ -127,9 +133,9 @@ function CardFamilia({ familia, vinculados, disponibles, abierta, onToggle, pend
           <div>
             <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-2">Datos de la cuenta</div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <input className={input} placeholder="Nombre del tutor" value={nombre} onChange={e => setNombre(e.target.value)} />
-              <input className={input} placeholder="Teléfono" value={telefono} onChange={e => setTelefono(e.target.value)} />
-              <input className={input} placeholder="Correo de acceso" value={email} onChange={e => setEmail(e.target.value)} />
+              <input className={input} placeholder="Nombre del tutor" value={nombre} disabled={!puedeEditar} onChange={e => setNombre(e.target.value)} />
+              <input className={input} placeholder="Teléfono" value={telefono} disabled={!puedeEditar} onChange={e => setTelefono(e.target.value)} />
+              <input className={input} placeholder="Correo de acceso" value={email} disabled={!puedeEditar} onChange={e => setEmail(e.target.value)} />
             </div>
             {cambiado && (
               <button onClick={() => correr(() => guardarFamilia({ id: familia.id, nombre, telefono, email }))} disabled={pending}
@@ -147,25 +153,29 @@ function CardFamilia({ familia, vinculados, disponibles, abierta, onToggle, pend
                   <span key={a.id} className="inline-flex items-center gap-1.5 bg-pm-bg border border-gray-200 rounded-full pl-3 pr-1.5 py-1 text-xs">
                     <span className="font-semibold text-pm-navy">{a.nombre}</span>
                     {a.actividad && <span className="text-gray-400">· {a.actividad}</span>}
-                    <button onClick={() => correr(() => desvincularAlumno(familia.id, a.id))} disabled={pending} className="text-gray-300 hover:text-red-500 ml-0.5">✕</button>
+                    {puedeEditar && <button onClick={() => correr(() => desvincularAlumno(familia.id, a.id))} disabled={pending} className="text-gray-300 hover:text-red-500 ml-0.5">✕</button>}
                   </span>
                 ))}
               </div>
             )}
-            <div className="flex gap-2 mt-2">
-              <select value={addId} onChange={e => setAddId(e.target.value)} className={`${input} flex-1`}>
-                <option value="">+ Añadir alumno…</option>
-                {disponibles.map(a => <option key={a.id} value={a.id}>{a.nombre}{a.actividad ? ` · ${a.actividad}` : ''}{a.email ? ` · ${a.email}` : ''}</option>)}
-              </select>
-              <button onClick={() => { if (addId) { correr(() => vincularAlumno(familia.id, addId)); setAddId('') } }} disabled={!addId || pending}
-                className="bg-pm-red text-white font-bold px-4 py-2 rounded-lg text-sm disabled:opacity-50">Añadir</button>
-            </div>
+            {puedeEditar && (
+              <div className="flex gap-2 mt-2">
+                <select value={addId} onChange={e => setAddId(e.target.value)} className={`${input} flex-1`}>
+                  <option value="">+ Añadir alumno…</option>
+                  {disponibles.map(a => <option key={a.id} value={a.id}>{a.nombre}{a.actividad ? ` · ${a.actividad}` : ''}{a.email ? ` · ${a.email}` : ''}</option>)}
+                </select>
+                <button onClick={() => { if (addId) { correr(() => vincularAlumno(familia.id, addId)); setAddId('') } }} disabled={!addId || pending}
+                  className="bg-pm-red text-white font-bold px-4 py-2 rounded-lg text-sm disabled:opacity-50">Añadir</button>
+              </div>
+            )}
           </div>
 
-          <div className="border-t border-gray-100 pt-3">
-            <button onClick={() => { if (confirm(`¿Eliminar la cuenta familiar de ${familia.email}? (No borra a los alumnos del CRM)`)) correr(() => eliminarFamilia(familia.id)) }}
-              disabled={pending} className="text-xs font-semibold text-gray-400 hover:text-pm-red">Eliminar cuenta familiar</button>
-          </div>
+          {puedeEditar && (
+            <div className="border-t border-gray-100 pt-3">
+              <button onClick={() => { if (confirm(`¿Eliminar la cuenta familiar de ${familia.email}? (No borra a los alumnos del CRM)`)) correr(() => eliminarFamilia(familia.id)) }}
+                disabled={pending} className="text-xs font-semibold text-gray-400 hover:text-pm-red">Eliminar cuenta familiar</button>
+            </div>
+          )}
         </div>
       )}
     </div>
