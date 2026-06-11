@@ -1,3 +1,5 @@
+'use client'
+
 import { MESES_TEMPORADA, ESTADO_PAGO_META, ESTADOS_GENERAL, type EstadoPago } from '@/lib/club/constants'
 
 const DIMS: Record<string, string> = {
