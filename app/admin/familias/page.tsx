@@ -2,6 +2,7 @@ import { requireSeccion } from '@/lib/admin/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { AdminHeader } from '@/components/admin/ui'
 import type { Familia } from '@/lib/familias/tipos'
+import { sincronizarFamilias } from '@/lib/familias/sync'
 import FamiliasClient, { type AlumnoLite } from './FamiliasClient'
 
 export const dynamic = 'force-dynamic'
@@ -14,6 +15,8 @@ async function safe<T>(fn: () => Promise<{ data: T[] | null; error: unknown }>):
 
 export default async function FamiliasPage() {
   await requireSeccion('familias')
+  // Sincroniza automáticamente las cuentas familiares con el CRM al abrir la sección.
+  await sincronizarFamilias()
   const db = createAdminClient()
 
   const [famsRes, linksRes, subsRes] = await Promise.all([

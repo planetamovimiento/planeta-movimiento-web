@@ -5,10 +5,9 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getAdminUser, logActivity } from '@/lib/admin/auth'
 import { puedeVerSeccion } from '@/lib/admin/secciones'
 import type { EstadoFamilia } from '@/lib/familias/tipos'
+import { sincronizarFamilias } from '@/lib/familias/sync'
 
-type Row = Record<string, unknown>
 const txt = (v?: string | null) => (typeof v === 'string' && v.trim() ? v.trim() : null)
-const str = (v: unknown) => (typeof v === 'string' ? v : '')
 const revalidar = () => revalidatePath('/admin/familias')
 
 async function exigir() {
@@ -19,55 +18,14 @@ async function exigir() {
   return { admin, error: null as string | null }
 }
 
-/** Crea cuentas familiares (por correo del tutor) y vincula sus alumnos. Idempotente. */
+/** Sincroniza cuentas familiares y vínculos desde el CRM. Idempotente. */
 export async function generarFamiliasDesdeCRM() {
   const { admin, error } = await exigir()
   if (!admin) return { ok: false, error }
-  const db = createAdminClient()
-
-  const [subsRes, famsRes, linksRes] = await Promise.all([
-    db.from('form_submissions').select('id, email, telefono, datos').eq('tipo', 'inscripcion_club'),
-    db.from('club_familias').select('id, email'),
-    db.from('club_familia_alumnos').select('familia_id, submission_id'),
-  ])
-  const subs = (subsRes.data ?? []) as Row[]
-  const famByEmail = new Map<string, string>(((famsRes.data ?? []) as Row[]).map(f => [str(f.email), str(f.id)]))
-  const linkSet = new Set(((linksRes.data ?? []) as Row[]).map(l => `${str(l.familia_id)}|${str(l.submission_id)}`))
-
-  // Datos de tutor por email (primera aparición).
-  const infoEmail = new Map<string, { nombre: string | null; telefono: string | null }>()
-  const subsValidos = subs.filter(s => str(s.email).trim())
-  for (const s of subsValidos) {
-    const email = str(s.email).trim().toLowerCase()
-    if (infoEmail.has(email)) continue
-    const datos = (s.datos ?? {}) as Record<string, unknown>
-    infoEmail.set(email, { nombre: txt(str(datos.tutorLegal)), telefono: txt(str(s.telefono)) })
+  const { nuevasFamilias, nuevosVinculos } = await sincronizarFamilias()
+  if (nuevasFamilias || nuevosVinculos) {
+    await logActivity({ actorEmail: admin.email, accion: `Sincronizó familias desde CRM (+${nuevasFamilias} cuentas, +${nuevosVinculos} vínculos)`, entidad: 'club_familia' })
   }
-
-  // Crear familias nuevas (bloque).
-  let nuevasFamilias = 0
-  const nuevosEmails = [...infoEmail.keys()].filter(e => !famByEmail.has(e))
-  if (nuevosEmails.length) {
-    const rows = nuevosEmails.map(e => ({ email: e, nombre: infoEmail.get(e)!.nombre, telefono: infoEmail.get(e)!.telefono, estado: 'activo' }))
-    const { data: creadas } = await db.from('club_familias').insert(rows).select('id, email')
-    for (const f of (creadas ?? []) as Row[]) { famByEmail.set(str(f.email), str(f.id)); nuevasFamilias++ }
-  }
-
-  // Vínculos nuevos (bloque).
-  const nuevosLinks: { familia_id: string; submission_id: string }[] = []
-  for (const s of subsValidos) {
-    const famId = famByEmail.get(str(s.email).trim().toLowerCase())
-    if (!famId) continue
-    const key = `${famId}|${str(s.id)}`
-    if (!linkSet.has(key)) { linkSet.add(key); nuevosLinks.push({ familia_id: famId, submission_id: str(s.id) }) }
-  }
-  let nuevosVinculos = 0
-  if (nuevosLinks.length) {
-    const { error: e } = await db.from('club_familia_alumnos').insert(nuevosLinks)
-    if (!e) nuevosVinculos = nuevosLinks.length
-  }
-
-  await logActivity({ actorEmail: admin.email, accion: `Generó familias desde CRM (+${nuevasFamilias} cuentas, +${nuevosVinculos} vínculos)`, entidad: 'club_familia' })
   revalidar()
   return { ok: true, nuevasFamilias, nuevosVinculos }
 }

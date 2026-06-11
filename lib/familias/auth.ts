@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Familia, EstadoFamilia } from './tipos'
+import { provisionarFamilia } from './sync'
 
 export type EstadoSesionFamilia =
   | { tipo: 'sin-sesion' }
@@ -14,17 +15,19 @@ export async function estadoFamilia(): Promise<EstadoSesionFamilia> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user?.email) return { tipo: 'sin-sesion' }
+  const email = user.email.toLowerCase()
 
-  const db = createAdminClient()
-  const { data } = await db.from('club_familias').select('*').eq('email', user.email.toLowerCase()).maybeSingle()
-  if (!data) return { tipo: 'sin-cuenta', email: user.email }
+  // Crea/sincroniza la cuenta automáticamente si ese correo tiene inscripciones.
+  const row = await provisionarFamilia(email)
+  if (!row) return { tipo: 'sin-cuenta', email }
 
-  const fam = data as Familia
-  if (fam.estado !== 'activo') return { tipo: 'inactiva', email: user.email, estado: fam.estado }
+  const fam = row as unknown as Familia
+  if (fam.estado !== 'activo') return { tipo: 'inactiva', email, estado: fam.estado }
 
   // Registrar último acceso (best-effort, sin bloquear).
+  const db = createAdminClient()
   void db.from('club_familias').update({ ultimo_acceso: new Date().toISOString() }).eq('id', fam.id)
-  return { tipo: 'ok', familia: fam }
+  return { tipo: 'ok', familia: { ...fam, email } }
 }
 
 /** Familia autenticada y ACTIVA, o null. */
