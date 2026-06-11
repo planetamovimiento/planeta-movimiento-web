@@ -63,7 +63,10 @@ export default function ReservasCRMClient({ registros, puedeEditar, gestionOk }:
   // ── Dashboard ────────────────────────────────────────────────────────────────
   const dash = useMemo(() => {
     const activas = lista.filter(r => ESTADOS_ACTIVOS.includes(r.estado_reserva)).length
+    // Por gestionar: reservas pendientes de acción (estado de reserva).
     const pendientes = lista.filter(r => ESTADOS_PENDIENTES.includes(r.estado_reserva)).length
+    // Por cobrar: reservas con pago pendiente y con importe realmente pendiente (>0 €).
+    const porCobrar = lista.filter(r => ['pendiente', 'impagado', 'parcial'].includes(r.estado_pago) && pendienteDe(r) > 0).length
     const pagosPend = lista.filter(r => ['pendiente', 'impagado', 'parcial'].includes(r.estado_pago)).reduce((s, r) => s + pendienteDe(r), 0)
     // Importe cobrado de una reserva: total si está 'Pagado', el parcial si lo hay.
     const cobrado = (r: Registro) => r.estado_pago === 'pagado' ? (Number(r.pagado) || Number(r.total) || 0) : (Number(r.pagado) || 0)
@@ -73,7 +76,7 @@ export default function ReservasCRMClient({ registros, puedeEditar, gestionOk }:
     const proximos = (cat: string) => lista
       .filter(r => r.categoria === cat && r.fecha_realizacion && r.fecha_realizacion >= HOY && r.estado_reserva !== 'cancelada')
       .sort((a, b) => (a.fecha_realizacion || '').localeCompare(b.fecha_realizacion || ''))
-    return { activas, pendientes, pagosPend, ingMes, ingAnio, cumple: proximos('Cumpleaños'), talleres: proximos('Talleres'), eventos: proximos('Eventos') }
+    return { activas, pendientes, porCobrar, pagosPend, ingMes, ingAnio, cumple: proximos('Cumpleaños'), talleres: proximos('Talleres'), eventos: proximos('Eventos') }
   }, [lista])
 
   const hayFiltros = !!(q || fCategoria || fServicio || fReserva || fPago || fMes)
@@ -133,10 +136,11 @@ export default function ReservasCRMClient({ registros, puedeEditar, gestionOk }:
       {error && <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700 flex justify-between"><span>{error}</span><button onClick={() => setError('')} className="font-bold">✕</button></div>}
 
       {/* Dashboard */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <Metric label="Reservas activas" valor={dash.activas} tono="navy" />
-        <Metric label="Pendientes" valor={dash.pendientes} tono="amber" />
-        <Metric label="Pagos pendientes" valor={eur(dash.pagosPend)} tono="red" />
+        <Metric label="Por gestionar" valor={dash.pendientes} tono="amber" />
+        <Metric label="Por cobrar" valor={dash.porCobrar} tono="red" />
+        <Metric label="Importe pendiente" valor={eur(dash.pagosPend)} tono="red" />
         <Metric label={`Ingresos · ${new Date().toLocaleDateString('es-ES', { month: 'long' })}`} valor={eur(dash.ingMes)} tono="green" />
         <Metric label={`Ingresos ${ANIO}`} valor={eur(dash.ingAnio)} tono="green" />
       </div>
