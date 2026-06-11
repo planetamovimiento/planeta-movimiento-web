@@ -8,7 +8,7 @@ import {
   labelEstadoGeneral, mesActualKey, edadDe, fechaCorta,
   type Alumno, type Grupo, type EstadoPago, type EstadoGeneral,
 } from '@/lib/club/constants'
-import { guardarGestion, setPagoMes, crearGrupo, renombrarGrupo, eliminarGrupo } from './actions'
+import { guardarGestion, setPagoMes, crearGrupo, renombrarGrupo, eliminarGrupo, fijarHorarioGrupo } from './actions'
 import ImportarModal from './ImportarModal'
 import { SubirImagen } from '@/components/admin/SubirImagen'
 
@@ -389,6 +389,11 @@ export default function ClubInscripcionesClient({
             if (r.ok) setGrupos(prev => prev.filter(g => g.id !== id))
             else setError(r.error || 'No se pudo eliminar')
           })}
+          onHorario={(id, horario) => startTransition(async () => {
+            const r = await fijarHorarioGrupo(id, horario)
+            if (r.ok) setGrupos(prev => prev.map(g => g.id === id ? { ...g, horario } : g))
+            else setError(r.error || 'No se pudo guardar el horario')
+          })}
         />
       )}
     </div>
@@ -585,12 +590,13 @@ function Dato({ k, v }: { k: string; v: string }) {
 }
 
 // ─── Modal de gestión de grupos ────────────────────────────────────────────────
-function ModalGrupos({ grupos, actividades, onClose, onCrear, onRenombrar, onEliminar }: {
+function ModalGrupos({ grupos, actividades, onClose, onCrear, onRenombrar, onEliminar, onHorario }: {
   grupos: Grupo[]; actividades: string[]
   onClose: () => void
   onCrear: (nombre: string, actividad: string | null) => void
   onRenombrar: (id: string, nombre: string) => void
   onEliminar: (id: string) => void
+  onHorario: (id: string, horario: string) => void
 }) {
   const [nuevo, setNuevo] = useState('')
   const [nuevaAct, setNuevaAct] = useState('')
@@ -627,11 +633,11 @@ function ModalGrupos({ grupos, actividades, onClose, onCrear, onRenombrar, onEli
           </div>
 
           {/* Globales */}
-          <FilaGrupos titulo="Grupos globales" items={globales} onRenombrar={onRenombrar} onEliminar={onEliminar} />
+          <FilaGrupos titulo="Grupos globales" items={globales} onRenombrar={onRenombrar} onEliminar={onEliminar} onHorario={onHorario} />
 
           {/* Por actividad */}
           {porActividad.map(({ act, items }) => (
-            <FilaGrupos key={act} titulo={act} items={items} onRenombrar={onRenombrar} onEliminar={onEliminar} />
+            <FilaGrupos key={act} titulo={act} items={items} onRenombrar={onRenombrar} onEliminar={onEliminar} onHorario={onHorario} />
           ))}
         </div>
       </div>
@@ -639,18 +645,20 @@ function ModalGrupos({ grupos, actividades, onClose, onCrear, onRenombrar, onEli
   )
 }
 
-function FilaGrupos({ titulo, items, onRenombrar, onEliminar }: {
-  titulo: string; items: Grupo[]; onRenombrar: (id: string, nombre: string) => void; onEliminar: (id: string) => void
+function FilaGrupos({ titulo, items, onRenombrar, onEliminar, onHorario }: {
+  titulo: string; items: Grupo[]; onRenombrar: (id: string, nombre: string) => void; onEliminar: (id: string) => void; onHorario: (id: string, horario: string) => void
 }) {
   if (items.length === 0) return null
   return (
     <div>
-      <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-2">{titulo}</div>
+      <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-2">{titulo} <span className="text-gray-300 font-medium normal-case">· nombre · horario</span></div>
       <div className="space-y-1.5">
         {items.map(g => (
           <div key={g.id} className="flex items-center gap-2">
             <input defaultValue={g.nombre} onBlur={e => { if (e.target.value.trim() && e.target.value !== g.nombre) onRenombrar(g.id, e.target.value.trim()) }}
-              className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-pm-red" />
+              className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-pm-red" title="Nombre del grupo" />
+            <input defaultValue={g.horario ?? ''} placeholder="Horario" onBlur={e => { if (e.target.value !== (g.horario ?? '')) onHorario(g.id, e.target.value.trim()) }}
+              className="w-40 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-pm-red" title="Horario por defecto del grupo (se muestra a las familias)" />
             <button onClick={() => { if (confirm(`¿Eliminar el grupo «${g.nombre}»?`)) onEliminar(g.id) }}
               className="text-gray-300 hover:text-red-500 transition-colors p-1.5" title="Eliminar grupo">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>

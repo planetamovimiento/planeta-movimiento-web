@@ -83,6 +83,18 @@ export async function crearGrupo(nombre: string, actividad: string | null) {
   return { ok: true }
 }
 
+export async function fijarHorarioGrupo(id: string, horario: string) {
+  const admin = await getAdminUser()
+  if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
+
+  const db = createAdminClient()
+  const { error } = await db.from('club_grupos').update({ horario: horario.trim() || null }).eq('id', id)
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath('/admin/club')
+  return { ok: true }
+}
+
 export async function renombrarGrupo(id: string, nombre: string) {
   const admin = await getAdminUser()
   if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
