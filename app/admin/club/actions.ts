@@ -12,6 +12,9 @@ type GestionPatch = {
   estado_general?: string
   temporada?: string
   observaciones?: string | null
+  observaciones_familia?: string | null
+  foto_url?: string | null
+  horario?: string | null
   fecha_alta?: string | null
   fecha_baja?: string | null
 }

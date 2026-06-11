@@ -10,6 +10,7 @@ import {
 } from '@/lib/club/constants'
 import { guardarGestion, setPagoMes, crearGrupo, renombrarGrupo, eliminarGrupo } from './actions'
 import ImportarModal from './ImportarModal'
+import { SubirImagen } from '@/components/admin/SubirImagen'
 
 const MES_ACTUAL = mesActualKey() ?? 'jun'
 
@@ -415,6 +416,8 @@ function FichaAlumno({ a, puedeEditar, gruposActividad, onClose, onGestion, onPa
   onClose: () => void; onGestion: (p: Partial<Alumno>) => void; onPago: (mes: string) => void
 }) {
   const [obs, setObs] = useState(a.observaciones)
+  const [obsFam, setObsFam] = useState(a.observaciones_familia)
+  const [horario, setHorario] = useState(a.horario)
   const edad = edadDe(a.fechaNacimiento)
 
   return (
@@ -477,6 +480,44 @@ function FichaAlumno({ a, puedeEditar, gruposActividad, onClose, onGestion, onPa
                 {TEMPORADAS.map(t => <option key={t} value={t}>{t}</option>)}
                 {!TEMPORADAS.includes(a.temporada) && <option value={a.temporada}>{a.temporada}</option>}
               </select>
+            </div>
+          </div>
+
+          {/* Portal de Familias — datos visibles para la familia */}
+          <div className="border-t border-gray-100 pt-4">
+            <div className="text-xs font-black text-pm-navy uppercase tracking-wider mb-3">
+              Portal de Familias <span className="text-gray-400 font-medium normal-case">· lo que ve la familia</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Foto del alumno</label>
+                {puedeEditar ? (
+                  <SubirImagen value={a.foto_url} onChange={url => onGestion({ foto_url: url })} carpeta="club-alumnos" />
+                ) : a.foto_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={a.foto_url} alt={a.nombre} className="w-24 h-24 rounded-xl object-cover border border-gray-200" />
+                ) : (
+                  <span className="text-xs text-gray-400">Sin foto</span>
+                )}
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Horario (visible)</label>
+                <input value={horario} disabled={!puedeEditar} onChange={e => setHorario(e.target.value)}
+                  placeholder="Ej. Lunes y miércoles · 16:00–17:00"
+                  className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-pm-red disabled:opacity-60" />
+                {puedeEditar && horario !== a.horario && (
+                  <button onClick={() => onGestion({ horario })} className="mt-1.5 bg-pm-navy text-white text-xs font-bold px-3 py-1.5 rounded-lg">Guardar horario</button>
+                )}
+              </div>
+            </div>
+            <div className="mt-3">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Observaciones visibles para la familia</label>
+              <textarea value={obsFam} disabled={!puedeEditar} onChange={e => setObsFam(e.target.value)} rows={2}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pm-red resize-none disabled:opacity-60"
+                placeholder="Mensaje o información que verá la familia (no son las notas internas)" />
+              {puedeEditar && obsFam !== a.observaciones_familia && (
+                <button onClick={() => onGestion({ observaciones_familia: obsFam })} className="mt-1.5 bg-pm-navy text-white text-xs font-bold px-3 py-1.5 rounded-lg">Guardar observación</button>
+              )}
             </div>
           </div>
 

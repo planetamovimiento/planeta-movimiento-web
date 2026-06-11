@@ -92,6 +92,10 @@ export type Alumno = {
   temporada: string
   pagos: Record<string, EstadoPago>
   observaciones: string
+  // campos visibles para la familia (Portal de Familias)
+  observaciones_familia: string
+  foto_url: string
+  horario: string
   fecha_alta: string | null
   fecha_baja: string | null
 }

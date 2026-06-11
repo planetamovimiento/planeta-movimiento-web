@@ -11,6 +11,7 @@ type SubRow = {
 type GestionRow = {
   submission_id: string; grupo: string | null; estado_general: string | null; temporada: string | null
   pagos: Record<string, string> | null; observaciones: string | null; fecha_alta: string | null; fecha_baja: string | null
+  observaciones_familia: string | null; foto_url: string | null; horario: string | null
 }
 
 async function safe<T>(fn: () => Promise<{ data: T[] | null; error: unknown }>): Promise<{ rows: T[]; ok: boolean }> {
@@ -64,6 +65,9 @@ export default async function ClubPage() {
       temporada: g?.temporada ?? TEMPORADA_ACTUAL,
       pagos: (g?.pagos as Record<string, EstadoPago>) ?? {},
       observaciones: g?.observaciones ?? '',
+      observaciones_familia: g?.observaciones_familia ?? '',
+      foto_url: g?.foto_url ?? '',
+      horario: g?.horario ?? '',
       fecha_alta: g?.fecha_alta ?? null,
       fecha_baja: g?.fecha_baja ?? null,
     }

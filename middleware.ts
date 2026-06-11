@@ -2,22 +2,27 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 /**
- * Protege /admin/** exigiendo sesión iniciada.
- * La AUTORIZACIÓN por rol (admin_users) se valida en app/admin/layout.tsx.
+ * Protege /admin/** y /familias/** exigiendo sesión iniciada.
+ * La AUTORIZACIÓN (admin_users / club_familias) se valida en cada layout.
  * Diseñado para NO devolver nunca un 500: ante cualquier fallo redirige al login.
  */
 export async function middleware(request: NextRequest) {
-  // Bypass de login SOLO en desarrollo local (variable ADMIN_DEV_BYPASS=true).
-  // Nunca se activa en producción (NODE_ENV === 'production').
+  // Bypass de login SOLO en desarrollo local (ADMIN_DEV_BYPASS=true). Nunca en producción.
   if (process.env.NODE_ENV !== 'production' && process.env.ADMIN_DEV_BYPASS === 'true') {
     return NextResponse.next({ request })
   }
 
   const path = request.nextUrl.pathname
-  const isPublicAdminRoute = path.startsWith('/admin/login') || path.startsWith('/admin/auth')
+  const esFamilias = path.startsWith('/familias')
+  const loginPath = esFamilias ? '/familias/login' : '/admin/login'
+  const home = esFamilias ? '/familias' : '/admin'
+  const esPublica = esFamilias
+    ? (path.startsWith('/familias/login') || path.startsWith('/familias/auth'))
+    : (path.startsWith('/admin/login') || path.startsWith('/admin/auth'))
+
   const toLogin = () => {
     const u = request.nextUrl.clone()
-    u.pathname = '/admin/login'
+    u.pathname = loginPath
     return NextResponse.redirect(u)
   }
 
@@ -25,9 +30,7 @@ export async function middleware(request: NextRequest) {
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   // Sin claves de Supabase no podemos validar la sesión: no tumbamos el panel.
-  if (!url || !anonKey) {
-    return isPublicAdminRoute ? NextResponse.next({ request }) : toLogin()
-  }
+  if (!url || !anonKey) return esPublica ? NextResponse.next({ request }) : toLogin()
 
   try {
     let response = NextResponse.next({ request })
@@ -47,22 +50,23 @@ export async function middleware(request: NextRequest) {
 
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (path.startsWith('/admin') && !isPublicAdminRoute && !user) return toLogin()
+    // Ruta protegida sin sesión → al login del área.
+    if (!esPublica && !user) return toLogin()
 
-    // Si ya hay sesión y va a /admin/login, llévalo al panel
-    if (path.startsWith('/admin/login') && user) {
+    // Sesión activa visitando la página de login → al inicio del área.
+    if (path.startsWith(loginPath) && user) {
       const u = request.nextUrl.clone()
-      u.pathname = '/admin'
+      u.pathname = home
       return NextResponse.redirect(u)
     }
 
     return response
   } catch {
     // Ante cualquier error (config, red…) nunca devolvemos 500.
-    return isPublicAdminRoute ? NextResponse.next({ request }) : toLogin()
+    return esPublica ? NextResponse.next({ request }) : toLogin()
   }
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/familias/:path*'],
 }

@@ -10,6 +10,7 @@ export type SeccionId =
   | 'club'
   | 'circo-inclusivo'
   | 'calendario-club'
+  | 'familias'
   | 'reservas'
   | 'pagos'
   | 'productos'
@@ -36,6 +37,7 @@ export const SECCIONES: SeccionMeta[] = [
   { id: 'club',            label: 'Inscripciones Club',  icon: '🏅', href: '/admin/club',            grupo: 'Club Deportivo Origen' },
   { id: 'circo-inclusivo', label: 'Circo Inclusivo',     icon: '🤸', href: '/admin/circo-inclusivo',  grupo: 'Club Deportivo Origen' },
   { id: 'calendario-club', label: 'Calendario Club',     icon: '🗓️', href: '/admin/calendario-club',  grupo: 'Club Deportivo Origen' },
+  { id: 'familias',        label: 'Portal de Familias',  icon: '👨‍👩‍👧', href: '/admin/familias',         grupo: 'Club Deportivo Origen' },
   { id: 'reservas',        label: 'Reservas',            icon: '📋', href: '/admin/reservas',         grupo: 'Empresa' },
   { id: 'pagos',           label: 'Pagos',               icon: '💳', href: '/admin/pagos',            grupo: 'Empresa' },
   { id: 'productos',       label: 'Productos y pedidos', icon: '🛒', href: '/admin/productos',        grupo: 'Empresa' },
