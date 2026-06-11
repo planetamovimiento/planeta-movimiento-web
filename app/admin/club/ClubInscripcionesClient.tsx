@@ -4,7 +4,7 @@ import { useState, useMemo, useTransition, useCallback } from 'react'
 import { Metric, EmptyState } from '@/components/admin/ui'
 import { waCliente } from '@/lib/whatsapp'
 import {
-  MESES_TEMPORADA, ESTADO_PAGO_META, CICLO_PAGO, ESTADOS_GENERAL, GRUPOS_BASE, TEMPORADAS, ACTIVIDADES_CLUB,
+  MESES_TEMPORADA, ESTADO_PAGO_META, ESTADOS_GENERAL, GRUPOS_BASE, TEMPORADAS, ACTIVIDADES_CLUB,
   labelEstadoGeneral, mesActualKey, edadDe, fechaCorta,
   type Alumno, type Grupo, type EstadoPago, type EstadoGeneral,
 } from '@/lib/club/constants'
@@ -135,17 +135,14 @@ export default function ClubInscripcionesClient({
     })
   }
 
-  function cicloPago(a: Alumno, mes: string) {
+  function setPago(a: Alumno, mes: string, valor: EstadoPago | '') {
     if (!puedeEditar) return
-    const actual = (a.pagos[mes] ?? '') as EstadoPago | ''
-    const idx = CICLO_PAGO.indexOf(actual)
-    const siguiente = CICLO_PAGO[(idx + 1) % CICLO_PAGO.length]
     const nuevos = { ...a.pagos }
-    if (siguiente) nuevos[mes] = siguiente as EstadoPago
+    if (valor) nuevos[mes] = valor
     else delete nuevos[mes]
     patchLocal(a.id, { pagos: nuevos })
     startTransition(async () => {
-      const r = await setPagoMes(a.id, mes, siguiente)
+      const r = await setPagoMes(a.id, mes, valor)
       if (!r.ok) setError(r.error || 'No se pudo guardar el pago')
     })
   }
@@ -339,7 +336,7 @@ export default function ClubInscripcionesClient({
                     </td>
                     <td className="px-3 py-2.5">
                       <div className="flex items-center justify-center gap-1">
-                        {MESES_TEMPORADA.map(m => <CirculoMes key={m.key} alumno={a} mesKey={m.key} mesLabel={m.label} mesNombre={m.nombre} onClick={() => cicloPago(a, m.key)} editable={puedeEditar} />)}
+                        {MESES_TEMPORADA.map(m => <SelectMes key={m.key} alumno={a} mesKey={m.key} mesLabel={m.label} mesNombre={m.nombre} onChange={valor => setPago(a, m.key, valor)} editable={puedeEditar} />)}
                       </div>
                     </td>
                     <td className="px-4 py-2.5 text-right">
@@ -361,7 +358,7 @@ export default function ClubInscripcionesClient({
           gruposActividad={gruposParaActividad(detalle.actividad)}
           onClose={() => setDetalleId(null)}
           onGestion={p => aplicarGestion(detalle.id, p)}
-          onPago={mes => cicloPago(detalle, mes)}
+          onSetPago={(mes, valor) => setPago(detalle, mes, valor)}
         />
       )}
 
@@ -394,25 +391,38 @@ export default function ClubInscripcionesClient({
   )
 }
 
-// ─── Círculo de estado mensual ─────────────────────────────────────────────────
-function CirculoMes({ alumno, mesKey, mesLabel, mesNombre, onClick, editable }: {
-  alumno: Alumno; mesKey: string; mesLabel: string; mesNombre: string; onClick: () => void; editable: boolean
+// ─── Color de fondo del selector según el estado de pago ───────────────────────
+function selectBg(estado: EstadoPago | '') {
+  if (estado === 'pagado') return 'bg-green-100 text-green-800 border-green-300'
+  if (estado === 'pendiente') return 'bg-amber-100 text-amber-800 border-amber-300'
+  if (estado === 'baja') return 'bg-red-100 text-red-800 border-red-300'
+  return 'bg-white text-gray-400 border-gray-300'
+}
+
+// ─── Selector de estado mensual (desplegable, evita cambios accidentales) ──────
+function SelectMes({ alumno, mesKey, mesLabel, mesNombre, onChange, editable }: {
+  alumno: Alumno; mesKey: string; mesLabel: string; mesNombre: string; onChange: (v: EstadoPago | '') => void; editable: boolean
 }) {
   const estado = (alumno.pagos[mesKey] ?? '') as EstadoPago | ''
-  const meta = estado ? ESTADO_PAGO_META[estado] : null
   return (
     <div className="flex flex-col items-center gap-0.5">
-      <button onClick={onClick} disabled={!editable} title={`${mesNombre}: ${meta?.label ?? 'sin definir'}`}
-        className={`w-5 h-5 rounded-full border transition-transform ${editable ? 'hover:scale-125 cursor-pointer' : 'cursor-default'} ${meta ? `${meta.dot} border-transparent` : 'bg-white border-gray-300'}`} />
+      <select value={estado} disabled={!editable} title={mesNombre}
+        onChange={e => onChange(e.target.value as EstadoPago | '')}
+        className={`text-[10px] font-bold rounded-md border px-1 py-1 cursor-pointer focus:outline-none focus:border-pm-navy disabled:opacity-60 disabled:cursor-default ${selectBg(estado)}`}>
+        <option value="">—</option>
+        <option value="pagado">Pagado</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="baja">Baja</option>
+      </select>
       <span className="text-[9px] text-gray-400 leading-none">{mesLabel}</span>
     </div>
   )
 }
 
 // ─── Ficha del alumno (panel lateral) ──────────────────────────────────────────
-function FichaAlumno({ a, puedeEditar, gruposActividad, onClose, onGestion, onPago }: {
+function FichaAlumno({ a, puedeEditar, gruposActividad, onClose, onGestion, onSetPago }: {
   a: Alumno; puedeEditar: boolean; gruposActividad: string[]
-  onClose: () => void; onGestion: (p: Partial<Alumno>) => void; onPago: (mes: string) => void
+  onClose: () => void; onGestion: (p: Partial<Alumno>) => void; onSetPago: (mes: string, valor: EstadoPago | '') => void
 }) {
   const [obs, setObs] = useState(a.observaciones)
   const edad = edadDe(a.fechaNacimiento)
@@ -486,17 +496,21 @@ function FichaAlumno({ a, puedeEditar, gruposActividad, onClose, onGestion, onPa
             <div className="grid grid-cols-5 gap-2">
               {MESES_TEMPORADA.map(m => {
                 const estado = (a.pagos[m.key] ?? '') as EstadoPago | ''
-                const meta = estado ? ESTADO_PAGO_META[estado] : null
                 return (
-                  <button key={m.key} disabled={!puedeEditar} onClick={() => onPago(m.key)} title="Clic para cambiar"
-                    className={`flex flex-col items-center gap-1 rounded-xl border py-2 transition-colors ${meta ? 'border-transparent' : 'border-gray-200'} ${editableBg(estado)}`}>
+                  <div key={m.key} className="flex flex-col items-center gap-1">
                     <span className="text-[11px] font-bold text-gray-600">{m.label}</span>
-                    <span className={`w-3.5 h-3.5 rounded-full ${meta ? meta.dot : 'bg-white border border-gray-300'}`} />
-                  </button>
+                    <select value={estado} disabled={!puedeEditar} onChange={e => onSetPago(m.key, e.target.value as EstadoPago | '')}
+                      className={`w-full text-[11px] font-semibold rounded-lg border px-1 py-1.5 text-center cursor-pointer focus:outline-none disabled:opacity-60 ${selectBg(estado)}`}>
+                      <option value="">—</option>
+                      <option value="pagado">Pagado</option>
+                      <option value="pendiente">Pendiente</option>
+                      <option value="baja">Baja</option>
+                    </select>
+                  </div>
                 )
               })}
             </div>
-            <p className="text-xs text-gray-400 mt-2">Clic en cada mes para alternar: sin definir → pagado → pendiente → baja.</p>
+            <p className="text-xs text-gray-400 mt-2">Elige el estado de cada mes en su desplegable.</p>
           </div>
 
           {/* Observaciones */}
@@ -525,13 +539,6 @@ function FichaAlumno({ a, puedeEditar, gruposActividad, onClose, onGestion, onPa
       </div>
     </div>
   )
-}
-
-function editableBg(estado: EstadoPago | '') {
-  if (estado === 'pagado') return 'bg-green-50 hover:bg-green-100'
-  if (estado === 'pendiente') return 'bg-amber-50 hover:bg-amber-100'
-  if (estado === 'baja') return 'bg-red-50 hover:bg-red-100'
-  return 'bg-white hover:bg-gray-50'
 }
 
 function Dato({ k, v }: { k: string; v: string }) {
