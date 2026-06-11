@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { getServicios } from '@/lib/servicios/store'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { AdminHeader, SetupNotice } from '@/components/admin/ui'
@@ -22,6 +23,15 @@ export default async function ServiciosPage() {
     <>
       <AdminHeader titulo="Servicios" subtitulo="Edita cualquier servicio de la web — Club y Empresa" />
       <div className="p-6 lg:p-8 space-y-6">
+        <Link href="/admin/horarios-reserva"
+          className="flex items-center gap-3 bg-pm-navy text-white rounded-2xl px-5 py-4 hover:bg-pm-navy/90 transition-colors">
+          <span className="text-2xl">🗓️</span>
+          <div>
+            <div className="font-black text-sm">Horarios de reserva</div>
+            <div className="text-white/60 text-xs">Franjas horarias y plazas de los servicios reservables online</div>
+          </div>
+          <span className="ml-auto font-bold text-sm">Configurar →</span>
+        </Link>
         {!migrado && (
           <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-sm text-amber-800">
             <div className="font-black mb-1">⚙️ Falta aplicar la migración del editor</div>

@@ -6,6 +6,9 @@ import { montoReserva } from '@/lib/reservas/monto'
 import { getRedsysConfig, getBaseUrl } from '@/lib/redsys/config'
 import { crearPeticion } from '@/lib/redsys/firma'
 import { generateReservaNumero } from '@/lib/utils'
+import { getHorarioServicio } from '@/lib/reservas/horarios'
+import { slotsDelDia, etiquetaSlot, horaInicioDe } from '@/lib/reservas/slots'
+import { contarReservas } from '@/lib/reservas/disponibilidad'
 
 export type DatosReserva = {
   nombre: string
@@ -62,6 +65,17 @@ export async function iniciarReserva(payload: IniciarPayload): Promise<IniciarRe
 
   const cfg = getRedsysConfig()
   if (!cfg) return { ok: false, error: 'La pasarela de pago no está configurada todavía.' }
+
+  // Validación de franja y plazas (anti-overbooking, autoritativa en servidor).
+  const slots = await getHorarioServicio(servicioId)
+  if (slots.length === 0) return { ok: false, error: 'Este servicio no tiene horarios de reserva configurados.' }
+  if (!fecha || !hora) return { ok: false, error: 'Elige una fecha y un horario para continuar.' }
+  const slot = slotsDelDia(slots, new Date(fecha + 'T00:00:00')).find(s => etiquetaSlot(s) === hora)
+  if (!slot) return { ok: false, error: 'La franja elegida no está disponible para esa fecha.' }
+  const yaReservadas = await contarReservas(servicio.nombre, fecha, horaInicioDe(hora))
+  if (yaReservadas >= slot.plazas) {
+    return { ok: false, error: 'Esa franja acaba de quedarse sin plazas. Por favor, elige otro horario.' }
+  }
 
   const db = createAdminClient()
   const numero = generateReservaNumero()

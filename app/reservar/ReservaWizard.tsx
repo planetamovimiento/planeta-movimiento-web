@@ -6,6 +6,9 @@ import StepFecha from '@/components/reserva/StepFecha'
 import StepDatos, { type DatosForm } from '@/components/reserva/StepDatos'
 import { iniciarReserva, type IniciarResult } from './actions'
 import type { ServicioReserva } from '@/lib/reservas/monto'
+import type { SlotSemanal } from '@/lib/reservas/slots'
+
+type Reservados = Record<string, Record<string, Record<string, number>>>
 
 const PASOS = ['Servicio', 'Fecha y hora', 'Datos']
 
@@ -28,7 +31,11 @@ function redirigirARedsys(c: Extract<IniciarResult, { ok: true }>) {
   form.submit()
 }
 
-export default function ReservaWizard({ servicios }: { servicios: ServicioReserva[] }) {
+export default function ReservaWizard({ servicios, horarios, reservados }: {
+  servicios: ServicioReserva[]
+  horarios: Record<string, SlotSemanal[]>
+  reservados: Reservados
+}) {
   const [paso, setPaso] = useState(1)
   const [servicioId, setServicioId] = useState<string | null>(null)
   const [fecha, setFecha] = useState<string | null>(null)
@@ -115,6 +122,8 @@ export default function ReservaWizard({ servicios }: { servicios: ServicioReserv
           )}
           {paso === 2 && (
             <StepFecha
+              slots={servicioId ? (horarios[servicioId] ?? []) : []}
+              reservados={servicioId ? (reservados[servicioId] ?? {}) : {}}
               fecha={fecha}
               hora={hora}
               onFecha={setFecha}
