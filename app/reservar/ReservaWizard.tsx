@@ -4,32 +4,14 @@ import { useState } from 'react'
 import StepServicio from '@/components/reserva/StepServicio'
 import StepFecha from '@/components/reserva/StepFecha'
 import StepDatos, { type DatosForm } from '@/components/reserva/StepDatos'
-import { iniciarReserva, type IniciarResult } from './actions'
+import { iniciarReserva } from './actions'
+import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
 import type { ServicioReserva } from '@/lib/reservas/monto'
 import type { SlotSemanal } from '@/lib/reservas/slots'
 
 type Reservados = Record<string, Record<string, Record<string, number>>>
 
 const PASOS = ['Servicio', 'Fecha y hora', 'Datos']
-
-/** Envía (auto-POST) los campos firmados al TPV de Redsys. */
-function redirigirARedsys(c: Extract<IniciarResult, { ok: true }>) {
-  const form = document.createElement('form')
-  form.method = 'POST'
-  form.action = c.url
-  const add = (name: string, value: string) => {
-    const input = document.createElement('input')
-    input.type = 'hidden'
-    input.name = name
-    input.value = value
-    form.appendChild(input)
-  }
-  add('Ds_SignatureVersion', c.Ds_SignatureVersion)
-  add('Ds_MerchantParameters', c.Ds_MerchantParameters)
-  add('Ds_Signature', c.Ds_Signature)
-  document.body.appendChild(form)
-  form.submit()
-}
 
 export default function ReservaWizard({ servicios, horarios, reservados }: {
   servicios: ServicioReserva[]

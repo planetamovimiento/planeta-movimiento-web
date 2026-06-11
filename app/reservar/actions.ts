@@ -40,14 +40,89 @@ function generarDsOrder(): string {
 }
 
 /**
- * Inicia el pago de una reserva: valida, calcula el importe EN SERVIDOR a partir
- * del catálogo, registra la reserva (pendiente) y devuelve los campos firmados
- * para redirigir al TPV de Redsys. El cliente nunca dicta el importe.
+ * Núcleo común: registra la reserva (bookings) y el cobro (payments) como
+ * pendientes y devuelve los campos firmados para redirigir al TPV de Redsys.
+ *  - total: precio total de referencia (€)
+ *  - senal: importe a cobrar online ahora (€)  (señal o total)
+ *  - esSenal: true si el cobro es una señal/fianza (el resto se paga aparte)
+ */
+async function emitirPago(args: {
+  servicioNombre: string
+  clienteNombre: string
+  email: string
+  telefono: string
+  fecha: string | null
+  hora: string | null
+  participantes: number | null
+  total: number
+  senal: number
+  esSenal: boolean
+  observaciones: string
+}): Promise<IniciarResult> {
+  const cfg = getRedsysConfig()
+  if (!cfg) return { ok: false, error: 'La pasarela de pago no está configurada todavía.' }
+  const cents = Math.round(args.senal * 100)
+  if (cents <= 0) return { ok: false, error: 'El importe no es válido. Contacta con nosotros.' }
+
+  const db = createAdminClient()
+  const numero = generateReservaNumero()
+  const dsOrder = generarDsOrder()
+
+  // 1) Reserva (pendiente de pago)
+  const { data: bk, error: e1 } = await db.from('bookings').insert({
+    numero,
+    servicio: args.servicioNombre,
+    cliente_nombre: args.clienteNombre,
+    cliente_email: args.email,
+    cliente_telefono: args.telefono,
+    fecha: args.fecha || null,
+    hora: args.hora || null,
+    participantes: args.participantes ?? null,
+    precio: args.total,
+    estado_reserva: 'pendiente',
+    estado_pago: 'pendiente',
+    observaciones: args.observaciones,
+    notas_internas: `Pago online (Redsys). Pedido ${dsOrder}.`,
+  }).select('id').single()
+
+  if (e1 || !bk) return { ok: false, error: 'No se pudo registrar la reserva. Inténtalo de nuevo.' }
+  const bookingId = (bk as { id: string }).id
+
+  // 2) Cobro (pendiente). referencia = Ds_Order → enlaza con la notificación.
+  const { error: e2 } = await db.from('payments').insert({
+    booking_id: bookingId,
+    cliente_nombre: args.clienteNombre,
+    servicio: args.servicioNombre,
+    importe: args.senal,
+    fianza: args.esSenal ? args.senal : null,
+    pendiente: Math.max(0, args.total - args.senal),
+    metodo: 'Tarjeta (Redsys)',
+    estado: 'pendiente',
+    referencia: dsOrder,
+  })
+  if (e2) return { ok: false, error: 'No se pudo registrar el cobro. Inténtalo de nuevo.' }
+
+  // 3) Petición firmada para Redsys
+  const base = getBaseUrl()
+  const campos = crearPeticion({
+    order: dsOrder,
+    amountCents: cents,
+    description: `Reserva ${args.servicioNombre} (${numero})`,
+    urlOk: `${base}/api/redsys/retorno?estado=ok&numero=${encodeURIComponent(numero)}`,
+    urlKo: `${base}/api/redsys/retorno?estado=ko&numero=${encodeURIComponent(numero)}`,
+    urlNotificacion: `${base}/api/redsys/notificacion`,
+  }, cfg)
+
+  return { ok: true, ...campos }
+}
+
+/**
+ * Asistente de reserva (/reservar): valida, calcula el importe EN SERVIDOR a
+ * partir del catálogo y de las franjas, y delega en emitirPago.
  */
 export async function iniciarReserva(payload: IniciarPayload): Promise<IniciarResult> {
   const { servicioId, fecha, hora, datos } = payload
 
-  // Validación mínima
   if (!datos?.acepta) return { ok: false, error: 'Debes aceptar las condiciones para continuar.' }
   if (!datos.nombre?.trim() || !datos.apellidos?.trim() || !datos.email?.trim() || !datos.telefono?.trim()) {
     return { ok: false, error: 'Faltan datos de contacto obligatorios.' }
@@ -63,9 +138,6 @@ export async function iniciarReserva(payload: IniciarPayload): Promise<IniciarRe
     return { ok: false, error: 'Este servicio aún no tiene precio configurado. Contacta con nosotros.' }
   }
 
-  const cfg = getRedsysConfig()
-  if (!cfg) return { ok: false, error: 'La pasarela de pago no está configurada todavía.' }
-
   // Validación de franja y plazas (anti-overbooking, autoritativa en servidor).
   const slots = await getHorarioServicio(servicioId)
   if (slots.length === 0) return { ok: false, error: 'Este servicio no tiene horarios de reserva configurados.' }
@@ -77,12 +149,7 @@ export async function iniciarReserva(payload: IniciarPayload): Promise<IniciarRe
     return { ok: false, error: 'Esa franja acaba de quedarse sin plazas. Por favor, elige otro horario.' }
   }
 
-  const db = createAdminClient()
-  const numero = generateReservaNumero()
-  const dsOrder = generarDsOrder()
   const clienteNombre = `${datos.nombre.trim()} ${datos.apellidos.trim()}`.trim()
-
-  // Datos extra que el CRM extrae del JSON al final de `observaciones`.
   const datosObs = {
     apellidos: datos.apellidos.trim(),
     nombreCumpleanero: datos.nombreCumpleanero?.trim() || '',
@@ -90,54 +157,79 @@ export async function iniciarReserva(payload: IniciarPayload): Promise<IniciarRe
     fecha: fecha || '',
     hora: hora || '',
     senal: monto.esSenal ? monto.euros : null,
-    dsOrder,
   }
   const observaciones = `${datos.notas?.trim() || ''}\n${JSON.stringify(datosObs)}`.trim()
 
-  // 1) Reserva (pendiente de pago)
-  const { data: bk, error: e1 } = await db.from('bookings').insert({
-    numero,
-    servicio: servicio.nombre,
-    cliente_nombre: clienteNombre,
-    cliente_email: datos.email.trim(),
-    cliente_telefono: datos.telefono.trim(),
-    fecha: fecha || null,
-    hora: hora || null,
-    precio: monto.totalReferencia ?? monto.euros,
-    estado_reserva: 'pendiente',
-    estado_pago: 'pendiente',
+  return emitirPago({
+    servicioNombre: servicio.nombre,
+    clienteNombre,
+    email: datos.email.trim(),
+    telefono: datos.telefono.trim(),
+    fecha, hora,
+    participantes: null,
+    total: monto.totalReferencia ?? monto.euros,
+    senal: monto.euros,
+    esSenal: monto.esSenal,
     observaciones,
-    notas_internas: `Pago online (Redsys). Pedido ${dsOrder}.`,
-  }).select('id').single()
-
-  if (e1 || !bk) return { ok: false, error: 'No se pudo registrar la reserva. Inténtalo de nuevo.' }
-  const bookingId = (bk as { id: string }).id
-
-  // 2) Cobro (pendiente). referencia = Ds_Order → enlaza con la notificación.
-  const pendiente = monto.totalReferencia != null ? Math.max(0, monto.totalReferencia - monto.euros) : null
-  const { error: e2 } = await db.from('payments').insert({
-    booking_id: bookingId,
-    cliente_nombre: clienteNombre,
-    servicio: servicio.nombre,
-    importe: monto.euros,
-    fianza: monto.esSenal ? monto.euros : null,
-    pendiente,
-    metodo: 'Tarjeta (Redsys)',
-    estado: 'pendiente',
-    referencia: dsOrder,
   })
-  if (e2) return { ok: false, error: 'No se pudo registrar el cobro. Inténtalo de nuevo.' }
+}
 
-  // 3) Petición firmada para Redsys
-  const base = getBaseUrl()
-  const campos = crearPeticion({
-    order: dsOrder,
-    amountCents: monto.cents,
-    description: `Reserva ${servicio.nombre} (${numero})`,
-    urlOk: `${base}/api/redsys/retorno?estado=ok&numero=${encodeURIComponent(numero)}`,
-    urlKo: `${base}/api/redsys/retorno?estado=ko&numero=${encodeURIComponent(numero)}`,
-    urlNotificacion: `${base}/api/redsys/notificacion`,
-  }, cfg)
+export type PagoReservaPayload = {
+  servicioId: string
+  servicioNombre?: string          // nombre a guardar en la reserva (override; p.ej. "Campamento de Navidad")
+  cliente: { nombre: string; email: string; telefono: string }
+  fecha?: string | null
+  hora?: string | null
+  participantes?: number | null
+  total: number                    // total de referencia (€) que calcula el widget
+  observaciones?: string
+  datos?: Record<string, unknown>  // datos extra para el CRM
+}
 
-  return { ok: true, ...campos }
+/**
+ * Inicio de pago para los widgets de Ocio (cumpleaños, campamentos, eventos).
+ * Cobra la FIANZA del servicio como señal si está configurada (>0); si no, el
+ * total. El widget calcula el total; el importe a cobrar se decide en servidor.
+ */
+export async function iniciarPagoReserva(p: PagoReservaPayload): Promise<IniciarResult> {
+  const { servicioId, cliente, fecha = null, hora = null, participantes = null, total, datos } = p
+
+  if (!cliente?.nombre?.trim() || !cliente.email?.trim() || !cliente.telefono?.trim()) {
+    return { ok: false, error: 'Faltan datos de contacto obligatorios.' }
+  }
+  if (!Number.isFinite(total) || total <= 0) {
+    return { ok: false, error: 'El importe de la reserva no es válido.' }
+  }
+
+  const servicio = await getServicio(servicioId)
+  if (!servicio || servicio.botonAccion !== 'reserva') {
+    return { ok: false, error: 'Este servicio no admite reserva online.' }
+  }
+
+  const fianza = Number(servicio.fianza) || 0
+  const esSenal = fianza > 0
+  const senal = esSenal ? fianza : total
+
+  // Anti-overbooking solo si el servicio tiene franjas configuradas y hay fecha+hora.
+  const slots = await getHorarioServicio(servicioId)
+  if (slots.length > 0 && fecha && hora) {
+    const slot = slotsDelDia(slots, new Date(fecha + 'T00:00:00')).find(s => etiquetaSlot(s) === hora)
+    if (!slot) return { ok: false, error: 'La franja elegida no está disponible para esa fecha.' }
+    const ya = await contarReservas(servicio.nombre, fecha, horaInicioDe(hora))
+    if (ya >= slot.plazas) return { ok: false, error: 'Esa franja acaba de quedarse sin plazas. Elige otra.' }
+  }
+
+  const observaciones = `${(p.observaciones ?? '').trim()}${datos ? '\n' + JSON.stringify(datos) : ''}`.trim()
+
+  return emitirPago({
+    servicioNombre: p.servicioNombre?.trim() || servicio.nombre,
+    clienteNombre: cliente.nombre.trim(),
+    email: cliente.email.trim(),
+    telefono: cliente.telefono.trim(),
+    fecha, hora, participantes,
+    total,
+    senal,
+    esSenal,
+    observaciones,
+  })
 }

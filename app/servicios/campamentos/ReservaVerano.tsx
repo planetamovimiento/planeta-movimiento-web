@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { submitBooking } from '@/lib/forms/actions'
+import { iniciarPagoReserva } from '@/app/reservar/actions'
+import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
 import FormularioCampamento, { type PayloadCampamento, textoParticipantes } from './FormularioCampamento'
 import { formatDia, formatFechaLarga } from './config'
 import { semanasResueltas, diasDeSemana, type CampamentosConfig, type SemanaVerano } from '@/lib/campamentos/editable'
@@ -52,6 +53,7 @@ export default function ReservaVerano({ cfg }: { cfg: CampamentosConfig }) {
   const [cuponError, setCuponError] = useState(false)
   const [paso, setPaso] = useState<'seleccion' | 'datos' | 'confirmado'>('seleccion')
   const [enviando, setEnviando] = useState(false)
+  const [error, setError] = useState('')
 
   const { subtotal, descuento, total, desglose } = useMemo(
     () => calcularPrecio(cfg, SEMANAS, diasSeleccionados, cuponAplicado, matinal, ampliacion),
@@ -86,17 +88,16 @@ export default function ReservaVerano({ cfg }: { cfg: CampamentosConfig }) {
   }
 
   async function onEnviar(p: PayloadCampamento) {
-    setEnviando(true)
+    setEnviando(true); setError('')
     const dias = Array.from(diasSeleccionados).sort()
     const n = p.participantes.length
-    await submitBooking({
-      servicio: 'Campamento de Verano',
-      cliente_nombre: p.contacto.nombre,
-      cliente_email: p.contacto.email,
-      cliente_telefono: p.contacto.telefono,
+    const r = await iniciarPagoReserva({
+      servicioId: 'campamentos',
+      servicioNombre: 'Campamento de Verano',
+      cliente: { nombre: p.contacto.nombre, email: p.contacto.email, telefono: p.contacto.telefono },
       fecha: dias[0],
       participantes: n,
-      precio: total * n,
+      total: total * n,
       observaciones: p.notas,
       datos: {
         diasSeleccionados: dias.join(', '),
@@ -108,8 +109,8 @@ export default function ReservaVerano({ cfg }: { cfg: CampamentosConfig }) {
         numNinos: n,
       },
     })
-    setEnviando(false)
-    setPaso('confirmado')
+    if (r.ok) { redirigirARedsys(r); return }
+    setEnviando(false); setError(r.error)
   }
 
   // ── Confirmado ──
@@ -324,11 +325,14 @@ export default function ReservaVerano({ cfg }: { cfg: CampamentosConfig }) {
 
           {/* Datos de contacto + participantes (hermanos) */}
           {paso === 'datos' && (
-            <FormularioCampamento
-              numNinos={numNinos} setNumNinos={setNumNinos} total={total * numNinos}
-              color="red" enviando={enviando}
-              onVolver={() => setPaso('seleccion')} onSubmit={onEnviar}
-            />
+            <>
+              {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
+              <FormularioCampamento
+                numNinos={numNinos} setNumNinos={setNumNinos} total={total * numNinos}
+                color="red" enviando={enviando}
+                onVolver={() => setPaso('seleccion')} onSubmit={onEnviar}
+              />
+            </>
           )}
         </>
       )}

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { submitBooking } from '@/lib/forms/actions'
+import { iniciarPagoReserva } from '@/app/reservar/actions'
+import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
 
 // ─── Constantes de negocio ────────────────────────────────────────────────────
 const MIN_PARTICIPANTES = 13
@@ -220,14 +221,14 @@ export default function ReservaCumpleanos({ ocupados = {} }: { ocupados?: Record
   // Estado del formulario de datos personales
   const [form, setForm] = useState({ nombre: '', email: '', telefono: '', notas: '', cumpleanero: '', edad: '' })
   const [enviando, setEnviando] = useState(false)
-  const [ocupadosLocal, setOcupadosLocal] = useState<Record<string, string[]>>({})
+  const [errorPago, setErrorPago] = useState('')
 
-  // Huecos ya reservados (del servidor + los que acabas de reservar en esta sesión).
-  // Se comparan por HORA DE INICIO (HH:MM) para casar formatos antiguos y nuevos.
+  // Huecos ya reservados (del servidor). Se comparan por HORA DE INICIO (HH:MM)
+  // para casar formatos antiguos y nuevos.
   const horaInicio = (s: string) => s.match(/\d{1,2}:\d{2}/)?.[0] ?? s
   const inicioTomados = (date: Date): string[] => {
     const k = ymdLocal(date)
-    return [...(ocupados[k] ?? []), ...(ocupadosLocal[k] ?? [])]
+    return [...(ocupados[k] ?? [])]
   }
   const slotTomado = (date: Date, slot: string) => inicioTomados(date).includes(horaInicio(slot))
   const diaCompleto = (date: Date) => { const t = getSlotsDelDia(date); return t.length > 0 && t.every(s => slotTomado(date, s)) }
@@ -257,16 +258,15 @@ export default function ReservaCumpleanos({ ocupados = {} }: { ocupados?: Record
       setSlotSeleccionado(null); setPaso(1); return
     }
     setEnviando(true)
+    setErrorPago('')
     const fechaStr = ymdLocal(fechaSeleccionada)
-    await submitBooking({
-      servicio: 'Cumpleaños',
-      cliente_nombre: form.nombre,
-      cliente_email: form.email,
-      cliente_telefono: form.telefono,
+    const r = await iniciarPagoReserva({
+      servicioId: 'cumpleanos',
+      cliente: { nombre: form.nombre, email: form.email, telefono: form.telefono },
       fecha: fechaStr,
       hora: slotSeleccionado,
       participantes,
-      precio: precio?.total,
+      total: precio?.total ?? 0,
       observaciones: form.notas,
       datos: {
         cumpleanero: form.cumpleanero,
@@ -275,9 +275,9 @@ export default function ReservaCumpleanos({ ocupados = {} }: { ocupados?: Record
         traeTarta: tieneTarta ? 'Sí' : 'No (tarta decorativa + juego extra)',
       },
     })
-    setOcupadosLocal(prev => ({ ...prev, [fechaStr]: [...(prev[fechaStr] ?? []), horaInicio(slotSeleccionado)] }))
+    if (r.ok) { redirigirARedsys(r); return }   // navega a la pasarela de Redsys
     setEnviando(false)
-    setPaso(3)
+    setErrorPago(r.error)
   }
 
   // ── Paso 3: Confirmado ──
@@ -524,19 +524,23 @@ export default function ReservaCumpleanos({ ocupados = {} }: { ocupados?: Record
 
           {/* Aviso fianza */}
           <div className="bg-pm-navy text-white rounded-xl p-4 text-sm text-center">
-            <div className="font-black text-base mb-1">Fianza de reserva: {FIANZA} €</div>
+            <div className="font-black text-base mb-1">Señal de reserva: {FIANZA} €</div>
             <p className="text-white/70 text-xs">
-              Tras enviar la solicitud nos pondremos en contacto contigo para gestionar el pago de la fianza y confirmar la fecha. El resto se abona el día del cumpleaños.
+              Pagas ahora la señal de {FIANZA} € de forma segura para confirmar la fecha. El resto ({precio ? `${precio.total - FIANZA} €` : 'el importe restante'}) se abona el día del cumpleaños en la instalación.
             </p>
           </div>
+
+          {errorPago && (
+            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">{errorPago}</div>
+          )}
 
           {/* Botón final */}
           <button type="submit" disabled={!canConfirmar() || enviando}
             className="w-full bg-pm-red hover:bg-pm-red-dark disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-sm tracking-widest uppercase py-4 rounded-xl transition-colors shadow-lg">
-            {enviando ? 'Enviando solicitud...' : `Solicitar reserva · ${precio?.total ?? 0} €`}
+            {enviando ? 'Redirigiendo al pago…' : `Pagar señal ${FIANZA} € y reservar`}
           </button>
           <p className="text-center text-xs text-gray-400">
-            Al enviar aceptas las <a href="#" className="text-pm-red underline">condiciones de uso</a> y la <a href="#" className="text-pm-red underline">política de privacidad</a>
+            Al continuar aceptas las <a href="/terminos-y-condiciones" className="text-pm-red underline">condiciones de uso</a> y la <a href="/politica-privacidad" className="text-pm-red underline">política de privacidad</a>. Pago seguro con tarjeta · Redsys.
           </p>
         </form>
       )}
