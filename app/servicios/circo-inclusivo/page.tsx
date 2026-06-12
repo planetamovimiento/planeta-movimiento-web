@@ -59,25 +59,6 @@ const objetivosAreas = [
   },
 ]
 
-const actividades = [
-  { nombre: 'Psicomotricidad y coordinación', icon: '🧠' },
-  { nombre: 'Equilibrio y control corporal', icon: '⚖️' },
-  { nombre: 'Reflejos y protección corporal', icon: '🛡️' },
-  { nombre: 'Juegos cooperativos grupales', icon: '🤝' },
-  { nombre: 'Circuitos motores adaptados', icon: '🔄' },
-  { nombre: 'Circo adaptado y movimiento creativo', icon: '🎪' },
-]
-
-const materiales = [
-  'Colchonetas blandas de diferentes texturas',
-  'Airtracks y superficies de seguridad',
-  'Camas elásticas',
-  'Material de equilibrio y coordinación',
-  'Elementos de circo adaptado',
-  'Material psicomotriz y recreativo',
-  'Recursos visuales y apoyos adaptados',
-]
-
 export default function CircoInclusivoPage() {
   return (
     <main className="bg-white min-h-screen">
@@ -121,13 +102,13 @@ export default function CircoInclusivoPage() {
 
               <div className="flex flex-wrap gap-3 mb-8">
                 {[
-                  { icon: '👥', texto: 'Máx. 7 participantes/grupo' },
-                  { icon: '👩‍⚕️', texto: '5 profesionales por sesión' },
-                  { icon: '📅', texto: 'Todos los miércoles' },
-                  { icon: '📍', texto: 'Instalaciones Planeta Movimiento' },
-                ].map(({ icon, texto }) => (
+                  'Máx. 7 participantes/grupo',
+                  '4 profesionales por sesión',
+                  'Todos los miércoles',
+                  'Instalaciones Planeta Movimiento',
+                ].map(texto => (
                   <span key={texto} className="inline-flex items-center gap-1.5 bg-white/10 border border-white/15 text-white text-xs font-medium px-3 py-1.5 rounded-full">
-                    {icon} {texto}
+                    {texto}
                   </span>
                 ))}
               </div>
@@ -142,7 +123,6 @@ export default function CircoInclusivoPage() {
             {/* Card visual — cartel inclusivo */}
             <div className="relative">
               <div className="bg-gradient-to-br from-indigo-700 to-purple-800 rounded-2xl p-10 text-center shadow-2xl">
-                <div className="text-6xl mb-4">♿🤸</div>
                 <div className="text-white font-black text-2xl mb-2">Circo Adaptado</div>
                 <div className="text-indigo-200 text-sm mb-6">Psicomotricidad · Equilibrio · Juego cooperativo</div>
                 <div className="bg-white/10 rounded-xl p-4 text-left space-y-2">
@@ -171,7 +151,7 @@ export default function CircoInclusivoPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl font-black text-pm-navy mb-2 text-center">Organización de grupos y horarios</h2>
           <p className="text-gray-500 text-sm text-center mb-10">
-            Grupos reducidos (máx. 7 personas) con 5 profesionales por sesión
+            Grupos reducidos (máx. 7 personas) con 4 profesionales por sesión
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -255,7 +235,7 @@ export default function CircoInclusivoPage() {
               <div className="bg-pm-bg rounded-xl p-4 border border-gray-200">
                 <div className="text-xs font-bold text-pm-navy uppercase tracking-wider mb-3">Por parte de Planeta Movimiento</div>
                 <ul className="space-y-2">
-                  {['2 monitores especializados', '1 monitor de apoyo'].map(p => (
+                  {['2 monitores especializados'].map(p => (
                     <li key={p} className="flex items-center gap-2 text-sm text-gray-700">
                       <span className="w-1.5 h-1.5 bg-pm-red rounded-full shrink-0"/>
                       {p}
@@ -265,7 +245,7 @@ export default function CircoInclusivoPage() {
               </div>
             </div>
             <p className="mt-4 text-xs text-gray-500 text-center">
-              <strong className="text-pm-navy">5 profesionales</strong> para un máximo de <strong className="text-pm-navy">7 participantes</strong> — atención cercana, estructurada y personalizada
+              <strong className="text-pm-navy">4 profesionales</strong> para un máximo de <strong className="text-pm-navy">7 participantes</strong> — atención cercana, estructurada y personalizada
             </p>
           </div>
         </div>
@@ -293,67 +273,6 @@ export default function CircoInclusivoPage() {
                     </li>
                   ))}
                 </ul>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ACTIVIDADES Y MATERIALES */}
-      <section className="bg-pm-bg py-14">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-
-            {/* Actividades */}
-            <div>
-              <h2 className="text-xl font-black text-pm-navy mb-6">Contenido de las sesiones</h2>
-              <div className="grid grid-cols-1 gap-3">
-                {actividades.map(({ nombre, icon }) => (
-                  <div key={nombre} className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100">
-                    <span className="text-xl shrink-0">{icon}</span>
-                    <span className="text-sm font-semibold text-pm-navy">{nombre}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Materiales */}
-            <div>
-              <h2 className="text-xl font-black text-pm-navy mb-6">Material utilizado</h2>
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-3">
-                {materiales.map(m => (
-                  <div key={m} className="flex items-center gap-3 text-sm text-gray-700 pb-3 border-b border-gray-50 last:border-0 last:pb-0">
-                    <span className="text-indigo-500 font-black shrink-0">→</span>
-                    {m}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* METODOLOGÍA */}
-      <section className="bg-white py-14">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl font-black text-pm-navy mb-2 text-center">Principios metodológicos</h2>
-          <p className="text-gray-500 text-sm text-center mb-10">
-            Intervención práctica, dinámica y siempre adaptada a cada persona
-          </p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {[
-              { texto: 'Seguridad física y emocional', icon: '🛡️' },
-              { texto: 'Adaptación individual', icon: '🎯' },
-              { texto: 'Aprendizaje por el juego', icon: '🎮' },
-              { texto: 'Acompañamiento constante', icon: '🤝' },
-              { texto: 'Refuerzo positivo', icon: '⭐' },
-              { texto: 'Rutinas estructuradas', icon: '📋' },
-              { texto: 'Promoción de la autonomía', icon: '🌱' },
-              { texto: 'Respeto a cada ritmo', icon: '🕐' },
-            ].map(({ texto, icon }) => (
-              <div key={texto} className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 text-center">
-                <div className="text-2xl mb-2">{icon}</div>
-                <div className="text-xs font-semibold text-indigo-800 leading-tight">{texto}</div>
               </div>
             ))}
           </div>
