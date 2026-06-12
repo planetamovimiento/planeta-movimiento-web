@@ -32,6 +32,7 @@ const ESTACIONES = [
     numero: '01',
     nombre: 'Acrobacia y Parkour',
     icon: '🤸',
+    foto: '/fotos/excursiones-estaciones/acrobacia-parkour.jpg',
     color: 'from-pm-red to-pm-red-dark',
     colorLight: 'bg-pm-red-light border-pm-red/20',
     colorText: 'text-pm-red',
@@ -42,6 +43,7 @@ const ESTACIONES = [
     numero: '02',
     nombre: 'Aéreos',
     icon: '🎪',
+    foto: '/fotos/excursiones-estaciones/aereos.jpg',
     color: 'from-purple-600 to-purple-800',
     colorLight: 'bg-purple-50 border-purple-200',
     colorText: 'text-purple-700',
@@ -52,6 +54,7 @@ const ESTACIONES = [
     numero: '03',
     nombre: 'Circo',
     icon: '🎭',
+    foto: '/fotos/excursiones-estaciones/circo.jpg',
     color: 'from-amber-500 to-orange-600',
     colorLight: 'bg-amber-50 border-amber-200',
     colorText: 'text-amber-700',
@@ -62,6 +65,7 @@ const ESTACIONES = [
     numero: '04',
     nombre: 'Baile y Expresión',
     icon: '💃',
+    foto: '/fotos/excursiones-estaciones/baile.jpg',
     color: 'from-emerald-500 to-emerald-700',
     colorLight: 'bg-emerald-50 border-emerald-200',
     colorText: 'text-emerald-700',
@@ -137,10 +141,11 @@ export default function ExcursionesPage() {
             {/* Visual de las 4 estaciones en el hero */}
             <div className="grid grid-cols-2 gap-3">
               {ESTACIONES.map(e => (
-                <div key={e.numero} className={`bg-gradient-to-br ${e.color} rounded-2xl p-5 text-white`}>
-                  <div className="text-3xl mb-2">{e.icon}</div>
-                  <div className="text-white/60 text-xs font-black uppercase tracking-wider">Estación {e.numero}</div>
-                  <div className="font-black text-sm mt-0.5">{e.nombre}</div>
+                <div key={e.numero} className={`bg-gradient-to-br ${e.color} rounded-2xl p-3 text-white`}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={e.foto} alt={e.nombre} className="w-full h-24 object-cover rounded-xl mb-3" />
+                  <div className="text-white/70 text-xs font-black uppercase tracking-wider px-1">Estación {e.numero}</div>
+                  <div className="font-black text-sm mt-0.5 px-1 pb-1">{e.nombre}</div>
                 </div>
               ))}
             </div>
@@ -185,41 +190,6 @@ export default function ExcursionesPage() {
         </div>
       </section>
 
-      {/* ── CÓMO FUNCIONA ── */}
-      <section className="bg-pm-bg py-14">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-black text-pm-navy mb-3">¿Cómo funciona la jornada?</h2>
-            <p className="text-gray-500 text-sm">Al llegar, el grupo se divide en 4 equipos que rotan por todas las estaciones</p>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="bg-pm-navy text-white px-6 py-4 flex items-center gap-3">
-              <div className="text-2xl">🔄</div>
-              <div>
-                <div className="font-black text-base">Sistema de rotaciones</div>
-                <div className="text-white/60 text-xs">4 grupos · 4 estaciones · Todos experimentan todo</div>
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                {ESTACIONES.map((e, i) => (
-                  <div key={e.numero} className={`${e.colorLight} border rounded-xl p-4 text-center`}>
-                    <div className="text-3xl mb-2">{e.icon}</div>
-                    <div className={`font-black text-sm ${e.colorText}`}>Estación {e.numero}</div>
-                    <div className="font-semibold text-pm-navy text-xs mt-1">{e.nombre}</div>
-                    <div className={`text-xs mt-2 font-bold ${e.colorText}`}>~45 min</div>
-                  </div>
-                ))}
-              </div>
-              <p className="text-center text-xs text-gray-400 mt-4">
-                ↩ Cada grupo rota por las 4 estaciones · Todos los alumnos completan el circuito completo
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* ── ESTACIONES DETALLE ── */}
       <section className="bg-white py-16">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -228,7 +198,8 @@ export default function ExcursionesPage() {
             {ESTACIONES.map(e => (
               <div key={e.numero} className={`border-2 rounded-2xl overflow-hidden ${e.colorLight}`}>
                 <div className={`bg-gradient-to-r ${e.color} text-white px-6 py-5 flex items-center gap-4`}>
-                  <div className="text-4xl">{e.icon}</div>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={e.foto} alt={e.nombre} className="w-16 h-16 object-cover rounded-xl shrink-0 border-2 border-white/40" />
                   <div>
                     <div className="text-xs font-black uppercase tracking-wider opacity-70">Estación {e.numero}</div>
                     <h3 className="text-xl font-black">{e.nombre}</h3>
