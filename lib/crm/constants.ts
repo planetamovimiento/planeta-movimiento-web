@@ -73,12 +73,19 @@ export function eur(n: number | null | undefined): string {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(Number(n))
 }
 
-export function pendienteDe(r: { total: number | null; pagado: number | null; estado_pago?: string }): number {
-  // El pendiente depende del estado de pago: 'pagado' o 'no aplica' nunca dejan pendiente.
-  if (r.estado_pago === 'pagado' || r.estado_pago === 'na') return 0
-  const t = Number(r.total) || 0
-  const p = Number(r.pagado) || 0
-  return Math.max(0, t - p)
+type ImporteReg = { total: number | null; pagado: number | null; estado_pago?: string }
+
+/** Importe efectivamente cobrado, derivado del ESTADO DE PAGO (no de un valor pegado). */
+export function pagadoDe(r: ImporteReg): number {
+  if (r.estado_pago === 'pagado') return Number(r.pagado) || Number(r.total) || 0
+  if (r.estado_pago === 'parcial') return Number(r.pagado) || 0
+  return 0 // pendiente, impagado, na → nada cobrado
+}
+
+/** Importe pendiente de cobro. Depende del estado de pago, no de un campo guardado. */
+export function pendienteDe(r: ImporteReg): number {
+  if (r.estado_pago === 'na') return 0
+  return Math.max(0, (Number(r.total) || 0) - pagadoDe(r))
 }
 
 export function fechaCorta(iso: string | null): string {

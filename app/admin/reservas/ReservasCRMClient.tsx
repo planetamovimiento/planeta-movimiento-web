@@ -5,7 +5,7 @@ import { Metric } from '@/components/admin/ui'
 import { waCliente } from '@/lib/whatsapp'
 import {
   ESTADOS_RESERVA, ESTADOS_PAGO, ESTADOS_ACTIVOS, ESTADOS_PENDIENTES, METODOS_PAGO,
-  labelReserva, labelPago, badgePago, eur, pendienteDe, fechaCorta,
+  labelReserva, labelPago, badgePago, eur, pendienteDe, pagadoDe, fechaCorta,
   type Registro,
 } from '@/lib/crm/constants'
 import { guardarGestionCRM, registrarPagoCRM } from './actions'
@@ -18,6 +18,8 @@ const ANIO = HOY.slice(0, 4)
 function patchPago(r: Registro, estado: string): Partial<Registro> {
   const patch: Partial<Registro> = { estado_pago: estado }
   if (estado === 'pagado') patch.pagado = r.total ?? r.pagado ?? null
+  else if (estado === 'pendiente' || estado === 'impagado' || estado === 'na') patch.pagado = 0
+  // 'parcial': se conserva el 'pagado' actual (el cobro parcial registrado).
   return patch
 }
 
@@ -68,8 +70,8 @@ export default function ReservasCRMClient({ registros, puedeEditar, gestionOk }:
     // Por cobrar: reservas con pago pendiente y con importe realmente pendiente (>0 €).
     const porCobrar = lista.filter(r => ['pendiente', 'impagado', 'parcial'].includes(r.estado_pago) && pendienteDe(r) > 0).length
     const pagosPend = lista.filter(r => ['pendiente', 'impagado', 'parcial'].includes(r.estado_pago)).reduce((s, r) => s + pendienteDe(r), 0)
-    // Importe cobrado de una reserva: total si está 'Pagado', el parcial si lo hay.
-    const cobrado = (r: Registro) => r.estado_pago === 'pagado' ? (Number(r.pagado) || Number(r.total) || 0) : (Number(r.pagado) || 0)
+    // Importe cobrado de una reserva, derivado del estado de pago.
+    const cobrado = (r: Registro) => pagadoDe(r)
     // Mes: por fecha de realización del servicio. Año: por fecha de realización o de alta.
     const ingMes = lista.reduce((s, r) => ((r.fecha_realizacion || '').slice(0, 7) === MES ? s + cobrado(r) : s), 0)
     const ingAnio = lista.reduce((s, r) => ((r.fecha_realizacion || r.fecha_reserva || '').slice(0, 4) === ANIO ? s + cobrado(r) : s), 0)
@@ -328,7 +330,7 @@ function FichaCliente({ r, todas, puedeEditar, onClose, onGestion, onCobrar }: {
             <div className="text-xs font-black text-pm-navy uppercase tracking-wider mb-2">Ficha económica</div>
             <div className="grid grid-cols-3 gap-2 mb-3">
               <CampoNum label="Total €" value={r.total} disabled={!puedeEditar} onSave={v => onGestion({ total: v })} />
-              <div><div className="text-[11px] text-gray-400">Pagado</div><div className="font-black text-green-600">{eur(r.estado_pago === 'pagado' ? (r.pagado ?? r.total) : r.pagado)}</div></div>
+              <div><div className="text-[11px] text-gray-400">Pagado</div><div className="font-black text-green-600">{eur(pagadoDe(r))}</div></div>
               <div><div className="text-[11px] text-gray-400">Pendiente</div><div className={`font-black ${pend > 0 ? 'text-pm-red' : 'text-gray-400'}`}>{eur(pend)}</div></div>
             </div>
             <div className="flex items-center gap-2 mb-1">
