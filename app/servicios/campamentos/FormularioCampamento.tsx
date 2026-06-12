@@ -29,7 +29,7 @@ export function textoParticipantes(parts: Participante[]): string {
 }
 
 export default function FormularioCampamento({
-  numNinos, setNumNinos, total, color = 'red', enviando, ctaLabel, onVolver, onSubmit,
+  numNinos, setNumNinos, total, color = 'red', enviando, ctaLabel, onVolver, onSubmit, onSubmitInstalacion,
 }: {
   numNinos: number
   setNumNinos: (n: number) => void
@@ -39,6 +39,7 @@ export default function FormularioCampamento({
   ctaLabel?: string
   onVolver: () => void
   onSubmit: (p: PayloadCampamento) => void
+  onSubmitInstalacion?: (p: PayloadCampamento) => void
 }) {
   const t = TEMAS[color]
   const [contacto, setContacto] = useState({ nombre: '', email: '', telefono: '' })
@@ -107,11 +108,20 @@ export default function FormularioCampamento({
       <textarea rows={2} placeholder="Notas (alergias, necesidades especiales...)" value={notas} onChange={e => setNotas(e.target.value)} className={`${inputCls} resize-none`} />
 
       {/* Botones */}
-      <div className="flex gap-2">
-        <button type="button" onClick={onVolver} className="border border-gray-200 text-gray-600 text-sm font-bold px-4 py-3 rounded-xl hover:border-gray-400 transition-colors">← Volver</button>
-        <button type="submit" disabled={!valido || enviando} className={`flex-1 ${t.btn} disabled:opacity-50 text-white font-black text-sm py-3 rounded-xl transition-colors`}>
-          {enviando ? 'Enviando...' : (ctaLabel ?? `Reservar — ${total} €`)}
-        </button>
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          <button type="button" onClick={onVolver} className="border border-gray-200 text-gray-600 text-sm font-bold px-4 py-3 rounded-xl hover:border-gray-400 transition-colors">← Volver</button>
+          <button type="submit" disabled={!valido || enviando} className={`flex-1 ${t.btn} disabled:opacity-50 text-white font-black text-sm py-3 rounded-xl transition-colors`}>
+            {enviando ? 'Enviando...' : (ctaLabel ?? (onSubmitInstalacion ? `Pagar con tarjeta — ${total} €` : `Reservar — ${total} €`))}
+          </button>
+        </div>
+        {onSubmitInstalacion && (
+          <button type="button" disabled={!valido || enviando}
+            onClick={() => { if (valido) onSubmitInstalacion({ contacto, participantes: parts, notas }) }}
+            className="w-full border-2 border-pm-navy text-pm-navy disabled:opacity-50 font-black text-sm py-3 rounded-xl hover:bg-pm-navy hover:text-white transition-colors">
+            🏫 Pagar en la instalación
+          </button>
+        )}
       </div>
     </form>
   )

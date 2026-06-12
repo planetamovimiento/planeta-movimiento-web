@@ -33,6 +33,8 @@ export type IniciarResult =
   | { ok: true; url: string; Ds_SignatureVersion: string; Ds_MerchantParameters: string; Ds_Signature: string }
   | { ok: false; error: string }
 
+export type ReservaResult = { ok: true; numero: string } | { ok: false; error: string }
+
 /** Servicios con botonAccion 'presupuesto' que SÍ cobran online (calculadora con precio). */
 const PAGABLES_PRESUPUESTO = new Set(['eventos'])
 
@@ -121,6 +123,58 @@ async function emitirPago(args: {
 }
 
 /**
+ * Núcleo de "pago en la instalación": registra la reserva (bookings) y un cobro
+ * (payments) pendiente con método "En la instalación", SIN pasar por Redsys.
+ */
+async function emitirReservaInstalacion(args: {
+  servicioNombre: string
+  clienteNombre: string
+  email: string
+  telefono: string
+  fecha: string | null
+  hora: string | null
+  participantes: number | null
+  total: number
+  observaciones: string
+}): Promise<ReservaResult> {
+  const db = createAdminClient()
+  const numero = generateReservaNumero()
+
+  const { data: bk, error: e1 } = await db.from('bookings').insert({
+    numero,
+    servicio: args.servicioNombre,
+    cliente_nombre: args.clienteNombre,
+    cliente_email: args.email,
+    cliente_telefono: args.telefono,
+    fecha: args.fecha || null,
+    hora: args.hora || null,
+    participantes: args.participantes ?? null,
+    precio: args.total,
+    estado_reserva: 'pendiente',
+    estado_pago: 'pendiente',
+    observaciones: args.observaciones,
+    notas_internas: 'Pago en la instalación (sin pasarela).',
+  }).select('id').single()
+  if (e1 || !bk) return { ok: false, error: 'No se pudo registrar la reserva. Inténtalo de nuevo.' }
+  const bookingId = (bk as { id: string }).id
+
+  const { error: e2 } = await db.from('payments').insert({
+    booking_id: bookingId,
+    cliente_nombre: args.clienteNombre,
+    servicio: args.servicioNombre,
+    importe: args.total,
+    fianza: null,
+    pendiente: args.total,
+    metodo: 'En la instalación',
+    estado: 'pendiente',
+    referencia: numero,
+  })
+  if (e2) return { ok: false, error: 'No se pudo registrar la reserva. Inténtalo de nuevo.' }
+
+  return { ok: true, numero }
+}
+
+/**
  * Asistente de reserva (/reservar): valida, calcula el importe EN SERVIDOR a
  * partir del catálogo y de las franjas, y delega en emitirPago.
  */
@@ -190,12 +244,21 @@ export type PagoReservaPayload = {
   datos?: Record<string, unknown>  // datos extra para el CRM
 }
 
-/**
- * Inicio de pago para los widgets de Ocio (cumpleaños, campamentos, eventos).
- * Cobra la FIANZA del servicio como señal si está configurada (>0); si no, el
- * total. El widget calcula el total; el importe a cobrar se decide en servidor.
- */
-export async function iniciarPagoReserva(p: PagoReservaPayload): Promise<IniciarResult> {
+type ReservaResuelta = {
+  servicioNombre: string
+  fianza: number
+  total: number
+  participantes: number | null
+  fecha: string | null
+  hora: string | null
+  observaciones: string
+  clienteNombre: string
+  email: string
+  telefono: string
+}
+
+/** Validación común (cliente, importe, servicio reservable, franjas y aforo) para ambos métodos de pago. */
+async function comprobarReserva(p: PagoReservaPayload): Promise<{ ok: true; data: ReservaResuelta } | { ok: false; error: string }> {
   const { servicioId, cliente, fecha = null, hora = null, participantes = null, total, datos } = p
 
   if (!cliente?.nombre?.trim() || !cliente.email?.trim() || !cliente.telefono?.trim()) {
@@ -211,9 +274,6 @@ export async function iniciarPagoReserva(p: PagoReservaPayload): Promise<Iniciar
   const reservable = servicio.botonAccion === 'reserva' || PAGABLES_PRESUPUESTO.has(servicioId)
   if (!reservable) return { ok: false, error: 'Este servicio no admite reserva online.' }
 
-  const fianza = Number(servicio.fianza) || 0
-  const esSenal = fianza > 0
-  const senal = esSenal ? fianza : total
   const servicioNombre = p.servicioNombre?.trim() || servicio.nombre
 
   // Anti-overbooking solo si el servicio tiene franjas configuradas y hay fecha+hora.
@@ -234,15 +294,39 @@ export async function iniciarPagoReserva(p: PagoReservaPayload): Promise<Iniciar
 
   const observaciones = `${(p.observaciones ?? '').trim()}${datos ? '\n' + JSON.stringify(datos) : ''}`.trim()
 
-  return emitirPago({
-    servicioNombre,
-    clienteNombre: cliente.nombre.trim(),
-    email: cliente.email.trim(),
-    telefono: cliente.telefono.trim(),
-    fecha, hora, participantes,
-    total,
-    senal,
-    esSenal,
-    observaciones,
-  })
+  return {
+    ok: true,
+    data: {
+      servicioNombre,
+      fianza: Number(servicio.fianza) || 0,
+      total, participantes, fecha, hora, observaciones,
+      clienteNombre: cliente.nombre.trim(),
+      email: cliente.email.trim(),
+      telefono: cliente.telefono.trim(),
+    },
+  }
+}
+
+/**
+ * Inicio de pago ONLINE (Redsys) para los widgets de Ocio (cumpleaños, campamentos, eventos).
+ * Cobra la FIANZA del servicio como señal si está configurada (>0); si no, el total.
+ */
+export async function iniciarPagoReserva(p: PagoReservaPayload): Promise<IniciarResult> {
+  const c = await comprobarReserva(p)
+  if (!c.ok) return c
+  const { servicioNombre, fianza, total, participantes, fecha, hora, observaciones, clienteNombre, email, telefono } = c.data
+  const esSenal = fianza > 0
+  const senal = esSenal ? fianza : total
+  return emitirPago({ servicioNombre, clienteNombre, email, telefono, fecha, hora, participantes, total, senal, esSenal, observaciones })
+}
+
+/**
+ * Reserva con PAGO EN LA INSTALACIÓN (sin pasarela). Registra la reserva pendiente
+ * de cobro con método "En la instalación". Se usa en campamentos.
+ */
+export async function reservarEnInstalacion(p: PagoReservaPayload): Promise<ReservaResult> {
+  const c = await comprobarReserva(p)
+  if (!c.ok) return c
+  const { servicioNombre, total, participantes, fecha, hora, observaciones, clienteNombre, email, telefono } = c.data
+  return emitirReservaInstalacion({ servicioNombre, clienteNombre, email, telefono, fecha, hora, participantes, total, observaciones })
 }

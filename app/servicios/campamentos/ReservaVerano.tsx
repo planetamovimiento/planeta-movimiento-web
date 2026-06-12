@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import { iniciarPagoReserva, type PagoReservaPayload } from '@/app/reservar/actions'
+import { iniciarPagoReserva, reservarEnInstalacion, type PagoReservaPayload } from '@/app/reservar/actions'
 import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
 import FormularioCampamento, { type PayloadCampamento, textoParticipantes } from './FormularioCampamento'
 import { formatDia, formatFechaLarga } from './config'
@@ -101,11 +101,10 @@ export default function ReservaVerano({ cfg, ocupacionDia = {}, onReservar }: { 
     }
   }
 
-  async function onEnviar(p: PayloadCampamento) {
-    setError('')
+  function construirPayload(p: PayloadCampamento): PagoReservaPayload {
     const dias = Array.from(diasSeleccionados).sort()
     const n = p.participantes.length
-    const payload: PagoReservaPayload = {
+    return {
       servicioId: 'campamentos',
       servicioNombre: 'Campamento de Verano',
       cliente: { nombre: p.contacto.nombre, email: p.contacto.email, telefono: p.contacto.telefono },
@@ -123,11 +122,23 @@ export default function ReservaVerano({ cfg, ocupacionDia = {}, onReservar }: { 
         numNinos: n,
       },
     }
+  }
+
+  async function onEnviar(p: PayloadCampamento) {
+    setError('')
+    const payload = construirPayload(p)
     if (onReservar) { onReservar(payload); return }
     setEnviando(true)
     const r = await iniciarPagoReserva(payload)
     if (r.ok) { redirigirARedsys(r); return }
     setEnviando(false); setError(r.error)
+  }
+
+  async function onEnviarInstalacion(p: PayloadCampamento) {
+    setError(''); setEnviando(true)
+    const r = await reservarEnInstalacion(construirPayload(p))
+    setEnviando(false)
+    if (r.ok) setPaso('confirmado'); else setError(r.error)
   }
 
   // ── Confirmado ──
@@ -139,9 +150,9 @@ export default function ReservaVerano({ cfg, ocupacionDia = {}, onReservar }: { 
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
           </svg>
         </div>
-        <h3 className="text-xl font-black text-pm-navy mb-2">¡Solicitud enviada!</h3>
+        <h3 className="text-xl font-black text-pm-navy mb-2">¡Reserva registrada!</h3>
         <p className="text-sm text-gray-600 mb-4">
-          Nos pondremos en contacto contigo para confirmar la reserva del campamento de verano.
+          Hemos guardado tu plaza del campamento de verano. <strong>El pago se realiza en la instalación.</strong> Te enviaremos la confirmación por email.
         </p>
         <div className="bg-pm-bg rounded-xl p-4 text-sm text-left space-y-1 max-w-xs mx-auto mb-4">
           <div><span className="text-gray-500">Días reservados:</span> <strong>{diasSeleccionados.size}</strong></div>
@@ -356,6 +367,7 @@ export default function ReservaVerano({ cfg, ocupacionDia = {}, onReservar }: { 
                 numNinos={numNinos} setNumNinos={setNumNinos} total={total * numNinos}
                 color="red" enviando={enviando} ctaLabel={onReservar ? 'Continuar al pago →' : undefined}
                 onVolver={() => setPaso('seleccion')} onSubmit={onEnviar}
+                onSubmitInstalacion={onReservar ? undefined : onEnviarInstalacion}
               />
             </>
           )}

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import StepServicio from '@/components/reserva/StepServicio'
 import StepFecha from '@/components/reserva/StepFecha'
 import StepDatos, { type DatosForm } from '@/components/reserva/StepDatos'
-import { iniciarReserva, iniciarPagoReserva, type PagoReservaPayload } from './actions'
+import { iniciarReserva, iniciarPagoReserva, reservarEnInstalacion, type PagoReservaPayload } from './actions'
 import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
 import { ReservaDiasSinCole, ReservaDomingos, ReservaMananaMagica } from '@/app/servicios/eventos/EventosInstalaciones'
 import CalculadoraEventos from '@/app/servicios/eventos/CalculadoraEventos'
@@ -55,6 +55,7 @@ export default function ReservaWizard({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [pagoPayload, setPagoPayload] = useState<PagoReservaPayload | null>(null)
+  const [confirmadoInstalacion, setConfirmadoInstalacion] = useState<string | null>(null)
   const [datos, setDatos] = useState<DatosForm>({
     nombre: '', apellidos: '', email: '', telefono: '',
     nombreCumpleanero: '', edadCumpleanero: '', notas: '', acepta: false,
@@ -97,6 +98,17 @@ export default function ReservaWizard({
       setError(r.error)
       setLoading(false)
     }
+  }
+
+  // Paso 3 (solo campamentos): registra la reserva con pago en la instalación.
+  async function handleInstalacion() {
+    if (!pagoPayload) return
+    setError('')
+    setLoading(true)
+    const r = await reservarEnInstalacion(pagoPayload)
+    setLoading(false)
+    if (r.ok) setConfirmadoInstalacion(r.numero)
+    else setError(r.error)
   }
 
   const progress = ((paso - 1) / (PASOS.length - 1)) * 100
@@ -155,6 +167,24 @@ export default function ReservaWizard({
 
         {/* Contenido */}
         <div className="bg-white rounded-2xl shadow-sm p-6 md:p-8">
+          {confirmadoInstalacion && (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
+                </svg>
+              </div>
+              <h2 className="text-2xl font-black text-pm-navy mb-2">¡Reserva registrada!</h2>
+              <p className="text-gray-600 text-sm max-w-sm mx-auto mb-4">
+                Hemos guardado tu plaza. <strong>El pago se realiza en la instalación.</strong> Te enviaremos la confirmación por email.
+              </p>
+              <div className="inline-block bg-pm-bg border border-gray-200 rounded-xl px-5 py-3 text-sm text-pm-navy">
+                Nº de reserva: <strong>{confirmadoInstalacion}</strong>
+              </div>
+            </div>
+          )}
+
+          {!confirmadoInstalacion && (<>
           {paso === 1 && (
             <StepServicio
               servicios={servicios}
@@ -205,17 +235,36 @@ export default function ReservaWizard({
 
               {error && <p className="text-sm text-red-600 font-semibold mt-3">{error}</p>}
 
-              <div className="flex items-center justify-between mt-6">
-                <button onClick={() => { setError(''); setPaso(2) }} disabled={loading}
-                  className="px-6 py-3 border-2 border-gray-200 text-gray-600 font-bold rounded-xl hover:border-gray-300 transition-colors disabled:opacity-50">
-                  ← Volver
-                </button>
-                <button onClick={handlePagoDedicado} disabled={loading}
-                  className="px-8 py-3 bg-pm-red text-white font-bold rounded-xl hover:bg-pm-red-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                  {loading ? 'Redirigiendo al pago…' : `Pagar ${euros(aPagar)} con tarjeta →`}
-                </button>
-              </div>
-              <p className="text-center text-xs text-gray-400 mt-4">Pago seguro con tarjeta · Redsys</p>
+              {servicioId === 'campamentos' ? (
+                <div className="space-y-2 mt-6">
+                  <button onClick={handlePagoDedicado} disabled={loading}
+                    className="w-full px-8 py-3 bg-pm-red text-white font-black rounded-xl hover:bg-pm-red-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    {loading ? 'Procesando…' : `💳 Pagar ${euros(aPagar)} con tarjeta →`}
+                  </button>
+                  <button onClick={handleInstalacion} disabled={loading}
+                    className="w-full px-8 py-3 border-2 border-pm-navy text-pm-navy font-black rounded-xl hover:bg-pm-navy hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    🏫 Pagar en la instalación
+                  </button>
+                  <button onClick={() => { setError(''); setPaso(2) }} disabled={loading}
+                    className="w-full text-sm text-gray-500 hover:text-pm-red font-semibold py-2 transition-colors disabled:opacity-50">
+                    ← Volver
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between mt-6">
+                  <button onClick={() => { setError(''); setPaso(2) }} disabled={loading}
+                    className="px-6 py-3 border-2 border-gray-200 text-gray-600 font-bold rounded-xl hover:border-gray-300 transition-colors disabled:opacity-50">
+                    ← Volver
+                  </button>
+                  <button onClick={handlePagoDedicado} disabled={loading}
+                    className="px-8 py-3 bg-pm-red text-white font-bold rounded-xl hover:bg-pm-red-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    {loading ? 'Redirigiendo al pago…' : `Pagar ${euros(aPagar)} con tarjeta →`}
+                  </button>
+                </div>
+              )}
+              <p className="text-center text-xs text-gray-400 mt-4">
+                {servicioId === 'campamentos' ? 'Con tarjeta pagas ahora; «en la instalación» reservas la plaza y pagas el día del campamento.' : 'Pago seguro con tarjeta · Redsys'}
+              </p>
             </div>
           )}
 
@@ -245,6 +294,7 @@ export default function ReservaWizard({
               error={error}
             />
           )}
+          </>)}
         </div>
       </div>
     </main>
