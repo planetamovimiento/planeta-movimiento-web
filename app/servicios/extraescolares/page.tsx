@@ -30,12 +30,6 @@ const CAPACIDADES = [
   { icon: '🌱', nombre: 'Confianza y autonomía' },
 ]
 
-const ACTIVIDADES = [
-  'Juegos cooperativos', 'Circuitos de habilidades', 'Retos motores',
-  'Deportes adaptados', 'Juegos tradicionales', 'Actividades de coordinación',
-  'Dinámicas grupales', 'Juegos de estrategia', 'Psicomotricidad', 'Juegos de velocidad',
-]
-
 const BENEFICIOS_ALUMNOS = [
   {
     tipo: 'Físicos',
@@ -58,15 +52,6 @@ const BENEFICIOS_ALUMNOS = [
     icon: '💛',
     items: ['Confianza', 'Autonomía', 'Motivación', 'Superación personal', 'Gestión de emociones'],
   },
-]
-
-const BENEFICIOS_CENTRO = [
-  { icon: '👨‍🏫', texto: 'Monitores cualificados y especializados' },
-  { icon: '📋', texto: 'Programación estructurada y seguimiento' },
-  { icon: '🎯', texto: 'Adaptación curricular a cada edad' },
-  { icon: '⏰', texto: 'Flexibilidad horaria total' },
-  { icon: '📦', texto: 'Material propio — el centro no necesita nada' },
-  { icon: '✅', texto: 'Gestión sencilla para AMPA y secretaría' },
 ]
 
 const FAQ = [
@@ -101,7 +86,7 @@ export default function ExtraescolaresPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <div className="inline-flex items-center gap-2 bg-pm-red/20 border border-pm-red/30 text-pm-red text-xs font-bold px-4 py-1.5 rounded-full mb-5">
-                🏫 Actividades extraescolares · En tu colegio
+                Actividades extraescolares · En tu colegio
               </div>
               <h1 className="text-4xl sm:text-5xl font-black leading-tight mb-5">
                 Llevamos el deporte<br/>
@@ -134,23 +119,19 @@ export default function ExtraescolaresPage() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white/5 border border-white/15 rounded-xl p-4 text-center">
-                  <div className="text-3xl mb-2">🚐</div>
+                <div className="bg-white/5 border border-white/15 rounded-xl p-5 text-center">
                   <div className="text-white font-bold text-sm">Nos desplazamos</div>
                   <div className="text-white/50 text-xs mt-1">Venimos a vuestro centro</div>
                 </div>
-                <div className="bg-white/5 border border-white/15 rounded-xl p-4 text-center">
-                  <div className="text-3xl mb-2">📦</div>
+                <div className="bg-white/5 border border-white/15 rounded-xl p-5 text-center">
                   <div className="text-white font-bold text-sm">Material propio</div>
                   <div className="text-white/50 text-xs mt-1">El centro no necesita nada</div>
                 </div>
-                <div className="bg-white/5 border border-white/15 rounded-xl p-4 text-center">
-                  <div className="text-3xl mb-2">👨‍🏫</div>
+                <div className="bg-white/5 border border-white/15 rounded-xl p-5 text-center">
                   <div className="text-white font-bold text-sm">Monitor experto</div>
                   <div className="text-white/50 text-xs mt-1">Certificado y con experiencia</div>
                 </div>
-                <div className="bg-white/5 border border-white/15 rounded-xl p-4 text-center">
-                  <div className="text-3xl mb-2">📋</div>
+                <div className="bg-white/5 border border-white/15 rounded-xl p-5 text-center">
                   <div className="text-white font-bold text-sm">Programación</div>
                   <div className="text-white/50 text-xs mt-1">Estructurada por curso</div>
                 </div>
@@ -208,48 +189,6 @@ export default function ExtraescolaresPage() {
         </div>
       </section>
 
-      {/* ── METODOLOGÍA ── */}
-      <section className="bg-pm-bg py-14">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-            <div>
-              <h2 className="text-3xl font-black text-pm-navy mb-4">Aprender jugando</h2>
-              <p className="text-gray-600 text-sm leading-relaxed mb-6">
-                La metodología está basada en el <strong className="text-pm-navy">aprendizaje mediante el juego</strong>.
-                Cada sesión es diferente: los alumnos no saben qué les espera, y eso genera motivación, expectativa y ganas de volver.
-              </p>
-              <div className="space-y-3">
-                {[
-                  { titulo: 'Progresión mensual', desc: 'Cada mes trabajamos una capacidad física de forma central, con propuestas variadas.' },
-                  { titulo: 'Contenidos rotativos', desc: 'Los juegos y actividades cambian constantemente para mantener el interés.' },
-                  { titulo: 'Adaptado a cada edad', desc: 'Infantil y Primaria tienen programaciones diferenciadas según su desarrollo motor.' },
-                  { titulo: 'Siempre en positivo', desc: 'Refuerzo positivo, participación activa y asociar el deporte con experiencias buenas.' },
-                ].map(({ titulo, desc }) => (
-                  <div key={titulo} className="flex items-start gap-3 bg-white border border-gray-200 rounded-xl p-4">
-                    <span className="text-pm-red font-black text-lg mt-0.5 shrink-0">✓</span>
-                    <div>
-                      <div className="font-black text-pm-navy text-sm">{titulo}</div>
-                      <div className="text-gray-500 text-xs mt-0.5">{desc}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <div className="text-xs font-black text-pm-navy uppercase tracking-wider mb-4">Ejemplos de actividades a lo largo del curso</div>
-              <div className="grid grid-cols-2 gap-2">
-                {ACTIVIDADES.map(a => (
-                  <div key={a} className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-xs text-gray-700 font-medium">
-                    <span className="text-pm-red font-black">→</span>{a}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* ── BENEFICIOS ALUMNOS ── */}
       <section className="bg-white py-16">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -271,22 +210,6 @@ export default function ExtraescolaresPage() {
                     </div>
                   ))}
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── BENEFICIOS CENTRO ── */}
-      <section className="bg-pm-navy py-14 text-white">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-black text-center mb-3">Ventajas para el centro y el AMPA</h2>
-          <p className="text-white/60 text-sm text-center mb-10">Gestionamos la actividad de principio a fin. Vuestra función es solo organizar la inscripción.</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {BENEFICIOS_CENTRO.map(({ icon, texto }) => (
-              <div key={texto} className="flex items-center gap-3 bg-white/5 border border-white/15 rounded-xl px-4 py-3.5">
-                <span className="text-2xl shrink-0">{icon}</span>
-                <span className="text-white/85 text-sm font-medium">{texto}</span>
               </div>
             ))}
           </div>
