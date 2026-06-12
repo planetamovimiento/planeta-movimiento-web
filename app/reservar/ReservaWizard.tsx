@@ -4,7 +4,7 @@ import { useState } from 'react'
 import StepServicio from '@/components/reserva/StepServicio'
 import StepFecha from '@/components/reserva/StepFecha'
 import StepDatos, { type DatosForm } from '@/components/reserva/StepDatos'
-import { iniciarReserva } from './actions'
+import { iniciarReserva, iniciarPagoReserva, type PagoReservaPayload } from './actions'
 import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
 import { ReservaDiasSinCole, ReservaDomingos, ReservaMananaMagica } from '@/app/servicios/eventos/EventosInstalaciones'
 import CalculadoraEventos from '@/app/servicios/eventos/CalculadoraEventos'
@@ -18,8 +18,18 @@ import type { CampamentosConfig } from '@/lib/campamentos/editable'
 type Reservados = Record<string, Record<string, Record<string, number>>>
 type OcupacionCampamentos = { verano: Record<string, number>; navidad: Record<string, number>; ssanta: Record<string, number> }
 
-// Servicios cuyo paso 2 usa su propio formulario de reserva (fecha + datos + pago).
+// Servicios cuyo paso 2 usa su propio formulario de reserva (fecha + datos), y un
+// paso 3 de pago. (Cumpleaños usa el calendario de franjas + StepDatos.)
 const DEDICADOS = new Set(['dias-sin-cole', 'domingos', 'manana-magica', 'campamentos', 'eventos'])
+
+const euros = (n: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(n)
+
+function fechaLarga(iso: string | null | undefined): string | null {
+  if (!iso) return null
+  try {
+    return new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(iso + 'T00:00:00'))
+  } catch { return iso }
+}
 
 export default function ReservaWizard({
   servicios, horarios, reservados,
@@ -44,6 +54,7 @@ export default function ReservaWizard({
   const [hora, setHora] = useState<string>('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [pagoPayload, setPagoPayload] = useState<PagoReservaPayload | null>(null)
   const [datos, setDatos] = useState<DatosForm>({
     nombre: '', apellidos: '', email: '', telefono: '',
     nombreCumpleanero: '', edadCumpleanero: '', notas: '', acepta: false,
@@ -51,8 +62,9 @@ export default function ReservaWizard({
 
   const servicio = servicios.find(s => s.id === servicioId) ?? null
   const esDedicado = servicioId ? DEDICADOS.has(servicioId) : false
-  const PASOS = esDedicado ? ['Servicio', 'Reserva'] : ['Servicio', 'Fecha y hora', 'Datos']
+  const PASOS = esDedicado ? ['Servicio', 'Reserva', 'Pago'] : ['Servicio', 'Fecha y hora', 'Datos']
 
+  // Cumpleaños (franjas): inicia el pago directo desde StepDatos.
   async function handleSubmit() {
     if (!servicioId) return
     setError('')
@@ -60,7 +72,27 @@ export default function ReservaWizard({
     const r = await iniciarReserva({ servicioId, fecha, hora, datos })
     if (r.ok) {
       redirigirARedsys(r)
-      // El navegador navega a Redsys; mantenemos loading hasta que ocurra.
+    } else {
+      setError(r.error)
+      setLoading(false)
+    }
+  }
+
+  // Servicios dedicados: el formulario entrega el payload → paso 3 (resumen).
+  function handleReservar(p: PagoReservaPayload) {
+    setError('')
+    setPagoPayload(p)
+    setPaso(3)
+  }
+
+  // Paso 3 de los dedicados: cobra (señal o total) y va a Redsys.
+  async function handlePagoDedicado() {
+    if (!pagoPayload) return
+    setError('')
+    setLoading(true)
+    const r = await iniciarPagoReserva(pagoPayload)
+    if (r.ok) {
+      redirigirARedsys(r)
     } else {
       setError(r.error)
       setLoading(false)
@@ -83,6 +115,13 @@ export default function ReservaWizard({
       </main>
     )
   }
+
+  // Datos para el resumen de pago (paso 3 de los dedicados).
+  const fianza = Number(servicio?.fianza) || 0
+  const esSenal = fianza > 0
+  const aPagar = pagoPayload ? (esSenal ? fianza : pagoPayload.total) : 0
+  const resto = pagoPayload ? Math.max(0, pagoPayload.total - aPagar) : 0
+  const numDias = pagoPayload ? Number(pagoPayload.datos?.numDias) || 0 : 0
 
   return (
     <main className="min-h-screen bg-pm-bg py-10">
@@ -125,20 +164,62 @@ export default function ReservaWizard({
             />
           )}
 
-          {/* Paso 2 — formulario real del servicio (dedicado) o calendario de franjas (cumpleaños) */}
-          {paso === 2 && esDedicado && (
-            <div>
+          {/* Paso 2 (dedicados) — formulario real del servicio. Se mantiene montado
+              (oculto) en el paso 3 para no perder los datos al volver. */}
+          {esDedicado && (paso === 2 || paso === 3) && (
+            <div className={paso === 3 ? 'hidden' : ''}>
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-pm-navy">{servicio?.nombre ?? 'Completa tu reserva'}</h2>
                 <button onClick={() => setPaso(1)} className="text-sm text-gray-500 hover:text-pm-red font-semibold transition-colors">← Cambiar actividad</button>
               </div>
-              {servicioId === 'dias-sin-cole' && <ReservaDiasSinCole cfg={diasSinCole} ocupacion={ocupacionDSC} />}
-              {servicioId === 'domingos' && <ReservaDomingos cfg={domingos} ocupacion={ocupacionDomingos} />}
-              {servicioId === 'manana-magica' && <ReservaMananaMagica cfg={mananaMagica} ocupacion={ocupacionMM} />}
-              {servicioId === 'campamentos' && <CampamentosReservaWizard cfg={campamentos} ocupacion={ocupacionCampamentos} />}
-              {servicioId === 'eventos' && <CalculadoraEventos />}
+              {servicioId === 'dias-sin-cole' && <ReservaDiasSinCole cfg={diasSinCole} ocupacion={ocupacionDSC} onReservar={handleReservar} />}
+              {servicioId === 'domingos' && <ReservaDomingos cfg={domingos} ocupacion={ocupacionDomingos} onReservar={handleReservar} />}
+              {servicioId === 'manana-magica' && <ReservaMananaMagica cfg={mananaMagica} ocupacion={ocupacionMM} onReservar={handleReservar} />}
+              {servicioId === 'campamentos' && <CampamentosReservaWizard cfg={campamentos} ocupacion={ocupacionCampamentos} onReservar={handleReservar} />}
+              {servicioId === 'eventos' && <CalculadoraEventos onReservar={handleReservar} />}
             </div>
           )}
+
+          {/* Paso 3 (dedicados) — resumen y pago */}
+          {paso === 3 && esDedicado && pagoPayload && (
+            <div>
+              <h2 className="text-2xl font-bold text-pm-navy mb-6">Confirma y paga</h2>
+              <div className="rounded-xl border border-gray-200 divide-y divide-gray-100 mb-6">
+                <Row label="Actividad" value={pagoPayload.servicioNombre || servicio?.nombre || ''} />
+                {numDias > 1
+                  ? <Row label="Días" value={`${numDias} días${fechaLarga(pagoPayload.fecha) ? ` · desde ${fechaLarga(pagoPayload.fecha)}` : ''}`} />
+                  : fechaLarga(pagoPayload.fecha) && <Row label="Fecha" value={fechaLarga(pagoPayload.fecha)!} />}
+                {!!pagoPayload.participantes && <Row label="Participantes" value={`${pagoPayload.participantes} niño${pagoPayload.participantes === 1 ? '' : 's'}`} />}
+                {esSenal && <Row label="Precio total" value={euros(pagoPayload.total)} />}
+              </div>
+
+              <div className="bg-pm-red-light border border-pm-red/20 rounded-xl p-5 flex items-center justify-between mb-2">
+                <div>
+                  <div className="font-black text-pm-red text-lg">{esSenal ? 'Señal a pagar ahora' : 'Total a pagar'}</div>
+                  <div className="text-xs text-gray-500">
+                    {esSenal ? `Reservas la fecha. El resto (${euros(resto)}) se abona al confirmar.` : 'Pago único'}
+                  </div>
+                </div>
+                <div className="text-3xl font-black text-pm-red">{euros(aPagar)}</div>
+              </div>
+
+              {error && <p className="text-sm text-red-600 font-semibold mt-3">{error}</p>}
+
+              <div className="flex items-center justify-between mt-6">
+                <button onClick={() => { setError(''); setPaso(2) }} disabled={loading}
+                  className="px-6 py-3 border-2 border-gray-200 text-gray-600 font-bold rounded-xl hover:border-gray-300 transition-colors disabled:opacity-50">
+                  ← Volver
+                </button>
+                <button onClick={handlePagoDedicado} disabled={loading}
+                  className="px-8 py-3 bg-pm-red text-white font-bold rounded-xl hover:bg-pm-red-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                  {loading ? 'Redirigiendo al pago…' : `Pagar ${euros(aPagar)} con tarjeta →`}
+                </button>
+              </div>
+              <p className="text-center text-xs text-gray-400 mt-4">Pago seguro con tarjeta · Redsys</p>
+            </div>
+          )}
+
+          {/* Cumpleaños (y servicios con franjas): calendario + datos */}
           {paso === 2 && !esDedicado && (
             <StepFecha
               slots={servicioId ? (horarios[servicioId] ?? []) : []}
@@ -151,7 +232,6 @@ export default function ReservaWizard({
               onBack={() => setPaso(1)}
             />
           )}
-
           {paso === 3 && !esDedicado && (
             <StepDatos
               datos={datos}
@@ -168,5 +248,14 @@ export default function ReservaWizard({
         </div>
       </div>
     </main>
+  )
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between px-4 py-3 text-sm">
+      <span className="text-gray-500">{label}</span>
+      <span className="font-semibold text-pm-navy text-right">{value}</span>
+    </div>
   )
 }

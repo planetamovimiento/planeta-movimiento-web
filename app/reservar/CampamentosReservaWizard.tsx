@@ -4,6 +4,7 @@ import { useState } from 'react'
 import ReservaVerano from '@/app/servicios/campamentos/ReservaVerano'
 import ReservaBloque from '@/app/servicios/campamentos/ReservaBloque'
 import { parseFechasLista, type CampamentosConfig } from '@/lib/campamentos/editable'
+import type { PagoReservaPayload } from '@/app/reservar/actions'
 
 type Ocupacion = { verano: Record<string, number>; navidad: Record<string, number>; ssanta: Record<string, number> }
 type Sub = 'verano' | 'navidad' | 'ssanta'
@@ -12,7 +13,7 @@ type Sub = 'verano' | 'navidad' | 'ssanta'
  * Selector compacto de campamento (Verano / Navidad / Semana Santa) + el picker
  * real de cada uno. Reutiliza los mismos formularios de la página de servicio.
  */
-export default function CampamentosReservaWizard({ cfg, ocupacion }: { cfg: CampamentosConfig; ocupacion: Ocupacion }) {
+export default function CampamentosReservaWizard({ cfg, ocupacion, onReservar }: { cfg: CampamentosConfig; ocupacion: Ocupacion; onReservar?: (p: PagoReservaPayload) => void }) {
   const navDias = parseFechasLista(cfg.navidadFechas)
   const ssDias = parseFechasLista(cfg.ssantaFechas)
 
@@ -49,9 +50,9 @@ export default function CampamentosReservaWizard({ cfg, ocupacion }: { cfg: Camp
         </div>
       </div>
 
-      {sub === 'verano' && <ReservaVerano cfg={cfg} ocupacionDia={ocupacion.verano} />}
-      {sub === 'navidad' && <ReservaBloque cfg={cfg} servicio="Campamento de Navidad" fechas={navDias} horario={cfg.navidadHorario} color="blue" nombreCorto="Navidad" ocupacionDia={ocupacion.navidad} />}
-      {sub === 'ssanta' && <ReservaBloque cfg={cfg} servicio="Campamento de Semana Santa" fechas={ssDias} horario={cfg.ssantaHorario} color="violet" nombreCorto="Semana Santa" ocupacionDia={ocupacion.ssanta} />}
+      {sub === 'verano' && <ReservaVerano cfg={cfg} ocupacionDia={ocupacion.verano} onReservar={onReservar} />}
+      {sub === 'navidad' && <ReservaBloque cfg={cfg} servicio="Campamento de Navidad" fechas={navDias} horario={cfg.navidadHorario} color="blue" nombreCorto="Navidad" ocupacionDia={ocupacion.navidad} onReservar={onReservar} />}
+      {sub === 'ssanta' && <ReservaBloque cfg={cfg} servicio="Campamento de Semana Santa" fechas={ssDias} horario={cfg.ssantaHorario} color="violet" nombreCorto="Semana Santa" ocupacionDia={ocupacion.ssanta} onReservar={onReservar} />}
     </div>
   )
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import { iniciarPagoReserva } from '@/app/reservar/actions'
+import { iniciarPagoReserva, type PagoReservaPayload } from '@/app/reservar/actions'
 import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
 import FormularioCampamento, { type PayloadCampamento, textoParticipantes } from './FormularioCampamento'
 import { type CampamentosConfig } from '@/lib/campamentos/editable'
@@ -65,7 +65,7 @@ function calcularPrecio(cfg: CampamentosConfig, fechas: string[], seleccionados:
 
 // ─── Componente reutilizable (Navidad / Semana Santa) ───────────────────────────
 export default function ReservaBloque({
-  cfg, servicio, fechas, horario, color, nombreCorto, ocupacionDia = {},
+  cfg, servicio, fechas, horario, color, nombreCorto, ocupacionDia = {}, onReservar,
 }: {
   cfg: CampamentosConfig
   servicio: string
@@ -74,6 +74,7 @@ export default function ReservaBloque({
   color: keyof typeof TEMA
   nombreCorto: string   // p.ej. "Navidad", "Semana Santa"
   ocupacionDia?: Record<string, number>
+  onReservar?: (p: PagoReservaPayload) => void
 }) {
   const t = TEMA[color]
   const aforoDia = cfg.aforoDia || 0
@@ -125,10 +126,10 @@ export default function ReservaBloque({
   }
 
   async function onEnviar(p: PayloadCampamento) {
-    setEnviando(true); setError('')
+    setError('')
     const dias = Array.from(seleccionados).sort()
     const n = p.participantes.length
-    const r = await iniciarPagoReserva({
+    const payload: PagoReservaPayload = {
       servicioId: 'campamentos',
       servicioNombre: servicio,
       cliente: { nombre: p.contacto.nombre, email: p.contacto.email, telefono: p.contacto.telefono },
@@ -145,7 +146,10 @@ export default function ReservaBloque({
         participantes: textoParticipantes(p.participantes),
         numNinos: n,
       },
-    })
+    }
+    if (onReservar) { onReservar(payload); return }
+    setEnviando(true)
+    const r = await iniciarPagoReserva(payload)
     if (r.ok) { redirigirARedsys(r); return }
     setEnviando(false); setError(r.error)
   }
@@ -305,7 +309,7 @@ export default function ReservaBloque({
               {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
               <FormularioCampamento
                 numNinos={numNinos} setNumNinos={setNumNinos} total={total * numNinos}
-                color={color} enviando={enviando}
+                color={color} enviando={enviando} ctaLabel={onReservar ? 'Continuar al pago →' : undefined}
                 onVolver={() => setPaso('seleccion')} onSubmit={onEnviar}
               />
             </>

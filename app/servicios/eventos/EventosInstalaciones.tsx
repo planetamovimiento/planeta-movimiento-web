@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { submitBooking } from '@/lib/forms/actions'
-import { iniciarPagoReserva } from '@/app/reservar/actions'
+import { iniciarPagoReserva, type PagoReservaPayload } from '@/app/reservar/actions'
 import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
 import type { MananaMagica } from '@/lib/eventos/manana-magica'
 import { parseFechasDSC, type EventoCentroCfg } from '@/lib/eventos/centro'
@@ -61,7 +61,7 @@ function Exito({ onClose }: { onClose: () => void }) {
 // ──────────────────────────────────────────────────────────────────────────────
 // DÍAS SIN COLE
 // ──────────────────────────────────────────────────────────────────────────────
-export function ReservaDiasSinCole({ cfg, onClose = () => {}, ocupacion = {} }: { cfg?: EventoCentroCfg; onClose?: () => void; ocupacion?: Record<string, number> }) {
+export function ReservaDiasSinCole({ cfg, onClose = () => {}, ocupacion = {}, onReservar }: { cfg?: EventoCentroCfg; onClose?: () => void; ocupacion?: Record<string, number>; onReservar?: (p: PagoReservaPayload) => void }) {
   const [fecha, setFecha]      = useState('')
   const [ninos, setNinos]       = useState(1)
   const [form, setForm]         = useState({ nombre: '', email: '', telefono: '' })
@@ -79,13 +79,16 @@ export function ReservaDiasSinCole({ cfg, onClose = () => {}, ocupacion = {} }: 
     : Math.round(precioBase * (1 + IVA) * ninos * 100) / 100
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault(); setEnviando(true); setError('')
-    const r = await iniciarPagoReserva({
+    e.preventDefault(); setError('')
+    const payload: PagoReservaPayload = {
       servicioId: 'dias-sin-cole',
       cliente: { nombre: form.nombre, email: form.email, telefono: form.telefono },
       fecha, participantes: ninos, total: precioConIva,
       datos: { horario: '9:00 - 14:00', numNinos: ninos },
-    })
+    }
+    if (onReservar) { onReservar(payload); return }
+    setEnviando(true)
+    const r = await iniciarPagoReserva(payload)
     if (r.ok) { redirigirARedsys(r); return }
     setEnviando(false); setError(r.error)
   }
@@ -156,7 +159,7 @@ export function ReservaDiasSinCole({ cfg, onClose = () => {}, ocupacion = {} }: 
       {error && <p className="text-xs text-red-600">{error}</p>}
       <button type="submit" disabled={!fecha || libresSel <= 0 || !form.nombre || !form.email || !form.telefono || enviando}
         className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">
-        {enviando ? 'Redirigiendo al pago…' : `Pagar ${precioConIva} € y reservar`}
+        {onReservar ? 'Continuar al pago →' : enviando ? 'Redirigiendo al pago…' : `Pagar ${precioConIva} € y reservar`}
       </button>
     </form>
   )
@@ -181,7 +184,7 @@ function domingosDeMes(year: number, month: number): string[] {
   return res
 }
 
-export function ReservaDomingos({ cfg, onClose = () => {}, ocupacion = {} }: { cfg?: EventoCentroCfg; onClose?: () => void; ocupacion?: Record<string, number> }) {
+export function ReservaDomingos({ cfg, onClose = () => {}, ocupacion = {}, onReservar }: { cfg?: EventoCentroCfg; onClose?: () => void; ocupacion?: Record<string, number>; onReservar?: (p: PagoReservaPayload) => void }) {
   const precioNino = cfg ? cfg.precio : 15
   const aforo = cfg?.aforo ?? 0
   const libresDe = (f: string) => (aforo > 0 ? Math.max(0, aforo - (ocupacion[f] ?? 0)) : Infinity)
@@ -205,13 +208,16 @@ export function ReservaDomingos({ cfg, onClose = () => {}, ocupacion = {} }: { c
   useEffect(() => { setNinos(n => Math.max(1, Math.min(n, libresSel))) }, [fecha]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault(); setEnviando(true); setError('')
-    const r = await iniciarPagoReserva({
+    e.preventDefault(); setError('')
+    const payload: PagoReservaPayload = {
       servicioId: 'domingos',
       cliente: { nombre: form.nombre, email: form.email, telefono: form.telefono },
       fecha, participantes: ninos, total,
       datos: { horario: '11:00 - 13:00', numNinos: ninos, nota: 'Adultos gratis' },
-    })
+    }
+    if (onReservar) { onReservar(payload); return }
+    setEnviando(true)
+    const r = await iniciarPagoReserva(payload)
     if (r.ok) { redirigirARedsys(r); return }
     setEnviando(false); setError(r.error)
   }
@@ -288,7 +294,7 @@ export function ReservaDomingos({ cfg, onClose = () => {}, ocupacion = {} }: { c
       {error && <p className="text-xs text-red-600">{error}</p>}
       <button type="submit" disabled={!fecha || libresSel <= 0 || !form.nombre || !form.email || !form.telefono || enviando}
         className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">
-        {enviando ? 'Redirigiendo al pago…' : `Pagar ${total} € y reservar`}
+        {onReservar ? 'Continuar al pago →' : enviando ? 'Redirigiendo al pago…' : `Pagar ${total} € y reservar`}
       </button>
     </form>
   )
@@ -361,7 +367,7 @@ export function ReservaHalloween({ cfg, onClose = () => {} }: { cfg?: EventoCent
 // ──────────────────────────────────────────────────────────────────────────────
 // MAÑANAS MÁGICAS (personaje editable desde el admin)
 // ──────────────────────────────────────────────────────────────────────────────
-export function ReservaMananaMagica({ cfg, onClose = () => {}, ocupacion = {} }: { cfg: MananaMagica; onClose?: () => void; ocupacion?: Record<string, number> }) {
+export function ReservaMananaMagica({ cfg, onClose = () => {}, ocupacion = {}, onReservar }: { cfg: MananaMagica; onClose?: () => void; ocupacion?: Record<string, number>; onReservar?: (p: PagoReservaPayload) => void }) {
   const [ninos, setNinos] = useState(1)
   const [form, setForm] = useState({ nombre: '', email: '', telefono: '', edades: '' })
   const [enviando, setEnviando] = useState(false)
@@ -374,13 +380,16 @@ export function ReservaMananaMagica({ cfg, onClose = () => {}, ocupacion = {} }:
   useEffect(() => { setNinos(n => Math.max(1, Math.min(n, libres))) }, [libres])
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault(); setEnviando(true); setError('')
-    const r = await iniciarPagoReserva({
+    e.preventDefault(); setError('')
+    const payload: PagoReservaPayload = {
       servicioId: 'manana-magica',
       cliente: { nombre: form.nombre, email: form.email, telefono: form.telefono },
       fecha: cfg.fecha || null, participantes: ninos, total,
       datos: { personaje: cfg.personaje, tematica: cfg.tematica, horario: cfg.horario, fecha: cfg.fechaTexto, edades: form.edades, numNinos: ninos },
-    })
+    }
+    if (onReservar) { onReservar(payload); return }
+    setEnviando(true)
+    const r = await iniciarPagoReserva(payload)
     if (r.ok) { redirigirARedsys(r); return }
     setEnviando(false); setError(r.error)
   }
@@ -426,7 +435,7 @@ export function ReservaMananaMagica({ cfg, onClose = () => {}, ocupacion = {} }:
       {error && <p className="text-xs text-red-600">{error}</p>}
       <button type="submit" disabled={completo || !form.nombre || !form.email || !form.telefono || enviando}
         className="w-full bg-fuchsia-600 hover:bg-fuchsia-700 disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">
-        {completo ? 'Plazas completas' : enviando ? 'Redirigiendo al pago…' : `✨ Pagar ${total} € y reservar`}
+        {completo ? 'Plazas completas' : onReservar ? 'Continuar al pago →' : enviando ? 'Redirigiendo al pago…' : `✨ Pagar ${total} € y reservar`}
       </button>
       <p className="text-center text-xs text-gray-400">Plazas limitadas · Pago seguro con tarjeta · Redsys</p>
     </form>

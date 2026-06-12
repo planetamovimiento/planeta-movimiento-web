@@ -45,7 +45,7 @@ const TABS_CENTRO = [
 ]
 
 // ─── Panel Externo ────────────────────────────────────────────────────────────
-function PanelExterno() {
+function PanelExterno({ senal }: { senal: number }) {
   const [faqAbierto, setFaqAbierto] = useState<number | null>(null)
 
   return (
@@ -148,7 +148,7 @@ function PanelExterno() {
       {/* Calculadora + formulario */}
       <div className="bg-pm-bg rounded-2xl p-6 border border-gray-200">
         <h3 className="font-black text-pm-navy text-lg mb-6 text-center">Calculadora y reserva</h3>
-        <CalculadoraEventos />
+        <CalculadoraEventos senal={senal} />
       </div>
 
       {/* FAQ */}
@@ -405,9 +405,10 @@ function PanelHalloween({ cfg }: { cfg: EventoCentroCfg }) {
 }
 
 // ─── Página principal (cliente) ───────────────────────────────────────────────
-export default function EventosPageClient({ mananaMagica, diasSinCole, domingos, halloween, ocupacionDSC, ocupacionDomingos, ocupacionMM }: {
+export default function EventosPageClient({ mananaMagica, diasSinCole, domingos, halloween, ocupacionDSC, ocupacionDomingos, ocupacionMM, senalEventos }: {
   mananaMagica: MananaMagica; diasSinCole: EventoCentroCfg; domingos: EventoCentroCfg; halloween: EventoCentroCfg
   ocupacionDSC: Record<string, number>; ocupacionDomingos: Record<string, number>; ocupacionMM: Record<string, number>
+  senalEventos: number
 }) {
   const [tabPrincipal, setTabPrincipal] = useState<TabPrincipal>('externo')
   const [tabCentro, setTabCentro]       = useState<TabCentro>('diassinc')
@@ -474,7 +475,7 @@ export default function EventosPageClient({ mananaMagica, diasSinCole, domingos,
       </div>
 
       {/* ── PANEL EXTERNO ── */}
-      {tabPrincipal === 'externo' && <PanelExterno />}
+      {tabPrincipal === 'externo' && <PanelExterno senal={senalEventos} />}
 
       {/* ── PANEL CENTRO ── */}
       {tabPrincipal === 'centro' && (

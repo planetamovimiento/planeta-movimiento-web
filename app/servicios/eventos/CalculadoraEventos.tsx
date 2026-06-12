@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { iniciarPagoReserva } from '@/app/reservar/actions'
+import { iniciarPagoReserva, type PagoReservaPayload } from '@/app/reservar/actions'
 import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
 import { waNegocio } from '@/lib/whatsapp'
 
@@ -34,7 +34,7 @@ function calcular(participantes: number, extrasIds: Set<string>, horasExtra: num
 }
 
 // ─── Componente ──────────────────────────────────────────────────────────────
-export default function CalculadoraEventos() {
+export default function CalculadoraEventos({ onReservar, senal = 0 }: { onReservar?: (p: PagoReservaPayload) => void; senal?: number } = {}) {
   const [participantes, setParticipantes] = useState<number>(10)
   const [extrasIds, setExtrasIds] = useState<Set<string>>(new Set())
   const [horasExtra, setHorasExtra] = useState(0)
@@ -61,10 +61,9 @@ export default function CalculadoraEventos() {
   }
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setEnviando(true); setError('')
+    e.preventDefault(); setError('')
     const extras = EXTRAS.filter(x => extrasIds.has(x.id)).map(x => x.label).join(', ')
-    const r = await iniciarPagoReserva({
+    const payload: PagoReservaPayload = {
       servicioId: 'eventos',
       servicioNombre: `Animación en tu evento · ${form.tipoEvento || 'evento'}`,
       cliente: { nombre: `${form.nombre} ${form.apellidos}`.trim(), email: form.email, telefono: form.telefono },
@@ -78,7 +77,10 @@ export default function CalculadoraEventos() {
         pack: pack.nombre, extras: extras || 'Ninguno', horasExtra,
         totalConIva: `${total} €`,
       },
-    })
+    }
+    if (onReservar) { onReservar(payload); return }
+    setEnviando(true)
+    const r = await iniciarPagoReserva(payload)
     if (r.ok) { redirigirARedsys(r); return }
     setEnviando(false); setError(r.error)
   }
@@ -248,10 +250,16 @@ export default function CalculadoraEventos() {
         {error && <p className="text-center text-sm text-red-600 font-semibold">{error}</p>}
         <button type="submit" disabled={!form.nombre || !form.email || !form.telefono || !form.tipoEvento || !form.fecha || !form.ubicacion || enviando}
           className="w-full bg-pm-red hover:bg-pm-red-dark disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-sm tracking-widest uppercase py-5 rounded-2xl transition-colors shadow-lg">
-          {enviando ? 'Redirigiendo al pago…' : `Pagar ${total} € (IVA incl.) y reservar`}
+          {onReservar
+            ? 'Continuar al pago →'
+            : enviando
+              ? 'Redirigiendo al pago…'
+              : senal > 0
+                ? `Pagar señal ${senal} € y reservar`
+                : `Pagar ${total} € (IVA incl.) y reservar`}
         </button>
         <p className="text-center text-xs text-gray-400">
-          Pago seguro con tarjeta · Redsys
+          {senal > 0 ? `Señal de ${senal} € para reservar la fecha · resto al confirmar el evento (${total} € IVA incl.)` : 'Pago seguro con tarjeta · Redsys'}
         </p>
       </form>
 

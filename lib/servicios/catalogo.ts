@@ -132,7 +132,7 @@ export const CATALOGO_SERVICIOS: ServicioCatalogo[] = [
     nombre: 'Eventos y celebraciones', entidad: 'empresa', categoria: 'Eventos', tipo: 'evento',
     descripcionCorta: 'Animación para bodas, comuniones y fiestas. Y eventos en el centro.',
     descripcionLarga: 'Animación infantil a domicilio (packs) y eventos en instalaciones (días sin cole, domingos, Halloween).',
-    edad: 'Todas las edades', precioDesde: 150, iva: 21, horarios: 'A convenir', estado: 'activo',
+    edad: 'Todas las edades', precioDesde: 150, iva: 21, fianza: 50, horarios: 'A convenir', estado: 'activo',
     botonTexto: 'Solicitar presupuesto', botonAccion: 'presupuesto', enlace: '/servicios/eventos',
   },
   {

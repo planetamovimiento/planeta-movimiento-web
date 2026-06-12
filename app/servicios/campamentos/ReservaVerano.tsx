@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import { iniciarPagoReserva } from '@/app/reservar/actions'
+import { iniciarPagoReserva, type PagoReservaPayload } from '@/app/reservar/actions'
 import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
 import FormularioCampamento, { type PayloadCampamento, textoParticipantes } from './FormularioCampamento'
 import { formatDia, formatFechaLarga } from './config'
@@ -42,7 +42,7 @@ function calcularPrecio(cfg: CampamentosConfig, semanas: SemanaVerano[], diasSel
 }
 
 // ─── Componente principal ─────────────────────────────────────────────────────
-export default function ReservaVerano({ cfg, ocupacionDia = {} }: { cfg: CampamentosConfig; ocupacionDia?: Record<string, number> }) {
+export default function ReservaVerano({ cfg, ocupacionDia = {}, onReservar }: { cfg: CampamentosConfig; ocupacionDia?: Record<string, number>; onReservar?: (p: PagoReservaPayload) => void }) {
   const SEMANAS = useMemo(() => semanasResueltas(cfg), [cfg])
   const aforoDia = cfg.aforoDia || 0
   const libresDia = (dia: string) => (aforoDia > 0 ? Math.max(0, aforoDia - (ocupacionDia[dia] ?? 0)) : Infinity)
@@ -102,10 +102,10 @@ export default function ReservaVerano({ cfg, ocupacionDia = {} }: { cfg: Campame
   }
 
   async function onEnviar(p: PayloadCampamento) {
-    setEnviando(true); setError('')
+    setError('')
     const dias = Array.from(diasSeleccionados).sort()
     const n = p.participantes.length
-    const r = await iniciarPagoReserva({
+    const payload: PagoReservaPayload = {
       servicioId: 'campamentos',
       servicioNombre: 'Campamento de Verano',
       cliente: { nombre: p.contacto.nombre, email: p.contacto.email, telefono: p.contacto.telefono },
@@ -122,7 +122,10 @@ export default function ReservaVerano({ cfg, ocupacionDia = {} }: { cfg: Campame
         participantes: textoParticipantes(p.participantes),
         numNinos: n,
       },
-    })
+    }
+    if (onReservar) { onReservar(payload); return }
+    setEnviando(true)
+    const r = await iniciarPagoReserva(payload)
     if (r.ok) { redirigirARedsys(r); return }
     setEnviando(false); setError(r.error)
   }
@@ -351,7 +354,7 @@ export default function ReservaVerano({ cfg, ocupacionDia = {} }: { cfg: Campame
               {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
               <FormularioCampamento
                 numNinos={numNinos} setNumNinos={setNumNinos} total={total * numNinos}
-                color="red" enviando={enviando}
+                color="red" enviando={enviando} ctaLabel={onReservar ? 'Continuar al pago →' : undefined}
                 onVolver={() => setPaso('seleccion')} onSubmit={onEnviar}
               />
             </>
