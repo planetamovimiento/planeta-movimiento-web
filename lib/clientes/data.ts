@@ -33,6 +33,20 @@ function datosDeObs(obs: string): Record<string, unknown> {
   return {}
 }
 
+/** Nombre(s) del/los niño(s) de una reserva, según el tipo de servicio. '' si no se capturó. */
+function nombresHijos(d: Record<string, unknown>): string {
+  // Campamentos: lista "1) Nombre Apellidos — dd/mm/aaaa\n2) ..."
+  const parts = str(d.participantes)
+  if (parts) {
+    const nombres = parts.split('\n')
+      .map(l => l.replace(/^\s*\d+\)\s*/, '').replace(/\s*—.*$/, '').trim())
+      .filter(Boolean)
+    if (nombres.length) return nombres.join(', ')
+  }
+  // Cumpleaños: nombre del cumpleañero/a (formulario dedicado o asistente)
+  return str(d.cumpleanero) || str(d.nombreCumpleanero) || ''
+}
+
 export async function getClientes(): Promise<{ clientes: Cliente[]; ok: boolean }> {
   const db = createAdminClient()
   const forms = await safe<Record<string, unknown>>(() => db.from('form_submissions').select('id, tipo, nombre, email, telefono, asunto, datos, created_at').order('created_at', { ascending: false }).limit(5000) as never)
@@ -58,10 +72,19 @@ export async function getClientes(): Promise<{ clientes: Cliente[]; ok: boolean 
 
   for (const b of books) {
     const d = datosDeObs(str(b.observaciones))
+    const contacto = str(b.cliente_nombre)
+    const hijos = nombresHijos(d)
+    const numNinos = str(d.numNinos)
+    // Participante = niño/s; Tutor = quien paga/contacto. Si la reserva no captura
+    // el nombre del niño, se muestra "N niños"; si tampoco, el contacto como cliente.
+    let participante: string, tutor: string
+    if (hijos) { participante = hijos; tutor = contacto }
+    else if (numNinos) { participante = `${numNinos} niño${numNinos === '1' ? '' : 's'}`; tutor = contacto }
+    else { participante = contacto || '—'; tutor = str(d.tutor) || str(d.tutorLegal) || '' }
     out.push({
       origen: 'reserva', id: str(b.id),
-      participante: str(b.cliente_nombre) || '—',
-      tutor: str(d.tutor) || str(d.tutorLegal) || '',
+      participante,
+      tutor,
       email: str(b.cliente_email), telefono: str(b.cliente_telefono),
       servicio: str(b.servicio) || 'Reserva',
       fecha: str(b.created_at),
