@@ -267,9 +267,9 @@ const CATEGORIAS: {
 // ─── Foto coherente por servicio (de /public/fotos, optimizadas desde Imagenes_web) ──
 const FOTO_SERVICIO: Record<string, string> = {
   'cumpleanos':          '/fotos/cumpleanos/1.webp',
-  'domingos':            '/fotos/eventos/1.webp',
-  'diassinc':            '/fotos/campamentos/2.webp',
-  'halloween':           '/fotos/eventos/3.webp',
+  'domingos':            '/fotos/eventos-centro/domingos.webp',
+  'diassinc':            '/fotos/eventos-centro/dias-sin-cole.webp',
+  'halloween':           '/fotos/eventos-centro/halloween.webp',
   'campamentos':         '/fotos/campamentos/1.webp',
   'gimnasia-acrobatica': '/fotos/gimnasia-acrobatica/1.webp',
   'telas-aereas':        '/fotos/telas-aereas/1.webp',

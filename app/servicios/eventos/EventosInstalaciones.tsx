@@ -426,6 +426,8 @@ export default function EventosInstalaciones() {
 
           {/* ── DÍAS SIN COLE ── */}
           <div className="bg-gradient-to-b from-amber-500 to-amber-600 rounded-3xl overflow-hidden flex flex-col">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/fotos/eventos-centro/dias-sin-cole.webp" alt="Días Sin Cole" className="w-full h-48 object-cover" />
             {/* Header */}
             <div className="px-6 pt-8 pb-5 text-white">
               <div className="text-4xl mb-3">⚡🦸</div>
@@ -475,6 +477,8 @@ export default function EventosInstalaciones() {
 
           {/* ── DOMINGOS EN FAMILIA ── */}
           <div className="bg-gradient-to-b from-emerald-600 to-emerald-700 rounded-3xl overflow-hidden flex flex-col">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/fotos/eventos-centro/domingos.webp" alt="Domingos en Familia" className="w-full h-48 object-cover" />
             {/* Header */}
             <div className="px-6 pt-8 pb-5 text-white">
               <div className="text-4xl mb-3">👨‍👩‍👧‍👦🎉</div>
@@ -518,6 +522,8 @@ export default function EventosInstalaciones() {
 
           {/* ── NOCHE DE HALLOWEEN ── */}
           <div className="bg-gradient-to-b from-gray-900 to-orange-950 rounded-3xl overflow-hidden flex flex-col border border-orange-500/30">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/fotos/eventos-centro/halloween.webp" alt="Noche de Halloween" className="w-full h-48 object-cover" />
             {/* Header */}
             <div className="px-6 pt-8 pb-5 text-white">
               <div className="text-4xl mb-3">🧟🎃👻</div>

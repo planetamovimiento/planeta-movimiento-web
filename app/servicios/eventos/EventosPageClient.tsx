@@ -186,7 +186,8 @@ function PanelDiasSinCole({ cfg }: { cfg: EventoCentroCfg }) {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10">
         <div className="space-y-6">
           <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl p-8 text-white">
-            <div className="text-5xl mb-3">⚡🦸</div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/fotos/eventos-centro/dias-sin-cole.webp" alt="Días Sin Cole" className="-mx-8 -mt-8 mb-5 w-[calc(100%+4rem)] h-56 object-cover rounded-t-2xl" />
             <h2 className="text-3xl font-black mb-2">Días Sin Cole</h2>
             <p className="text-amber-100 text-sm leading-relaxed mb-4">
               En los festivos escolares abrimos nuestras instalaciones para que los niños vivan una mañana épica de la Escuela de Superhéroes mientras las familias concilian.
@@ -242,7 +243,8 @@ function PanelDomingos({ cfg }: { cfg: EventoCentroCfg }) {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10">
         <div className="space-y-6">
           <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl p-8 text-white">
-            <div className="text-5xl mb-3">👨‍👩‍👧‍👦🎉</div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/fotos/eventos-centro/domingos.webp" alt="Domingos en Familia" className="-mx-8 -mt-8 mb-5 w-[calc(100%+4rem)] h-56 object-cover rounded-t-2xl" />
             <h2 className="text-3xl font-black mb-2">Domingos en Familia</h2>
             <p className="text-emerald-100 text-sm leading-relaxed mb-4">
               Práctica libre dentro de nuestras instalaciones. Sin clases, sin presión — solo movimiento, juego y tiempo de calidad en familia.
@@ -352,7 +354,8 @@ function PanelHalloween({ cfg }: { cfg: EventoCentroCfg }) {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10">
         <div className="space-y-6">
           <div className="bg-gradient-to-br from-gray-900 to-orange-950 rounded-2xl p-8 text-white border border-orange-500/30">
-            <div className="text-5xl mb-3">🧟🎃👻</div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/fotos/eventos-centro/halloween.webp" alt="Noche de Halloween" className="-mx-8 -mt-8 mb-5 w-[calc(100%+4rem)] h-56 object-cover rounded-t-2xl" />
             <div className="text-orange-400 font-black text-xs uppercase tracking-widest mb-1">Evento anual especial</div>
             <h2 className="text-3xl font-black mb-1">Noche de Halloween</h2>
             {cfg.evento && <div className="text-orange-400 font-black text-lg mb-3">«{cfg.evento}»</div>}
