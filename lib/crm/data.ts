@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { normEstadoReserva } from './constants'
 import type { Registro, Origen, Pago } from './constants'
 
 async function safe<T>(fn: () => Promise<{ data: T[] | null; error: unknown }>): Promise<{ rows: T[]; ok: boolean }> {
@@ -146,13 +147,13 @@ type RegInput = Omit<Registro, 'pagos' | 'metodo_pago'>
 
 // Aplica el overlay de gestión sobre los valores base de la fuente
 function base(r: RegInput, gestion: Map<string, Record<string, unknown>>): Registro {
-  const full: Registro = { ...r, metodo_pago: '', pagos: [] }
+  const full: Registro = { ...r, estado_reserva: normEstadoReserva(r.estado_reserva), metodo_pago: '', pagos: [] }
   const g = gestion.get(`${r.origen}|${r.id}`)
   if (!g) return full
   const ov = <T,>(v: unknown, fallback: T): T => (v == null ? fallback : (v as T))
   return {
     ...full,
-    estado_reserva: ov(g.estado_reserva, full.estado_reserva),
+    estado_reserva: normEstadoReserva(ov(g.estado_reserva, full.estado_reserva)),
     estado_pago: ov(g.estado_pago, full.estado_pago),
     total: ov(num(g.total), full.total),
     pagado: ov(num(g.pagado), full.pagado),

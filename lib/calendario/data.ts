@@ -27,7 +27,9 @@ export async function getEventosCalendario(): Promise<{ eventos: EventoCalendari
     for (const r of registros) {
       const f = (r.fecha_realizacion || '').slice(0, 10)
       if (!f) continue
-      if (r.estado_reserva === 'cancelada') continue   // las canceladas NO aparecen en el calendario
+      // Solo las reservas CONFIRMADAS (o ya finalizadas) aparecen en el calendario.
+      // Las nuevas solicitudes (sin confirmar) y las canceladas no se muestran.
+      if (r.estado_reserva !== 'confirmada' && r.estado_reserva !== 'finalizada') continue
       const cumpleanero = r.categoria === 'Cumpleaños' ? String((r.datos as Record<string, unknown>)?.cumpleanero ?? '') : ''
       const nombre = cumpleanero || r.cliente_nombre
       out.push({
