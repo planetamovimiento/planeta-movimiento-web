@@ -3,13 +3,13 @@
 import { useState, useMemo } from 'react'
 import { iniciarPagoReserva } from '@/app/reservar/actions'
 import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
-
-// ─── Constantes de negocio ────────────────────────────────────────────────────
-const MIN_PARTICIPANTES = 13
-const PRECIO_LUNES_JUEVES = 11   // €
-const PRECIO_FIN_SEMANA   = 13   // €
-const EXTRA_MONITOR       = 20   // € si >25 participantes
-const FIANZA              = 50   // €
+import {
+  CUMPLE_MIN_PARTICIPANTES as MIN_PARTICIPANTES,
+  CUMPLE_PRECIO_LV as PRECIO_LUNES_JUEVES,
+  CUMPLE_PRECIO_FINDE as PRECIO_FIN_SEMANA,
+  CUMPLE_EXTRA_MONITOR as EXTRA_MONITOR,
+  CUMPLE_FIANZA as FIANZA,
+} from '@/lib/cumpleanos/precio'
 
 const MERIENDAS = [
   { id: 'sandwich-mixto', label: 'Sándwich mixto', desc: 'Jamón york y queso' },

@@ -10,6 +10,7 @@ import { getHorarioServicio } from '@/lib/reservas/horarios'
 import { slotsDelDia, etiquetaSlot, horaInicioDe } from '@/lib/reservas/slots'
 import { contarReservas } from '@/lib/reservas/disponibilidad'
 import { validarAforo } from '@/lib/reservas/aforo'
+import { CUMPLE_MIN_PARTICIPANTES, calcularTotalCumple } from '@/lib/cumpleanos/precio'
 
 export type DatosReserva = {
   nombre: string
@@ -207,11 +208,17 @@ export async function iniciarReserva(payload: IniciarPayload): Promise<IniciarRe
     return { ok: false, error: 'Esa franja acaba de quedarse sin plazas. Por favor, elige otro horario.' }
   }
 
+  // Cumpleaños: por defecto el mínimo facturable (13) y total estimado según el día.
+  const esCumple = servicioId === 'cumpleanos'
+  const participantes = esCumple ? CUMPLE_MIN_PARTICIPANTES : null
+  const total = esCumple ? calcularTotalCumple(fecha, CUMPLE_MIN_PARTICIPANTES) : (monto.totalReferencia ?? monto.euros)
+
   const clienteNombre = `${datos.nombre.trim()} ${datos.apellidos.trim()}`.trim()
   const datosObs = {
     apellidos: datos.apellidos.trim(),
     nombreCumpleanero: datos.nombreCumpleanero?.trim() || '',
     edadCumpleanero: datos.edadCumpleanero?.trim() || '',
+    numNinos: esCumple ? CUMPLE_MIN_PARTICIPANTES : undefined,
     fecha: fecha || '',
     hora: hora || '',
     senal: monto.esSenal ? monto.euros : null,
@@ -224,8 +231,8 @@ export async function iniciarReserva(payload: IniciarPayload): Promise<IniciarRe
     email: datos.email.trim(),
     telefono: datos.telefono.trim(),
     fecha, hora,
-    participantes: null,
-    total: monto.totalReferencia ?? monto.euros,
+    participantes,
+    total,
     senal: monto.euros,
     esSenal: monto.esSenal,
     observaciones,
