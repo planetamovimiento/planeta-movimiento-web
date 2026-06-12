@@ -2,45 +2,45 @@ import Link from 'next/link'
 import { Galeria } from '@/components/ui/Galeria'
 
 export const metadata = {
-  title: 'Curso Monitor de Actividades Juveniles 2026 — Planeta Movimiento × ARKHE',
+  title: 'Curso Monitor de Actividades Juveniles 2026 — Planeta Movimiento × Actividades ARKHE',
   description:
-    'Curso de Monitor de Actividades Juveniles en Cuenca, Tarancón y Motilla del Palancar. Del 6 al 31 de julio de 2026. Titulación homologada por la Junta de Castilla-La Mancha. Inscripción vía ARKHE.',
+    'Curso de Monitor de Actividades Juveniles en Cuenca, Tarancón y Motilla del Palancar. Del 6 al 31 de julio de 2026. Titulación homologada por la Junta de Castilla-La Mancha. Inscripción vía Actividades ARKHE.',
 }
 
 // ─── Configuración de sedes — actualizar URLs al activar inscripción ──────────
 const SEDES = [
   {
     ciudad: 'Cuenca',
-    emoji: '🏛️',
     color: 'from-pm-red to-pm-red-dark',
     colorLight: 'bg-pm-red-light border-pm-red/20',
     colorText: 'text-pm-red',
     fechas: '6 – 31 julio 2026',
     horario: 'Lunes a viernes · 10:00 – 14:00',
     plazas: 'Plazas limitadas',
-    url: 'https://arkhe.com/inscripcion-cuenca', // ← actualizar cuando esté disponible
+    foto: '/fotos/monitor-juvenil/cuenca.webp',
+    url: 'https://www.actividadesarkhe.com/actividad/preinscripcion-curso-monitores-cuenca/',
   },
   {
     ciudad: 'Tarancón',
-    emoji: '🌾',
     color: 'from-emerald-600 to-emerald-800',
     colorLight: 'bg-emerald-50 border-emerald-200',
     colorText: 'text-emerald-700',
     fechas: '6 – 31 julio 2026',
     horario: 'Lunes a viernes · 10:00 – 14:00',
     plazas: 'Plazas limitadas',
-    url: 'https://arkhe.com/inscripcion-tarancon', // ← actualizar cuando esté disponible
+    foto: '/fotos/monitor-juvenil/tarancon.webp',
+    url: 'https://www.actividadesarkhe.com/actividad/preinscripcion-curso-de-monitor-tarancon/',
   },
   {
     ciudad: 'Motilla del Palancar',
-    emoji: '🏔️',
     color: 'from-indigo-600 to-indigo-800',
     colorLight: 'bg-indigo-50 border-indigo-200',
     colorText: 'text-indigo-700',
     fechas: '6 – 31 julio 2026',
     horario: 'Lunes a viernes · 10:00 – 14:00',
     plazas: 'Plazas limitadas',
-    url: 'https://arkhe.com/inscripcion-motilla', // ← actualizar cuando esté disponible
+    foto: '/fotos/monitor-juvenil/motilla.webp',
+    url: 'https://www.actividadesarkhe.com/actividad/preinscripcion-curso-monitores-motilla-del-palancar/',
   },
 ]
 
@@ -51,19 +51,6 @@ const REQUISITOS = [
   { icon: '👶', texto: 'Personas que quieran trabajar con infancia' },
   { icon: '🌱', texto: 'Jóvenes interesados en el ocio educativo' },
   { icon: '📈', texto: 'Personas que buscan ampliar su formación' },
-]
-
-const APRENDERÁS = [
-  { icon: '🎯', texto: 'Dinamización de grupos' },
-  { icon: '🤝', texto: 'Juegos cooperativos' },
-  { icon: '💡', texto: 'Educación en valores' },
-  { icon: '🕊️', texto: 'Resolución de conflictos' },
-  { icon: '🌲', texto: 'Actividades al aire libre' },
-  { icon: '⛺', texto: 'Organización de campamentos' },
-  { icon: '🗓️', texto: 'Diseño de actividades' },
-  { icon: '🛡️', texto: 'Seguridad y prevención' },
-  { icon: '👦', texto: 'Trabajo con infancia y juventud' },
-  { icon: '🎪', texto: 'Animación sociocultural' },
 ]
 
 const SALIDAS = [
@@ -85,7 +72,7 @@ const FAQ = [
   { q: '¿La titulación es oficial?', a: 'Sí. La titulación está homologada y reconocida por la Junta de Castilla-La Mancha, lo que le da validez en todo el territorio nacional para trabajar como monitor en actividades juveniles.' },
   { q: '¿Cuántas horas de prácticas incluye?', a: 'El curso incluye 150 horas de prácticas en situaciones reales con grupos infantiles y juveniles, complementando así la formación teórica de julio.' },
   { q: '¿Dónde puedo trabajar después?', a: 'En campamentos de verano y urbanos, escuelas de verano, asociaciones juveniles, empresas de ocio, programas municipales, actividades deportivas y cualquier entidad que trabaje con infancia y juventud.' },
-  { q: '¿Cómo me inscribo?', a: 'La inscripción se realiza directamente a través de la plataforma oficial de ARKHE. En esta página encontrarás los botones de inscripción para cada sede. Haz clic en tu localidad y completa el proceso en la web de ARKHE.' },
+  { q: '¿Cómo me inscribo?', a: 'La inscripción se realiza directamente a través de la plataforma oficial de Actividades ARKHE. En esta página encontrarás los botones de inscripción para cada sede. Haz clic en tu localidad y completa el proceso en la web de Actividades ARKHE.' },
   { q: '¿En qué localidad puedo realizar el curso?', a: 'El curso se imparte en tres sedes: Cuenca, Tarancón y Motilla del Palancar. Puedes elegir la que mejor se adapte a tu ubicación y disponibilidad.' },
 ]
 
@@ -123,7 +110,7 @@ export default function MonitorJuvenilPage() {
                   🎓 Titulación oficial · Junta de Castilla-La Mancha
                 </span>
                 <span className="inline-flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold px-3 py-1.5 rounded-full">
-                  ✕ En colaboración con ARKHE
+                  En colaboración con Actividades ARKHE
                 </span>
               </div>
 
@@ -148,33 +135,37 @@ export default function MonitorJuvenilPage() {
                 {SEDES.map(s => (
                   <a key={s.ciudad} href={s.url} target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 bg-pm-red hover:bg-pm-red-dark text-white font-black px-5 py-3 rounded-xl transition-colors shadow-lg text-sm">
-                    {s.emoji} Inscribirme en {s.ciudad}
+                    Inscribirme en {s.ciudad}
                   </a>
                 ))}
               </div>
             </div>
 
-            {/* Tarjeta visual del curso */}
-            <div className="bg-white/5 border border-white/15 rounded-3xl p-8 backdrop-blur-sm">
-              <div className="text-center mb-6">
-                <div className="text-6xl mb-3">🏕️</div>
-                <div className="text-white font-black text-2xl mb-1">Monitor Juvenil 2026</div>
-                <div className="text-white/50 text-sm">Planeta Movimiento × ARKHE</div>
-              </div>
-              <div className="space-y-3">
-                {[
-                  { label: '📅 Fechas', valor: '6 al 31 de julio 2026' },
-                  { label: '⏰ Horario', valor: 'L-V · 10:00 – 14:00' },
-                  { label: '📍 Sedes', valor: 'Cuenca · Tarancón · Motilla' },
-                  { label: '📋 Prácticas', valor: '150 horas incluidas' },
-                  { label: '✅ Titulación', valor: 'Homologada Junta CLM' },
-                  { label: '👤 Edad mínima', valor: '16 años' },
-                ].map(({ label, valor }) => (
-                  <div key={label} className="flex justify-between items-center py-2 border-b border-white/10 text-sm">
-                    <span className="text-white/60">{label}</span>
-                    <span className="text-white font-semibold">{valor}</span>
-                  </div>
-                ))}
+            {/* Tarjeta visual del curso (con foto de fondo) */}
+            <div className="relative rounded-3xl overflow-hidden border border-white/15 shadow-2xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/fotos/monitor-juvenil/hero.webp" alt="Curso de Monitor de Actividades Juveniles" className="absolute inset-0 w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-b from-pm-navy/75 to-pm-navy/90" />
+              <div className="relative p-8">
+                <div className="text-center mb-6">
+                  <div className="text-white font-black text-2xl mb-1 [text-shadow:0_2px_12px_rgba(0,0,0,0.5)]">Monitor Juvenil 2026</div>
+                  <div className="text-white/70 text-sm">Planeta Movimiento × Actividades ARKHE</div>
+                </div>
+                <div className="space-y-3">
+                  {[
+                    { label: '📅 Fechas', valor: '6 al 31 de julio 2026' },
+                    { label: '⏰ Horario', valor: 'L-V · 10:00 – 14:00' },
+                    { label: '📍 Sedes', valor: 'Cuenca · Tarancón · Motilla' },
+                    { label: '📋 Prácticas', valor: '150 horas incluidas' },
+                    { label: '✅ Titulación', valor: 'Homologada Junta CLM' },
+                    { label: '👤 Edad mínima', valor: '16 años' },
+                  ].map(({ label, valor }) => (
+                    <div key={label} className="flex justify-between items-center py-2 border-b border-white/15 text-sm">
+                      <span className="text-white/70">{label}</span>
+                      <span className="text-white font-semibold">{valor}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -205,12 +196,12 @@ export default function MonitorJuvenilPage() {
                   A
                 </div>
                 <div>
-                  <div className="font-black text-pm-navy text-lg">ARKHE</div>
+                  <div className="font-black text-pm-navy text-lg">Actividades ARKHE</div>
                   <div className="text-gray-500 text-sm">Entidad colaboradora en formación</div>
                 </div>
               </div>
               <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                ARKHE es una empresa especializada en <strong className="text-pm-navy">formación educativa y juvenil</strong>.
+                Actividades ARKHE es una empresa especializada en <strong className="text-pm-navy">formación educativa y juvenil</strong>.
                 La inscripción y gestión del curso se realiza íntegramente a través de su plataforma oficial.
               </p>
               <div className="space-y-2">
@@ -223,9 +214,9 @@ export default function MonitorJuvenilPage() {
                   <div key={item} className="text-sm text-gray-700">{item}</div>
                 ))}
               </div>
-              <a href="https://arkhe.com" target="_blank" rel="noopener noreferrer"
+              <a href="https://www.actividadesarkhe.com/categoria-actividad/cursos/" target="_blank" rel="noopener noreferrer"
                 className="mt-4 flex items-center gap-2 text-pm-red hover:text-pm-red-dark font-bold text-sm transition-colors">
-                Visitar ARKHE.com
+                Visitar actividadesarkhe.com
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
                 </svg>
@@ -286,7 +277,7 @@ export default function MonitorJuvenilPage() {
             <div className="text-xs font-black text-pm-navy uppercase tracking-wider mb-5">Proceso formativo completo</div>
             <div className="flex flex-col sm:flex-row items-stretch gap-0">
               {[
-                { paso: '01', fase: 'Inscripción', desc: 'A través de la plataforma ARKHE', color: 'bg-pm-red text-white', icon: '✍️' },
+                { paso: '01', fase: 'Inscripción', desc: 'A través de la plataforma Actividades ARKHE', color: 'bg-pm-red text-white', icon: '✍️' },
                 { paso: '02', fase: 'Formación teórica', desc: 'Julio 2026 · L-V · 10:00-14:00', color: 'bg-pm-navy text-white', icon: '📖' },
                 { paso: '03', fase: 'Prácticas', desc: '150 horas en entornos reales', color: 'bg-emerald-600 text-white', icon: '🏕️' },
                 { paso: '04', fase: 'Titulación', desc: 'Certificado homologado Junta CLM', color: 'bg-indigo-600 text-white', icon: '🎓' },
@@ -317,34 +308,29 @@ export default function MonitorJuvenilPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {SEDES.map(s => (
               <div key={s.ciudad} className={`border-2 rounded-2xl overflow-hidden flex flex-col ${s.colorLight}`}>
-                {/* Header */}
-                <div className={`bg-gradient-to-br ${s.color} text-white px-6 py-6 text-center`}>
-                  <div className="text-4xl mb-2">{s.emoji}</div>
-                  <h3 className="font-black text-2xl">{s.ciudad}</h3>
-                  <div className="text-white/70 text-xs mt-1">Castilla-La Mancha</div>
+                {/* Header con foto de fondo */}
+                <div className="relative text-white px-6 py-10 text-center overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={s.foto} alt={s.ciudad} className="absolute inset-0 w-full h-full object-cover" />
+                  <div className={`absolute inset-0 bg-gradient-to-br ${s.color} opacity-85`} />
+                  <div className="relative">
+                    <h3 className="font-black text-2xl [text-shadow:0_2px_10px_rgba(0,0,0,0.4)]">{s.ciudad}</h3>
+                    <div className="text-white/85 text-xs mt-1">Castilla-La Mancha</div>
+                  </div>
                 </div>
 
                 {/* Info */}
                 <div className="p-5 flex-1 space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <span className="text-lg">📅</span>
-                    <div>
-                      <div className="font-semibold text-pm-navy">{s.fechas}</div>
-                      <div className="text-xs text-gray-500">Formación teórica</div>
-                    </div>
+                  <div className="text-sm">
+                    <div className="font-semibold text-pm-navy">{s.fechas}</div>
+                    <div className="text-xs text-gray-500">Formación teórica</div>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <span className="text-lg">⏰</span>
-                    <div>
-                      <div className="font-semibold text-pm-navy">{s.horario}</div>
-                    </div>
+                  <div className="text-sm">
+                    <div className="font-semibold text-pm-navy">{s.horario}</div>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-700">
-                    <span className="text-lg">📋</span>
-                    <div>
-                      <div className="font-semibold text-pm-navy">150 horas de prácticas</div>
-                      <div className="text-xs text-gray-500">Incluidas en el curso</div>
-                    </div>
+                  <div className="text-sm">
+                    <div className="font-semibold text-pm-navy">150 horas de prácticas</div>
+                    <div className="text-xs text-gray-500">Incluidas en el curso</div>
                   </div>
                   <div className={`flex items-center gap-1.5 text-xs font-bold ${s.colorText} bg-white border border-current/20 rounded-full px-3 py-1 self-start w-fit`}>
                     <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse"/>
@@ -358,26 +344,8 @@ export default function MonitorJuvenilPage() {
                     className={`block w-full bg-gradient-to-br ${s.color} text-white font-black text-sm text-center py-3.5 rounded-xl transition-opacity hover:opacity-90 shadow-sm`}>
                     Inscribirme en {s.ciudad} →
                   </a>
-                  <p className="text-center text-xs text-gray-400 mt-2">Inscripción vía plataforma ARKHE</p>
+                  <p className="text-center text-xs text-gray-400 mt-2">Inscripción vía plataforma Actividades ARKHE</p>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── QUÉ APRENDERÁS ── */}
-      <section className="bg-pm-bg py-14">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-black text-pm-navy mb-3">¿Qué aprenderás?</h2>
-            <p className="text-gray-500 text-sm max-w-lg mx-auto">Una visión general de los contenidos que trabajarás durante la formación</p>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            {APRENDERÁS.map(({ icon, texto }) => (
-              <div key={texto} className="bg-white border border-gray-200 rounded-2xl p-4 text-center shadow-sm hover:shadow-md transition-shadow hover:border-pm-red/30">
-                <div className="text-3xl mb-2">{icon}</div>
-                <div className="text-xs font-bold text-pm-navy leading-tight">{texto}</div>
               </div>
             ))}
           </div>
@@ -446,15 +414,15 @@ export default function MonitorJuvenilPage() {
             {SEDES.map(s => (
               <a key={s.ciudad} href={s.url} target="_blank" rel="noopener noreferrer"
                 className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 bg-white text-pm-red hover:bg-pm-red-light font-black px-6 py-4 rounded-xl transition-colors shadow-lg text-sm">
-                {s.emoji} {s.ciudad}
+                {s.ciudad}
               </a>
             ))}
           </div>
 
           <p className="mt-6 text-red-200 text-xs">
             La inscripción se gestiona íntegramente en la plataforma oficial de{' '}
-            <a href="https://arkhe.com" target="_blank" rel="noopener noreferrer" className="underline font-bold hover:text-white transition-colors">
-              ARKHE.com
+            <a href="https://www.actividadesarkhe.com/categoria-actividad/cursos/" target="_blank" rel="noopener noreferrer" className="underline font-bold hover:text-white transition-colors">
+              actividadesarkhe.com
             </a>
           </p>
         </div>
