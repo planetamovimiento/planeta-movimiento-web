@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { iniciarPagoReserva } from '@/app/reservar/actions'
 import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
 import FormularioCampamento, { type PayloadCampamento, textoParticipantes } from './FormularioCampamento'
@@ -42,8 +42,11 @@ function calcularPrecio(cfg: CampamentosConfig, semanas: SemanaVerano[], diasSel
 }
 
 // ─── Componente principal ─────────────────────────────────────────────────────
-export default function ReservaVerano({ cfg }: { cfg: CampamentosConfig }) {
+export default function ReservaVerano({ cfg, ocupacionDia = {} }: { cfg: CampamentosConfig; ocupacionDia?: Record<string, number> }) {
   const SEMANAS = useMemo(() => semanasResueltas(cfg), [cfg])
+  const aforoDia = cfg.aforoDia || 0
+  const libresDia = (dia: string) => (aforoDia > 0 ? Math.max(0, aforoDia - (ocupacionDia[dia] ?? 0)) : Infinity)
+  const diaLleno = (dia: string) => aforoDia > 0 && libresDia(dia) <= 0
   const [diasSeleccionados, setDiasSeleccionados] = useState<Set<string>>(new Set())
   const [matinal, setMatinal]     = useState(false)   // entrada 8:00
   const [ampliacion, setAmpliacion] = useState(false) // salida 15:00
@@ -60,7 +63,17 @@ export default function ReservaVerano({ cfg }: { cfg: CampamentosConfig }) {
     [cfg, SEMANAS, diasSeleccionados, cuponAplicado, matinal, ampliacion]
   )
 
+  // Máximo de niños según las plazas libres del día más ajustado de la selección.
+  const maxNinos = useMemo(() => {
+    if (aforoDia <= 0) return Infinity
+    const sel = Array.from(diasSeleccionados)
+    if (sel.length === 0) return Infinity
+    return Math.min(...sel.map(d => Math.max(0, aforoDia - (ocupacionDia[d] ?? 0))))
+  }, [aforoDia, ocupacionDia, diasSeleccionados])
+  useEffect(() => { setNumNinos(n => Math.max(1, Math.min(n, maxNinos))) }, [maxNinos])
+
   function toggleDia(dia: string) {
+    if (diaLleno(dia) && !diasSeleccionados.has(dia)) return
     setDiasSeleccionados(prev => {
       const next = new Set(prev)
       next.has(dia) ? next.delete(dia) : next.add(dia)
@@ -69,12 +82,13 @@ export default function ReservaVerano({ cfg }: { cfg: CampamentosConfig }) {
   }
 
   function toggleSemana(semana: SemanaVerano) {
-    const dias = diasDeSemana(semana)
+    const dias = diasDeSemana(semana).filter(d => !diaLleno(d))
+    if (dias.length === 0) return
     const todosSeleccionados = dias.every(d => diasSeleccionados.has(d))
     setDiasSeleccionados(prev => {
       const next = new Set(prev)
-      if (todosSeleccionados) { dias.forEach(d => next.delete(d)) }
-      else { dias.forEach(d => next.add(d)) }
+      if (todosSeleccionados) dias.forEach(d => next.delete(d))
+      else dias.forEach(d => next.add(d))
       return next
     })
   }
@@ -194,14 +208,19 @@ export default function ReservaVerano({ cfg }: { cfg: CampamentosConfig }) {
               <div className="grid grid-cols-5 gap-1.5 p-3 bg-white">
                 {dias.map((dia, i) => {
                   const selec = diasSeleccionados.has(dia)
+                  const lleno = diaLleno(dia)
                   return (
                     <button
                       key={dia}
+                      disabled={lleno && !selec}
+                      title={lleno ? 'Completo' : undefined}
                       onClick={() => toggleDia(dia)}
                       className={`flex flex-col items-center py-2 rounded-xl border-2 transition-all text-xs font-semibold ${
                         selec
                           ? `${semana.color} text-white border-transparent`
-                          : `bg-pm-bg border-gray-200 text-gray-700 hover:border-pm-red/40`
+                          : lleno
+                            ? 'bg-gray-50 border-gray-200 text-gray-300 line-through cursor-not-allowed'
+                            : `bg-pm-bg border-gray-200 text-gray-700 hover:border-pm-red/40`
                       }`}
                     >
                       <span className="text-xs opacity-70 mb-0.5">{DIAS_SEMANA[i]}</span>
@@ -253,9 +272,12 @@ export default function ReservaVerano({ cfg }: { cfg: CampamentosConfig }) {
               <button onClick={() => setNumNinos(n => Math.max(1, n - 1))}
                 className="w-9 h-9 bg-pm-bg border border-gray-200 rounded-xl text-lg font-bold hover:border-pm-red transition-colors">−</button>
               <div className="text-3xl font-black text-pm-navy flex-1 text-center">{numNinos}</div>
-              <button onClick={() => setNumNinos(n => n + 1)}
-                className="w-9 h-9 bg-pm-bg border border-gray-200 rounded-xl text-lg font-bold hover:border-pm-red transition-colors">+</button>
+              <button onClick={() => setNumNinos(n => Math.min(maxNinos, n + 1))} disabled={numNinos >= maxNinos}
+                className="w-9 h-9 bg-pm-bg border border-gray-200 rounded-xl text-lg font-bold hover:border-pm-red transition-colors disabled:opacity-40 disabled:cursor-not-allowed">+</button>
             </div>
+            {Number.isFinite(maxNinos) && (
+              <p className="text-xs text-gray-400 mt-2">Máximo {maxNinos} niño{maxNinos === 1 ? '' : 's'} según las plazas libres de los días elegidos.</p>
+            )}
           </div>
 
           {/* Cupón hermanos */}

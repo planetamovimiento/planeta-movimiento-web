@@ -1,4 +1,5 @@
 import { getCampamentosConfig } from '@/lib/campamentos/store'
+import { getOcupacionCampamentos } from '@/lib/reservas/aforo'
 import CampamentosPageClient from './CampamentosPageClient'
 
 export const dynamic = 'force-dynamic'
@@ -10,6 +11,6 @@ export const metadata = {
 }
 
 export default async function CampamentosPage() {
-  const cfg = await getCampamentosConfig()
-  return <CampamentosPageClient cfg={cfg} />
+  const [cfg, ocupacion] = await Promise.all([getCampamentosConfig(), getOcupacionCampamentos()])
+  return <CampamentosPageClient cfg={cfg} ocupacion={ocupacion} />
 }

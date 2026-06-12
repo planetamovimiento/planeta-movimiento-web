@@ -21,6 +21,7 @@ export default function EditorEventoCentro({ id, inicial, puedeEditar }: { id: s
     const contenido = {
       precio: Number(f.precio) || 0, ivaIncluido: f.ivaIncluido, horario: f.horario, edad: f.edad,
       nota: f.nota, fechas: f.fechas, evento: f.evento, plazas: Number(f.plazas) || 0,
+      aforo: Number(f.aforo) || 0,
     }
     const r = await guardarEventoConfig(id, contenido, estado)
     setGuardando(false)
@@ -53,6 +54,13 @@ export default function EditorEventoCentro({ id, inicial, puedeEditar }: { id: s
           <div>
             <label className={label}>Plazas máximas</label>
             <input type="number" value={f.plazas} disabled={!puedeEditar} onChange={e => set('plazas', e.target.value)} className={input} />
+          </div>
+        )}
+        {!esHalloween && (
+          <div>
+            <label className={label}>Aforo por fecha (niños · 0 = sin límite)</label>
+            <input type="number" min={0} value={f.aforo} disabled={!puedeEditar} onChange={e => set('aforo', e.target.value)} className={input} />
+            <p className="text-[11px] text-gray-400 mt-1.5">Plazas máximas de niños por día. Al llenarse, esa fecha aparece como «Completo» en la web.</p>
           </div>
         )}
       </div>

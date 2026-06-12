@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { submitBooking } from '@/lib/forms/actions'
 import { iniciarPagoReserva } from '@/app/reservar/actions'
 import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
@@ -61,7 +61,7 @@ function Exito({ onClose }: { onClose: () => void }) {
 // ──────────────────────────────────────────────────────────────────────────────
 // DÍAS SIN COLE
 // ──────────────────────────────────────────────────────────────────────────────
-export function ReservaDiasSinCole({ cfg, onClose = () => {} }: { cfg?: EventoCentroCfg; onClose?: () => void }) {
+export function ReservaDiasSinCole({ cfg, onClose = () => {}, ocupacion = {} }: { cfg?: EventoCentroCfg; onClose?: () => void; ocupacion?: Record<string, number> }) {
   const [fecha, setFecha]      = useState('')
   const [ninos, setNinos]       = useState(1)
   const [form, setForm]         = useState({ nombre: '', email: '', telefono: '' })
@@ -70,6 +70,10 @@ export function ReservaDiasSinCole({ cfg, onClose = () => {} }: { cfg?: EventoCe
 
   const fechasDSC = cfg ? parseFechasDSC(cfg.fechas) : DIAS_SIN_COLE
   const precioBase = cfg ? cfg.precio : 30
+  const aforo = cfg?.aforo ?? 0
+  const libresDe = (f: string) => (aforo > 0 ? Math.max(0, aforo - (ocupacion[f] ?? 0)) : Infinity)
+  const libresSel = fecha ? libresDe(fecha) : Infinity
+  useEffect(() => { setNinos(n => Math.max(1, Math.min(n, libresSel))) }, [fecha]) // eslint-disable-line react-hooks/exhaustive-deps
   const precioConIva = (cfg && cfg.ivaIncluido)
     ? Math.round(precioBase * ninos * 100) / 100
     : Math.round(precioBase * (1 + IVA) * ninos * 100) / 100
@@ -94,17 +98,27 @@ export function ReservaDiasSinCole({ cfg, onClose = () => {} }: { cfg?: EventoCe
         <div className="grid grid-cols-1 gap-2">
           {fechasDSC.map(d => {
             const pasado = new Date(d.fecha + 'T12:00:00') < new Date()
+            const libres = libresDe(d.fecha)
+            const lleno = aforo > 0 && libres <= 0
+            const bloqueado = pasado || lleno
             return (
-              <button key={d.fecha} type="button" disabled={pasado}
+              <button key={d.fecha} type="button" disabled={bloqueado}
                 onClick={() => setFecha(d.fecha)}
                 className={`flex items-center justify-between px-4 py-3 rounded-xl border-2 text-sm transition-all ${
-                  pasado ? 'opacity-30 cursor-not-allowed border-gray-100 bg-gray-50' :
+                  bloqueado ? 'opacity-40 cursor-not-allowed border-gray-100 bg-gray-50' :
                   fecha === d.fecha ? 'border-amber-500 bg-amber-50 text-amber-800' :
                   'border-gray-200 hover:border-amber-400 text-pm-navy'
                 }`}>
                 <span className="font-semibold">{d.label}</span>
-                <span className="text-xs text-gray-500">
-                  {new Date(d.fecha + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                <span className="text-right leading-tight">
+                  <span className="block text-xs text-gray-500">
+                    {new Date(d.fecha + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                  </span>
+                  {aforo > 0 && (
+                    <span className={`block text-[11px] font-bold ${lleno ? 'text-red-500' : 'text-green-600'}`}>
+                      {lleno ? 'Completo' : `${libres} libre${libres === 1 ? '' : 's'}`}
+                    </span>
+                  )}
                 </span>
               </button>
             )
@@ -118,8 +132,11 @@ export function ReservaDiasSinCole({ cfg, onClose = () => {} }: { cfg?: EventoCe
         <div className="flex items-center gap-4">
           <button type="button" onClick={() => setNinos(n => Math.max(1, n-1))} className="w-9 h-9 bg-amber-50 border border-amber-200 rounded-xl font-bold text-lg hover:border-amber-400 transition-colors">−</button>
           <div className="flex-1 text-center text-3xl font-black text-pm-navy">{ninos}</div>
-          <button type="button" onClick={() => setNinos(n => n+1)} className="w-9 h-9 bg-amber-50 border border-amber-200 rounded-xl font-bold text-lg hover:border-amber-400 transition-colors">+</button>
+          <button type="button" onClick={() => setNinos(n => Math.min(libresSel, n+1))} disabled={ninos >= libresSel} className="w-9 h-9 bg-amber-50 border border-amber-200 rounded-xl font-bold text-lg hover:border-amber-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">+</button>
         </div>
+        {fecha && Number.isFinite(libresSel) && (
+          <p className="text-xs text-gray-400 mt-2">Quedan {libresSel} plaza{libresSel === 1 ? '' : 's'} para esa fecha.</p>
+        )}
       </div>
 
       {/* Precio */}
@@ -137,7 +154,7 @@ export function ReservaDiasSinCole({ cfg, onClose = () => {} }: { cfg?: EventoCe
       <input required type="tel" placeholder="Teléfono *" value={form.telefono} onChange={e => setForm(f => ({...f, telefono: e.target.value}))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-amber-500"/>
 
       {error && <p className="text-xs text-red-600">{error}</p>}
-      <button type="submit" disabled={!fecha || !form.nombre || !form.email || !form.telefono || enviando}
+      <button type="submit" disabled={!fecha || libresSel <= 0 || !form.nombre || !form.email || !form.telefono || enviando}
         className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">
         {enviando ? 'Redirigiendo al pago…' : `Pagar ${precioConIva} € y reservar`}
       </button>
@@ -164,8 +181,10 @@ function domingosDeMes(year: number, month: number): string[] {
   return res
 }
 
-export function ReservaDomingos({ cfg, onClose = () => {} }: { cfg?: EventoCentroCfg; onClose?: () => void }) {
+export function ReservaDomingos({ cfg, onClose = () => {}, ocupacion = {} }: { cfg?: EventoCentroCfg; onClose?: () => void; ocupacion?: Record<string, number> }) {
   const precioNino = cfg ? cfg.precio : 15
+  const aforo = cfg?.aforo ?? 0
+  const libresDe = (f: string) => (aforo > 0 ? Math.max(0, aforo - (ocupacion[f] ?? 0)) : Infinity)
   const hoy = useMemo(() => { const h = new Date(); h.setHours(0, 0, 0, 0); return h }, [])
   const [viewY, setViewY] = useState(hoy.getFullYear())
   const [viewM, setViewM] = useState(hoy.getMonth())
@@ -182,6 +201,8 @@ export function ReservaDomingos({ cfg, onClose = () => {} }: { cfg?: EventoCentr
   const [error, setError]   = useState('')
 
   const total = ninos * precioNino
+  const libresSel = fecha ? libresDe(fecha) : Infinity
+  useEffect(() => { setNinos(n => Math.max(1, Math.min(n, libresSel))) }, [fecha]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault(); setEnviando(true); setError('')
@@ -217,15 +238,20 @@ export function ReservaDomingos({ cfg, onClose = () => {} }: { cfg?: EventoCentr
           {domingos.map(d => {
             const obj = new Date(d + 'T12:00:00')
             const pasado = obj < hoy
+            const libres = libresDe(d)
+            const lleno = aforo > 0 && libres <= 0
+            const bloqueado = pasado || lleno
             return (
-              <button key={d} type="button" disabled={pasado} onClick={() => setFecha(d)}
+              <button key={d} type="button" disabled={bloqueado} onClick={() => setFecha(d)}
                 className={`px-3 py-2.5 rounded-xl border-2 text-sm transition-all text-center ${
-                  pasado ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
+                  bloqueado ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
                   : fecha === d ? 'border-green-500 bg-green-50 text-green-800'
                   : 'border-gray-200 hover:border-green-400 text-pm-navy'
                 }`}>
                 <div className="font-black">{obj.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}</div>
-                <div className="text-xs text-gray-400">11:00 – 13:00</div>
+                <div className={`text-xs ${lleno ? 'text-red-500 font-bold' : 'text-gray-400'}`}>
+                  {lleno ? 'Completo' : aforo > 0 ? `${libres} libre${libres === 1 ? '' : 's'}` : '11:00 – 13:00'}
+                </div>
               </button>
             )
           })}
@@ -239,8 +265,11 @@ export function ReservaDomingos({ cfg, onClose = () => {} }: { cfg?: EventoCentr
         <div className="flex items-center gap-4">
           <button type="button" onClick={() => setNinos(n => Math.max(1, n-1))} className="w-9 h-9 bg-green-50 border border-green-200 rounded-xl font-bold text-lg hover:border-green-400 transition-colors">−</button>
           <div className="flex-1 text-center text-3xl font-black text-pm-navy">{ninos}</div>
-          <button type="button" onClick={() => setNinos(n => n+1)} className="w-9 h-9 bg-green-50 border border-green-200 rounded-xl font-bold text-lg hover:border-green-400 transition-colors">+</button>
+          <button type="button" onClick={() => setNinos(n => Math.min(libresSel, n+1))} disabled={ninos >= libresSel} className="w-9 h-9 bg-green-50 border border-green-200 rounded-xl font-bold text-lg hover:border-green-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">+</button>
         </div>
+        {fecha && Number.isFinite(libresSel) && (
+          <p className="text-xs text-gray-400 mt-2">Quedan {libresSel} plaza{libresSel === 1 ? '' : 's'} ese domingo.</p>
+        )}
       </div>
 
       {fecha && (
@@ -257,7 +286,7 @@ export function ReservaDomingos({ cfg, onClose = () => {} }: { cfg?: EventoCentr
       <input required type="tel" placeholder="Teléfono *" value={form.telefono} onChange={e => setForm(f => ({...f, telefono: e.target.value}))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-green-500"/>
 
       {error && <p className="text-xs text-red-600">{error}</p>}
-      <button type="submit" disabled={!fecha || !form.nombre || !form.email || !form.telefono || enviando}
+      <button type="submit" disabled={!fecha || libresSel <= 0 || !form.nombre || !form.email || !form.telefono || enviando}
         className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">
         {enviando ? 'Redirigiendo al pago…' : `Pagar ${total} € y reservar`}
       </button>
@@ -332,7 +361,7 @@ export function ReservaHalloween({ cfg, onClose = () => {} }: { cfg?: EventoCent
 // ──────────────────────────────────────────────────────────────────────────────
 // MAÑANAS MÁGICAS (personaje editable desde el admin)
 // ──────────────────────────────────────────────────────────────────────────────
-export function ReservaMananaMagica({ cfg, onClose = () => {} }: { cfg: MananaMagica; onClose?: () => void }) {
+export function ReservaMananaMagica({ cfg, onClose = () => {}, ocupacion = {} }: { cfg: MananaMagica; onClose?: () => void; ocupacion?: Record<string, number> }) {
   const [ninos, setNinos] = useState(1)
   const [form, setForm] = useState({ nombre: '', email: '', telefono: '', edades: '' })
   const [enviando, setEnviando] = useState(false)
@@ -340,6 +369,9 @@ export function ReservaMananaMagica({ cfg, onClose = () => {} }: { cfg: MananaMa
 
   const desc = cfg.descuentoHermanos / 100
   const total = Math.round((cfg.precio + Math.max(0, ninos - 1) * cfg.precio * (1 - desc)) * 100) / 100
+  const aforo = cfg.aforo ?? 0
+  const libres = aforo > 0 && cfg.fecha ? Math.max(0, aforo - (ocupacion[cfg.fecha] ?? 0)) : Infinity
+  useEffect(() => { setNinos(n => Math.max(1, Math.min(n, libres))) }, [libres])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault(); setEnviando(true); setError('')
@@ -353,7 +385,7 @@ export function ReservaMananaMagica({ cfg, onClose = () => {} }: { cfg: MananaMa
     setEnviando(false); setError(r.error)
   }
 
-  const completo = cfg.estado === 'completo'
+  const completo = cfg.estado === 'completo' || (aforo > 0 && libres <= 0)
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -372,8 +404,11 @@ export function ReservaMananaMagica({ cfg, onClose = () => {} }: { cfg: MananaMa
         <div className="flex items-center gap-4">
           <button type="button" onClick={() => setNinos(n => Math.max(1, n - 1))} className="w-9 h-9 bg-fuchsia-50 border border-fuchsia-200 rounded-xl font-bold text-lg hover:border-fuchsia-400 transition-colors">−</button>
           <div className="flex-1 text-center text-3xl font-black text-pm-navy">{ninos}</div>
-          <button type="button" onClick={() => setNinos(n => n + 1)} className="w-9 h-9 bg-fuchsia-50 border border-fuchsia-200 rounded-xl font-bold text-lg hover:border-fuchsia-400 transition-colors">+</button>
+          <button type="button" onClick={() => setNinos(n => Math.min(libres, n + 1))} disabled={ninos >= libres} className="w-9 h-9 bg-fuchsia-50 border border-fuchsia-200 rounded-xl font-bold text-lg hover:border-fuchsia-400 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">+</button>
         </div>
+        {Number.isFinite(libres) && (
+          <p className="text-xs text-gray-400 mt-2">{libres > 0 ? `Quedan ${libres} plaza${libres === 1 ? '' : 's'}.` : 'Plazas completas.'}</p>
+        )}
       </div>
 
       <div className="bg-fuchsia-50 border border-fuchsia-200 rounded-xl p-3 text-sm">

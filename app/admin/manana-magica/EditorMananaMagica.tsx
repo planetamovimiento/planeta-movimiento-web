@@ -19,6 +19,7 @@ export default function EditorMananaMagica({ inicial, puedeEditar }: { inicial: 
       personaje: f.personaje, tematica: f.tematica, emoji: f.emoji,
       fecha: f.fecha, fechaTexto: f.fechaTexto, horario: f.horario,
       precio: Number(f.precio) || 0, descuentoHermanos: Number(f.descuentoHermanos) || 0,
+      aforo: Number(f.aforo) || 0,
       edades: f.edades, descripcion: f.descripcion,
       actividades: actsText.split('\n').map(s => s.trim()).filter(Boolean),
     }
@@ -74,6 +75,10 @@ export default function EditorMananaMagica({ inicial, puedeEditar }: { inicial: 
         <div>
           <label className={label}>Descuento hermanos (%)</label>
           <input type="number" value={f.descuentoHermanos} disabled={!puedeEditar} onChange={e => set('descuentoHermanos', e.target.value)} className={input} />
+        </div>
+        <div>
+          <label className={label}>Aforo (niños · 0 = sin límite)</label>
+          <input type="number" min={0} value={f.aforo} disabled={!puedeEditar} onChange={e => set('aforo', e.target.value)} className={input} />
         </div>
       </div>
 

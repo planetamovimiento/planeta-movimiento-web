@@ -15,6 +15,7 @@ export type MananaMagica = {
   horario: string            // "11:00 – 13:00"
   precio: number             // € por niño
   descuentoHermanos: number  // % de descuento para hermanos
+  aforo: number              // plazas (niños) para la fecha única; 0 = sin límite
   edades: string
   descripcion: string
   actividades: string[]
@@ -32,6 +33,7 @@ export const MANANA_MAGICA_DEFAULT: MananaMagica = {
   horario: '11:00 – 13:00',
   precio: 30,
   descuentoHermanos: 20,
+  aforo: 0,
   edades: 'Infantil y primaria',
   descripcion:
     'Una mañana mágica llena de juego, creatividad y diversión sin pantallas. Una jornada temática con un personaje invitado distinto cada mes, pensada para que los peques disfruten de un montón de actividades en nuestras instalaciones.',

@@ -9,6 +9,7 @@ import { generateReservaNumero } from '@/lib/utils'
 import { getHorarioServicio } from '@/lib/reservas/horarios'
 import { slotsDelDia, etiquetaSlot, horaInicioDe } from '@/lib/reservas/slots'
 import { contarReservas } from '@/lib/reservas/disponibilidad'
+import { validarAforo } from '@/lib/reservas/aforo'
 
 export type DatosReserva = {
   nombre: string
@@ -209,6 +210,7 @@ export async function iniciarPagoReserva(p: PagoReservaPayload): Promise<Iniciar
   const fianza = Number(servicio.fianza) || 0
   const esSenal = fianza > 0
   const senal = esSenal ? fianza : total
+  const servicioNombre = p.servicioNombre?.trim() || servicio.nombre
 
   // Anti-overbooking solo si el servicio tiene franjas configuradas y hay fecha+hora.
   const slots = await getHorarioServicio(servicioId)
@@ -219,10 +221,17 @@ export async function iniciarPagoReserva(p: PagoReservaPayload): Promise<Iniciar
     if (ya >= slot.plazas) return { ok: false, error: 'Esa franja acaba de quedarse sin plazas. Elige otra.' }
   }
 
+  // Aforo por fecha (Días Sin Cole / Domingos / Mañanas / Campamentos). Autoritativo en servidor.
+  const diasSel = typeof datos?.diasSeleccionados === 'string'
+    ? (datos.diasSeleccionados as string).split(',').map(s => s.trim()).filter(Boolean)
+    : (fecha ? [fecha] : [])
+  const aforoOk = await validarAforo({ servicioId, servicioNombre, fecha, dias: diasSel, ninos: participantes ?? 1 })
+  if (!aforoOk.ok) return aforoOk
+
   const observaciones = `${(p.observaciones ?? '').trim()}${datos ? '\n' + JSON.stringify(datos) : ''}`.trim()
 
   return emitirPago({
-    servicioNombre: p.servicioNombre?.trim() || servicio.nombre,
+    servicioNombre,
     clienteNombre: cliente.nombre.trim(),
     email: cliente.email.trim(),
     telefono: cliente.telefono.trim(),

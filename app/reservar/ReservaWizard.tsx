@@ -6,17 +6,36 @@ import StepFecha from '@/components/reserva/StepFecha'
 import StepDatos, { type DatosForm } from '@/components/reserva/StepDatos'
 import { iniciarReserva } from './actions'
 import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
+import { ReservaDiasSinCole, ReservaDomingos, ReservaMananaMagica } from '@/app/servicios/eventos/EventosInstalaciones'
+import CampamentosReservaWizard from './CampamentosReservaWizard'
 import type { ServicioReserva } from '@/lib/reservas/monto'
 import type { SlotSemanal } from '@/lib/reservas/slots'
+import type { EventoCentroCfg } from '@/lib/eventos/centro'
+import type { MananaMagica } from '@/lib/eventos/manana-magica'
+import type { CampamentosConfig } from '@/lib/campamentos/editable'
 
 type Reservados = Record<string, Record<string, Record<string, number>>>
+type OcupacionCampamentos = { verano: Record<string, number>; navidad: Record<string, number>; ssanta: Record<string, number> }
 
-const PASOS = ['Servicio', 'Fecha y hora', 'Datos']
+// Servicios cuyo paso 2 usa su propio formulario de reserva (fecha + datos + pago).
+const DEDICADOS = new Set(['dias-sin-cole', 'domingos', 'manana-magica', 'campamentos'])
 
-export default function ReservaWizard({ servicios, horarios, reservados }: {
+export default function ReservaWizard({
+  servicios, horarios, reservados,
+  diasSinCole, domingos, mananaMagica, campamentos,
+  ocupacionDSC, ocupacionDomingos, ocupacionMM, ocupacionCampamentos,
+}: {
   servicios: ServicioReserva[]
   horarios: Record<string, SlotSemanal[]>
   reservados: Reservados
+  diasSinCole: EventoCentroCfg
+  domingos: EventoCentroCfg
+  mananaMagica: MananaMagica
+  campamentos: CampamentosConfig
+  ocupacionDSC: Record<string, number>
+  ocupacionDomingos: Record<string, number>
+  ocupacionMM: Record<string, number>
+  ocupacionCampamentos: OcupacionCampamentos
 }) {
   const [paso, setPaso] = useState(1)
   const [servicioId, setServicioId] = useState<string | null>(null)
@@ -30,6 +49,8 @@ export default function ReservaWizard({ servicios, horarios, reservados }: {
   })
 
   const servicio = servicios.find(s => s.id === servicioId) ?? null
+  const esDedicado = servicioId ? DEDICADOS.has(servicioId) : false
+  const PASOS = esDedicado ? ['Servicio', 'Reserva'] : ['Servicio', 'Fecha y hora', 'Datos']
 
   async function handleSubmit() {
     if (!servicioId) return
@@ -102,7 +123,21 @@ export default function ReservaWizard({ servicios, horarios, reservados }: {
               onNext={() => setPaso(2)}
             />
           )}
-          {paso === 2 && (
+
+          {/* Paso 2 — formulario real del servicio (dedicado) o calendario de franjas (cumpleaños) */}
+          {paso === 2 && esDedicado && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-pm-navy">{servicio?.nombre ?? 'Completa tu reserva'}</h2>
+                <button onClick={() => setPaso(1)} className="text-sm text-gray-500 hover:text-pm-red font-semibold transition-colors">← Cambiar actividad</button>
+              </div>
+              {servicioId === 'dias-sin-cole' && <ReservaDiasSinCole cfg={diasSinCole} ocupacion={ocupacionDSC} />}
+              {servicioId === 'domingos' && <ReservaDomingos cfg={domingos} ocupacion={ocupacionDomingos} />}
+              {servicioId === 'manana-magica' && <ReservaMananaMagica cfg={mananaMagica} ocupacion={ocupacionMM} />}
+              {servicioId === 'campamentos' && <CampamentosReservaWizard cfg={campamentos} ocupacion={ocupacionCampamentos} />}
+            </div>
+          )}
+          {paso === 2 && !esDedicado && (
             <StepFecha
               slots={servicioId ? (horarios[servicioId] ?? []) : []}
               reservados={servicioId ? (reservados[servicioId] ?? {}) : {}}
@@ -114,7 +149,8 @@ export default function ReservaWizard({ servicios, horarios, reservados }: {
               onBack={() => setPaso(1)}
             />
           )}
-          {paso === 3 && (
+
+          {paso === 3 && !esDedicado && (
             <StepDatos
               datos={datos}
               onDatos={setDatos}

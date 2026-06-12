@@ -1,4 +1,5 @@
 import { getMananaMagica, getEventoCentro } from '@/lib/eventos/store'
+import { getOcupacionFecha } from '@/lib/reservas/aforo'
 import EventosPageClient from './EventosPageClient'
 
 export const dynamic = 'force-dynamic'
@@ -10,11 +11,24 @@ export const metadata = {
 }
 
 export default async function EventosPage() {
-  const [mananaMagica, diasSinCole, domingos, halloween] = await Promise.all([
+  const [mananaMagica, diasSinCole, domingos, halloween, ocupacionDSC, ocupacionDomingos, ocupacionMM] = await Promise.all([
     getMananaMagica(),
     getEventoCentro('dias-sin-cole'),
     getEventoCentro('domingos'),
     getEventoCentro('halloween'),
+    getOcupacionFecha('dias-sin-cole'),
+    getOcupacionFecha('domingos'),
+    getOcupacionFecha('manana-magica'),
   ])
-  return <EventosPageClient mananaMagica={mananaMagica} diasSinCole={diasSinCole} domingos={domingos} halloween={halloween} />
+  return (
+    <EventosPageClient
+      mananaMagica={mananaMagica}
+      diasSinCole={diasSinCole}
+      domingos={domingos}
+      halloween={halloween}
+      ocupacionDSC={ocupacionDSC}
+      ocupacionDomingos={ocupacionDomingos}
+      ocupacionMM={ocupacionMM}
+    />
+  )
 }

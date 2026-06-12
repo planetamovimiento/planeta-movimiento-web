@@ -180,7 +180,7 @@ function precioLabel(cfg: EventoCentroCfg): string | null {
 }
 
 // ─── Panel Días Sin Cole ──────────────────────────────────────────────────────
-function PanelDiasSinCole({ cfg }: { cfg: EventoCentroCfg }) {
+function PanelDiasSinCole({ cfg, ocupacion }: { cfg: EventoCentroCfg; ocupacion: Record<string, number> }) {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10">
@@ -228,7 +228,7 @@ function PanelDiasSinCole({ cfg }: { cfg: EventoCentroCfg }) {
               <div className="font-black text-base">⚡ Reservar plaza</div>
               <div className="text-amber-100 text-xs mt-0.5">Elige el día y completa la solicitud</div>
             </div>
-            <div className="p-5"><ReservaDiasSinCole cfg={cfg} /></div>
+            <div className="p-5"><ReservaDiasSinCole cfg={cfg} ocupacion={ocupacion} /></div>
           </div>
         </div>
       </div>
@@ -237,7 +237,7 @@ function PanelDiasSinCole({ cfg }: { cfg: EventoCentroCfg }) {
 }
 
 // ─── Panel Domingos ───────────────────────────────────────────────────────────
-function PanelDomingos({ cfg }: { cfg: EventoCentroCfg }) {
+function PanelDomingos({ cfg, ocupacion }: { cfg: EventoCentroCfg; ocupacion: Record<string, number> }) {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10">
@@ -294,7 +294,7 @@ function PanelDomingos({ cfg }: { cfg: EventoCentroCfg }) {
               <div className="font-black text-base">🗓 Reservar domingo</div>
               <div className="text-emerald-100 text-xs mt-0.5">Elige la semana y completa la solicitud</div>
             </div>
-            <div className="p-5"><ReservaDomingos cfg={cfg} /></div>
+            <div className="p-5"><ReservaDomingos cfg={cfg} ocupacion={ocupacion} /></div>
           </div>
         </div>
       </div>
@@ -303,7 +303,7 @@ function PanelDomingos({ cfg }: { cfg: EventoCentroCfg }) {
 }
 
 // ─── Panel Mañanas Mágicas ────────────────────────────────────────────────────
-function PanelMananaMagica({ cfg }: { cfg: MananaMagica }) {
+function PanelMananaMagica({ cfg, ocupacion }: { cfg: MananaMagica; ocupacion: Record<string, number> }) {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10">
@@ -339,7 +339,7 @@ function PanelMananaMagica({ cfg }: { cfg: MananaMagica }) {
               <div className="font-black text-base">✨ Reservar — Mañana Mágica</div>
               <div className="text-fuchsia-100 text-xs mt-0.5">{cfg.personaje} · {cfg.fechaTexto}</div>
             </div>
-            <div className="p-5"><ReservaMananaMagica cfg={cfg} /></div>
+            <div className="p-5"><ReservaMananaMagica cfg={cfg} ocupacion={ocupacion} /></div>
           </div>
         </div>
       </div>
@@ -405,8 +405,9 @@ function PanelHalloween({ cfg }: { cfg: EventoCentroCfg }) {
 }
 
 // ─── Página principal (cliente) ───────────────────────────────────────────────
-export default function EventosPageClient({ mananaMagica, diasSinCole, domingos, halloween }: {
+export default function EventosPageClient({ mananaMagica, diasSinCole, domingos, halloween, ocupacionDSC, ocupacionDomingos, ocupacionMM }: {
   mananaMagica: MananaMagica; diasSinCole: EventoCentroCfg; domingos: EventoCentroCfg; halloween: EventoCentroCfg
+  ocupacionDSC: Record<string, number>; ocupacionDomingos: Record<string, number>; ocupacionMM: Record<string, number>
 }) {
   const [tabPrincipal, setTabPrincipal] = useState<TabPrincipal>('externo')
   const [tabCentro, setTabCentro]       = useState<TabCentro>('diassinc')
@@ -500,9 +501,9 @@ export default function EventosPageClient({ mananaMagica, diasSinCole, domingos,
             </div>
           </div>
 
-          {tabCentro === 'diassinc'  && <PanelDiasSinCole cfg={diasSinCole} />}
-          {tabCentro === 'domingos'  && <PanelDomingos cfg={domingos} />}
-          {tabCentro === 'manana'    && <PanelMananaMagica cfg={mananaMagica} />}
+          {tabCentro === 'diassinc'  && <PanelDiasSinCole cfg={diasSinCole} ocupacion={ocupacionDSC} />}
+          {tabCentro === 'domingos'  && <PanelDomingos cfg={domingos} ocupacion={ocupacionDomingos} />}
+          {tabCentro === 'manana'    && <PanelMananaMagica cfg={mananaMagica} ocupacion={ocupacionMM} />}
           {tabCentro === 'halloween' && <PanelHalloween cfg={halloween} />}
         </>
       )}

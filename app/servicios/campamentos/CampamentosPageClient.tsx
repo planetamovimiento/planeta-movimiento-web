@@ -26,7 +26,9 @@ function rangoCorto(dias: string[]): string {
   return dias.length === 1 ? dcorta(dias[0]) : `${dcorta(dias[0])} – ${dcorta(dias[dias.length - 1])}`
 }
 
-export default function CampamentosPageClient({ cfg }: { cfg: CampamentosConfig }) {
+type OcupacionCampamentos = { verano: Record<string, number>; navidad: Record<string, number>; ssanta: Record<string, number> }
+
+export default function CampamentosPageClient({ cfg, ocupacion }: { cfg: CampamentosConfig; ocupacion: OcupacionCampamentos }) {
   const [panelActivo, setPanelActivo] = useState<Panel>('verano')
 
   const SEMANAS = semanasResueltas(cfg)
@@ -144,7 +146,7 @@ export default function CampamentosPageClient({ cfg }: { cfg: CampamentosConfig 
                   <div className="text-blue-200 text-xs mt-0.5">Elige los días y paga tu reserva</div>
                 </div>
                 <div className="p-5 max-h-[80vh] overflow-y-auto">
-                  <ReservaBloque cfg={cfg} servicio="Campamento de Navidad" fechas={navDias} horario={cfg.navidadHorario} color="blue" nombreCorto="Navidad" />
+                  <ReservaBloque cfg={cfg} servicio="Campamento de Navidad" fechas={navDias} horario={cfg.navidadHorario} color="blue" nombreCorto="Navidad" ocupacionDia={ocupacion.navidad} />
                 </div>
               </div>
             </div>
@@ -196,7 +198,7 @@ export default function CampamentosPageClient({ cfg }: { cfg: CampamentosConfig 
                   <div className="text-violet-200 text-xs mt-0.5">Elige los días y paga tu reserva</div>
                 </div>
                 <div className="p-5 max-h-[80vh] overflow-y-auto">
-                  <ReservaBloque cfg={cfg} servicio="Campamento de Semana Santa" fechas={ssDias} horario={cfg.ssantaHorario} color="violet" nombreCorto="Semana Santa" />
+                  <ReservaBloque cfg={cfg} servicio="Campamento de Semana Santa" fechas={ssDias} horario={cfg.ssantaHorario} color="violet" nombreCorto="Semana Santa" ocupacionDia={ocupacion.ssanta} />
                 </div>
               </div>
             </div>
@@ -278,7 +280,7 @@ export default function CampamentosPageClient({ cfg }: { cfg: CampamentosConfig 
                   <div className="font-black text-base">☀️ Reservar Campamento de Verano</div>
                   <div className="text-red-200 text-xs mt-0.5">Selecciona semanas o días sueltos</div>
                 </div>
-                <div className="p-5 max-h-[80vh] overflow-y-auto"><ReservaVerano cfg={cfg} /></div>
+                <div className="p-5 max-h-[80vh] overflow-y-auto"><ReservaVerano cfg={cfg} ocupacionDia={ocupacion.verano} /></div>
               </div>
             </div>
           </div>

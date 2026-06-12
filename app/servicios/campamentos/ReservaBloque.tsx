@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { iniciarPagoReserva } from '@/app/reservar/actions'
 import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
 import FormularioCampamento, { type PayloadCampamento, textoParticipantes } from './FormularioCampamento'
@@ -65,7 +65,7 @@ function calcularPrecio(cfg: CampamentosConfig, fechas: string[], seleccionados:
 
 // ─── Componente reutilizable (Navidad / Semana Santa) ───────────────────────────
 export default function ReservaBloque({
-  cfg, servicio, fechas, horario, color, nombreCorto,
+  cfg, servicio, fechas, horario, color, nombreCorto, ocupacionDia = {},
 }: {
   cfg: CampamentosConfig
   servicio: string
@@ -73,8 +73,12 @@ export default function ReservaBloque({
   horario: string
   color: keyof typeof TEMA
   nombreCorto: string   // p.ej. "Navidad", "Semana Santa"
+  ocupacionDia?: Record<string, number>
 }) {
   const t = TEMA[color]
+  const aforoDia = cfg.aforoDia || 0
+  const libresDia = (dia: string) => (aforoDia > 0 ? Math.max(0, aforoDia - (ocupacionDia[dia] ?? 0)) : Infinity)
+  const diaLleno = (dia: string) => aforoDia > 0 && libresDia(dia) <= 0
   const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set())
   const [matinal, setMatinal] = useState(false)
   const [vespertino, setVespertino] = useState(false)
@@ -91,7 +95,17 @@ export default function ReservaBloque({
     [cfg, fechas, seleccionados, cuponAplicado, matinal, vespertino]
   )
 
+  // Máximo de niños según las plazas libres del día más ajustado de la selección.
+  const maxNinos = useMemo(() => {
+    if (aforoDia <= 0) return Infinity
+    const sel = Array.from(seleccionados)
+    if (sel.length === 0) return Infinity
+    return Math.min(...sel.map(d => Math.max(0, aforoDia - (ocupacionDia[d] ?? 0))))
+  }, [aforoDia, ocupacionDia, seleccionados])
+  useEffect(() => { setNumNinos(n => Math.max(1, Math.min(n, maxNinos))) }, [maxNinos])
+
   function toggle(dia: string) {
+    if (diaLleno(dia) && !seleccionados.has(dia)) return
     setSeleccionados(prev => {
       const next = new Set(prev)
       next.has(dia) ? next.delete(dia) : next.add(dia)
@@ -100,8 +114,9 @@ export default function ReservaBloque({
   }
 
   function seleccionarTodo() {
-    if (seleccionados.size === fechas.length) setSeleccionados(new Set())
-    else setSeleccionados(new Set(fechas))
+    const libres = fechas.filter(d => !diaLleno(d))
+    if (libres.every(d => seleccionados.has(d)) && seleccionados.size > 0) setSeleccionados(new Set())
+    else setSeleccionados(new Set(libres))
   }
 
   function aplicarCupon() {
@@ -174,9 +189,12 @@ export default function ReservaBloque({
             const diaSemana = DIAS_LABEL[d.getDay().toString()]
             const mes = d.toLocaleDateString('es-ES', { month: 'short' }).replace('.', '')
             const selec = seleccionados.has(dia)
+            const lleno = diaLleno(dia)
             return (
-              <button key={dia} onClick={() => toggle(dia)}
-                className={`flex flex-col items-center py-3 rounded-xl border-2 transition-all ${selec ? t.sel : `bg-pm-bg border-gray-200 text-gray-700 ${t.selHover}`}`}>
+              <button key={dia} disabled={lleno && !selec} title={lleno ? 'Completo' : undefined} onClick={() => toggle(dia)}
+                className={`flex flex-col items-center py-3 rounded-xl border-2 transition-all ${
+                  selec ? t.sel : lleno ? 'bg-gray-50 border-gray-200 text-gray-300 line-through cursor-not-allowed' : `bg-pm-bg border-gray-200 text-gray-700 ${t.selHover}`
+                }`}>
                 <span className="text-xs opacity-70 mb-0.5">{diaSemana}</span>
                 <span className="text-lg font-black">{numDia}</span>
                 <span className="text-xs opacity-70">{mes}</span>
@@ -215,8 +233,11 @@ export default function ReservaBloque({
             <div className="flex items-center gap-4">
               <button onClick={() => setNumNinos(n => Math.max(1, n - 1))} className="w-9 h-9 bg-pm-bg border border-gray-200 rounded-xl text-lg font-bold hover:border-pm-red transition-colors">−</button>
               <div className="text-3xl font-black text-pm-navy flex-1 text-center">{numNinos}</div>
-              <button onClick={() => setNumNinos(n => n + 1)} className="w-9 h-9 bg-pm-bg border border-gray-200 rounded-xl text-lg font-bold hover:border-pm-red transition-colors">+</button>
+              <button onClick={() => setNumNinos(n => Math.min(maxNinos, n + 1))} disabled={numNinos >= maxNinos} className="w-9 h-9 bg-pm-bg border border-gray-200 rounded-xl text-lg font-bold hover:border-pm-red transition-colors disabled:opacity-40 disabled:cursor-not-allowed">+</button>
             </div>
+            {Number.isFinite(maxNinos) && (
+              <p className="text-xs text-gray-400 mt-2">Máximo {maxNinos} niño{maxNinos === 1 ? '' : 's'} según las plazas libres de los días elegidos.</p>
+            )}
           </div>
 
           {/* Cupón hermanos */}

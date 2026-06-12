@@ -17,6 +17,7 @@ export type CampamentosConfig = {
   precioVespertino: number
   descuentoHermanos: number   // % (ej. 15)
   cuponHermanos: string
+  aforoDia: number            // plazas (niños) por día; 0 = sin límite (un niño ocupa cada día que elige)
   // Navidad
   navidadFechas: string        // una fecha YYYY-MM-DD por línea
   navidadHorario: string
@@ -41,7 +42,7 @@ export type CampamentosConfig = {
 
 export const CAMPAMENTOS_DEFAULT: CampamentosConfig = {
   precioDiaSuelto: 25, precioSemana: 95, precioMatinal: 5, precioVespertino: 5,
-  descuentoHermanos: 15, cuponHermanos: 'HERMANOS',
+  descuentoHermanos: 15, cuponHermanos: 'HERMANOS', aforoDia: 0,
   navidadFechas: ['2025-12-26', '2025-12-27', '2025-12-28', '2025-12-29', '2025-12-30'].join('\n'),
   navidadHorario: '9:00 – 14:00', navidadEstado: 'abierto',
   navidadDescripcion: 'Durante estos días los niños vivirán una aventura única en nuestra Escuela de Superhéroes, llena de retos, actividades y dinámicas que desarrollan sus habilidades motrices mientras se lo pasan en grande.',

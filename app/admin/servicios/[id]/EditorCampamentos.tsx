@@ -26,6 +26,7 @@ export default function EditorCampamentos({ inicial, puedeEditar }: { inicial: C
       precioDiaSuelto: Number(f.precioDiaSuelto) || 0, precioSemana: Number(f.precioSemana) || 0,
       precioMatinal: Number(f.precioMatinal) || 0, precioVespertino: Number(f.precioVespertino) || 0,
       descuentoHermanos: Number(f.descuentoHermanos) || 0, cuponHermanos: f.cuponHermanos,
+      aforoDia: Number(f.aforoDia) || 0,
       navidadFechas: f.navidadFechas, navidadHorario: f.navidadHorario, navidadEstado: f.navidadEstado,
       navidadDescripcion: f.navidadDescripcion, navidadImagen: f.navidadImagen,
       ssantaFechas: f.ssantaFechas, ssantaHorario: f.ssantaHorario, ssantaEstado: f.ssantaEstado,
@@ -62,7 +63,9 @@ export default function EditorCampamentos({ inicial, puedeEditar }: { inicial: C
           <div><label className={label}>Matinal (€/día)</label><input type="number" value={f.precioMatinal} disabled={!puedeEditar} onChange={e => set('precioMatinal', e.target.value)} className={input} /></div>
           <div><label className={label}>Vespertino (€/día)</label><input type="number" value={f.precioVespertino} disabled={!puedeEditar} onChange={e => set('precioVespertino', e.target.value)} className={input} /></div>
           <div><label className={label}>Cupón hermanos</label><input value={f.cuponHermanos} disabled={!puedeEditar} onChange={e => set('cuponHermanos', e.target.value.toUpperCase())} className={input} /></div>
+          <div><label className={label}>Aforo por día (niños · 0 = sin límite)</label><input type="number" min={0} value={f.aforoDia} disabled={!puedeEditar} onChange={e => set('aforoDia', e.target.value)} className={input} /></div>
         </div>
+        <p className="text-[11px] text-gray-400 mt-3">El aforo por día se aplica a Navidad, Semana Santa y Verano. Un niño ocupa una plaza por cada día que selecciona. Al llenarse un día, aparece como «Completo».</p>
       </section>
 
       {/* NAVIDAD */}
