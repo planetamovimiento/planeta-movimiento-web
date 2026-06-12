@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { submitBooking } from '@/lib/forms/actions'
+import { iniciarPagoReserva } from '@/app/reservar/actions'
+import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
 import { waNegocio } from '@/lib/whatsapp'
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -41,8 +42,8 @@ export default function CalculadoraEventos() {
     nombre: '', apellidos: '', telefono: '', email: '',
     tipoEvento: '', fecha: '', ubicacion: '', horario: '', observaciones: '',
   })
-  const [enviado, setEnviado] = useState(false)
   const [enviando, setEnviando] = useState(false)
+  const [error, setError] = useState('')
 
   const { pack, baseNet, extrasNet, horasNet, subtotalNet, ivaAmount, total } = useMemo(
     () => calcular(participantes, extrasIds, horasExtra),
@@ -61,17 +62,16 @@ export default function CalculadoraEventos() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setEnviando(true)
+    setEnviando(true); setError('')
     const extras = EXTRAS.filter(x => extrasIds.has(x.id)).map(x => x.label).join(', ')
-    await submitBooking({
-      servicio: `Evento · ${form.tipoEvento || 'externo'}`,
-      cliente_nombre: `${form.nombre} ${form.apellidos}`.trim(),
-      cliente_email: form.email,
-      cliente_telefono: form.telefono,
-      fecha: form.fecha || undefined,
-      hora: form.horario,
+    const r = await iniciarPagoReserva({
+      servicioId: 'eventos',
+      servicioNombre: `Animación en tu evento · ${form.tipoEvento || 'evento'}`,
+      cliente: { nombre: `${form.nombre} ${form.apellidos}`.trim(), email: form.email, telefono: form.telefono },
+      fecha: form.fecha || null,
+      hora: form.horario || null,
       participantes,
-      precio: total,
+      total,
       observaciones: form.observaciones,
       datos: {
         tipoEvento: form.tipoEvento, ubicacion: form.ubicacion,
@@ -79,36 +79,16 @@ export default function CalculadoraEventos() {
         totalConIva: `${total} €`,
       },
     })
-    setEnviando(false)
-    setEnviado(true)
+    if (r.ok) { redirigirARedsys(r); return }
+    setEnviando(false); setError(r.error)
   }
-
-  if (enviado) return (
-    <div className="text-center py-12">
-      <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-5">
-        <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
-        </svg>
-      </div>
-      <h3 className="text-2xl font-black text-pm-navy mb-3">¡Solicitud recibida!</h3>
-      <p className="text-gray-600 text-sm max-w-sm mx-auto mb-2">
-        Nos pondremos en contacto contigo en menos de 24 horas para confirmar todos los detalles del evento.
-      </p>
-      <div className="inline-block bg-pm-bg border border-gray-200 rounded-xl px-5 py-3 text-sm text-pm-navy mt-4">
-        <span className="font-semibold">{pack.nombre}</span> · {participantes} participantes · <strong>{total} € (IVA incl.)</strong>
-      </div>
-      <div className="mt-6">
-        <button onClick={() => setEnviado(false)} className="text-pm-red underline text-sm">Enviar otra solicitud</button>
-      </div>
-    </div>
-  )
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10" id="reservar">
 
       {/* ── FORMULARIO ── */}
       <form onSubmit={handleSubmit} className="space-y-6">
-        <h2 className="text-2xl font-black text-pm-navy">Solicita tu presupuesto</h2>
+        <h2 className="text-2xl font-black text-pm-navy">Reserva tu evento</h2>
 
         {/* Datos personales */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm space-y-4">
@@ -265,12 +245,13 @@ export default function CalculadoraEventos() {
             placeholder="Temática del evento, necesidades especiales, rango de edad de los niños, alergias, etc."/>
         </div>
 
+        {error && <p className="text-center text-sm text-red-600 font-semibold">{error}</p>}
         <button type="submit" disabled={!form.nombre || !form.email || !form.telefono || !form.tipoEvento || !form.fecha || !form.ubicacion || enviando}
           className="w-full bg-pm-red hover:bg-pm-red-dark disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-sm tracking-widest uppercase py-5 rounded-2xl transition-colors shadow-lg">
-          {enviando ? 'Enviando...' : `Solicitar presupuesto — ${total} € (IVA incl.)`}
+          {enviando ? 'Redirigiendo al pago…' : `Pagar ${total} € (IVA incl.) y reservar`}
         </button>
         <p className="text-center text-xs text-gray-400">
-          Recibirás respuesta en menos de 24 horas · Sin compromiso
+          Pago seguro con tarjeta · Redsys
         </p>
       </form>
 
@@ -341,13 +322,13 @@ export default function CalculadoraEventos() {
               </div>
               <div className="flex items-start gap-2 text-xs text-gray-500">
                 <span className="text-green-500 font-bold shrink-0 mt-0.5">✓</span>
-                Respuesta en menos de 24 horas
+                Reserva confirmada al instante con el pago
               </div>
             </div>
 
             <a href="#reservar"
               className="block w-full bg-pm-red hover:bg-pm-red-dark text-white font-black text-sm text-center py-3 rounded-xl transition-colors mt-2">
-              Solicitar presupuesto →
+              Reservar y pagar →
             </a>
           </div>
         </div>

@@ -147,7 +147,7 @@ function PanelExterno() {
 
       {/* Calculadora + formulario */}
       <div className="bg-pm-bg rounded-2xl p-6 border border-gray-200">
-        <h3 className="font-black text-pm-navy text-lg mb-6 text-center">Calculadora y solicitud de presupuesto</h3>
+        <h3 className="font-black text-pm-navy text-lg mb-6 text-center">Calculadora y reserva</h3>
         <CalculadoraEventos />
       </div>
 

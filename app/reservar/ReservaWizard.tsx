@@ -7,6 +7,7 @@ import StepDatos, { type DatosForm } from '@/components/reserva/StepDatos'
 import { iniciarReserva } from './actions'
 import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
 import { ReservaDiasSinCole, ReservaDomingos, ReservaMananaMagica } from '@/app/servicios/eventos/EventosInstalaciones'
+import CalculadoraEventos from '@/app/servicios/eventos/CalculadoraEventos'
 import CampamentosReservaWizard from './CampamentosReservaWizard'
 import type { ServicioReserva } from '@/lib/reservas/monto'
 import type { SlotSemanal } from '@/lib/reservas/slots'
@@ -18,7 +19,7 @@ type Reservados = Record<string, Record<string, Record<string, number>>>
 type OcupacionCampamentos = { verano: Record<string, number>; navidad: Record<string, number>; ssanta: Record<string, number> }
 
 // Servicios cuyo paso 2 usa su propio formulario de reserva (fecha + datos + pago).
-const DEDICADOS = new Set(['dias-sin-cole', 'domingos', 'manana-magica', 'campamentos'])
+const DEDICADOS = new Set(['dias-sin-cole', 'domingos', 'manana-magica', 'campamentos', 'eventos'])
 
 export default function ReservaWizard({
   servicios, horarios, reservados,
@@ -135,6 +136,7 @@ export default function ReservaWizard({
               {servicioId === 'domingos' && <ReservaDomingos cfg={domingos} ocupacion={ocupacionDomingos} />}
               {servicioId === 'manana-magica' && <ReservaMananaMagica cfg={mananaMagica} ocupacion={ocupacionMM} />}
               {servicioId === 'campamentos' && <CampamentosReservaWizard cfg={campamentos} ocupacion={ocupacionCampamentos} />}
+              {servicioId === 'eventos' && <CalculadoraEventos />}
             </div>
           )}
           {paso === 2 && !esDedicado && (

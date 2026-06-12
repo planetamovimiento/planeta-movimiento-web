@@ -33,6 +33,9 @@ export type IniciarResult =
   | { ok: true; url: string; Ds_SignatureVersion: string; Ds_MerchantParameters: string; Ds_Signature: string }
   | { ok: false; error: string }
 
+/** Servicios con botonAccion 'presupuesto' que SÍ cobran online (calculadora con precio). */
+const PAGABLES_PRESUPUESTO = new Set(['eventos'])
+
 /** Genera un número de pedido Redsys de 12 dígitos (los 4 primeros numéricos). */
 function generarDsOrder(): string {
   const base = String(Date.now()).slice(-8)
@@ -203,9 +206,10 @@ export async function iniciarPagoReserva(p: PagoReservaPayload): Promise<Iniciar
   }
 
   const servicio = await getServicio(servicioId)
-  if (!servicio || servicio.botonAccion !== 'reserva') {
-    return { ok: false, error: 'Este servicio no admite reserva online.' }
-  }
+  if (!servicio) return { ok: false, error: 'Este servicio no admite reserva online.' }
+  // 'eventos' (Animación en tu evento) es 'presupuesto' pero cobra online con su calculadora.
+  const reservable = servicio.botonAccion === 'reserva' || PAGABLES_PRESUPUESTO.has(servicioId)
+  if (!reservable) return { ok: false, error: 'Este servicio no admite reserva online.' }
 
   const fianza = Number(servicio.fianza) || 0
   const esSenal = fianza > 0

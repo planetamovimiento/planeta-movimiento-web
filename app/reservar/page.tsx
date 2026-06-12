@@ -11,7 +11,8 @@ export const dynamic = 'force-dynamic'
 
 export default async function ReservarPage() {
   // Servicios reservables reales (catálogo + ediciones del panel).
-  const lista = (await getServicios()).filter(s => s.botonAccion === 'reserva' && s.estado === 'activo')
+  const todos = await getServicios()
+  const lista = todos.filter(s => s.botonAccion === 'reserva' && s.estado === 'activo')
   const servicios: ServicioReserva[] = lista.map(s => ({
     id: s.id,
     nombre: s.nombre,
@@ -23,6 +24,23 @@ export default async function ReservarPage() {
     edad: s.edad,
     horarios: s.horarios,
   }))
+
+  // "Animación en tu evento": el servicio 'eventos' (botonAccion 'presupuesto') cobra online
+  // con su calculadora, así que lo añadimos como opción del asistente.
+  const eventosSvc = todos.find(s => s.id === 'eventos' && s.estado === 'activo')
+  if (eventosSvc) {
+    servicios.push({
+      id: 'eventos',
+      nombre: 'Animación en tu evento',
+      icon: eventosSvc.icon,
+      descripcionCorta: 'Bodas, comuniones y fiestas a domicilio. Packs desde 150 € + IVA. Calcula y reserva.',
+      precio: null,
+      precioDesde: null,
+      fianza: eventosSvc.fianza,
+      edad: 'Desde 3-4 años',
+      horarios: '',
+    })
+  }
 
   // Horarios (franjas + plazas) y ocupación actual de cada servicio.
   const ids = servicios.map(s => s.id)
