@@ -46,8 +46,8 @@ const NAV_ITEMS = [
       { label: 'Actividades de 2 a 5 años', href: '/actividades/2-5-anos', desc: 'Psicomotricidad y circo para bebés y peques' },
       { label: 'Actividades de 6 a 15 años', href: '/actividades/6-15-anos', desc: 'Acrobacia, circo y artes marciales' },
       { label: 'Actividades para mayores de 16 años', href: '/actividades/adultos', desc: 'Club y disciplinas para jóvenes y adultos' },
-      { label: 'Actividades para Ayuntamientos', href: '/actividades/ayuntamientos', desc: 'Programas municipales y comunitarios' },
-      { label: 'Actividades para Empresas', href: '/actividades/empresas', desc: 'Team building y eventos corporativos' },
+      { label: 'Actividades para Entidades Públicas', href: '/actividades/ayuntamientos', desc: 'Ayuntamientos, AMPAS y residencias' },
+      { label: 'Actividades para Entidades Privadas', href: '/actividades/empresas', desc: 'Empresas, Clubes y asociaciones' },
     ],
   },
   {

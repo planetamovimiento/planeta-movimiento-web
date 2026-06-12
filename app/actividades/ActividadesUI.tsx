@@ -40,7 +40,17 @@ const SERVICIOS: Servicio[] = [
     href: '/servicios/eventos',
     icon: '👨‍👩‍👧‍👦',
     grad: 'from-emerald-600 to-emerald-800',
-    tags: ['2-5', '6-15', '+16', 'ocio'],
+    tags: ['2-5', 'ocio'],
+  },
+  {
+    id: 'manana-magica',
+    nombre: 'Mañanas Mágicas',
+    desc: 'Jornada temática con un personaje invitado distinto cada mes: show, manualidades, deportes y photocall.',
+    edad: 'Infantil y primaria',
+    href: '/servicios/eventos',
+    icon: '✨',
+    grad: 'from-fuchsia-600 to-violet-600',
+    tags: ['2-5'],
   },
   {
     id: 'diassinc',
@@ -71,7 +81,7 @@ const SERVICIOS: Servicio[] = [
     href: '/servicios/campamentos',
     icon: '🏕️',
     grad: 'from-pm-navy to-pm-navy-md',
-    tags: ['2-5', '6-15', 'ayto'],
+    tags: ['2-5', '6-15'],
     destacado: true,
   },
   // ── Club (clases regulares) ───────────────────────────────────────────────
@@ -133,7 +143,7 @@ const SERVICIOS: Servicio[] = [
     href: '/servicios/circo-inclusivo',
     icon: '♿',
     grad: 'from-indigo-700 to-purple-800',
-    tags: ['+16', 'ayto', 'empresa'],
+    tags: ['ayto', 'empresa'],
   },
   // ── Educativo ────────────────────────────────────────────────────────────
   {
@@ -180,6 +190,16 @@ const SERVICIOS: Servicio[] = [
     grad: 'from-pm-red to-pm-navy',
     tags: ['ayto', 'empresa'],
     destacado: true,
+  },
+  {
+    id: 'licitaciones',
+    nombre: 'Licitaciones y contratos públicos',
+    desc: 'Diseño, gestión y ejecución de programas deportivos, educativos y sociales para administraciones mediante contratos y licitaciones.',
+    edad: 'Administraciones y entidades',
+    href: '/servicios/licitaciones',
+    icon: '🏛️',
+    grad: 'from-emerald-700 to-pm-navy',
+    tags: ['ayto'],
   },
   {
     id: 'eventos-ext',
@@ -242,8 +262,8 @@ const CATEGORIAS: {
   },
   {
     id: 'ayto',
-    label: 'Ayuntamientos',
-    sublabel: 'Entidades públicas y municipales',
+    label: 'Entidades Públicas',
+    sublabel: 'Ayuntamientos, AMPAS y residencias',
     emoji: '🏛️',
     color: 'bg-emerald-700',
     colorText: 'text-emerald-700',
@@ -253,8 +273,8 @@ const CATEGORIAS: {
   },
   {
     id: 'empresa',
-    label: 'Empresas',
-    sublabel: 'Entidades privadas y eventos',
+    label: 'Entidades Privadas',
+    sublabel: 'Empresas, Clubes y asociaciones',
     emoji: '💼',
     color: 'bg-slate-700',
     colorText: 'text-slate-700',
