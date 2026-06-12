@@ -32,7 +32,7 @@ const ESTACIONES = [
     numero: '01',
     nombre: 'Acrobacia y Parkour',
     icon: '🤸',
-    foto: '/fotos/excursiones-estaciones/acrobacia-parkour.jpg',
+    foto: '/fotos/excursiones-estaciones/acrobacia-parkour.webp',
     color: 'from-pm-red to-pm-red-dark',
     colorLight: 'bg-pm-red-light border-pm-red/20',
     colorText: 'text-pm-red',
@@ -65,7 +65,7 @@ const ESTACIONES = [
     numero: '04',
     nombre: 'Baile y Expresión',
     icon: '💃',
-    foto: '/fotos/excursiones-estaciones/baile.jpg',
+    foto: '/fotos/excursiones-estaciones/baile.webp',
     color: 'from-emerald-500 to-emerald-700',
     colorLight: 'bg-emerald-50 border-emerald-200',
     colorText: 'text-emerald-700',
@@ -139,13 +139,13 @@ export default function ExcursionesPage() {
             </div>
 
             {/* Visual de las 4 estaciones en el hero */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               {ESTACIONES.map(e => (
-                <div key={e.numero} className={`bg-gradient-to-br ${e.color} rounded-2xl p-3 text-white`}>
+                <div key={e.numero} className={`bg-gradient-to-br ${e.color} rounded-2xl p-3.5 text-white`}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={e.foto} alt={e.nombre} className="w-full h-24 object-cover rounded-xl mb-3" />
+                  <img src={e.foto} alt={e.nombre} className="w-full h-40 sm:h-48 object-cover rounded-xl mb-3" />
                   <div className="text-white/70 text-xs font-black uppercase tracking-wider px-1">Estación {e.numero}</div>
-                  <div className="font-black text-sm mt-0.5 px-1 pb-1">{e.nombre}</div>
+                  <div className="font-black text-base mt-0.5 px-1 pb-1">{e.nombre}</div>
                 </div>
               ))}
             </div>
