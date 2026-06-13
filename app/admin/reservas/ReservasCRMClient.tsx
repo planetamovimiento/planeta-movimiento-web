@@ -5,7 +5,7 @@ import { Metric } from '@/components/admin/ui'
 import { waCliente } from '@/lib/whatsapp'
 import {
   ESTADOS_RESERVA, ESTADOS_PAGO, ESTADOS_ACTIVOS, ESTADOS_PENDIENTES, METODOS_PAGO,
-  labelReserva, labelPago, badgePago, eur, pendienteDe, pagadoDe, fechaCorta,
+  labelReserva, labelPago, badgePago, eur, pendienteDe, pagadoDe, totalDe, fechaCorta,
   type Registro,
 } from '@/lib/crm/constants'
 import { guardarGestionCRM, registrarPagoCRM } from './actions'
@@ -15,12 +15,10 @@ const MES = HOY.slice(0, 7)
 const ANIO = HOY.slice(0, 4)
 
 /** Patch al cambiar el estado de pago: si pasa a 'Pagado', el importe pagado iguala al total. */
-function patchPago(r: Registro, estado: string): Partial<Registro> {
-  const patch: Partial<Registro> = { estado_pago: estado }
-  if (estado === 'pagado') patch.pagado = r.total ?? r.pagado ?? null
-  else if (estado === 'pendiente' || estado === 'impagado' || estado === 'na') patch.pagado = 0
-  // 'parcial': se conserva el 'pagado' actual (el cobro parcial registrado).
-  return patch
+// El pendiente/pagado se derivan del estado (ver pagadoDe/pendienteDe), así que basta
+// con guardar el nuevo estado de pago.
+function patchPago(_r: Registro, estado: string): Partial<Registro> {
+  return { estado_pago: estado }
 }
 
 export default function ReservasCRMClient({ registros, puedeEditar, gestionOk }: {
@@ -117,7 +115,7 @@ export default function ReservasCRMClient({ registros, puedeEditar, gestionOk }:
     const filas = filtradas.map(r => [
       r.numero, r.cliente_nombre, r.cliente_email, r.cliente_telefono, r.servicio, r.categoria,
       fechaCorta(r.fecha_reserva), fechaCorta(r.fecha_realizacion), r.participantes ?? '',
-      r.total ?? '', r.pagado ?? '', pendienteDe(r) || '', labelReserva(r.estado_reserva), labelPago(r.estado_pago),
+      totalDe(r) || '', pagadoDe(r) || '', pendienteDe(r) || '', labelReserva(r.estado_reserva), labelPago(r.estado_pago),
       r.metodo_pago, r.observaciones,
     ].map(esc).join(';'))
     const csv = '﻿' + [cols.map(esc).join(';'), ...filas].join('\r\n')
@@ -224,7 +222,7 @@ export default function ReservasCRMClient({ registros, puedeEditar, gestionOk }:
                       </td>
                       <td className="px-3 py-2.5 whitespace-nowrap text-gray-600 text-xs">{fechaCorta(r.fecha_realizacion)}{r.hora ? ` · ${r.hora}` : ''}</td>
                       <td className="px-3 py-2.5 text-center text-gray-600">{r.participantes ?? '—'}</td>
-                      <td className="px-3 py-2.5 text-right whitespace-nowrap text-pm-navy font-semibold">{eur(r.total)}</td>
+                      <td className="px-3 py-2.5 text-right whitespace-nowrap text-pm-navy font-semibold">{eur(totalDe(r))}</td>
                       <td className={`px-3 py-2.5 text-right whitespace-nowrap font-bold ${pend > 0 ? 'text-pm-red' : 'text-gray-300'}`}>{pend > 0 ? eur(pend) : '—'}</td>
                       <td className="px-3 py-2.5">
                         <select value={r.estado_reserva} disabled={!puedeEditar} onChange={e => aplicar(r, { estado_reserva: e.target.value })}

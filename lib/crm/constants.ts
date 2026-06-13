@@ -73,19 +73,42 @@ export function eur(n: number | null | undefined): string {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(Number(n))
 }
 
-type ImporteReg = { total: number | null; pagado: number | null; estado_pago?: string }
-
-/** Importe efectivamente cobrado, derivado del ESTADO DE PAGO (no de un valor pegado). */
-export function pagadoDe(r: ImporteReg): number {
-  if (r.estado_pago === 'pagado') return Number(r.pagado) || Number(r.total) || 0
-  if (r.estado_pago === 'parcial') return Number(r.pagado) || 0
-  return 0 // pendiente, impagado, na → nada cobrado
+type ImporteReg = {
+  total: number | null
+  pagado: number | null
+  estado_pago?: string
+  estado_reserva?: string
+  pagos?: { importe: number }[]
 }
 
-/** Importe pendiente de cobro. Depende del estado de pago, no de un campo guardado. */
+/** Total efectivo de la reserva. Las CANCELADAS quedan a 0 €. */
+export function totalDe(r: ImporteReg): number {
+  if (r.estado_reserva === 'cancelada') return 0
+  return Number(r.total) || 0
+}
+
+/** Suma de cobros reales registrados (señal de Redsys + cobros del panel). */
+function cobradoReal(r: ImporteReg): number {
+  return (r.pagos || []).reduce((s, p) => s + (Number(p.importe) || 0), 0)
+}
+
+/** Importe efectivamente cobrado, derivado del estado de pago. */
+export function pagadoDe(r: ImporteReg): number {
+  if (r.estado_reserva === 'cancelada') return 0
+  if (r.estado_pago === 'pagado') return totalDe(r)            // pagó la totalidad
+  if (r.estado_pago === 'impagado' || r.estado_pago === 'na') return 0
+  return Math.min(totalDe(r), cobradoReal(r))                 // pendiente / parcial → señal o cobros
+}
+
+/**
+ * Importe pendiente de cobro. Solo cuenta cuando la reserva está CONFIRMADA o
+ * FINALIZADA (nueva solicitud y cancelada no cuentan). 'pagado'/'na'/'impagado' → 0;
+ * 'pendiente'/'parcial' → total − lo cobrado (p.ej. total − 50 si hay señal).
+ */
 export function pendienteDe(r: ImporteReg): number {
-  if (r.estado_pago === 'na') return 0
-  return Math.max(0, (Number(r.total) || 0) - pagadoDe(r))
+  if (r.estado_reserva !== 'confirmada' && r.estado_reserva !== 'finalizada') return 0
+  if (r.estado_pago === 'pagado' || r.estado_pago === 'na' || r.estado_pago === 'impagado') return 0
+  return Math.max(0, totalDe(r) - pagadoDe(r))
 }
 
 export function fechaCorta(iso: string | null): string {
