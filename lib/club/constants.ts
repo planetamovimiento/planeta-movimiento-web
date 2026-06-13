@@ -42,7 +42,6 @@ export const ESTADOS_GENERAL: { id: EstadoGeneral; label: string; badge: string;
   { id: 'pendiente', label: 'Pendiente de confirmar', badge: 'bg-amber-100 text-amber-700',   dot: 'bg-amber-500' },
   { id: 'espera',    label: 'Lista de espera',        badge: 'bg-purple-100 text-purple-700', dot: 'bg-purple-500' },
   { id: 'baja',      label: 'En baja',                badge: 'bg-red-100 text-red-700',       dot: 'bg-red-500' },
-  { id: 'archivado', label: 'Archivado',              badge: 'bg-gray-100 text-gray-500',     dot: 'bg-gray-400' },
 ]
 
 export function labelEstadoGeneral(id: string): string {

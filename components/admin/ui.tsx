@@ -82,9 +82,9 @@ export function SetupNotice() {
 }
 
 // ─── Tarjeta métrica ──────────────────────────────────────────────────────────
-export function Metric({ label, valor, sub, tono = 'navy' }: { label: string; valor: string | number; sub?: string; tono?: 'navy' | 'red' | 'green' | 'amber' }) {
+export function Metric({ label, valor, sub, tono = 'navy' }: { label: string; valor: string | number; sub?: string; tono?: 'navy' | 'red' | 'green' | 'amber' | 'purple' }) {
   const tonos = {
-    navy: 'text-pm-navy', red: 'text-pm-red', green: 'text-green-600', amber: 'text-amber-600',
+    navy: 'text-pm-navy', red: 'text-pm-red', green: 'text-green-600', amber: 'text-amber-600', purple: 'text-purple-600',
   }
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">

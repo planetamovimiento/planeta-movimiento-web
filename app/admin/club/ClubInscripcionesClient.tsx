@@ -110,13 +110,16 @@ export default function ClubInscripcionesClient({
 
   // Métricas globales
   const metricas = useMemo(() => {
-    const total = lista.length
     const activos = lista.filter(a => a.estado_general === 'activo').length
     const bajas = lista.filter(a => a.estado_general === 'baja').length
+    const pendientes = lista.filter(a => a.estado_general === 'pendiente').length
+    const espera = lista.filter(a => a.estado_general === 'espera').length
+    // Inscritos = ya validados (Activo en adelante). Espera y pendiente NO cuentan.
+    const inscritos = lista.filter(a => a.estado_general !== 'pendiente' && a.estado_general !== 'espera').length
     const pendientesPago = lista.filter(a =>
       a.estado_general !== 'baja' && a.estado_general !== 'archivado' && (a.pagos[MES_ACTUAL] ?? '') !== 'pagado'
     ).length
-    return { total, activos, bajas, pendientesPago }
+    return { inscritos, activos, bajas, pendientes, espera, pendientesPago }
   }, [lista])
 
   const hayFiltros = !!(q || fActividad || fGrupo || fTemporada || fEstado || fMes || fPago)
@@ -191,11 +194,13 @@ export default function ClubInscripcionesClient({
       )}
 
       {/* Métricas */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Metric label="Alumnos inscritos" valor={metricas.total} tono="navy" />
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        <Metric label="Alumnos inscritos" valor={metricas.inscritos} tono="navy" />
         <Metric label="Activos" valor={metricas.activos} tono="green" />
-        <Metric label={`Pago pendiente · ${MESES_TEMPORADA.find(m => m.key === MES_ACTUAL)?.nombre ?? ''}`} valor={metricas.pendientesPago} tono="amber" />
+        <Metric label="Pendientes de confirmar" valor={metricas.pendientes} tono="amber" />
+        <Metric label="Lista de espera" valor={metricas.espera} tono="purple" />
         <Metric label="En baja" valor={metricas.bajas} tono="red" />
+        <Metric label={`Pago pendiente · ${MESES_TEMPORADA.find(m => m.key === MES_ACTUAL)?.nombre ?? ''}`} valor={metricas.pendientesPago} tono="amber" />
       </div>
 
       {/* Filtros */}
