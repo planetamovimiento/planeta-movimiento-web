@@ -53,7 +53,7 @@ export function labelEstadoGeneral(id: string): string {
 export const GRUPOS_BASE = ['Iniciación 1', 'Iniciación 2', 'Iniciación 3', 'Medio 1', 'Medio 2', 'Medio 3', 'Avanzado']
 
 /** Grupos que SIEMPRE están disponibles en el desplegable de cualquier actividad. */
-export const GRUPOS_EXTRA = ['Rítmica 1', 'Isaac Albéniz', 'Bienestar 1']
+export const GRUPOS_EXTRA = ['Rítmica 1', 'Isaac Albéniz', 'Bienestar 1', 'JJB 1']
 
 /**
  * Actividades del Club (nombres canónicos cortos para el panel).
