@@ -17,6 +17,7 @@ export default async function ReservasPage() {
         <ReservasCRMClient
           registros={registros}
           puedeEditar={admin ? can.edit(admin.role) : false}
+          puedeBorrar={admin ? can.manageFinance(admin.role) : false}
           gestionOk={gestionOk}
         />
       </div>

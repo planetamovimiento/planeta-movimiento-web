@@ -8,7 +8,7 @@ import {
   labelReserva, labelPago, badgePago, eur, pendienteDe, pagadoDe, totalDe, fechaCorta,
   type Registro,
 } from '@/lib/crm/constants'
-import { guardarGestionCRM, registrarPagoCRM } from './actions'
+import { guardarGestionCRM, registrarPagoCRM, eliminarReservaCRM } from './actions'
 
 const HOY = new Date().toISOString().slice(0, 10)
 const MES = HOY.slice(0, 7)
@@ -21,8 +21,8 @@ function patchPago(_r: Registro, estado: string): Partial<Registro> {
   return { estado_pago: estado }
 }
 
-export default function ReservasCRMClient({ registros, puedeEditar, gestionOk }: {
-  registros: Registro[]; puedeEditar: boolean; gestionOk: boolean
+export default function ReservasCRMClient({ registros, puedeEditar, puedeBorrar, gestionOk }: {
+  registros: Registro[]; puedeEditar: boolean; puedeBorrar: boolean; gestionOk: boolean
 }) {
   const [lista, setLista] = useState<Registro[]>(registros)
   const [, startTransition] = useTransition()
@@ -106,6 +106,16 @@ export default function ReservasCRMClient({ registros, puedeEditar, gestionOk }:
     startTransition(async () => {
       const res = await registrarPagoCRM(r.origen, r.id, { importe, metodo, nota, total })
       if (!res.ok) setError(res.error || 'No se pudo registrar el cobro')
+    })
+  }
+
+  function eliminar(r: Registro) {
+    if (!puedeBorrar) return
+    setDetalleKey(null)
+    setLista(prev => prev.filter(x => keyOf(x) !== keyOf(r)))
+    startTransition(async () => {
+      const res = await eliminarReservaCRM(r.origen, r.id)
+      if (!res.ok) setError(res.error || 'No se pudo eliminar la reserva')
     })
   }
 
@@ -253,10 +263,11 @@ export default function ReservasCRMClient({ registros, puedeEditar, gestionOk }:
 
       {detalle && (
         <FichaCliente
-          r={detalle} todas={lista} puedeEditar={puedeEditar}
+          r={detalle} todas={lista} puedeEditar={puedeEditar} puedeBorrar={puedeBorrar}
           onClose={() => setDetalleKey(null)}
           onGestion={p => aplicar(detalle, p)}
           onCobrar={(imp, met, nota) => cobrar(detalle, imp, met, nota)}
+          onEliminar={() => eliminar(detalle)}
         />
       )}
     </div>
@@ -286,9 +297,9 @@ function Proximo({ titulo, icon, items }: { titulo: string; icon: string; items:
 }
 
 // ─── Ficha del cliente / reserva ─────────────────────────────────────────────────
-function FichaCliente({ r, todas, puedeEditar, onClose, onGestion, onCobrar }: {
-  r: Registro; todas: Registro[]; puedeEditar: boolean
-  onClose: () => void; onGestion: (p: Partial<Registro>) => void; onCobrar: (importe: number, metodo: string, nota: string) => void
+function FichaCliente({ r, todas, puedeEditar, puedeBorrar, onClose, onGestion, onCobrar, onEliminar }: {
+  r: Registro; todas: Registro[]; puedeEditar: boolean; puedeBorrar: boolean
+  onClose: () => void; onGestion: (p: Partial<Registro>) => void; onCobrar: (importe: number, metodo: string, nota: string) => void; onEliminar: () => void
 }) {
   const [obs, setObs] = useState(r.observaciones)
   const [importe, setImporte] = useState('')
@@ -432,6 +443,17 @@ function FichaCliente({ r, todas, puedeEditar, onClose, onGestion, onCobrar }: {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Eliminar reserva (solo rol principal) */}
+          {puedeBorrar && (
+            <div className="border-t border-gray-100 pt-4">
+              <button
+                onClick={() => { if (window.confirm(`¿Eliminar definitivamente la reserva de ${r.cliente_nombre || 'este cliente'} (${r.servicio})? Esta acción no se puede deshacer.`)) onEliminar() }}
+                className="w-full border-2 border-red-200 text-red-600 hover:bg-red-50 text-sm font-bold px-4 py-2.5 rounded-xl transition-colors">
+                🗑 Eliminar reserva
+              </button>
             </div>
           )}
         </div>

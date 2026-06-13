@@ -57,3 +57,31 @@ export async function registrarPagoCRM(origen: string, origenId: string, pago: {
   revalidatePath('/admin/reservas')
   return { ok: true, pagado, estado_pago }
 }
+
+/** Elimina una reserva por completo (registro de origen + cobros + capa de gestión). Solo rol principal. */
+export async function eliminarReservaCRM(origen: string, origenId: string) {
+  const admin = await getAdminUser()
+  if (!admin || !can.manageFinance(admin.role)) return { ok: false, error: 'Sin permisos para eliminar' }
+
+  const db = createAdminClient()
+  if (origen === 'booking') {
+    await db.from('payments').delete().eq('booking_id', origenId)
+    const { error } = await db.from('bookings').delete().eq('id', origenId)
+    if (error) return { ok: false, error: error.message }
+  } else if (origen === 'form') {
+    const { error } = await db.from('form_submissions').delete().eq('id', origenId)
+    if (error) return { ok: false, error: error.message }
+  } else if (origen === 'order') {
+    const { error } = await db.from('product_orders').delete().eq('id', origenId)
+    if (error) return { ok: false, error: error.message }
+  } else {
+    return { ok: false, error: 'Origen no válido' }
+  }
+  await db.from('crm_gestion').delete().eq('origen', origen).eq('origen_id', origenId)
+
+  await logActivity({ actorEmail: admin.email, accion: `Reserva eliminada (${origen})`, entidad: 'crm', entidadId: `${origen}:${origenId}` })
+  revalidatePath('/admin/reservas')
+  revalidatePath('/admin/calendario')
+  revalidatePath('/admin/clientes')
+  return { ok: true }
+}

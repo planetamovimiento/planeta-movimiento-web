@@ -17,14 +17,17 @@ export const ESTADOS_RESERVA = [
 const REMAP_RESERVA: Record<string, string> = { revision: 'nueva', pago_pendiente: 'nueva', en_curso: 'confirmada', espera: 'nueva' }
 export const normEstadoReserva = (id: string) => REMAP_RESERVA[id] ?? id
 
-// ── Estados de pago (5) ─────────────────────────────────────────────────────────
+// ── Estados de pago (4) ─────────────────────────────────────────────────────────
 export const ESTADOS_PAGO = [
   { id: 'pagado',    label: 'Pagado',       badge: 'bg-green-100 text-green-700', dot: 'bg-green-500' },
   { id: 'pendiente', label: 'Pendiente',    badge: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500' },
   { id: 'impagado',  label: 'Impagado',     badge: 'bg-red-100 text-red-700',     dot: 'bg-red-500' },
   { id: 'parcial',   label: 'Pago parcial', badge: 'bg-blue-100 text-blue-700',   dot: 'bg-blue-500' },
-  { id: 'na',        label: 'No aplica',    badge: 'bg-gray-100 text-gray-500',   dot: 'bg-gray-400' },
 ] as const
+
+// 'na' (No aplica) retirado → se remapea a 'pendiente' (datos/overlays antiguos).
+const REMAP_PAGO: Record<string, string> = { na: 'pendiente' }
+export const normEstadoPago = (id: string) => REMAP_PAGO[id] ?? id
 
 export const METODOS_PAGO = ['Transferencia', 'Tarjeta', 'Efectivo', 'Bizum']
 
@@ -81,10 +84,9 @@ type ImporteReg = {
   pagos?: { importe: number }[]
 }
 
-/** Total efectivo de la reserva. CANCELADA o pago "No aplica" (gratis) → 0 €. */
+/** Total efectivo de la reserva. Las CANCELADAS quedan a 0 €. */
 export function totalDe(r: ImporteReg): number {
   if (r.estado_reserva === 'cancelada') return 0
-  if (r.estado_pago === 'na') return 0
   return Number(r.total) || 0
 }
 
