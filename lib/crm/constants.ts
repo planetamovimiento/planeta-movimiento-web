@@ -81,9 +81,10 @@ type ImporteReg = {
   pagos?: { importe: number }[]
 }
 
-/** Total efectivo de la reserva. Las CANCELADAS quedan a 0 €. */
+/** Total efectivo de la reserva. CANCELADA o pago "No aplica" (gratis) → 0 €. */
 export function totalDe(r: ImporteReg): number {
   if (r.estado_reserva === 'cancelada') return 0
+  if (r.estado_pago === 'na') return 0
   return Number(r.total) || 0
 }
 
