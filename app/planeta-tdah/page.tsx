@@ -7,7 +7,7 @@ export const metadata = {
     'Planeta TDAH: la primera plataforma web gamificada para personas con TDAH y sus familias. Convierte tu rutina en una aventura. Tu universo. Tu foco. Tu poder.',
 }
 
-const PLANETA_TDAH_URL = 'https://planetatdah.com/ref/GKSUYP'
+const PLANETA_TDAH_URL = 'https://planetatdah.com/ref/Q2U8DX'
 
 const FUNCIONALIDADES = [
   { icon: '🦸', titulo: 'Camino del Héroe', desc: 'Minijuego con héroes que evolucionan por nivel, una mascota que cuidas, misiones diarias y personalizadas, tienda con monedas y logros.' },
@@ -106,10 +106,6 @@ export default function PlanetaTdahPage() {
               Descubre Planeta TDAH
               <span className="inline-block ml-1 transition-transform group-hover:translate-x-1">→</span>
             </a>
-            <a href={PLANETA_TDAH_URL} target="_blank" rel="noopener noreferrer"
-              className="bg-white/10 hover:bg-white/15 backdrop-blur border border-white/20 text-white font-bold px-8 py-4 rounded-2xl transition-all hover:-translate-y-0.5">
-              Empieza gratis
-            </a>
           </div>
           <p className="text-white/40 text-xs mt-4">Acceso gratuito durante la beta · Sin tarjeta</p>
         </div>
@@ -199,10 +195,6 @@ export default function PlanetaTdahPage() {
               <a href={PLANETA_TDAH_URL} target="_blank" rel="noopener noreferrer"
                 className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white font-black px-10 py-4 rounded-2xl transition-all shadow-xl shadow-violet-600/40 hover:-translate-y-0.5">
                 Descubre Planeta TDAH →
-              </a>
-              <a href={PLANETA_TDAH_URL} target="_blank" rel="noopener noreferrer"
-                className="bg-white/10 hover:bg-white/15 backdrop-blur border-2 border-white/20 text-white font-bold px-10 py-4 rounded-2xl transition-all hover:-translate-y-0.5">
-                Empieza gratis
               </a>
             </div>
 
