@@ -52,13 +52,15 @@ export default function AdminSidebar(
         </div>
 
         <nav className="flex-1 p-3 space-y-4 overflow-y-auto">
-          {/* Dashboard — siempre disponible */}
-          <div className="space-y-1">
-            <Link href="/admin" onClick={() => setOpen(false)} className={linkClass('/admin', true)}>
-              <span className="text-base">📊</span>
-              Dashboard
-            </Link>
-          </div>
+          {/* Dashboard — para gestores; el monitor solo tiene su portal */}
+          {role !== 'monitor' && (
+            <div className="space-y-1">
+              <Link href="/admin" onClick={() => setOpen(false)} className={linkClass('/admin', true)}>
+                <span className="text-base">📊</span>
+                Dashboard
+              </Link>
+            </div>
+          )}
 
           {grupos.map((grupo, gi) => (
             <div key={gi}>
