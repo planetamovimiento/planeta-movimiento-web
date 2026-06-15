@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useMemo, useTransition } from 'react'
-import Link from 'next/link'
 import { AdminHeader, Metric } from '@/components/admin/ui'
 import { SubirImagen } from '@/components/admin/SubirImagen'
 import { ACTIVIDADES_MONITOR, ESTADOS_MONITOR, badgeEstadoMonitor, labelEstadoMonitor, resumenHoras, resumenHorasActividades, horasActividad, horasDeFichaje, fmtHoras } from '@/lib/monitores/constants'
@@ -54,20 +53,17 @@ export default function MonitoresAdmin({ monitores, actividades, fichajes, carpe
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {monitores.map(m => (
-                <div key={m.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-pm-red/40 transition-colors flex flex-col">
-                  <button onClick={() => setFicha(m)} className="p-4 text-left flex gap-3 items-center">
-                    {m.foto_url
-                      // eslint-disable-next-line @next/next/no-img-element
-                      ? <img src={m.foto_url} alt="" className="w-12 h-12 rounded-full object-cover shrink-0" />
-                      : <div className="w-12 h-12 rounded-full bg-pm-navy/10 flex items-center justify-center text-pm-navy font-black shrink-0">{(m.nombre || m.email)[0]?.toUpperCase()}</div>}
-                    <div className="min-w-0 flex-1">
-                      <div className="font-bold text-pm-navy truncate">{`${m.nombre} ${m.apellidos}`.trim() || m.email}</div>
-                      <div className="text-xs text-gray-400 truncate">{m.especialidades.join(', ') || m.email}</div>
-                    </div>
-                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${badgeEstadoMonitor(m.estado)}`}>{labelEstadoMonitor(m.estado)}</span>
-                  </button>
-                  <Link href={`/admin/monitores?ver=${m.id}`} className="border-t border-gray-100 text-center text-xs font-bold text-pm-navy hover:text-pm-red py-2 rounded-b-2xl hover:bg-gray-50">👁️ Ver su portal</Link>
-                </div>
+                <button key={m.id} onClick={() => setFicha(m)} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-pm-red/40 transition-colors p-4 text-left flex gap-3 items-center">
+                  {m.foto_url
+                    // eslint-disable-next-line @next/next/no-img-element
+                    ? <img src={m.foto_url} alt="" className="w-12 h-12 rounded-full object-cover shrink-0" />
+                    : <div className="w-12 h-12 rounded-full bg-pm-navy/10 flex items-center justify-center text-pm-navy font-black shrink-0">{(m.nombre || m.email)[0]?.toUpperCase()}</div>}
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-pm-navy truncate">{`${m.nombre} ${m.apellidos}`.trim() || m.email}</div>
+                    <div className="text-xs text-gray-400 truncate">{m.especialidades.join(', ') || m.email}</div>
+                  </div>
+                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${badgeEstadoMonitor(m.estado)}`}>{labelEstadoMonitor(m.estado)}</span>
+                </button>
               ))}
               {monitores.length === 0 && <p className="text-gray-400 text-sm col-span-full py-8 text-center">No hay monitores todavía{puedeEditar ? '. Pulsa «Añadir monitor».' : '.'}</p>}
             </div>

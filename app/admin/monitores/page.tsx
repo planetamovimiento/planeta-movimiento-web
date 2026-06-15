@@ -9,9 +9,8 @@ import MonitoresAdmin from './MonitoresAdmin'
 
 export const dynamic = 'force-dynamic'
 
-export default async function MonitoresPage({ searchParams }: { searchParams: Promise<{ ver?: string }> }) {
+export default async function MonitoresPage() {
   const admin = await requireSeccion('monitores')
-  const { ver } = await searchParams
   const [carpetas, documentos] = await Promise.all([getCarpetas(), getTodosDocumentos()])
 
   // ── Vista del propio monitor ──
@@ -38,17 +37,6 @@ export default async function MonitoresPage({ searchParams }: { searchParams: Pr
   }
 
   const [monitores, actividades, fichajes] = await Promise.all([getMonitores(), getActividades(), getFichajes()])
-
-  // ── Vista previa: un admin ve el portal tal y como lo ve un monitor concreto ──
-  if (ver) {
-    const mon = monitores.find(m => m.id === ver)
-    if (mon) {
-      const acts = actividades.filter(a => a.monitor_id === mon.id)
-      const fich = fichajes.filter(f => f.monitor_id === mon.id)
-      const abierto = fich.find(f => !f.salida) ?? null
-      return <MonitorPortal monitor={mon} equipo={monitores} actividades={acts} fichajes={fich} abierto={abierto} carpetas={carpetas} documentos={documentos} preview />
-    }
-  }
 
   // ── Vista de administración del equipo ──
   return (

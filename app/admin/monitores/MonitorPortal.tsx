@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { AdminHeader, Metric } from '@/components/admin/ui'
 import { resumenHoras, resumenHorasActividades, horasPorMes, fmtHoras, badgeEstadoMonitor, labelEstadoMonitor } from '@/lib/monitores/constants'
@@ -29,9 +28,9 @@ function Cronometro({ desde }: { desde: string }) {
   return <span className="font-mono tabular-nums">{hh}:{mm}:{ss}</span>
 }
 
-export default function MonitorPortal({ monitor, equipo, actividades, fichajes, abierto, carpetas, documentos, preview = false }: {
+export default function MonitorPortal({ monitor, equipo, actividades, fichajes, abierto, carpetas, documentos }: {
   monitor: Monitor; equipo: Monitor[]; actividades: Actividad[]; fichajes: Fichaje[]; abierto: Fichaje | null
-  carpetas: Carpeta[]; documentos: Documento[]; preview?: boolean
+  carpetas: Carpeta[]; documentos: Documento[]
 }) {
   const [tab, setTab] = useState<'inicio' | 'calendario' | 'recursos' | 'perfil' | 'equipo'>('inicio')
   const [error, setError] = useState('')
@@ -44,10 +43,8 @@ export default function MonitorPortal({ monitor, equipo, actividades, fichajes, 
   const hoy = new Date().toISOString().slice(0, 10)
   const mesActual = hoy.slice(0, 7)
   const proximas = actividades.filter(a => a.fecha >= hoy).slice(0, 6)
-  const nombreCompleto = `${monitor.nombre} ${monitor.apellidos}`.trim() || monitor.email
 
   function fichar(entrar: boolean) {
-    if (preview) return
     setError('')
     start(async () => {
       const r = await (entrar ? ficharEntrada() : ficharSalida())
@@ -60,14 +57,6 @@ export default function MonitorPortal({ monitor, equipo, actividades, fichajes, 
     <>
       <AdminHeader titulo={`Hola, ${monitor.nombre || 'monitor'} 👋`} subtitulo="Tu portal · horario, fichaje, horas y recursos" />
       <div className="p-4 lg:p-6 space-y-4">
-        {/* Aviso de vista previa (cuando un admin previsualiza el portal del monitor) */}
-        {preview && (
-          <div className="bg-pm-navy/5 border border-pm-navy/15 rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-2 text-sm">
-            <span className="text-pm-navy font-semibold">👁️ Vista previa — así ve <strong>{nombreCompleto}</strong> su portal. El botón de fichar está desactivado <em>solo aquí</em> (para no fichar por él); cuando entre con su correo, funcionará con normalidad.</span>
-            <Link href="/admin/monitores" className="font-bold text-pm-red hover:underline">← Volver a gestión</Link>
-          </div>
-        )}
-
         {/* Pestañas */}
         <div className="flex flex-wrap gap-1 bg-white rounded-xl border border-gray-100 p-1 w-fit">
           {([['inicio', 'Inicio'], ['calendario', 'Mi calendario'], ['recursos', 'Recursos'], ['perfil', 'Mi perfil'], ['equipo', 'Equipo']] as const).map(([id, label]) => (
@@ -89,8 +78,8 @@ export default function MonitorPortal({ monitor, equipo, actividades, fichajes, 
                 ) : <div className="text-gray-500 text-sm">No tienes ninguna jornada abierta. Pulsa «Entrar» al empezar tu turno.</div>}
               </div>
               {abierto
-                ? <button onClick={() => fichar(false)} disabled={loading || preview} title={preview ? 'Desactivado en la vista previa' : undefined} className="bg-pm-navy hover:bg-pm-navy-md disabled:opacity-50 disabled:cursor-not-allowed text-white font-black px-8 py-3 rounded-xl">Salir</button>
-                : <button onClick={() => fichar(true)} disabled={loading || preview} title={preview ? 'Desactivado en la vista previa' : undefined} className="bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black px-8 py-3 rounded-xl">Entrar</button>}
+                ? <button onClick={() => fichar(false)} disabled={loading} className="bg-pm-navy hover:bg-pm-navy-md disabled:opacity-50 text-white font-black px-8 py-3 rounded-xl">Salir</button>
+                : <button onClick={() => fichar(true)} disabled={loading} className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-black px-8 py-3 rounded-xl">Entrar</button>}
             </div>
             {error && <p className="text-red-600 text-sm">{error}</p>}
 
