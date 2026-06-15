@@ -4,7 +4,7 @@ import { useState, useMemo, useTransition } from 'react'
 import Link from 'next/link'
 import { AdminHeader, Metric } from '@/components/admin/ui'
 import { SubirImagen } from '@/components/admin/SubirImagen'
-import { ACTIVIDADES_MONITOR, ESTADOS_MONITOR, badgeEstadoMonitor, labelEstadoMonitor, resumenHoras, resumenHorasActividades, horasPorMes, fmtHoras } from '@/lib/monitores/constants'
+import { ACTIVIDADES_MONITOR, ESTADOS_MONITOR, badgeEstadoMonitor, labelEstadoMonitor, resumenHoras, resumenHorasActividades, horasActividad, horasDeFichaje, fmtHoras } from '@/lib/monitores/constants'
 import { crearMonitor, editarMonitor, eliminarMonitor, asignarActividad, editarActividad, eliminarActividad } from './actions'
 import Calendario from './Calendario'
 import Recursos from './Recursos'
@@ -33,7 +33,6 @@ export default function MonitoresAdmin({ monitores, actividades, fichajes, carpe
   const fichajesMon = monSel ? fichajes.filter(f => f.monitor_id === monSel) : fichajes
   const horas = resumenHoras(fichajesMon)
   const horasNom = resumenHorasActividades(actsFiltradas)
-  const mesesNom = horasPorMes(actsFiltradas)
 
   return (
     <>
@@ -105,25 +104,10 @@ export default function MonitoresAdmin({ monitores, actividades, fichajes, carpe
                 <Metric label="Este mes" valor={fmtHoras(horasNom.mes)} tono="amber" />
                 <Metric label="Acumulado" valor={fmtHoras(horasNom.total)} tono="purple" />
               </div>
-              {mesesNom.length ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="text-xs text-gray-400 uppercase"><tr>
-                      <th className="text-left py-2 px-2">Mes</th>
-                      <th className="text-right py-2 px-2">Horas en nómina</th>
-                    </tr></thead>
-                    <tbody className="divide-y divide-gray-50">
-                      {mesesNom.map(m => (
-                        <tr key={m.mes}>
-                          <td className="py-2 px-2 text-gray-600 capitalize">{m.label}</td>
-                          <td className="py-2 px-2 text-right font-black text-pm-navy">{fmtHoras(m.horas)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : <p className="text-gray-400 text-sm py-2">Aún no hay actividades con horario en el calendario. Asigna actividades con hora de inicio y fin para contabilizar las horas.</p>}
             </div>
+
+            {/* REGISTRO MENSUAL (nómina + fichadas) con filtro de mes */}
+            <RegistroMensual actividades={actsFiltradas} fichajes={fichajesMon} />
 
             {/* HORAS FICHADAS (control real) */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
@@ -306,6 +290,66 @@ function ListaActividades({ actividades, nombreMonitor, onError, puedeEditar, on
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+
+function RegistroMensual({ actividades, fichajes }: { actividades: Actividad[]; fichajes: Fichaje[] }) {
+  const [mesSel, setMesSel] = useState('')
+  const meses = useMemo(() => {
+    const map = new Map<string, { nomina: number; fichadas: number }>()
+    for (const a of actividades) {
+      const h = horasActividad(a); if (!h) continue
+      const k = a.fecha.slice(0, 7); const c = map.get(k) ?? { nomina: 0, fichadas: 0 }; c.nomina += h; map.set(k, c)
+    }
+    for (const f of fichajes) {
+      const h = horasDeFichaje(f); if (!h) continue
+      const k = f.fecha.slice(0, 7); const c = map.get(k) ?? { nomina: 0, fichadas: 0 }; c.fichadas += h; map.set(k, c)
+    }
+    return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0])).map(([mes, v]) => {
+      const [y, mm] = mes.split('-').map(Number)
+      return { mes, label: new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(new Date(y, mm - 1, 1)), ...v }
+    })
+  }, [actividades, fichajes])
+
+  const filas = mesSel ? meses.filter(m => m.mes === mesSel) : meses
+  const totalNom = filas.reduce((s, m) => s + m.nomina, 0)
+  const totalFich = filas.reduce((s, m) => s + m.fichadas, 0)
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="font-black text-pm-navy">📅 Registro mensual de horas</h3>
+        <select value={mesSel} onChange={e => setMesSel(e.target.value)} className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-pm-red capitalize">
+          <option value="">Todos los meses</option>
+          {meses.map(m => <option key={m.mes} value={m.mes} className="capitalize">{m.label}</option>)}
+        </select>
+      </div>
+      {filas.length ? (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="text-xs text-gray-400 uppercase"><tr>
+              <th className="text-left py-2 px-2">Mes</th>
+              <th className="text-right py-2 px-2">En nómina (calendario)</th>
+              <th className="text-right py-2 px-2">Fichadas (real)</th>
+            </tr></thead>
+            <tbody className="divide-y divide-gray-50">
+              {filas.map(m => (
+                <tr key={m.mes}>
+                  <td className="py-2 px-2 text-gray-600 capitalize">{m.label}</td>
+                  <td className="py-2 px-2 text-right font-black text-pm-navy">{fmtHoras(m.nomina)}</td>
+                  <td className="py-2 px-2 text-right font-semibold text-gray-500">{fmtHoras(m.fichadas)}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot><tr className="border-t-2 border-gray-100">
+              <td className="py-2 px-2 font-black text-pm-navy">Total</td>
+              <td className="py-2 px-2 text-right font-black text-pm-red">{fmtHoras(totalNom)}</td>
+              <td className="py-2 px-2 text-right font-bold text-gray-500">{fmtHoras(totalFich)}</td>
+            </tr></tfoot>
+          </table>
+        </div>
+      ) : <p className="text-gray-400 text-sm py-2">Aún no hay horas registradas. Asigna actividades con horario para empezar a contabilizar.</p>}
     </div>
   )
 }
