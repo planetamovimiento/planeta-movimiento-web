@@ -39,14 +39,30 @@ export async function getAdminUser(): Promise<AdminUser | null> {
     .eq('activo', true)
     .maybeSingle()
 
-  if (!data) return null
-  return {
-    id: user.id,
-    email: data.email,
-    nombre: data.nombre,
-    role: data.role as AdminRole,
-    secciones: (data.secciones as string[] | null) ?? null,
+  if (data) {
+    return {
+      id: user.id,
+      email: data.email,
+      nombre: data.nombre,
+      role: data.role as AdminRole,
+      secciones: (data.secciones as string[] | null) ?? null,
+    }
   }
+
+  // Sin fila en admin_users: si el correo tiene FICHA DE MONITOR (no inactivo),
+  // su propia ficha le da acceso a su portal (no hace falta añadirlo en Administradores).
+  try {
+    const { data: mon } = await admin
+      .from('monitores')
+      .select('nombre, email, estado')
+      .eq('email', user.email.toLowerCase())
+      .maybeSingle()
+    if (mon && mon.estado !== 'inactivo') {
+      return { id: user.id, email: String(mon.email), nombre: (mon.nombre as string | null) ?? null, role: 'monitor', secciones: ['monitores'] }
+    }
+  } catch { /* la tabla monitores aún no existe: se ignora */ }
+
+  return null
 }
 
 /**
