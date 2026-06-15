@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { getAdminUser } from '@/lib/admin/auth'
 import { getDashboard } from '@/lib/admin/data'
 import { puedeVerSeccion, type SeccionId } from '@/lib/admin/secciones'
@@ -6,6 +7,8 @@ import { AdminHeader, Metric, EstadoBadge, EmptyState, SetupNotice } from '@/com
 
 export default async function DashboardPage() {
   const admin = await getAdminUser()
+  // El monitor no ve el dashboard general: directo a su portal.
+  if (admin?.role === 'monitor') redirect('/admin/monitores')
   const d = await getDashboard()
   const hoy = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())
 

@@ -12,7 +12,7 @@ export default function AdminSidebar(
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
 
-  const roleLabel = role === 'principal' ? 'Administrador principal' : role === 'gestor' ? 'Gestor' : 'Solo lectura'
+  const roleLabel = role === 'principal' ? 'Administrador principal' : role === 'gestor' ? 'Gestor' : role === 'monitor' ? 'Monitor' : 'Solo lectura'
 
   // Secciones visibles para este usuario, agrupadas conservando el orden de SECCIONES.
   const visibles = SECCIONES.filter(s => puedeVerSeccion(role, secciones, s.id))

@@ -4,7 +4,7 @@
 // (auth, guards) como en el cliente (barra lateral, gestor de admins).
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type AdminRole = 'principal' | 'gestor' | 'lectura'
+export type AdminRole = 'principal' | 'gestor' | 'lectura' | 'monitor'
 
 export type SeccionId =
   | 'club'
@@ -19,6 +19,7 @@ export type SeccionId =
   | 'servicios'
   | 'clientes'
   | 'balance'
+  | 'monitores'
   | 'administradores'
   | 'actividad'
 
@@ -44,6 +45,7 @@ export const SECCIONES: SeccionMeta[] = [
   { id: 'formularios',     label: 'Solicitudes',         icon: '✉️', href: '/admin/formularios',      grupo: 'Empresa' },
   { id: 'calendario',      label: 'Calendario',          icon: '🗓️', href: '/admin/calendario',       grupo: 'Empresa' },
   { id: 'servicios',       label: 'Servicios',           icon: '🎪', href: '/admin/servicios',        grupo: 'Empresa' },
+  { id: 'monitores',       label: 'Monitores',           icon: '🧑‍🏫', href: '/admin/monitores',        grupo: 'Equipo' },
   { id: 'clientes',        label: 'Clientes',            icon: '👥', href: '/admin/clientes',         grupo: 'General' },
   { id: 'balance',         label: 'Balance Económico',   icon: '💰', href: '/admin/balance',          grupo: 'General' },
   { id: 'administradores', label: 'Administradores',     icon: '🔐', href: '/admin/administradores',   grupo: 'General', soloPrincipal: true },
@@ -61,6 +63,8 @@ export const SECCIONES_ASIGNABLES: SeccionMeta[] = SECCIONES.filter(s => !s.solo
  * Las secciones `soloPrincipal` nunca son accesibles para gestor/lectura.
  */
 export function puedeVerSeccion(role: AdminRole, secciones: string[] | null, id: SeccionId): boolean {
+  // El monitor SOLO ve su portal (sección 'monitores').
+  if (role === 'monitor') return id === 'monitores'
   if (role === 'principal') return true
   const meta = SECCIONES.find(s => s.id === id)
   if (!meta || meta.soloPrincipal) return false
