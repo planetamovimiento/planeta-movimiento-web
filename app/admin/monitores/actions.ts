@@ -8,6 +8,22 @@ import { tipoDocumento, CARPETAS_DEFAULT } from '@/lib/monitores/constants'
 
 type Res = { ok: true } | { ok: false; error: string }
 
+/**
+ * Garantiza que el correo tenga acceso de MONITOR (rol monitor + solo sección
+ * "monitores"). Si no existe en admin_users lo crea; si existía como "lectura" (u
+ * otro) lo corrige a monitor. No toca a un principal/gestor (no se le degrada).
+ */
+async function asegurarAccesoMonitor(db: ReturnType<typeof createAdminClient>, email: string, nombre: string, invitedBy: string) {
+  const e = email.trim().toLowerCase()
+  if (!e) return
+  const { data: existe } = await db.from('admin_users').select('id, role').eq('email', e).maybeSingle()
+  if (!existe) {
+    await db.from('admin_users').insert({ email: e, nombre: nombre || null, role: 'monitor', secciones: ['monitores'], invited_by: invitedBy, activo: true })
+  } else if (existe.role !== 'principal' && existe.role !== 'gestor') {
+    await db.from('admin_users').update({ role: 'monitor', secciones: ['monitores'], activo: true }).eq('email', e)
+  }
+}
+
 // ── Monitores (alta/edición/baja) ──────────────────────────────────────────────
 export async function crearMonitor(p: {
   email: string; nombre: string; apellidos?: string; telefono?: string; fecha_alta?: string | null
@@ -26,11 +42,8 @@ export async function crearMonitor(p: {
   })
   if (error) return { ok: false, error: error.message.includes('duplicate') ? 'Ya existe un monitor con ese correo.' : error.message }
 
-  // Acceso al portal: alta en admin_users con rol monitor (si no existe ya).
-  const { data: existe } = await db.from('admin_users').select('id').eq('email', email).maybeSingle()
-  if (!existe) {
-    await db.from('admin_users').insert({ email, nombre: p.nombre.trim() || null, role: 'monitor', secciones: ['monitores'], invited_by: admin.email, activo: true })
-  }
+  // Acceso al portal: queda con rol monitor (aunque el correo ya existiera como lectura).
+  await asegurarAccesoMonitor(db, email, p.nombre.trim(), admin.email)
   await logActivity({ actorEmail: admin.email, accion: 'Alta de monitor', entidad: 'monitor', entidadId: email })
   revalidatePath('/admin/monitores')
   return { ok: true }
@@ -42,6 +55,9 @@ export async function editarMonitor(id: string, patch: Record<string, unknown>):
   const db = createAdminClient()
   const { error } = await db.from('monitores').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', id)
   if (error) return { ok: false, error: error.message }
+  // Reasegura el acceso de monitor (repara fichas que quedaron como "lectura").
+  const { data: mon } = await db.from('monitores').select('email, nombre').eq('id', id).maybeSingle()
+  if (mon?.email) await asegurarAccesoMonitor(db, String(mon.email), String(mon.nombre ?? ''), admin.email)
   revalidatePath('/admin/monitores')
   return { ok: true }
 }
