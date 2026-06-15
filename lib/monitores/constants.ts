@@ -85,3 +85,61 @@ export function fmtHoras(h: number): string {
   if (horas === 0 && min === 0) return '0h'
   return `${horas}h${min > 0 ? ` ${min}m` : ''}`
 }
+
+// ── Horas en nómina (a partir del CALENDARIO de actividades) ───────────────────
+// Se calculan con las horas programadas (hora_inicio → hora_fin) de cada actividad
+// asignada. Sirven de base para la nómina aunque el monitor fiche mal o lo olvide.
+type ActividadHoras = { fecha: string; hora_inicio: string | null; hora_fin: string | null }
+
+const aMinutos = (hhmm: string | null): number | null => {
+  if (!hhmm) return null
+  const [h, m] = hhmm.split(':').map(Number)
+  if (Number.isNaN(h)) return null
+  return h * 60 + (m || 0)
+}
+
+/** Horas programadas de una actividad (0 si le falta la hora de inicio o de fin). */
+export function horasActividad(a: ActividadHoras): number {
+  const ini = aMinutos(a.hora_inicio)
+  const fin = aMinutos(a.hora_fin)
+  if (ini === null || fin === null) return 0
+  const diff = fin - ini
+  return diff > 0 ? diff / 60 : 0
+}
+
+/** Resumen de horas programadas (calendario): día, semana, mes y acumulado. */
+export function resumenHorasActividades(actividades: ActividadHoras[], ahora = new Date()): { dia: number; semana: number; mes: number; total: number } {
+  const hoy = ahora.toISOString().slice(0, 10)
+  const mes = ahora.toISOString().slice(0, 7)
+  const lunes = lunesDeEstaSemana(ahora).toISOString().slice(0, 10)
+  const domingo = new Date(lunesDeEstaSemana(ahora)); domingo.setDate(domingo.getDate() + 6)
+  const domingoISO = domingo.toISOString().slice(0, 10)
+  let dia = 0, semana = 0, mesH = 0, total = 0
+  for (const a of actividades) {
+    const h = horasActividad(a)
+    if (!h) continue
+    total += h
+    if (a.fecha === hoy) dia += h
+    if (a.fecha >= lunes && a.fecha <= domingoISO) semana += h
+    if (a.fecha.slice(0, 7) === mes) mesH += h
+  }
+  return { dia, semana, mes: mesH, total }
+}
+
+/** Total de horas programadas agrupadas por mes (más reciente primero). */
+export function horasPorMes(actividades: ActividadHoras[]): { mes: string; label: string; horas: number }[] {
+  const m = new Map<string, number>()
+  for (const a of actividades) {
+    const h = horasActividad(a)
+    if (!h) continue
+    const k = a.fecha.slice(0, 7) // YYYY-MM
+    m.set(k, (m.get(k) ?? 0) + h)
+  }
+  return [...m.entries()]
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([mes, horas]) => {
+      const [y, mm] = mes.split('-').map(Number)
+      const label = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(new Date(y, mm - 1, 1))
+      return { mes, label, horas }
+    })
+}

@@ -3,7 +3,7 @@
 import { useState, useEffect, useTransition } from 'react'
 import Link from 'next/link'
 import { AdminHeader, Metric } from '@/components/admin/ui'
-import { resumenHoras, fmtHoras, badgeEstadoMonitor, labelEstadoMonitor } from '@/lib/monitores/constants'
+import { resumenHoras, resumenHorasActividades, horasPorMes, fmtHoras, badgeEstadoMonitor, labelEstadoMonitor } from '@/lib/monitores/constants'
 import { descargarICS } from '@/lib/monitores/ics'
 import { ficharEntrada, ficharSalida } from './actions'
 import Calendario from './Calendario'
@@ -37,7 +37,10 @@ export default function MonitorPortal({ monitor, actividades, fichajes, abierto,
   const [loading, start] = useTransition()
 
   const horas = resumenHoras(fichajes)
+  const horasNom = resumenHorasActividades(actividades)
+  const mesesNom = horasPorMes(actividades)
   const hoy = new Date().toISOString().slice(0, 10)
+  const mesActual = hoy.slice(0, 7)
   const proximas = actividades.filter(a => a.fecha >= hoy).slice(0, 6)
   const nombreCompleto = `${monitor.nombre} ${monitor.apellidos}`.trim() || monitor.email
 
@@ -85,12 +88,39 @@ export default function MonitorPortal({ monitor, actividades, fichajes, abierto,
             </div>
             {error && <p className="text-red-600 text-sm">{error}</p>}
 
-            {/* Horas */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <Metric label="Horas hoy" valor={fmtHoras(horas.dia)} tono="navy" />
-              <Metric label="Esta semana" valor={fmtHoras(horas.semana)} tono="green" />
-              <Metric label="Este mes" valor={fmtHoras(horas.mes)} tono="amber" />
-              <Metric label="Acumulado" valor={fmtHoras(horas.total)} tono="purple" />
+            {/* Horas fichadas (control real) */}
+            <div>
+              <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-2">Horas fichadas (lo que registras con Entrar/Salir)</div>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <Metric label="Hoy" valor={fmtHoras(horas.dia)} tono="navy" />
+                <Metric label="Esta semana" valor={fmtHoras(horas.semana)} tono="green" />
+                <Metric label="Este mes" valor={fmtHoras(horas.mes)} tono="amber" />
+                <Metric label="Acumulado" valor={fmtHoras(horas.total)} tono="purple" />
+              </div>
+            </div>
+
+            {/* Horas en nómina (según el calendario) */}
+            <div className="bg-white rounded-2xl border border-pm-red/20 shadow-sm p-5">
+              <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+                <div>
+                  <h3 className="font-black text-pm-navy">💶 Horas en nómina</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">Según las actividades programadas en tu calendario. Estas son las que cuentan para tu nómina.</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-black text-pm-red">{fmtHoras(horasNom.mes)}</div>
+                  <div className="text-xs text-gray-400">este mes</div>
+                </div>
+              </div>
+              {mesesNom.length ? (
+                <div className="divide-y divide-gray-50">
+                  {mesesNom.slice(0, 6).map(m => (
+                    <div key={m.mes} className={`flex justify-between text-sm py-1.5 ${m.mes === mesActual ? 'font-bold text-pm-navy' : 'text-gray-600'}`}>
+                      <span className="capitalize">{m.label}{m.mes === mesActual ? ' · en curso' : ''}</span>
+                      <span>{fmtHoras(m.horas)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : <p className="text-gray-400 text-sm py-2">Aún no tienes actividades con horario en el calendario.</p>}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

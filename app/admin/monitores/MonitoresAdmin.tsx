@@ -4,7 +4,7 @@ import { useState, useMemo, useTransition } from 'react'
 import Link from 'next/link'
 import { AdminHeader, Metric } from '@/components/admin/ui'
 import { SubirImagen } from '@/components/admin/SubirImagen'
-import { ACTIVIDADES_MONITOR, ESTADOS_MONITOR, badgeEstadoMonitor, labelEstadoMonitor, resumenHoras, fmtHoras } from '@/lib/monitores/constants'
+import { ACTIVIDADES_MONITOR, ESTADOS_MONITOR, badgeEstadoMonitor, labelEstadoMonitor, resumenHoras, resumenHorasActividades, horasPorMes, fmtHoras } from '@/lib/monitores/constants'
 import { crearMonitor, editarMonitor, eliminarMonitor, asignarActividad, eliminarActividad } from './actions'
 import Calendario from './Calendario'
 import Recursos from './Recursos'
@@ -31,6 +31,8 @@ export default function MonitoresAdmin({ monitores, actividades, fichajes, carpe
   const actsFiltradas = monSel ? actividades.filter(a => a.monitor_id === monSel) : actividades
   const fichajesMon = monSel ? fichajes.filter(f => f.monitor_id === monSel) : fichajes
   const horas = resumenHoras(fichajesMon)
+  const horasNom = resumenHorasActividades(actsFiltradas)
+  const mesesNom = horasPorMes(actsFiltradas)
 
   return (
     <>
@@ -86,38 +88,78 @@ export default function MonitoresAdmin({ monitores, actividades, fichajes, carpe
         {tab === 'horas' && (
           <div className="space-y-4">
             <SelectorMonitor monitores={monitores} value={monSel} onChange={setMonSel} />
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <Metric label="Horas hoy" valor={fmtHoras(horas.dia)} tono="navy" />
-              <Metric label="Esta semana" valor={fmtHoras(horas.semana)} tono="green" />
-              <Metric label="Este mes" valor={fmtHoras(horas.mes)} tono="amber" />
-              <Metric label="Acumulado" valor={fmtHoras(horas.total)} tono="purple" />
-            </div>
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <h3 className="font-black text-pm-navy mb-3">Historial de jornadas {monSel ? '' : '(todos)'}</h3>
-              {fichajesMon.length ? (
+
+            {/* HORAS EN NÓMINA (según el calendario) */}
+            <div className="bg-white rounded-2xl border border-pm-red/20 shadow-sm p-5 space-y-4">
+              <div>
+                <h3 className="font-black text-pm-navy">💶 Horas en nómina · según el calendario {monSel ? '' : '(todos los monitores)'}</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Calculadas con las horas programadas en el calendario (inicio → fin de cada actividad). Es la base para la nómina, aunque el monitor fiche mal o se le olvide. Elige un monitor arriba para ver sus horas individuales.</p>
+              </div>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <Metric label="Programadas hoy" valor={fmtHoras(horasNom.dia)} tono="navy" />
+                <Metric label="Esta semana" valor={fmtHoras(horasNom.semana)} tono="green" />
+                <Metric label="Este mes" valor={fmtHoras(horasNom.mes)} tono="amber" />
+                <Metric label="Acumulado" valor={fmtHoras(horasNom.total)} tono="purple" />
+              </div>
+              {mesesNom.length ? (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="text-xs text-gray-400 uppercase"><tr>
-                      {!monSel && <th className="text-left py-2 px-2">Monitor</th>}
-                      <th className="text-left py-2 px-2">Fecha</th><th className="text-left py-2 px-2">Entrada</th><th className="text-left py-2 px-2">Salida</th><th className="text-right py-2 px-2">Horas</th>
+                      <th className="text-left py-2 px-2">Mes</th>
+                      <th className="text-right py-2 px-2">Horas en nómina</th>
                     </tr></thead>
                     <tbody className="divide-y divide-gray-50">
-                      {fichajesMon.slice(0, 100).map(f => {
-                        const h = f.salida ? (new Date(f.salida).getTime() - new Date(f.entrada).getTime()) / 3600000 : 0
-                        return (
-                          <tr key={f.id}>
-                            {!monSel && <td className="py-2 px-2 text-gray-600">{nombreDe(f.monitor_id)}</td>}
-                            <td className="py-2 px-2 text-gray-600 capitalize">{fechaLarga(f.fecha)}</td>
-                            <td className="py-2 px-2">{horaCorta(f.entrada)}</td>
-                            <td className="py-2 px-2">{f.salida ? horaCorta(f.salida) : <span className="text-green-600 font-semibold">abierta</span>}</td>
-                            <td className="py-2 px-2 text-right font-semibold text-pm-navy">{f.salida ? fmtHoras(h) : '—'}</td>
-                          </tr>
-                        )
-                      })}
+                      {mesesNom.map(m => (
+                        <tr key={m.mes}>
+                          <td className="py-2 px-2 text-gray-600 capitalize">{m.label}</td>
+                          <td className="py-2 px-2 text-right font-black text-pm-navy">{fmtHoras(m.horas)}</td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
-              ) : <p className="text-gray-400 text-sm py-6 text-center">Sin fichajes registrados.</p>}
+              ) : <p className="text-gray-400 text-sm py-2">Aún no hay actividades con horario en el calendario. Asigna actividades con hora de inicio y fin para contabilizar las horas.</p>}
+            </div>
+
+            {/* HORAS FICHADAS (control real) */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+              <div>
+                <h3 className="font-black text-pm-navy">⏱️ Horas fichadas · control real</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Lo que el monitor fichó realmente con Entrar/Salir. Útil para comparar con lo programado.</p>
+              </div>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <Metric label="Fichadas hoy" valor={fmtHoras(horas.dia)} tono="navy" />
+                <Metric label="Esta semana" valor={fmtHoras(horas.semana)} tono="green" />
+                <Metric label="Este mes" valor={fmtHoras(horas.mes)} tono="amber" />
+                <Metric label="Acumulado" valor={fmtHoras(horas.total)} tono="purple" />
+              </div>
+              <div>
+                <h4 className="font-bold text-pm-navy mb-2 text-sm">Historial de jornadas {monSel ? '' : '(todos)'}</h4>
+                {fichajesMon.length ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="text-xs text-gray-400 uppercase"><tr>
+                        {!monSel && <th className="text-left py-2 px-2">Monitor</th>}
+                        <th className="text-left py-2 px-2">Fecha</th><th className="text-left py-2 px-2">Entrada</th><th className="text-left py-2 px-2">Salida</th><th className="text-right py-2 px-2">Horas</th>
+                      </tr></thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {fichajesMon.slice(0, 100).map(f => {
+                          const h = f.salida ? (new Date(f.salida).getTime() - new Date(f.entrada).getTime()) / 3600000 : 0
+                          return (
+                            <tr key={f.id}>
+                              {!monSel && <td className="py-2 px-2 text-gray-600">{nombreDe(f.monitor_id)}</td>}
+                              <td className="py-2 px-2 text-gray-600 capitalize">{fechaLarga(f.fecha)}</td>
+                              <td className="py-2 px-2">{horaCorta(f.entrada)}</td>
+                              <td className="py-2 px-2">{f.salida ? horaCorta(f.salida) : <span className="text-green-600 font-semibold">abierta</span>}</td>
+                              <td className="py-2 px-2 text-right font-semibold text-pm-navy">{f.salida ? fmtHoras(h) : '—'}</td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : <p className="text-gray-400 text-sm py-6 text-center">Sin fichajes registrados.</p>}
+              </div>
             </div>
           </div>
         )}
