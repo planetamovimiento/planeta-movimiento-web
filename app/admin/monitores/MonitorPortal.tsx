@@ -54,7 +54,7 @@ export default function MonitorPortal({ monitor, actividades, fichajes, abierto,
         {/* Aviso de vista previa (cuando un admin previsualiza el portal del monitor) */}
         {preview && (
           <div className="bg-pm-navy/5 border border-pm-navy/15 rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-2 text-sm">
-            <span className="text-pm-navy font-semibold">👁️ Vista previa — así ve <strong>{nombreCompleto}</strong> su portal. El fichaje está desactivado.</span>
+            <span className="text-pm-navy font-semibold">👁️ Vista previa — así ve <strong>{nombreCompleto}</strong> su portal. El botón de fichar está desactivado <em>solo aquí</em> (para no fichar por él); cuando entre con su correo, funcionará con normalidad.</span>
             <Link href="/admin/monitores" className="font-bold text-pm-red hover:underline">← Volver a gestión</Link>
           </div>
         )}
@@ -80,8 +80,8 @@ export default function MonitorPortal({ monitor, actividades, fichajes, abierto,
                 ) : <div className="text-gray-500 text-sm">No tienes ninguna jornada abierta. Pulsa «Entrar» al empezar tu turno.</div>}
               </div>
               {abierto
-                ? <button onClick={() => fichar(false)} disabled={loading || preview} className="bg-pm-navy hover:bg-pm-navy-md disabled:opacity-50 text-white font-black px-8 py-3 rounded-xl">Salir</button>
-                : <button onClick={() => fichar(true)} disabled={loading || preview} className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-black px-8 py-3 rounded-xl">Entrar</button>}
+                ? <button onClick={() => fichar(false)} disabled={loading || preview} title={preview ? 'Desactivado en la vista previa' : undefined} className="bg-pm-navy hover:bg-pm-navy-md disabled:opacity-50 disabled:cursor-not-allowed text-white font-black px-8 py-3 rounded-xl">Salir</button>
+                : <button onClick={() => fichar(true)} disabled={loading || preview} title={preview ? 'Desactivado en la vista previa' : undefined} className="bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black px-8 py-3 rounded-xl">Entrar</button>}
             </div>
             {error && <p className="text-red-600 text-sm">{error}</p>}
 
