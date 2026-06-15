@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useTransition } from 'react'
+import Link from 'next/link'
 import { AdminHeader, Metric } from '@/components/admin/ui'
 import { SubirImagen } from '@/components/admin/SubirImagen'
 import { ACTIVIDADES_MONITOR, ESTADOS_MONITOR, badgeEstadoMonitor, labelEstadoMonitor, resumenHoras, fmtHoras } from '@/lib/monitores/constants'
@@ -14,8 +15,8 @@ const horaCorta = (iso: string) => new Date(iso).toLocaleTimeString('es-ES', { h
 
 type Tab = 'equipo' | 'calendario' | 'horas' | 'recursos'
 
-export default function MonitoresAdmin({ monitores, actividades, fichajes, carpetas, documentos, puedeBorrar }: {
-  monitores: Monitor[]; actividades: Actividad[]; fichajes: Fichaje[]; carpetas: Carpeta[]; documentos: Documento[]; puedeBorrar: boolean
+export default function MonitoresAdmin({ monitores, actividades, fichajes, carpetas, documentos, puedeBorrar, puedeEditar }: {
+  monitores: Monitor[]; actividades: Actividad[]; fichajes: Fichaje[]; carpetas: Carpeta[]; documentos: Documento[]; puedeBorrar: boolean; puedeEditar: boolean
 }) {
   const [tab, setTab] = useState<Tab>('equipo')
   const [ficha, setFicha] = useState<Monitor | 'nuevo' | null>(null)
@@ -47,23 +48,26 @@ export default function MonitoresAdmin({ monitores, actividades, fichajes, carpe
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <Metric label="Monitores" valor={monitores.length} tono="navy" />
-              <button onClick={() => setFicha('nuevo')} className="bg-pm-red hover:bg-pm-red-dark text-white font-bold text-sm px-4 py-2.5 rounded-xl">+ Añadir monitor</button>
+              {puedeEditar && <button onClick={() => setFicha('nuevo')} className="bg-pm-red hover:bg-pm-red-dark text-white font-bold text-sm px-4 py-2.5 rounded-xl">+ Añadir monitor</button>}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {monitores.map(m => (
-                <button key={m.id} onClick={() => setFicha(m)} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-left hover:border-pm-red/40 transition-colors flex gap-3 items-center">
-                  {m.foto_url
-                    // eslint-disable-next-line @next/next/no-img-element
-                    ? <img src={m.foto_url} alt="" className="w-12 h-12 rounded-full object-cover shrink-0" />
-                    : <div className="w-12 h-12 rounded-full bg-pm-navy/10 flex items-center justify-center text-pm-navy font-black shrink-0">{(m.nombre || m.email)[0]?.toUpperCase()}</div>}
-                  <div className="min-w-0 flex-1">
-                    <div className="font-bold text-pm-navy truncate">{`${m.nombre} ${m.apellidos}`.trim() || m.email}</div>
-                    <div className="text-xs text-gray-400 truncate">{m.especialidades.join(', ') || m.email}</div>
-                  </div>
-                  <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${badgeEstadoMonitor(m.estado)}`}>{labelEstadoMonitor(m.estado)}</span>
-                </button>
+                <div key={m.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-pm-red/40 transition-colors flex flex-col">
+                  <button onClick={() => setFicha(m)} className="p-4 text-left flex gap-3 items-center">
+                    {m.foto_url
+                      // eslint-disable-next-line @next/next/no-img-element
+                      ? <img src={m.foto_url} alt="" className="w-12 h-12 rounded-full object-cover shrink-0" />
+                      : <div className="w-12 h-12 rounded-full bg-pm-navy/10 flex items-center justify-center text-pm-navy font-black shrink-0">{(m.nombre || m.email)[0]?.toUpperCase()}</div>}
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-pm-navy truncate">{`${m.nombre} ${m.apellidos}`.trim() || m.email}</div>
+                      <div className="text-xs text-gray-400 truncate">{m.especialidades.join(', ') || m.email}</div>
+                    </div>
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${badgeEstadoMonitor(m.estado)}`}>{labelEstadoMonitor(m.estado)}</span>
+                  </button>
+                  <Link href={`/admin/monitores?ver=${m.id}`} className="border-t border-gray-100 text-center text-xs font-bold text-pm-navy hover:text-pm-red py-2 rounded-b-2xl hover:bg-gray-50">👁️ Ver su portal</Link>
+                </div>
               ))}
-              {monitores.length === 0 && <p className="text-gray-400 text-sm col-span-full py-8 text-center">No hay monitores todavía. Pulsa «Añadir monitor».</p>}
+              {monitores.length === 0 && <p className="text-gray-400 text-sm col-span-full py-8 text-center">No hay monitores todavía{puedeEditar ? '. Pulsa «Añadir monitor».' : '.'}</p>}
             </div>
           </div>
         )}
@@ -72,9 +76,9 @@ export default function MonitoresAdmin({ monitores, actividades, fichajes, carpe
         {tab === 'calendario' && (
           <div className="space-y-4">
             <SelectorMonitor monitores={monitores} value={monSel} onChange={setMonSel} />
-            <AsignarForm monitores={monitores} monSel={monSel} onError={setError} />
+            {puedeEditar && <AsignarForm monitores={monitores} monSel={monSel} onError={setError} />}
             <Calendario actividades={actsFiltradas} nombreMonitor={monSel ? undefined : nombreDe} />
-            <ListaActividades actividades={actsFiltradas} nombreMonitor={nombreDe} onError={setError} />
+            <ListaActividades actividades={actsFiltradas} nombreMonitor={nombreDe} onError={setError} puedeEditar={puedeEditar} />
           </div>
         )}
 
@@ -119,10 +123,10 @@ export default function MonitoresAdmin({ monitores, actividades, fichajes, carpe
         )}
 
         {/* ── RECURSOS ── */}
-        {tab === 'recursos' && <Recursos carpetas={carpetas} documentos={documentos} admin />}
+        {tab === 'recursos' && <Recursos carpetas={carpetas} documentos={documentos} admin={puedeEditar} />}
       </div>
 
-      {ficha && <FichaMonitor monitor={ficha === 'nuevo' ? null : ficha} puedeBorrar={puedeBorrar} onClose={() => setFicha(null)} />}
+      {ficha && <FichaMonitor monitor={ficha === 'nuevo' ? null : ficha} puedeBorrar={puedeBorrar} puedeEditar={puedeEditar} onClose={() => setFicha(null)} />}
     </>
   )
 }
@@ -176,7 +180,7 @@ function AsignarForm({ monitores, monSel, onError }: { monitores: Monitor[]; mon
   )
 }
 
-function ListaActividades({ actividades, nombreMonitor, onError }: { actividades: Actividad[]; nombreMonitor: (id: string) => string; onError: (e: string) => void }) {
+function ListaActividades({ actividades, nombreMonitor, onError, puedeEditar }: { actividades: Actividad[]; nombreMonitor: (id: string) => string; onError: (e: string) => void; puedeEditar: boolean }) {
   const [, start] = useTransition()
   const hoy = new Date().toISOString().slice(0, 10)
   const proximas = actividades.filter(a => a.fecha >= hoy).slice(0, 30)
@@ -190,7 +194,7 @@ function ListaActividades({ actividades, nombreMonitor, onError }: { actividades
             <span className="text-pm-red font-bold w-24 shrink-0 capitalize">{fechaLarga(a.fecha)}</span>
             <span className="text-gray-500 w-24 shrink-0">{a.hora_inicio}{a.hora_fin ? `–${a.hora_fin}` : ''}</span>
             <span className="flex-1 min-w-0 text-pm-navy"><strong>{a.actividad}</strong> · {nombreMonitor(a.monitor_id)}{a.lugar ? ` · ${a.lugar}` : ''}{a.grupo ? ` · ${a.grupo}` : ''}</span>
-            <button onClick={() => start(async () => { const r = await eliminarActividad(a.id); if (!r.ok) onError(r.error) })} className="text-gray-300 hover:text-red-500 px-1" title="Eliminar">🗑</button>
+            {puedeEditar && <button onClick={() => start(async () => { const r = await eliminarActividad(a.id); if (!r.ok) onError(r.error) })} className="text-gray-300 hover:text-red-500 px-1" title="Eliminar">🗑</button>}
           </div>
         ))}
       </div>
@@ -198,8 +202,9 @@ function ListaActividades({ actividades, nombreMonitor, onError }: { actividades
   )
 }
 
-function FichaMonitor({ monitor, puedeBorrar, onClose }: { monitor: Monitor | null; puedeBorrar: boolean; onClose: () => void }) {
+function FichaMonitor({ monitor, puedeBorrar, puedeEditar, onClose }: { monitor: Monitor | null; puedeBorrar: boolean; puedeEditar: boolean; onClose: () => void }) {
   const nuevo = !monitor
+  const ro = !puedeEditar
   const [f, setF] = useState({
     email: monitor?.email ?? '', nombre: monitor?.nombre ?? '', apellidos: monitor?.apellidos ?? '',
     telefono: monitor?.telefono ?? '', fecha_alta: monitor?.fecha_alta ?? '', estado: monitor?.estado ?? 'activo',
@@ -236,24 +241,25 @@ function FichaMonitor({ monitor, puedeBorrar, onClose }: { monitor: Monitor | nu
           <button onClick={onClose} className="text-white/60 hover:text-white text-xl">✕</button>
         </div>
         <div className="p-5 space-y-4">
-          {!nuevo && <div><label className={label}>Foto</label><SubirImagen value={f.foto_url} onChange={url => setF(x => ({ ...x, foto_url: url }))} carpeta="monitores" /></div>}
+          {!nuevo && puedeEditar && <div><label className={label}>Foto</label><SubirImagen value={f.foto_url} onChange={url => setF(x => ({ ...x, foto_url: url }))} carpeta="monitores" /></div>}
+          {ro && <div className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-gray-500">Vista de solo lectura. No tienes permiso para editar fichas.</div>}
           <div className="grid grid-cols-2 gap-3">
-            <div><label className={label}>Nombre *</label><input value={f.nombre} onChange={e => setF({ ...f, nombre: e.target.value })} className={input} /></div>
-            <div><label className={label}>Apellidos</label><input value={f.apellidos} onChange={e => setF({ ...f, apellidos: e.target.value })} className={input} /></div>
+            <div><label className={label}>Nombre *</label><input value={f.nombre} disabled={ro} onChange={e => setF({ ...f, nombre: e.target.value })} className={input} /></div>
+            <div><label className={label}>Apellidos</label><input value={f.apellidos} disabled={ro} onChange={e => setF({ ...f, apellidos: e.target.value })} className={input} /></div>
           </div>
           <div>
             <label className={label}>Correo {nuevo ? '* (acceso al portal)' : '(no editable)'}</label>
-            <input type="email" value={f.email} disabled={!nuevo} onChange={e => setF({ ...f, email: e.target.value })} className={`${input} ${!nuevo ? 'bg-gray-50 text-gray-400' : ''}`} />
+            <input type="email" value={f.email} disabled={!nuevo || ro} onChange={e => setF({ ...f, email: e.target.value })} className={`${input} ${!nuevo ? 'bg-gray-50 text-gray-400' : ''}`} />
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div><label className={label}>Teléfono</label><input value={f.telefono} onChange={e => setF({ ...f, telefono: e.target.value })} className={input} /></div>
-            <div><label className={label}>Fecha de alta</label><input type="date" value={f.fecha_alta ?? ''} onChange={e => setF({ ...f, fecha_alta: e.target.value })} className={input} /></div>
+            <div><label className={label}>Teléfono</label><input value={f.telefono} disabled={ro} onChange={e => setF({ ...f, telefono: e.target.value })} className={input} /></div>
+            <div><label className={label}>Fecha de alta</label><input type="date" value={f.fecha_alta ?? ''} disabled={ro} onChange={e => setF({ ...f, fecha_alta: e.target.value })} className={input} /></div>
           </div>
           <div>
             <label className={label}>Estado</label>
             <div className="flex flex-wrap gap-1.5">
               {ESTADOS_MONITOR.map(e => (
-                <button key={e.id} onClick={() => setF({ ...f, estado: e.id })} className={`text-xs font-bold px-3 py-1.5 rounded-full border ${f.estado === e.id ? `${e.badge} border-transparent ring-2 ring-offset-1 ring-pm-navy/20` : 'border-gray-200 text-gray-500'}`}>{e.label}</button>
+                <button key={e.id} disabled={ro} onClick={() => setF({ ...f, estado: e.id })} className={`text-xs font-bold px-3 py-1.5 rounded-full border disabled:opacity-60 ${f.estado === e.id ? `${e.badge} border-transparent ring-2 ring-offset-1 ring-pm-navy/20` : 'border-gray-200 text-gray-500'}`}>{e.label}</button>
               ))}
             </div>
           </div>
@@ -261,15 +267,17 @@ function FichaMonitor({ monitor, puedeBorrar, onClose }: { monitor: Monitor | nu
             <label className={label}>Especialidades</label>
             <div className="flex flex-wrap gap-1.5">
               {ACTIVIDADES_MONITOR.map(a => (
-                <button key={a} onClick={() => toggleEsp(a)} className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${f.especialidades.includes(a) ? 'bg-pm-red-light text-pm-red border-pm-red/30' : 'border-gray-200 text-gray-500'}`}>{a}</button>
+                <button key={a} disabled={ro} onClick={() => toggleEsp(a)} className={`text-xs font-semibold px-2.5 py-1 rounded-full border disabled:opacity-60 ${f.especialidades.includes(a) ? 'bg-pm-red-light text-pm-red border-pm-red/30' : 'border-gray-200 text-gray-500'}`}>{a}</button>
               ))}
             </div>
           </div>
-          <div><label className={label}>Observaciones internas</label><textarea rows={3} value={f.observaciones} onChange={e => setF({ ...f, observaciones: e.target.value })} className={`${input} resize-none`} /></div>
+          <div><label className={label}>Observaciones internas</label><textarea rows={3} value={f.observaciones} disabled={ro} onChange={e => setF({ ...f, observaciones: e.target.value })} className={`${input} resize-none`} /></div>
           {error && <p className="text-red-600 text-sm">{error}</p>}
           <div className="flex items-center justify-between gap-2 pt-1">
             {!nuevo && puedeBorrar ? <button onClick={borrar} className="text-red-600 border border-red-200 hover:bg-red-50 font-bold text-sm px-4 py-2.5 rounded-xl">Eliminar</button> : <span />}
-            <button onClick={guardar} className="bg-pm-red hover:bg-pm-red-dark text-white font-black px-6 py-2.5 rounded-xl">{nuevo ? 'Crear monitor' : 'Guardar cambios'}</button>
+            {puedeEditar
+              ? <button onClick={guardar} className="bg-pm-red hover:bg-pm-red-dark text-white font-black px-6 py-2.5 rounded-xl">{nuevo ? 'Crear monitor' : 'Guardar cambios'}</button>
+              : <button onClick={onClose} className="border border-gray-200 text-gray-600 font-bold text-sm px-6 py-2.5 rounded-xl">Cerrar</button>}
           </div>
           {nuevo && <p className="text-xs text-gray-400">Se creará su acceso al portal con este correo (entra por enlace mágico, sin contraseña).</p>}
         </div>

@@ -11,10 +11,11 @@ const fechaLarga = (s: string) => new Intl.DateTimeFormat('es-ES', { weekday: 'l
 
 type Vista = 'dia' | 'semana' | 'mes'
 
-export default function Calendario({ actividades, nombreMonitor, onDia }: {
+export default function Calendario({ actividades, nombreMonitor, onDia, onExportar }: {
   actividades: Actividad[]
   nombreMonitor?: (id: string) => string
   onDia?: (fecha: string) => void
+  onExportar?: () => void
 }) {
   const [vista, setVista] = useState<Vista>('semana')
   const [ref, setRef] = useState(() => { const d = new Date(); d.setHours(12, 0, 0, 0); return d })
@@ -47,10 +48,17 @@ export default function Calendario({ actividades, nombreMonitor, onDia }: {
           <button onClick={() => mover(1)} className="w-8 h-8 rounded-lg border border-gray-200 text-gray-500 hover:border-pm-red">›</button>
           <span className="font-black text-pm-navy capitalize ml-1">{titulo}</span>
         </div>
-        <div className="flex rounded-xl border border-gray-200 overflow-hidden text-sm">
-          {(['dia', 'semana', 'mes'] as Vista[]).map(v => (
-            <button key={v} onClick={() => setVista(v)} className={`px-3 py-1.5 font-semibold capitalize ${vista === v ? 'bg-pm-red text-white' : 'text-gray-500 hover:bg-gray-50'}`}>{v}</button>
-          ))}
+        <div className="flex items-center gap-2">
+          {onExportar && (
+            <button onClick={onExportar} className="flex items-center gap-1.5 text-sm font-bold text-pm-navy border border-gray-200 hover:border-pm-red rounded-xl px-3 py-1.5" title="Descargar para Google Calendar, Apple o el móvil">
+              📅 Exportar
+            </button>
+          )}
+          <div className="flex rounded-xl border border-gray-200 overflow-hidden text-sm">
+            {(['dia', 'semana', 'mes'] as Vista[]).map(v => (
+              <button key={v} onClick={() => setVista(v)} className={`px-3 py-1.5 font-semibold capitalize ${vista === v ? 'bg-pm-red text-white' : 'text-gray-500 hover:bg-gray-50'}`}>{v}</button>
+            ))}
+          </div>
         </div>
       </div>
 

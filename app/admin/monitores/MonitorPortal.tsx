@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useEffect, useTransition } from 'react'
+import Link from 'next/link'
 import { AdminHeader, Metric } from '@/components/admin/ui'
-import { resumenHoras, fmtHoras } from '@/lib/monitores/constants'
+import { resumenHoras, fmtHoras, badgeEstadoMonitor, labelEstadoMonitor } from '@/lib/monitores/constants'
+import { descargarICS } from '@/lib/monitores/ics'
 import { ficharEntrada, ficharSalida } from './actions'
 import Calendario from './Calendario'
 import Recursos from './Recursos'
@@ -11,19 +13,36 @@ import type { Monitor, Actividad, Fichaje, Carpeta, Documento } from '@/lib/moni
 const horaCorta = (iso: string) => new Date(iso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
 const fechaLarga = (s: string) => new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(s + 'T12:00:00'))
 
-export default function MonitorPortal({ monitor, actividades, fichajes, abierto, carpetas, documentos }: {
+/** Cronómetro en vivo: tiempo transcurrido desde la entrada, refresca cada segundo. */
+function Cronometro({ desde }: { desde: string }) {
+  const [ahora, setAhora] = useState(() => Date.now())
+  useEffect(() => {
+    const t = setInterval(() => setAhora(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [])
+  const ms = Math.max(0, ahora - new Date(desde).getTime())
+  const s = Math.floor(ms / 1000)
+  const hh = String(Math.floor(s / 3600)).padStart(2, '0')
+  const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0')
+  const ss = String(s % 60).padStart(2, '0')
+  return <span className="font-mono tabular-nums">{hh}:{mm}:{ss}</span>
+}
+
+export default function MonitorPortal({ monitor, actividades, fichajes, abierto, carpetas, documentos, preview = false }: {
   monitor: Monitor; actividades: Actividad[]; fichajes: Fichaje[]; abierto: Fichaje | null
-  carpetas: Carpeta[]; documentos: Documento[]
+  carpetas: Carpeta[]; documentos: Documento[]; preview?: boolean
 }) {
-  const [tab, setTab] = useState<'inicio' | 'calendario' | 'recursos'>('inicio')
+  const [tab, setTab] = useState<'inicio' | 'calendario' | 'recursos' | 'perfil'>('inicio')
   const [error, setError] = useState('')
   const [loading, start] = useTransition()
 
   const horas = resumenHoras(fichajes)
   const hoy = new Date().toISOString().slice(0, 10)
   const proximas = actividades.filter(a => a.fecha >= hoy).slice(0, 6)
+  const nombreCompleto = `${monitor.nombre} ${monitor.apellidos}`.trim() || monitor.email
 
   function fichar(entrar: boolean) {
+    if (preview) return
     setError('')
     start(async () => { const r = await (entrar ? ficharEntrada() : ficharSalida()); if (!r.ok) setError(r.error) })
   }
@@ -32,26 +51,37 @@ export default function MonitorPortal({ monitor, actividades, fichajes, abierto,
     <>
       <AdminHeader titulo={`Hola, ${monitor.nombre || 'monitor'} 👋`} subtitulo="Tu portal · horario, fichaje, horas y recursos" />
       <div className="p-4 lg:p-6 space-y-4">
+        {/* Aviso de vista previa (cuando un admin previsualiza el portal del monitor) */}
+        {preview && (
+          <div className="bg-pm-navy/5 border border-pm-navy/15 rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-2 text-sm">
+            <span className="text-pm-navy font-semibold">👁️ Vista previa — así ve <strong>{nombreCompleto}</strong> su portal. El fichaje está desactivado.</span>
+            <Link href="/admin/monitores" className="font-bold text-pm-red hover:underline">← Volver a gestión</Link>
+          </div>
+        )}
+
         {/* Pestañas */}
-        <div className="flex gap-1 bg-white rounded-xl border border-gray-100 p-1 w-fit">
-          {([['inicio', 'Inicio'], ['calendario', 'Mi calendario'], ['recursos', 'Recursos']] as const).map(([id, label]) => (
+        <div className="flex flex-wrap gap-1 bg-white rounded-xl border border-gray-100 p-1 w-fit">
+          {([['inicio', 'Inicio'], ['calendario', 'Mi calendario'], ['recursos', 'Recursos'], ['perfil', 'Mi perfil']] as const).map(([id, label]) => (
             <button key={id} onClick={() => setTab(id)} className={`px-4 py-2 rounded-lg text-sm font-semibold ${tab === id ? 'bg-pm-red text-white' : 'text-gray-500 hover:bg-gray-50'}`}>{label}</button>
           ))}
         </div>
 
         {tab === 'inicio' && (
           <div className="space-y-4">
-            {/* Fichaje */}
+            {/* Fichaje + cronómetro */}
             <div className={`rounded-2xl p-5 border shadow-sm flex flex-wrap items-center justify-between gap-4 ${abierto ? 'bg-green-50 border-green-200' : 'bg-white border-gray-100'}`}>
               <div>
                 <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-1">Control horario</div>
-                {abierto
-                  ? <div className="text-pm-navy font-bold">🟢 Jornada abierta desde las <strong>{horaCorta(abierto.entrada)}</strong></div>
-                  : <div className="text-gray-500 text-sm">No tienes ninguna jornada abierta.</div>}
+                {abierto ? (
+                  <div className="text-pm-navy font-bold flex items-center gap-3">
+                    <span className="text-3xl text-green-700"><Cronometro desde={abierto.entrada} /></span>
+                    <span className="text-sm font-normal text-gray-500">desde las {horaCorta(abierto.entrada)}</span>
+                  </div>
+                ) : <div className="text-gray-500 text-sm">No tienes ninguna jornada abierta. Pulsa «Entrar» al empezar tu turno.</div>}
               </div>
               {abierto
-                ? <button onClick={() => fichar(false)} disabled={loading} className="bg-pm-navy hover:bg-pm-navy-md disabled:opacity-50 text-white font-black px-8 py-3 rounded-xl">Salir</button>
-                : <button onClick={() => fichar(true)} disabled={loading} className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-black px-8 py-3 rounded-xl">Entrar</button>}
+                ? <button onClick={() => fichar(false)} disabled={loading || preview} className="bg-pm-navy hover:bg-pm-navy-md disabled:opacity-50 text-white font-black px-8 py-3 rounded-xl">Salir</button>
+                : <button onClick={() => fichar(true)} disabled={loading || preview} className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-black px-8 py-3 rounded-xl">Entrar</button>}
             </div>
             {error && <p className="text-red-600 text-sm">{error}</p>}
 
@@ -116,9 +146,54 @@ export default function MonitorPortal({ monitor, actividades, fichajes, abierto,
           </div>
         )}
 
-        {tab === 'calendario' && <Calendario actividades={actividades} />}
+        {tab === 'calendario' && (
+          <Calendario actividades={actividades} onExportar={() => descargarICS(actividades, `calendario-${(monitor.nombre || 'monitor').toLowerCase()}.ics`)} />
+        )}
         {tab === 'recursos' && <Recursos carpetas={carpetas} documentos={documentos} admin={false} />}
+        {tab === 'perfil' && <MiPerfil monitor={monitor} />}
       </div>
     </>
+  )
+}
+
+/** Ficha personal del monitor — solo lectura (el alta/edición la hacen los admins). */
+function MiPerfil({ monitor }: { monitor: Monitor }) {
+  const nombreCompleto = `${monitor.nombre} ${monitor.apellidos}`.trim() || monitor.email
+  const Dato = ({ label, valor }: { label: string; valor: string }) => (
+    <div>
+      <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">{label}</div>
+      <div className="text-pm-navy font-semibold">{valor || '—'}</div>
+    </div>
+  )
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 max-w-2xl space-y-5">
+      <div className="flex items-center gap-4">
+        {monitor.foto_url
+          // eslint-disable-next-line @next/next/no-img-element
+          ? <img src={monitor.foto_url} alt="" className="w-20 h-20 rounded-full object-cover shrink-0" />
+          : <div className="w-20 h-20 rounded-full bg-pm-navy/10 flex items-center justify-center text-pm-navy font-black text-2xl shrink-0">{(monitor.nombre || monitor.email)[0]?.toUpperCase()}</div>}
+        <div className="min-w-0">
+          <div className="text-xl font-black text-pm-navy">{nombreCompleto}</div>
+          <span className={`inline-block mt-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${badgeEstadoMonitor(monitor.estado)}`}>{labelEstadoMonitor(monitor.estado)}</span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-gray-100 pt-4">
+        <Dato label="Correo" valor={monitor.email} />
+        <Dato label="Teléfono" valor={monitor.telefono || ''} />
+        <Dato label="Fecha de alta" valor={monitor.fecha_alta ? fechaLarga(monitor.fecha_alta) : ''} />
+      </div>
+
+      <div className="border-t border-gray-100 pt-4">
+        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Especialidades</div>
+        {monitor.especialidades.length ? (
+          <div className="flex flex-wrap gap-1.5">
+            {monitor.especialidades.map(e => <span key={e} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-pm-red-light text-pm-red">{e}</span>)}
+          </div>
+        ) : <p className="text-gray-400 text-sm">Sin especialidades asignadas.</p>}
+      </div>
+
+      <p className="text-xs text-gray-400 border-t border-gray-100 pt-4">¿Algún dato incorrecto? Avisa a tu coordinador para que lo actualice.</p>
+    </div>
   )
 }
