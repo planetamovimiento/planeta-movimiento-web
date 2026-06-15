@@ -31,10 +31,10 @@ export default async function MonitoresPage({ searchParams }: { searchParams: Pr
         </>
       )
     }
-    const [actividades, fichajes, abierto] = await Promise.all([
-      getActividades({ monitorId: mon.id }), getFichajes(mon.id), getFichajeAbierto(mon.id),
+    const [actividades, fichajes, abierto, equipo] = await Promise.all([
+      getActividades({ monitorId: mon.id }), getFichajes(mon.id), getFichajeAbierto(mon.id), getMonitores(),
     ])
-    return <MonitorPortal monitor={mon} actividades={actividades} fichajes={fichajes} abierto={abierto} carpetas={carpetas} documentos={documentos} />
+    return <MonitorPortal monitor={mon} equipo={equipo} actividades={actividades} fichajes={fichajes} abierto={abierto} carpetas={carpetas} documentos={documentos} />
   }
 
   const [monitores, actividades, fichajes] = await Promise.all([getMonitores(), getActividades(), getFichajes()])
@@ -46,7 +46,7 @@ export default async function MonitoresPage({ searchParams }: { searchParams: Pr
       const acts = actividades.filter(a => a.monitor_id === mon.id)
       const fich = fichajes.filter(f => f.monitor_id === mon.id)
       const abierto = fich.find(f => !f.salida) ?? null
-      return <MonitorPortal monitor={mon} actividades={acts} fichajes={fich} abierto={abierto} carpetas={carpetas} documentos={documentos} preview />
+      return <MonitorPortal monitor={mon} equipo={monitores} actividades={acts} fichajes={fich} abierto={abierto} carpetas={carpetas} documentos={documentos} preview />
     }
   }
 

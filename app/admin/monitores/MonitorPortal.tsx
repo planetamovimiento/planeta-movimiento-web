@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useTransition } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { AdminHeader, Metric } from '@/components/admin/ui'
 import { resumenHoras, resumenHorasActividades, horasPorMes, fmtHoras, badgeEstadoMonitor, labelEstadoMonitor } from '@/lib/monitores/constants'
 import { descargarICS } from '@/lib/monitores/ics'
@@ -28,13 +29,14 @@ function Cronometro({ desde }: { desde: string }) {
   return <span className="font-mono tabular-nums">{hh}:{mm}:{ss}</span>
 }
 
-export default function MonitorPortal({ monitor, actividades, fichajes, abierto, carpetas, documentos, preview = false }: {
-  monitor: Monitor; actividades: Actividad[]; fichajes: Fichaje[]; abierto: Fichaje | null
+export default function MonitorPortal({ monitor, equipo, actividades, fichajes, abierto, carpetas, documentos, preview = false }: {
+  monitor: Monitor; equipo: Monitor[]; actividades: Actividad[]; fichajes: Fichaje[]; abierto: Fichaje | null
   carpetas: Carpeta[]; documentos: Documento[]; preview?: boolean
 }) {
-  const [tab, setTab] = useState<'inicio' | 'calendario' | 'recursos' | 'perfil'>('inicio')
+  const [tab, setTab] = useState<'inicio' | 'calendario' | 'recursos' | 'perfil' | 'equipo'>('inicio')
   const [error, setError] = useState('')
   const [loading, start] = useTransition()
+  const router = useRouter()
 
   const horas = resumenHoras(fichajes)
   const horasNom = resumenHorasActividades(actividades)
@@ -47,7 +49,11 @@ export default function MonitorPortal({ monitor, actividades, fichajes, abierto,
   function fichar(entrar: boolean) {
     if (preview) return
     setError('')
-    start(async () => { const r = await (entrar ? ficharEntrada() : ficharSalida()); if (!r.ok) setError(r.error) })
+    start(async () => {
+      const r = await (entrar ? ficharEntrada() : ficharSalida())
+      if (!r.ok) setError(r.error)
+      else router.refresh() // refresca el portal para mostrar el cronómetro / cierre
+    })
   }
 
   return (
@@ -64,7 +70,7 @@ export default function MonitorPortal({ monitor, actividades, fichajes, abierto,
 
         {/* Pestañas */}
         <div className="flex flex-wrap gap-1 bg-white rounded-xl border border-gray-100 p-1 w-fit">
-          {([['inicio', 'Inicio'], ['calendario', 'Mi calendario'], ['recursos', 'Recursos'], ['perfil', 'Mi perfil']] as const).map(([id, label]) => (
+          {([['inicio', 'Inicio'], ['calendario', 'Mi calendario'], ['recursos', 'Recursos'], ['perfil', 'Mi perfil'], ['equipo', 'Equipo']] as const).map(([id, label]) => (
             <button key={id} onClick={() => setTab(id)} className={`px-4 py-2 rounded-lg text-sm font-semibold ${tab === id ? 'bg-pm-red text-white' : 'text-gray-500 hover:bg-gray-50'}`}>{label}</button>
           ))}
         </div>
@@ -181,8 +187,35 @@ export default function MonitorPortal({ monitor, actividades, fichajes, abierto,
         )}
         {tab === 'recursos' && <Recursos carpetas={carpetas} documentos={documentos} admin={false} />}
         {tab === 'perfil' && <MiPerfil monitor={monitor} />}
+        {tab === 'equipo' && <EquipoDirectorio equipo={equipo} miId={monitor.id} />}
       </div>
     </>
+  )
+}
+
+/** Directorio del equipo — solo consulta (sin acceso al portal de los compañeros). */
+function EquipoDirectorio({ equipo, miId }: { equipo: Monitor[]; miId: string }) {
+  if (!equipo.length) return <p className="text-gray-400 text-sm py-8 text-center">Todavía no hay más monitores en el equipo.</p>
+  return (
+    <div>
+      <p className="text-sm text-gray-500 mb-3">Estos son los monitores del equipo. Es solo una guía de contacto: no puedes entrar en su portal ni editar sus datos.</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {equipo.map(m => (
+          <div key={m.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex gap-3 items-center">
+            {m.foto_url
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={m.foto_url} alt="" className="w-12 h-12 rounded-full object-cover shrink-0" />
+              : <div className="w-12 h-12 rounded-full bg-pm-navy/10 flex items-center justify-center text-pm-navy font-black shrink-0">{(m.nombre || m.email)[0]?.toUpperCase()}</div>}
+            <div className="min-w-0 flex-1">
+              <div className="font-bold text-pm-navy truncate">{`${m.nombre} ${m.apellidos}`.trim() || m.email}{m.id === miId && <span className="text-pm-red text-xs font-bold"> · tú</span>}</div>
+              <div className="text-xs text-gray-400 truncate">{m.especialidades.join(', ') || '—'}</div>
+              {(m.telefono || m.email) && <div className="text-xs text-gray-500 truncate mt-0.5">{[m.telefono, m.email].filter(Boolean).join(' · ')}</div>}
+            </div>
+            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 ${badgeEstadoMonitor(m.estado)}`}>{labelEstadoMonitor(m.estado)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
