@@ -11,10 +11,11 @@ const fechaLarga = (s: string) => new Intl.DateTimeFormat('es-ES', { weekday: 'l
 
 type Vista = 'dia' | 'semana' | 'mes'
 
-export default function Calendario({ actividades, nombreMonitor, onDia, onExportar }: {
+export default function Calendario({ actividades, nombreMonitor, onEditarActividad, onExportar }: {
   actividades: Actividad[]
   nombreMonitor?: (id: string) => string
-  onDia?: (fecha: string) => void
+  /** Si se pasa (admin), al pulsar una actividad se abre su edición. */
+  onEditarActividad?: (a: Actividad) => void
   onExportar?: () => void
 }) {
   const [vista, setVista] = useState<Vista>('semana')
@@ -33,11 +34,14 @@ export default function Calendario({ actividades, nombreMonitor, onDia, onExport
     : vista === 'dia' ? fechaLarga(iso(ref))
     : `Semana del ${new Intl.DateTimeFormat('es-ES', { day: 'numeric', month: 'short' }).format(lunesDe(ref))}`
 
-  const Chip = ({ a }: { a: Actividad }) => (
-    <div className="text-[11px] leading-tight bg-pm-red-light text-pm-red rounded px-1.5 py-0.5 truncate" title={`${a.hora_inicio || ''} ${a.actividad}${a.lugar ? ' · ' + a.lugar : ''}`}>
-      {a.hora_inicio && <span className="font-bold">{a.hora_inicio} </span>}{a.actividad}{nombreMonitor ? ` · ${nombreMonitor(a.monitor_id)}` : ''}
-    </div>
-  )
+  const Chip = ({ a }: { a: Actividad }) => {
+    const contenido = <>{a.hora_inicio && <span className="font-bold">{a.hora_inicio} </span>}{a.actividad}{nombreMonitor ? ` · ${nombreMonitor(a.monitor_id)}` : ''}</>
+    const titulo = `${a.hora_inicio || ''} ${a.actividad}${a.lugar ? ' · ' + a.lugar : ''}${onEditarActividad ? ' · pulsa para editar' : ''}`
+    const cls = 'block w-full text-left text-[11px] leading-tight bg-pm-red-light text-pm-red rounded px-1.5 py-0.5 truncate'
+    return onEditarActividad
+      ? <button type="button" onClick={() => onEditarActividad(a)} className={`${cls} hover:bg-pm-red hover:text-white cursor-pointer`} title={titulo}>{contenido}</button>
+      : <div className={cls} title={titulo}>{contenido}</div>
+  }
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
@@ -77,10 +81,10 @@ export default function Calendario({ actividades, nombreMonitor, onDia, onExport
                 const f = iso(new Date(ref.getFullYear(), ref.getMonth(), day))
                 const acts = porFecha.get(f) ?? []
                 return (
-                  <button key={f} onClick={() => onDia?.(f)} className={`min-h-[72px] text-left rounded-lg border p-1 align-top ${f === hoy ? 'border-pm-red bg-pm-red-light/40' : 'border-gray-100 hover:border-gray-300'}`}>
+                  <div key={f} className={`min-h-[72px] text-left rounded-lg border p-1 align-top ${f === hoy ? 'border-pm-red bg-pm-red-light/40' : 'border-gray-100'}`}>
                     <div className={`text-xs font-bold mb-0.5 ${f === hoy ? 'text-pm-red' : 'text-gray-500'}`}>{day}</div>
-                    <div className="space-y-0.5">{acts.slice(0, 2).map(a => <Chip key={a.id} a={a} />)}{acts.length > 2 && <div className="text-[10px] text-gray-400">+{acts.length - 2} más</div>}</div>
-                  </button>
+                    <div className="space-y-0.5">{acts.slice(0, 3).map(a => <Chip key={a.id} a={a} />)}{acts.length > 3 && <div className="text-[10px] text-gray-400">+{acts.length - 3} más</div>}</div>
+                  </div>
                 )
               })}
             </div>
@@ -113,15 +117,20 @@ export default function Calendario({ actividades, nombreMonitor, onDia, onExport
         const acts = porFecha.get(iso(ref)) ?? []
         return acts.length ? (
           <div className="space-y-2">
-            {acts.map(a => (
-              <div key={a.id} className="flex items-start gap-3 border border-gray-100 rounded-xl p-3">
-                <div className="text-pm-red font-black text-sm w-28 shrink-0">{a.hora_inicio || '—'}{a.hora_fin ? ` – ${a.hora_fin}` : ''}</div>
-                <div className="min-w-0">
-                  <div className="font-bold text-pm-navy text-sm">{a.actividad}{nombreMonitor ? ` · ${nombreMonitor(a.monitor_id)}` : ''}</div>
-                  <div className="text-xs text-gray-500">{[a.lugar, a.grupo].filter(Boolean).join(' · ')}{a.observaciones ? ` — ${a.observaciones}` : ''}</div>
-                </div>
-              </div>
-            ))}
+            {acts.map(a => {
+              const fila = (
+                <>
+                  <div className="text-pm-red font-black text-sm w-28 shrink-0">{a.hora_inicio || '—'}{a.hora_fin ? ` – ${a.hora_fin}` : ''}</div>
+                  <div className="min-w-0">
+                    <div className="font-bold text-pm-navy text-sm">{a.actividad}{nombreMonitor ? ` · ${nombreMonitor(a.monitor_id)}` : ''}</div>
+                    <div className="text-xs text-gray-500">{[a.lugar, a.grupo].filter(Boolean).join(' · ')}{a.observaciones ? ` — ${a.observaciones}` : ''}</div>
+                  </div>
+                </>
+              )
+              return onEditarActividad
+                ? <button key={a.id} type="button" onClick={() => onEditarActividad(a)} className="w-full flex items-start gap-3 border border-gray-100 rounded-xl p-3 text-left hover:border-pm-red/50 hover:bg-pm-red-light/20">{fila}<span className="ml-auto text-gray-300 text-xs self-center">✎ editar</span></button>
+                : <div key={a.id} className="flex items-start gap-3 border border-gray-100 rounded-xl p-3">{fila}</div>
+            })}
           </div>
         ) : <p className="text-gray-400 text-sm py-8 text-center">Sin actividades este día.</p>
       })()}

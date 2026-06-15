@@ -58,18 +58,60 @@ export async function eliminarMonitor(id: string, email: string): Promise<Res> {
 }
 
 // ── Actividades (calendario de trabajo) ────────────────────────────────────────
+
+/** Fechas semanales desde `desde` hasta `hasta` (ambas incl.), máx. 60 repeticiones. */
+function fechasSemanales(desde: string, hasta: string): string[] {
+  const out: string[] = []
+  let d = new Date(desde + 'T12:00:00Z')
+  const fin = new Date(hasta + 'T12:00:00Z')
+  let guard = 0
+  while (d <= fin && guard < 60) {
+    out.push(d.toISOString().slice(0, 10))
+    d = new Date(d.getTime() + 7 * 86_400_000)
+    guard++
+  }
+  return out
+}
+
 export async function asignarActividad(p: {
   monitor_id: string; fecha: string; hora_inicio?: string; hora_fin?: string
+  actividad?: string; lugar?: string; grupo?: string; observaciones?: string
+  /** Si se indica (YYYY-MM-DD > fecha), crea una copia semanal hasta esa fecha. */
+  repetir_hasta?: string
+}): Promise<{ ok: true; creadas: number } | { ok: false; error: string }> {
+  const admin = await getAdminUser()
+  if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
+  if (!p.monitor_id || !p.fecha) return { ok: false, error: 'Faltan monitor y fecha' }
+
+  const fechas = p.repetir_hasta && p.repetir_hasta > p.fecha
+    ? fechasSemanales(p.fecha, p.repetir_hasta)
+    : [p.fecha]
+
+  const base = {
+    monitor_id: p.monitor_id, hora_inicio: p.hora_inicio || null, hora_fin: p.hora_fin || null,
+    actividad: p.actividad || null, lugar: p.lugar || null, grupo: p.grupo || null, observaciones: p.observaciones || null,
+  }
+  const db = createAdminClient()
+  const { error } = await db.from('monitor_actividades').insert(fechas.map(fecha => ({ ...base, fecha })))
+  if (error) return { ok: false, error: error.message }
+  revalidatePath('/admin/monitores')
+  return { ok: true, creadas: fechas.length }
+}
+
+export async function editarActividad(id: string, patch: {
+  fecha?: string; hora_inicio?: string; hora_fin?: string
   actividad?: string; lugar?: string; grupo?: string; observaciones?: string
 }): Promise<Res> {
   const admin = await getAdminUser()
   if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
-  if (!p.monitor_id || !p.fecha) return { ok: false, error: 'Faltan monitor y fecha' }
+  if (patch.fecha === '') return { ok: false, error: 'La fecha es obligatoria' }
   const db = createAdminClient()
-  const { error } = await db.from('monitor_actividades').insert({
-    monitor_id: p.monitor_id, fecha: p.fecha, hora_inicio: p.hora_inicio || null, hora_fin: p.hora_fin || null,
-    actividad: p.actividad || null, lugar: p.lugar || null, grupo: p.grupo || null, observaciones: p.observaciones || null,
-  })
+  const { error } = await db.from('monitor_actividades').update({
+    ...(patch.fecha !== undefined ? { fecha: patch.fecha } : {}),
+    hora_inicio: patch.hora_inicio || null, hora_fin: patch.hora_fin || null,
+    actividad: patch.actividad || null, lugar: patch.lugar || null,
+    grupo: patch.grupo || null, observaciones: patch.observaciones || null,
+  }).eq('id', id)
   if (error) return { ok: false, error: error.message }
   revalidatePath('/admin/monitores')
   return { ok: true }
