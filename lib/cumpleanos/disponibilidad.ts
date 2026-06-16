@@ -21,7 +21,9 @@ export async function getCumpleanosOcupados(): Promise<Record<string, string[]>>
       const hora = b.hora ? String(b.hora).trim() : ''
       if (!fecha || !hora) continue
       const estado = overlay.get(String(b.id)) || String(b.estado_reserva ?? '')
-      if (estado === 'cancelada' || estado === 'reembolsada') continue
+      // Solo bloquea el hueco una reserva confirmada (señal pagada) o finalizada.
+      // Una señal sin pagar (nueva/pendiente) NO reserva nada → el hueco sigue libre.
+      if (estado !== 'confirmada' && estado !== 'finalizada') continue
       // Guardamos la hora de inicio (HH:MM) para casar formatos antiguos ("18:15") y nuevos ("18:15 – 20:15")
       const inicio = hora.match(/\d{1,2}:\d{2}/)?.[0] ?? hora
       ;(out[fecha] ||= []).push(inicio)

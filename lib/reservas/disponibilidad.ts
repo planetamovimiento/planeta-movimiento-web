@@ -10,9 +10,13 @@ import { horaInicioDe } from './slots'
 type Row = Record<string, unknown>
 const str = (v: unknown) => (typeof v === 'string' ? v : v == null ? '' : String(v))
 
-/** Estados que NO ocupan plaza. */
+/**
+ * Una reserva ocupa el hueco SOLO cuando está confirmada (pagada la señal) o
+ * finalizada. Una reserva sin pagar (nueva/pendiente) o rechazada/cancelada NO
+ * bloquea el horario: si no se paga la señal, no se reserva nada.
+ */
 function ocupa(estado: string): boolean {
-  return estado !== 'cancelada' && estado !== 'reembolsada'
+  return estado === 'confirmada' || estado === 'finalizada'
 }
 
 /**
