@@ -11,6 +11,7 @@ import { slotsDelDia, etiquetaSlot, horaInicioDe } from '@/lib/reservas/slots'
 import { contarReservas } from '@/lib/reservas/disponibilidad'
 import { validarAforo } from '@/lib/reservas/aforo'
 import { CUMPLE_MIN_PARTICIPANTES, calcularTotalCumple } from '@/lib/cumpleanos/precio'
+import { enviarConfirmacionReserva } from '@/lib/emails/confirmacion'
 
 export type DatosReserva = {
   nombre: string
@@ -335,5 +336,13 @@ export async function reservarEnInstalacion(p: PagoReservaPayload): Promise<Rese
   const c = await comprobarReserva(p)
   if (!c.ok) return c
   const { servicioNombre, total, participantes, fecha, hora, observaciones, clienteNombre, email, telefono } = c.data
-  return emitirReservaInstalacion({ servicioNombre, clienteNombre, email, telefono, fecha, hora, participantes, total, observaciones })
+  const r = await emitirReservaInstalacion({ servicioNombre, clienteNombre, email, telefono, fecha, hora, participantes, total, observaciones })
+  if (r.ok) {
+    await enviarConfirmacionReserva({
+      servicio: servicioNombre, clienteNombre, clienteEmail: email,
+      fecha, hora, participantes, numero: r.numero,
+      total, pagado: 0, pendiente: total,
+    })
+  }
+  return r
 }

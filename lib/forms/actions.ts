@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { resend } from '@/lib/resend'
+import { enviarConfirmacionReserva } from '@/lib/emails/confirmacion'
 
 const FROM = `Planeta Movimiento <${process.env.RESEND_FROM_EMAIL || 'hola@planetamovimiento.com'}>`
 // Bandeja del negocio donde llegan los avisos de nuevas solicitudes/reservas
@@ -23,38 +24,21 @@ async function upsertCustomer(db: ReturnType<typeof createAdminClient>, p: Perso
   return data?.id ?? null
 }
 
-// ── Email de aviso al negocio + confirmación al cliente ──────────────────────
-async function enviarEmails(opts: {
-  asuntoAdmin: string
-  resumen: { label: string; valor: string }[]
-  clienteEmail?: string
-  tituloCliente: string
-}) {
-  const filas = opts.resumen
+// ── Aviso interno al negocio (la confirmación al cliente la envía el módulo
+//    lib/emails/confirmacion con un mensaje específico por servicio). ──────────
+async function avisarNegocio(asuntoAdmin: string, resumen: { label: string; valor: string }[]) {
+  const filas = resumen
     .filter(r => r.valor)
     .map(r => `<tr><td style="padding:6px 12px;color:#64748b">${r.label}</td><td style="padding:6px 12px;color:#0F1A3D;font-weight:600">${r.valor}</td></tr>`)
     .join('')
   const tabla = `<table style="border-collapse:collapse;font-family:sans-serif;font-size:14px">${filas}</table>`
-
-  // Aviso interno
   try {
     await resend.emails.send({
       from: FROM, to: NOTIF_TO,
-      subject: opts.asuntoAdmin,
-      html: `<div style="font-family:sans-serif"><h2 style="color:#0F1A3D">${opts.asuntoAdmin}</h2>${tabla}<p style="color:#94a3b8;font-size:12px;margin-top:16px">Gestiónalo en el panel de administración.</p></div>`,
+      subject: asuntoAdmin,
+      html: `<div style="font-family:sans-serif"><h2 style="color:#0F1A3D">${asuntoAdmin}</h2>${tabla}<p style="color:#94a3b8;font-size:12px;margin-top:16px">Gestiónalo en el panel de administración.</p></div>`,
     })
   } catch {}
-
-  // Confirmación al cliente
-  if (opts.clienteEmail) {
-    try {
-      await resend.emails.send({
-        from: FROM, to: opts.clienteEmail,
-        subject: opts.tituloCliente,
-        html: `<div style="font-family:sans-serif"><h2 style="color:#0F1A3D">${opts.tituloCliente}</h2><p style="color:#334155">¡Gracias por contactar con Planeta Movimiento! Hemos recibido tu solicitud y te responderemos lo antes posible.</p>${tabla}<p style="color:#94a3b8;font-size:12px;margin-top:16px">Planeta Movimiento · Cuenca</p></div>`,
-      })
-    } catch {}
-  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -93,11 +77,10 @@ export async function submitForm(input: {
       { label: 'Mensaje', valor: input.mensaje ?? '' },
       ...Object.entries(input.datos ?? {}).map(([k, v]) => ({ label: k, valor: String(v ?? '') })),
     ]
-    await enviarEmails({
-      asuntoAdmin: `Nueva solicitud · ${input.tipo}`,
-      resumen,
-      clienteEmail: input.email,
-      tituloCliente: 'Hemos recibido tu solicitud',
+    await avisarNegocio(`Nueva solicitud · ${input.tipo}`, resumen)
+    await enviarConfirmacionReserva({
+      servicio: input.asunto || input.tipo,
+      clienteNombre: input.nombre, clienteEmail: input.email,
     })
     return { ok: true }
   } catch (e) {
@@ -145,22 +128,23 @@ export async function submitBooking(input: {
     })
     if (error) return { ok: false, error: error.message }
 
-    await enviarEmails({
-      asuntoAdmin: `Nueva reserva · ${input.servicio} (${numero})`,
-      resumen: [
-        { label: 'Servicio', valor: input.servicio },
-        { label: 'Nº', valor: numero },
-        { label: 'Cliente', valor: input.cliente_nombre ?? '' },
-        { label: 'Email', valor: input.cliente_email ?? '' },
-        { label: 'Teléfono', valor: input.cliente_telefono ?? '' },
-        { label: 'Fecha', valor: input.fecha ?? '' },
-        { label: 'Horario', valor: input.hora ?? '' },
-        { label: 'Participantes', valor: input.participantes != null ? String(input.participantes) : '' },
-        { label: 'Precio estimado', valor: input.precio != null ? `${input.precio} €` : '' },
-        { label: 'Observaciones', valor: input.observaciones ?? '' },
-      ],
-      clienteEmail: input.cliente_email,
-      tituloCliente: 'Hemos recibido tu solicitud de reserva',
+    await avisarNegocio(`Nueva reserva · ${input.servicio} (${numero})`, [
+      { label: 'Servicio', valor: input.servicio },
+      { label: 'Nº', valor: numero },
+      { label: 'Cliente', valor: input.cliente_nombre ?? '' },
+      { label: 'Email', valor: input.cliente_email ?? '' },
+      { label: 'Teléfono', valor: input.cliente_telefono ?? '' },
+      { label: 'Fecha', valor: input.fecha ?? '' },
+      { label: 'Horario', valor: input.hora ?? '' },
+      { label: 'Participantes', valor: input.participantes != null ? String(input.participantes) : '' },
+      { label: 'Precio estimado', valor: input.precio != null ? `${input.precio} €` : '' },
+      { label: 'Observaciones', valor: input.observaciones ?? '' },
+    ])
+    await enviarConfirmacionReserva({
+      servicio: input.servicio,
+      clienteNombre: input.cliente_nombre, clienteEmail: input.cliente_email,
+      fecha: input.fecha, hora: input.hora,
+      participantes: input.participantes ?? null, numero, total: input.precio ?? null,
     })
     return { ok: true, numero }
   } catch (e) {
