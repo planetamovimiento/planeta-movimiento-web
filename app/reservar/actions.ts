@@ -11,7 +11,7 @@ import { slotsDelDia, etiquetaSlot, horaInicioDe } from '@/lib/reservas/slots'
 import { contarReservas } from '@/lib/reservas/disponibilidad'
 import { validarAforo } from '@/lib/reservas/aforo'
 import { CUMPLE_MIN_PARTICIPANTES, calcularTotalCumple } from '@/lib/cumpleanos/precio'
-import { enviarConfirmacionReserva } from '@/lib/emails/confirmacion'
+import { enviarConfirmacionReserva, avisarNegocioReserva } from '@/lib/emails/confirmacion'
 
 export type DatosReserva = {
   nombre: string
@@ -338,11 +338,13 @@ export async function reservarEnInstalacion(p: PagoReservaPayload): Promise<Rese
   const { servicioNombre, total, participantes, fecha, hora, observaciones, clienteNombre, email, telefono } = c.data
   const r = await emitirReservaInstalacion({ servicioNombre, clienteNombre, email, telefono, fecha, hora, participantes, total, observaciones })
   if (r.ok) {
-    await enviarConfirmacionReserva({
+    const datos = {
       servicio: servicioNombre, clienteNombre, clienteEmail: email,
       fecha, hora, participantes, numero: r.numero,
       total, pagado: 0, pendiente: total,
-    })
+    }
+    await enviarConfirmacionReserva(datos)                                          // confirmación al cliente
+    await avisarNegocioReserva({ ...datos, motivo: 'Nueva reserva (pago en instalación)' }) // aviso interno (info@)
   }
   return r
 }

@@ -1,12 +1,8 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { resend } from '@/lib/resend'
+import { enviarEmail, NOTIF_TO } from '@/lib/emails/enviar'
 import { enviarConfirmacionReserva } from '@/lib/emails/confirmacion'
-
-const FROM = `Planeta Movimiento <${process.env.RESEND_FROM_EMAIL || 'hola@planetamovimiento.com'}>`
-// Bandeja del negocio donde llegan los avisos de nuevas solicitudes/reservas
-const NOTIF_TO = process.env.NOTIF_EMAIL || 'administracion@planetamovimiento.com'
 
 type Persona = { nombre?: string; email?: string; telefono?: string }
 
@@ -32,13 +28,12 @@ async function avisarNegocio(asuntoAdmin: string, resumen: { label: string; valo
     .map(r => `<tr><td style="padding:6px 12px;color:#64748b">${r.label}</td><td style="padding:6px 12px;color:#0F1A3D;font-weight:600">${r.valor}</td></tr>`)
     .join('')
   const tabla = `<table style="border-collapse:collapse;font-family:sans-serif;font-size:14px">${filas}</table>`
-  try {
-    await resend.emails.send({
-      from: FROM, to: NOTIF_TO,
-      subject: asuntoAdmin,
-      html: `<div style="font-family:sans-serif"><h2 style="color:#0F1A3D">${asuntoAdmin}</h2>${tabla}<p style="color:#94a3b8;font-size:12px;margin-top:16px">Gestiónalo en el panel de administración.</p></div>`,
-    })
-  } catch {}
+  await enviarEmail({
+    to: NOTIF_TO,
+    subject: asuntoAdmin,
+    html: `<div style="font-family:sans-serif"><h2 style="color:#0F1A3D">${asuntoAdmin}</h2>${tabla}<p style="color:#94a3b8;font-size:12px;margin-top:16px">Gestiónalo en el panel de administración.</p></div>`,
+    tipo: 'aviso-interno',
+  })
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

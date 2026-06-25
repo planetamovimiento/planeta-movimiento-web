@@ -20,6 +20,7 @@ export type SeccionId =
   | 'clientes'
   | 'balance'
   | 'monitores'
+  | 'correos'
   | 'administradores'
   | 'actividad'
 
@@ -47,6 +48,7 @@ export const SECCIONES: SeccionMeta[] = [
   { id: 'servicios',       label: 'Servicios',           icon: '🎪', href: '/admin/servicios',        grupo: 'Empresa' },
   { id: 'monitores',       label: 'Monitores',           icon: '🧑‍🏫', href: '/admin/monitores',        grupo: 'Equipo' },
   { id: 'clientes',        label: 'Clientes',            icon: '👥', href: '/admin/clientes',         grupo: 'General' },
+  { id: 'correos',         label: 'Correos',             icon: '📧', href: '/admin/correos',          grupo: 'General' },
   { id: 'balance',         label: 'Balance Económico',   icon: '💰', href: '/admin/balance',          grupo: 'General' },
   { id: 'administradores', label: 'Administradores',     icon: '🔐', href: '/admin/administradores',   grupo: 'General', soloPrincipal: true },
   { id: 'actividad',       label: 'Actividad',           icon: '📝', href: '/admin/actividad',        grupo: 'General' },

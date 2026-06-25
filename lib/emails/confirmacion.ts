@@ -5,9 +5,7 @@
 // instalación, y las inscripciones/solicitudes del Club y formularios.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { resend } from '@/lib/resend'
-
-const FROM = `Planeta Movimiento <${process.env.RESEND_CONFIRM_FROM || 'info@planetamovimiento.com'}>`
+import { enviarEmail, NOTIF_TO } from '@/lib/emails/enviar'
 
 /** Mensaje específico por servicio. Se elige por palabras clave del nombre. */
 type Plantilla = { titulo: string; intro: string; cierre?: string }
@@ -144,7 +142,44 @@ export async function enviarConfirmacionReserva(p: DatosConfirmacion): Promise<v
   </div>
 </div>`
 
-  try {
-    await resend.emails.send({ from: FROM, to: email, subject: `${pl.titulo} · Planeta Movimiento`, html })
-  } catch { /* nunca rompe el flujo de reserva */ }
+  await enviarEmail({
+    to: email,
+    subject: `${pl.titulo} · Planeta Movimiento`,
+    html,
+    tipo: 'confirmacion-cliente',
+    meta: { servicio: p.servicio, numero: p.numero ?? null },
+  })
+}
+
+/**
+ * Aviso INTERNO al negocio (info@) de una nueva reserva o pago. Para que el
+ * equipo se entere al instante de cada reserva online o en instalación.
+ */
+export async function avisarNegocioReserva(p: DatosConfirmacion & { motivo: string }): Promise<void> {
+  const filas: [string, string][] = [
+    ['Motivo', p.motivo],
+    ['Servicio', p.servicio],
+    ['Nº de reserva', p.numero || ''],
+    ['Cliente', p.clienteNombre || ''],
+    ['Email', p.clienteEmail || ''],
+    ['Fecha', p.fecha ? fmtFecha(p.fecha) : ''],
+    ['Horario', p.hora || ''],
+    ['Participantes', p.participantes && p.participantes > 0 ? String(p.participantes) : ''],
+    ['Importe total', p.total && p.total > 0 ? euro(p.total) : ''],
+    ['Pagado', p.pagado && p.pagado > 0 ? euro(p.pagado) : ''],
+    ['Pendiente', p.pendiente && p.pendiente > 0 ? euro(p.pendiente) : ''],
+  ]
+  const tabla = filas
+    .filter(([, v]) => v)
+    .map(([k, v]) => `<tr><td style="padding:6px 12px;color:#64748b">${k}</td><td style="padding:6px 12px;color:#0F1A3D;font-weight:600">${v}</td></tr>`)
+    .join('')
+  const html = `<div style="font-family:sans-serif"><h2 style="color:#0F1A3D">${p.motivo} · ${p.servicio}</h2><table style="border-collapse:collapse;font-size:14px">${tabla}</table><p style="color:#94a3b8;font-size:12px;margin-top:16px">Gestiónalo en el panel de administración.</p></div>`
+
+  await enviarEmail({
+    to: NOTIF_TO,
+    subject: `${p.motivo} · ${p.servicio}${p.numero ? ` (${p.numero})` : ''}`,
+    html,
+    tipo: 'aviso-reserva',
+    meta: { servicio: p.servicio, numero: p.numero ?? null, motivo: p.motivo },
+  })
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { verificarNotificacion, pagoAutorizado } from '@/lib/redsys/firma'
-import { enviarConfirmacionReserva } from '@/lib/emails/confirmacion'
+import { enviarConfirmacionReserva, avisarNegocioReserva } from '@/lib/emails/confirmacion'
 
 // El cifrado 3DES requiere el runtime de Node (no edge).
 export const runtime = 'nodejs'
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
         .eq('id', bookingId).maybeSingle()
       if (bk) {
         const b = bk as Record<string, unknown>
-        await enviarConfirmacionReserva({
+        const datos = {
           servicio: String(b.servicio || ''),
           clienteNombre: (b.cliente_nombre as string) || null,
           clienteEmail: (b.cliente_email as string) || null,
@@ -84,7 +84,9 @@ export async function POST(request: Request) {
           total: b.precio != null ? Number(b.precio) : null,
           pagado: importe,
           pendiente: Number(p.pendiente) || 0,
-        })
+        }
+        await enviarConfirmacionReserva(datos)                                   // confirmación al cliente
+        await avisarNegocioReserva({ ...datos, motivo: 'Pago recibido — reserva confirmada' }) // aviso interno (info@)
       }
     }
     await db.from('activity_log').insert({
