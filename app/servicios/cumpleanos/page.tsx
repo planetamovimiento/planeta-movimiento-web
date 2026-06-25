@@ -3,6 +3,8 @@ import { Galeria } from '@/components/ui/Galeria'
 import { VideoYoutube } from '@/components/ui/VideoYoutube'
 import ReservaCumpleanos from './ReservaCumpleanos'
 import { getCumpleanosOcupados } from '@/lib/cumpleanos/disponibilidad'
+import { JsonLd } from '@/components/seo/JsonLd'
+import { breadcrumbsJsonLd } from '@/lib/seo'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,9 +12,10 @@ export const dynamic = 'force-dynamic'
 const VIDEO_CUMPLE = 'https://www.youtube.com/shorts/HsIbAnQt6qc'
 
 export const metadata = {
-  title: 'Celebración de Cumpleaños — Planeta Movimiento Cuenca',
+  title: 'Cumpleaños Infantiles y Celebraciones en Cuenca | Planeta Movimiento',
   description:
-    '¡Celebra un cumpleaños a lo grande en Cuenca! 2 horas de actividad guiada, juegos, retos en grupo y merienda incluida. Desde 11 €/participante.',
+    'Cumpleaños infantiles y celebraciones temáticas de superhéroes en Cuenca: 2 horas de actividad guiada, juegos, retos en grupo y merienda incluida. Desde 11 €/participante.',
+  alternates: { canonical: '/servicios/cumpleanos' },
 }
 
 const incluye = [
@@ -30,6 +33,7 @@ export default async function CumpleanosPage() {
   const ocupados = await getCumpleanosOcupados()
   return (
     <main className="bg-pm-bg min-h-screen">
+      <JsonLd data={breadcrumbsJsonLd([{ name: 'Inicio', path: '/' }, { name: 'Ocio', path: '/ocio' }, { name: 'Cumpleaños', path: '/servicios/cumpleanos' }])} />
       {/* Breadcrumb */}
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">

@@ -1,11 +1,14 @@
 import Link from 'next/link'
 import { waNegocio } from '@/lib/whatsapp'
 import { Foto } from '@/components/ui/Foto'
+import { JsonLd } from '@/components/seo/JsonLd'
+import { breadcrumbsJsonLd } from '@/lib/seo'
 
 export const metadata = {
-  title: 'Club Deportivo Origen — Circo y Acrobacia en Cuenca',
+  title: 'Club Deportivo Origen — Acrobacia, Circo y Deporte en Cuenca | Planeta Movimiento',
   description:
-    'El Club Deportivo Origen ofrece clases semanales de circo, acrobacia, aéreos, jiu-jitsu y bienestar en Cuenca. Deporte, salud, inclusión y comunidad para todas las edades.',
+    'Club Deportivo Origen en Cuenca: clases semanales de gimnasia acrobática, circo, telas aéreas, jiu-jitsu y bienestar. Deporte, salud, inclusión y comunidad para todas las edades.',
+  alternates: { canonical: '/club' },
 }
 
 // ─── Disciplinas del Club ─────────────────────────────────────────────────────
@@ -85,6 +88,7 @@ function TarjetaDisciplina({ d }: { d: typeof DISCIPLINAS[0] }) {
 export default function ClubPage() {
   return (
     <main className="bg-pm-bg min-h-screen">
+      <JsonLd data={breadcrumbsJsonLd([{ name: 'Inicio', path: '/' }, { name: 'Club Deportivo Origen', path: '/club' }])} />
 
       {/* ── HERO ── */}
       <section className="bg-pm-navy text-white py-20 border-t-4 border-pm-red">

@@ -21,6 +21,13 @@ const STATS = [
   { end: 50,   prefix: '+', suffix: '', label: 'Eventos al año' },
 ]
 
+const DESTACADOS = [
+  { nombre: 'Campamentos', desc: 'Campamentos de Verano, Navidad y Semana Santa: la Escuela de Superhéroes en acción.', href: '/servicios/campamentos', icon: '⛺', grad: 'from-amber-500 to-orange-600' },
+  { nombre: 'Cumpleaños', desc: 'Cumpleaños infantiles y celebraciones temáticas con actividad guiada y merienda.', href: '/servicios/cumpleanos', icon: '🎂', grad: 'from-pm-red to-pm-red-dark' },
+  { nombre: 'Club Deportivo Origen', desc: 'Acrobacia, circo, telas aéreas y artes marciales para todas las edades.', href: '/club', icon: '🤸', grad: 'from-blue-600 to-pm-navy' },
+  { nombre: 'Más Actividades', desc: 'Descubre el catálogo completo: excursiones, talleres, extraescolares y mucho más.', href: '/actividades', icon: '✨', grad: 'from-slate-700 to-pm-navy' },
+]
+
 const AUDIENCIAS = [
   { nombre: 'Familias', desc: 'Cumpleaños, campamentos y actividades para disfrutar juntos.', href: '/actividades', grad: 'from-pm-red to-pm-red-dark' },
   { nombre: 'Colegios y AMPAs', desc: 'Excursiones, extraescolares y programas educativos.', href: '/actividades', grad: 'from-blue-600 to-pm-navy' },
@@ -79,6 +86,33 @@ export default function HomePage() {
                 <span className="font-black text-pm-navy text-base">{c.nombre}</span>
                 <span className="text-xs text-gray-400">{c.tipo}</span>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════ SERVICIOS DESTACADOS ════ */}
+      <section className="bg-white py-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Reveal className="text-center mb-10">
+            <span className="inline-block text-pm-red text-xs font-black uppercase tracking-widest mb-3">Lo más solicitado</span>
+            <h2 className="text-3xl sm:text-4xl font-black text-pm-navy mb-3">Nuestros servicios principales</h2>
+            <p className="text-gray-500 text-base max-w-xl mx-auto">Las actividades estrella de Planeta Movimiento en Cuenca.</p>
+          </Reveal>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {DESTACADOS.map((d, i) => (
+              <Reveal key={d.nombre} delay={i * 70}>
+                <Link href={d.href}
+                  className={`group block h-full bg-gradient-to-br ${d.grad} rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl`}>
+                  <div className="text-3xl mb-3">{d.icon}</div>
+                  <h3 className="text-lg font-black text-white mb-2">{d.nombre}</h3>
+                  <p className="text-white/75 text-sm leading-relaxed mb-4">{d.desc}</p>
+                  <span className="text-white text-sm font-bold inline-flex items-center gap-1.5">
+                    Ver más
+                    <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7"/></svg>
+                  </span>
+                </Link>
+              </Reveal>
             ))}
           </div>
         </div>

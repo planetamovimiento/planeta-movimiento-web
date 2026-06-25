@@ -40,7 +40,7 @@ const NAV_ITEMS = [
     ],
   },
   {
-    label: '+Actividades',
+    label: 'Más Actividades',
     href: '/actividades',
     items: [
       { label: 'Actividades de 2 a 5 años', href: '/actividades/2-5-anos', desc: 'Psicomotricidad y circo para bebés y peques' },

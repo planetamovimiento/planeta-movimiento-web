@@ -4,7 +4,7 @@ import './globals.css'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import FooterGate from '@/components/layout/FooterGate'
-import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, NEGOCIO_JSONLD } from '@/lib/seo'
+import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, NEGOCIO_JSONLD, SITE_NAV_JSONLD } from '@/lib/seo'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -48,6 +48,11 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(NEGOCIO_JSONLD) }}
+        />
+        {/* Navegación principal (refuerza las secciones clave para los sitelinks) */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(SITE_NAV_JSONLD) }}
         />
         <Navbar />
         {children}

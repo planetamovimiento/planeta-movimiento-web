@@ -43,3 +43,36 @@ export const NEGOCIO_JSONLD = {
   areaServed: { '@type': 'City', name: 'Cuenca' },
   priceRange: '€€',
 }
+
+/**
+ * Navegación principal del sitio (Schema). Refuerza ante Google cuáles son las
+ * secciones más importantes — señal que ayuda a los enlaces de sitio (sitelinks).
+ * Orden = prioridad: Campamentos, Cumpleaños, Club Origen, Más Actividades.
+ */
+export const SITE_NAV_JSONLD = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'Servicios principales de Planeta Movimiento',
+  itemListElement: [
+    { '@type': 'SiteNavigationElement', position: 1, name: 'Campamentos', description: 'Campamentos de Verano, Navidad y Semana Santa', url: `${SITE_URL}/servicios/campamentos` },
+    { '@type': 'SiteNavigationElement', position: 2, name: 'Cumpleaños', description: 'Cumpleaños infantiles y celebraciones temáticas', url: `${SITE_URL}/servicios/cumpleanos` },
+    { '@type': 'SiteNavigationElement', position: 3, name: 'Club Deportivo Origen', description: 'Acrobacia, circo, telas aéreas y artes marciales', url: `${SITE_URL}/club` },
+    { '@type': 'SiteNavigationElement', position: 4, name: 'Más Actividades', description: 'Catálogo completo de actividades y servicios', url: `${SITE_URL}/actividades` },
+    { '@type': 'SiteNavigationElement', position: 5, name: 'Ocio', url: `${SITE_URL}/ocio` },
+    { '@type': 'SiteNavigationElement', position: 6, name: 'Educación', url: `${SITE_URL}/educacion` },
+  ],
+}
+
+/** Construye el Schema de migas de pan (BreadcrumbList) para una página. */
+export function breadcrumbsJsonLd(items: { name: string; path: string }[]) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((it, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: it.name,
+      item: `${SITE_URL}${it.path}`,
+    })),
+  }
+}

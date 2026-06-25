@@ -1,11 +1,13 @@
 import Link from 'next/link'
 
 const links = [
-  { label: 'Cumpleaños', href: '/servicios/cumpleanos' },
   { label: 'Campamentos', href: '/servicios/campamentos' },
-  { label: 'Eventos', href: '/servicios/eventos' },
+  { label: 'Cumpleaños', href: '/servicios/cumpleanos' },
+  { label: 'Club Deportivo Origen', href: '/club' },
+  { label: 'Más Actividades', href: '/actividades' },
+  { label: 'Eventos y celebraciones', href: '/servicios/eventos' },
   { label: 'Talleres', href: '/servicios/talleres' },
-  { label: 'Club', href: '/club' },
+  { label: 'Ocio en el centro', href: '/ocio' },
   { label: 'Colchonetas', href: '/colchonetas' },
 ]
 
