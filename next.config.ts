@@ -23,6 +23,7 @@ const nextConfig: NextConfig = {
       { source: "/cumpleanos-celebraciones", destination: "/servicios/cumpleanos", permanent: true },
 
       // ── Campamentos ──
+      { source: "/campamento-ninos-cuenca", destination: "/servicios/campamentos", permanent: true },
       { source: "/servicio/campamento-familiar-el-hosquillo", destination: "/servicios/campamentos", permanent: true },
 
       // ── Club / actividades artísticas (Escuela de Bienestar, circo, etc.) ──
