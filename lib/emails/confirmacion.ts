@@ -6,6 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { enviarEmail, NOTIF_TO } from '@/lib/emails/enviar'
+import { escHtml } from '@/lib/seguridad/sanitize'
 
 /** Mensaje específico por servicio. Se elige por palabras clave del nombre. */
 type Plantilla = { titulo: string; intro: string; cierre?: string }
@@ -117,7 +118,7 @@ export async function enviarConfirmacionReserva(p: DatosConfirmacion): Promise<v
   ]
   const tabla = filas
     .filter(([, v]) => v)
-    .map(([k, v]) => `<tr><td style="padding:7px 14px;color:#64748b;font-size:14px">${k}</td><td style="padding:7px 14px;color:#0F1A3D;font-weight:700;font-size:14px;text-align:right">${v}</td></tr>`)
+    .map(([k, v]) => `<tr><td style="padding:7px 14px;color:#64748b;font-size:14px">${escHtml(k)}</td><td style="padding:7px 14px;color:#0F1A3D;font-weight:700;font-size:14px;text-align:right">${escHtml(v)}</td></tr>`)
     .join('')
 
   const html = `
@@ -128,7 +129,7 @@ export async function enviarConfirmacionReserva(p: DatosConfirmacion): Promise<v
     </div>
     <div style="padding:28px">
       <h1 style="color:#0F1A3D;font-size:22px;margin:0 0 12px">${pl.titulo}</h1>
-      ${p.clienteNombre ? `<p style="color:#334155;font-size:15px;margin:0 0 12px">Hola ${p.clienteNombre.split(' ')[0]},</p>` : ''}
+      ${p.clienteNombre ? `<p style="color:#334155;font-size:15px;margin:0 0 12px">Hola ${escHtml(p.clienteNombre.split(' ')[0])},</p>` : ''}
       <p style="color:#334155;font-size:15px;line-height:1.6;margin:0 0 18px">${pl.intro}</p>
       <table style="width:100%;border-collapse:collapse;background:#f8fafc;border-radius:10px;overflow:hidden">${tabla}</table>
       ${pl.cierre ? `<p style="color:#475569;font-size:13px;line-height:1.6;margin:18px 0 0">${pl.cierre}</p>` : ''}

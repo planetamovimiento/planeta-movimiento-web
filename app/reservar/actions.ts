@@ -12,6 +12,7 @@ import { contarReservas } from '@/lib/reservas/disponibilidad'
 import { validarAforo } from '@/lib/reservas/aforo'
 import { CUMPLE_MIN_PARTICIPANTES, calcularTotalCumple } from '@/lib/cumpleanos/precio'
 import { enviarConfirmacionReserva, avisarNegocioReserva } from '@/lib/emails/confirmacion'
+import { comprobarEnvioForm } from '@/lib/seguridad/guard'
 
 export type DatosReserva = {
   nombre: string
@@ -250,6 +251,7 @@ export type PagoReservaPayload = {
   total: number                    // total de referencia (€) que calcula el widget
   observaciones?: string
   datos?: Record<string, unknown>  // datos extra para el CRM
+  seguridad?: { hp?: string; renderedAt?: number; turnstileToken?: string } // antibots
 }
 
 type ReservaResuelta = {
@@ -275,6 +277,17 @@ async function comprobarReserva(p: PagoReservaPayload): Promise<{ ok: true; data
   if (!Number.isFinite(total) || total <= 0) {
     return { ok: false, error: 'El importe de la reserva no es válido.' }
   }
+
+  // Capa antibots/antispam (honeypot, tiempo, rate-limit, spam, captcha).
+  const g = await comprobarEnvioForm({
+    formTipo: 'reserva',
+    honeypot: p.seguridad?.hp,
+    renderedAt: p.seguridad?.renderedAt,
+    turnstileToken: p.seguridad?.turnstileToken,
+    email: cliente.email,
+    contenido: p.observaciones,
+  })
+  if (!g.ok) return g
 
   const servicio = await getServicio(servicioId)
   if (!servicio) return { ok: false, error: 'Este servicio no admite reserva online.' }

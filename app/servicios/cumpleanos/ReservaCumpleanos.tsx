@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { iniciarPagoReserva } from '@/app/reservar/actions'
 import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
+import { useProteccion, ProteccionCampos } from '@/components/seguridad/ProteccionFormulario'
 import {
   CUMPLE_MIN_PARTICIPANTES as MIN_PARTICIPANTES,
   CUMPLE_PRECIO_LV as PRECIO_LUNES_JUEVES,
@@ -222,6 +223,7 @@ export default function ReservaCumpleanos({ ocupados = {} }: { ocupados?: Record
   const [form, setForm] = useState({ nombre: '', email: '', telefono: '', notas: '', cumpleanero: '', edad: '' })
   const [enviando, setEnviando] = useState(false)
   const [errorPago, setErrorPago] = useState('')
+  const proteccion = useProteccion()
 
   // Huecos ya reservados (del servidor). Se comparan por HORA DE INICIO (HH:MM)
   // para casar formatos antiguos y nuevos.
@@ -268,6 +270,7 @@ export default function ReservaCumpleanos({ ocupados = {} }: { ocupados?: Record
       participantes,
       total: precio?.total ?? 0,
       observaciones: form.notas,
+      seguridad: proteccion.valores(),
       datos: {
         cumpleanero: form.cumpleanero,
         edad: form.edad ? `Cumple ${form.edad}` : '',
@@ -521,6 +524,9 @@ export default function ReservaCumpleanos({ ocupados = {} }: { ocupados?: Record
               />
             </div>
           </div>
+
+          {/* Protección antibots (honeypot + tiempo + captcha si está configurado) */}
+          <ProteccionCampos hpRef={proteccion.hpRef} onToken={proteccion.onToken} />
 
           {/* Aviso fianza */}
           <div className="bg-pm-navy text-white rounded-xl p-4 text-sm text-center">
