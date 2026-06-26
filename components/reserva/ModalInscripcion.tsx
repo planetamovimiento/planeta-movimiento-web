@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { submitForm } from '@/lib/forms/actions'
+import { PagoClub } from '@/components/club/PagoClub'
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
@@ -110,10 +111,11 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose }: Pr
               Nos pondremos en contacto contigo en las próximas 24 horas para confirmar tu plaza.
             </p>
             {form.modalidad && (
-              <p className="text-xs text-pm-red font-semibold mb-6">
+              <p className="text-xs text-pm-red font-semibold mb-4">
                 Modalidad elegida: {modalidades.find(m => m.id === form.modalidad)?.label}
               </p>
             )}
+            <PagoClub actividad={servicio} className="mb-6" />
             <button
               onClick={onClose}
               className="bg-pm-red hover:bg-pm-red-dark text-white font-bold px-8 py-3 rounded-xl transition-colors"
@@ -299,6 +301,9 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose }: Pr
                 placeholder="Experiencia previa, lesiones, dudas sobre horarios..."
               />
             </div>
+
+            {/* ── Información de pago del Club ── */}
+            <PagoClub actividad={servicio} />
 
             {/* ── 6. Condiciones ── */}
             <label className="flex items-start gap-3 cursor-pointer">

@@ -186,12 +186,12 @@ export default function EditorTaller({ taller }: { taller: Taller & { updatedAt?
               <div><label className={lbl}>Plazas por semana</label><input type="number" className={inp} value={f.plazasSemana ?? ''} onChange={e => set('plazasSemana', num(e.target.value))} placeholder="10" /></div>
             </div>
 
-            {/* Nota de pago */}
+            {/* Nota de pago adicional */}
             <div>
-              <label className={lbl}>Instrucciones de pago</label>
-              <textarea rows={3} className={inp + ' resize-none'} value={f.pagoNota} onChange={e => set('pagoNota', e.target.value)}
-                placeholder="Transferencia al Club Deportivo Origen o pago en la instalación. Concepto: «Intensivo + nombre del participante»." />
-              <p className="text-xs text-gray-400 mt-1">Los talleres del Club no tienen pago online: este texto guía al usuario tras inscribirse.</p>
+              <label className={lbl}>Nota de pago adicional (opcional)</label>
+              <textarea rows={2} className={inp + ' resize-none'} value={f.pagoNota} onChange={e => set('pagoNota', e.target.value)}
+                placeholder="Texto extra opcional (p. ej. plazos o descuentos)." />
+              <p className="text-xs text-gray-400 mt-1">Los datos de pago del Club (efectivo o transferencia · IBAN de Globalcaja · concepto «Actividad + nombre del participante») se muestran automáticamente en el formulario. Este campo solo añade una nota extra.</p>
             </div>
           </div>
         )}

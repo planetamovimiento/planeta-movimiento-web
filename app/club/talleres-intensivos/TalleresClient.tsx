@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { submitForm } from '@/lib/forms/actions'
+import { PagoClub } from '@/components/club/PagoClub'
 import { type Taller, type Estado } from './config'
 
 // ─── Badge de estado ─────────────────────────────────────────────────────────
@@ -129,10 +130,11 @@ function ModalAviso({ taller, tipo, onClose }: {
               {tipo === 'espera'  && 'Te contactaremos si se libera alguna plaza.'}
               {tipo === 'inscripcion' && 'Nos pondremos en contacto contigo para confirmar tu plaza.'}
             </p>
-            {tipo === 'inscripcion' && multi && taller.pagoNota && (
-              <p className="text-gray-500 text-xs mb-5 bg-pm-bg border border-gray-200 rounded-xl p-3 leading-relaxed">
-                💳 {taller.pagoNota}
-              </p>
+            {tipo === 'inscripcion' && multi && (
+              <div className="mb-5">
+                <PagoClub actividad={taller.nombre} />
+                {taller.pagoNota && <p className="text-gray-500 text-xs mt-2 leading-relaxed">{taller.pagoNota}</p>}
+              </div>
             )}
             <button onClick={onClose} className="bg-pm-red hover:bg-pm-red-dark text-white font-bold px-6 py-2.5 rounded-xl transition-colors">
               Cerrar
@@ -206,11 +208,12 @@ function ModalAviso({ taller, tipo, onClose }: {
               </select>
             )}
 
-            {/* Nota de pago (solo inscripción multi) */}
-            {tipo === 'inscripcion' && multi && taller.pagoNota && (
-              <p className="text-xs text-gray-500 bg-pm-bg border border-gray-200 rounded-xl p-3 leading-relaxed">
-                💳 {taller.pagoNota}
-              </p>
+            {/* Información de pago del Club (solo inscripción multi) */}
+            {tipo === 'inscripcion' && multi && (
+              <div>
+                <PagoClub actividad={taller.nombre} />
+                {taller.pagoNota && <p className="text-xs text-gray-500 mt-2 leading-relaxed">{taller.pagoNota}</p>}
+              </div>
             )}
 
             <button type="submit" disabled={!form.nombre || !form.email || enviando}

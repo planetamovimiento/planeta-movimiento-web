@@ -103,7 +103,7 @@ export const TALLERES: Taller[] = [
     packLabel: 'Las dos semanas',
     plazasSesion: 10,
     plazasSemana: 10,
-    pagoNota: 'El pago se realiza por transferencia bancaria al Club Deportivo Origen o directamente en la instalación. Concepto recomendado: «Intensivo Telas Aéreas + nombre del participante».',
+    pagoNota: '',   // El bloque de pago del Club (IBAN, efectivo/transferencia y concepto) se muestra automáticamente.
   },
 
   // ────────────────────────────────────────────────────────────────────────────
