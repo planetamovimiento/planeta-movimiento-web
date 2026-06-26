@@ -7,7 +7,7 @@
 export const SITE_URL = 'https://planetamovimiento.com'
 export const SITE_NAME = 'Planeta Movimiento'
 export const SITE_DESCRIPTION =
-  'Centro de circo, acrobacia y movimiento en Cuenca. Club deportivo, cumpleaños, campamentos, eventos, talleres, excursiones y formación para todas las edades.'
+  'Centro de educación, deporte y ocio en Cuenca. Club deportivo, cumpleaños, campamentos, eventos, talleres, excursiones y formación para todas las edades.'
 
 /** Datos del negocio para el Schema.org (ficha local en Google). */
 export const NEGOCIO_JSONLD = {

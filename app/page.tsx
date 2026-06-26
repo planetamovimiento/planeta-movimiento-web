@@ -6,9 +6,9 @@ import CountUp from '@/components/home/CountUp'
 import { Foto } from '@/components/ui/Foto'
 
 export const metadata = {
-  title: 'Planeta Movimiento — Circo, deporte y ocio en Cuenca',
+  title: 'Planeta Movimiento — Educación, deporte y ocio en Cuenca',
   description:
-    'Centro de circo, acrobacia y movimiento en Cuenca. Club deportivo, cumpleaños, campamentos, eventos, talleres, excursiones y formación para todas las edades.',
+    'Centro de educación, deporte y ocio en Cuenca. Club deportivo, cumpleaños, campamentos, eventos, talleres, excursiones y formación para todas las edades.',
   alternates: { canonical: '/' },
 }
 

@@ -27,7 +27,7 @@ export default function Hero() {
         {/* Badge */}
         <span className="inline-flex items-center gap-2 border border-white/15 bg-white/5 backdrop-blur text-white/80 text-xs font-semibold px-4 py-1.5 rounded-full mb-10">
           <span className="w-1.5 h-1.5 bg-pm-red rounded-full animate-pulse" />
-          Centro de referencia en Cuenca · Circo, deporte y ocio
+          Centro de referencia en Cuenca · Educación, deporte y ocio
         </span>
 
         {/* Logo protagonista — gira como una moneda con el ratón */}
@@ -41,7 +41,7 @@ export default function Hero() {
 
         {/* Subtítulo */}
         <p className="text-white/80 text-base sm:text-lg max-w-2xl mb-10 leading-relaxed [text-shadow:0_1px_12px_rgba(0,0,0,0.5)]">
-          Circo, acrobacia, campamentos, eventos y formación para todas las edades.
+          Educación, deporte y ocio para todas las edades: campamentos, cumpleaños, eventos y talleres.
           Un espacio único en Cuenca donde aprender, jugar y superarse no tiene límites.
         </p>
 

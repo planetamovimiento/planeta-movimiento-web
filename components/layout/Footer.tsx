@@ -23,7 +23,7 @@ export default function Footer() {
               <span className="text-pm-red font-bold">Movimiento</span>
             </div>
             <p className="text-white/60 text-sm leading-relaxed">
-              Centro de referencia en actividades de movimiento y circo en Cuenca.
+              Centro de educación, deporte y ocio en Cuenca para todas las edades.
             </p>
             {/* Social icons */}
             <div className="flex gap-4 mt-5">
