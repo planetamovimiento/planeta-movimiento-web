@@ -24,6 +24,8 @@ export default function CalendarioClient({ eventos: ini, servicios, puedeEditar,
   const porDia = useMemo(() => {
     const m = new Map<string, EventoCalendario[]>()
     for (const e of filtrados) { const a = m.get(e.fecha) || []; a.push(e); m.set(e.fecha, a) }
+    // Dentro de cada día, primero los que tienen hora (ordenados), luego el resto.
+    for (const a of m.values()) a.sort((x, y) => (x.hora || '~~').localeCompare(y.hora || '~~'))
     return m
   }, [filtrados])
 
@@ -38,10 +40,10 @@ export default function CalendarioClient({ eventos: ini, servicios, puedeEditar,
   const next = () => (month === 11 ? (setMonth(0), setYear(y => y + 1)) : setMonth(m => m + 1))
   const hoy = () => { setYear(HOY.getFullYear()); setMonth(HOY.getMonth()) }
 
-  function addManual(fecha: string, titulo: string, servicio: string, nota: string) {
+  function addManual(fecha: string, titulo: string, servicio: string, hora: string, nota: string) {
     startTransition(async () => {
-      const r = await crearEventoManual({ fecha, titulo, servicio, nota })
-      if (r.ok) setEventos(prev => [...prev, { id: `m-${r.id}`, fecha, titulo, servicio: servicio || 'Evento manual', categoria: 'Manual', tipo: 'manual', detalle: nota }])
+      const r = await crearEventoManual({ fecha, titulo, servicio, hora, nota })
+      if (r.ok) setEventos(prev => [...prev, { id: `m-${r.id}`, fecha, titulo, servicio: servicio || 'Evento manual', categoria: 'Manual', tipo: 'manual', hora: hora || undefined, detalle: nota }])
       else setError(r.error || 'No se pudo crear')
     })
   }
@@ -105,7 +107,9 @@ export default function CalendarioClient({ eventos: ini, servicios, puedeEditar,
                 <span className={`text-xs font-bold ${esHoy ? 'bg-pm-red text-white w-6 h-6 rounded-full flex items-center justify-center' : 'text-gray-500'}`}>{dia}</span>
                 <div className="space-y-0.5 overflow-hidden">
                   {evs.slice(0, 3).map(e => (
-                    <div key={e.id} className={`text-[10px] leading-tight px-1.5 py-0.5 rounded truncate ${colorDe(e.categoria)}`} title={e.titulo}>{e.titulo}</div>
+                    <div key={e.id} className={`text-[10px] leading-tight px-1.5 py-0.5 rounded truncate ${colorDe(e.categoria)}`} title={(e.hora ? `${e.hora} · ` : '') + e.titulo}>
+                      {e.hora && <span className="font-bold">{e.hora} </span>}{e.titulo}
+                    </div>
                   ))}
                   {evs.length > 3 && <div className="text-[10px] text-gray-400 font-semibold px-1">+{evs.length - 3} más</div>}
                 </div>
@@ -129,10 +133,11 @@ export default function CalendarioClient({ eventos: ini, servicios, puedeEditar,
 // ─── Panel de un día ────────────────────────────────────────────────────────────
 function DiaPanel({ fecha, eventos, servicios, puedeEditar, onClose, onAdd, onDel }: {
   fecha: string; eventos: EventoCalendario[]; servicios: string[]; puedeEditar: boolean
-  onClose: () => void; onAdd: (fecha: string, titulo: string, servicio: string, nota: string) => void; onDel: (id: string) => void
+  onClose: () => void; onAdd: (fecha: string, titulo: string, servicio: string, hora: string, nota: string) => void; onDel: (id: string) => void
 }) {
   const [titulo, setTitulo] = useState('')
   const [servicio, setServicio] = useState('')
+  const [hora, setHora] = useState('')
   const [nota, setNota] = useState('')
   const d = new Date(fecha + 'T12:00:00')
   const fechaLarga = d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
@@ -153,6 +158,7 @@ function DiaPanel({ fecha, eventos, servicios, puedeEditar, onClose, onAdd, onDe
               <div key={e.id} className={`rounded-xl p-3 ${colorDe(e.categoria)} flex items-start justify-between gap-2`}>
                 <div>
                   <div className="font-bold text-sm">{e.titulo}</div>
+                  {e.hora && <div className="text-xs font-semibold opacity-80">🕒 {e.hora}</div>}
                   <div className="text-xs opacity-70">{e.servicio} · {e.tipo === 'reserva' ? 'Reserva' : e.tipo === 'manual' ? 'Manual' : 'Programado'}{e.detalle ? ` · ${e.detalle}` : ''}</div>
                 </div>
                 {e.tipo === 'manual' && puedeEditar && (
@@ -168,8 +174,9 @@ function DiaPanel({ fecha, eventos, servicios, puedeEditar, onClose, onAdd, onDe
               <input value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Título del evento *" className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red" />
               <input value={servicio} onChange={e => setServicio(e.target.value)} placeholder="Servicio (opcional)" list="servicios-cal" className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red" />
               <datalist id="servicios-cal">{servicios.map(s => <option key={s} value={s} />)}</datalist>
+              <input value={hora} onChange={e => setHora(e.target.value)} placeholder="Hora (opcional) · ej. 18:00 o 18:00 – 20:00" className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red" />
               <input value={nota} onChange={e => setNota(e.target.value)} placeholder="Nota (opcional)" className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red" />
-              <button onClick={() => { if (titulo.trim()) { onAdd(fecha, titulo.trim(), servicio.trim(), nota.trim()); setTitulo(''); setServicio(''); setNota('') } }}
+              <button onClick={() => { if (titulo.trim()) { onAdd(fecha, titulo.trim(), servicio.trim(), hora.trim(), nota.trim()); setTitulo(''); setServicio(''); setHora(''); setNota('') } }}
                 className="w-full bg-pm-red hover:bg-pm-red-dark text-white font-bold py-2.5 rounded-lg text-sm transition-colors">Añadir al calendario</button>
             </div>
           )}

@@ -11,6 +11,7 @@ export type EventoCalendario = {
   servicio: string
   categoria: string
   tipo: TipoEvento
+  hora?: string        // 'HH:MM' o rango '18:15 – 20:15' (opcional)
   detalle?: string
 }
 

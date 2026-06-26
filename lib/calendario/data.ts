@@ -35,7 +35,7 @@ export async function getEventosCalendario(): Promise<{ eventos: EventoCalendari
       out.push({
         id: `r-${r.origen}-${r.id}`, fecha: f,
         titulo: nombre ? `${r.servicio} · ${nombre}` : r.servicio,
-        servicio: r.servicio, categoria: r.categoria, tipo: 'reserva', detalle: nombre,
+        servicio: r.servicio, categoria: r.categoria, tipo: 'reserva', hora: r.hora || undefined, detalle: nombre,
       })
     }
   } catch { /* sin CRM */ }
@@ -72,7 +72,8 @@ export async function getEventosCalendario(): Promise<{ eventos: EventoCalendari
     for (const m of data ?? []) {
       out.push({
         id: `m-${m.id}`, fecha: String(m.fecha).slice(0, 10), titulo: String(m.titulo),
-        servicio: (m.servicio as string) || 'Evento manual', categoria: 'Manual', tipo: 'manual', detalle: (m.nota as string) || '',
+        servicio: (m.servicio as string) || 'Evento manual', categoria: 'Manual', tipo: 'manual',
+        hora: (m.hora as string) || undefined, detalle: (m.nota as string) || '',
       })
     }
   } catch { ok = false }

@@ -4,14 +4,15 @@ import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAdminUser, can, logActivity } from '@/lib/admin/auth'
 
-export async function crearEventoManual(input: { fecha: string; titulo: string; servicio?: string; nota?: string }) {
+export async function crearEventoManual(input: { fecha: string; titulo: string; servicio?: string; hora?: string; nota?: string }) {
   const admin = await getAdminUser()
   if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
   if (!input.fecha || !input.titulo.trim()) return { ok: false, error: 'Fecha y título son obligatorios' }
 
   const db = createAdminClient()
   const { data, error } = await db.from('calendario_eventos').insert({
-    fecha: input.fecha, titulo: input.titulo.trim(), servicio: input.servicio || null, nota: input.nota || null, created_by: admin.email,
+    fecha: input.fecha, titulo: input.titulo.trim(), servicio: input.servicio || null,
+    hora: input.hora?.trim() || null, nota: input.nota || null, created_by: admin.email,
   }).select('id').maybeSingle()
   if (error) return { ok: false, error: error.message }
 
