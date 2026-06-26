@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     title: 'Planeta Movimiento — Educación, deporte y ocio en Cuenca',
     description: SITE_DESCRIPTION,
   },
-  icons: { icon: '/favicon.ico', apple: '/logo.png' },
+  // El icono de la pestaña lo toma Next de app/icon.png y app/apple-icon.png (el logo).
 }
 
 export const viewport: Viewport = {
