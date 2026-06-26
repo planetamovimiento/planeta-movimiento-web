@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { submitForm } from '@/lib/forms/actions'
 import { type Taller, type Estado } from './config'
 
@@ -10,6 +10,35 @@ const ESTADO_CONFIG: Record<Estado, { label: string; color: string; dot: string 
   ultimas:      { label: 'Últimas plazas',        color: 'bg-amber-100 text-amber-700 border-amber-300',  dot: 'bg-amber-500 animate-pulse' },
   completo:     { label: 'Completo',              color: 'bg-gray-100 text-gray-500 border-gray-300',     dot: 'bg-gray-400' },
   proximamente: { label: 'Próximamente',           color: 'bg-blue-100 text-blue-700 border-blue-300',    dot: 'bg-blue-400' },
+  finalizado:   { label: 'Finalizado',             color: 'bg-gray-100 text-gray-500 border-gray-300',    dot: 'bg-gray-400' },
+}
+
+// ─── Helpers de intensivo multi-semana ────────────────────────────────────────
+const esMulti = (t: Taller) => !!(t.semanas && t.semanas.length > 0)
+
+/** Horario común de una semana, o null si los días tienen horarios distintos. */
+function horarioComun(dias: { horario: string }[]): string | null {
+  const set = new Set(dias.map(d => d.horario).filter(Boolean))
+  return set.size === 1 ? [...set][0] : null
+}
+
+type Modalidad = { value: string; label: string; precio: number | null }
+
+/** Opciones de inscripción según los precios configurados. */
+function modalidadesDe(t: Taller): Modalidad[] {
+  const out: Modalidad[] = []
+  const semanas = t.semanas ?? []
+  if (t.precioDia != null) out.push({ value: 'dia', label: 'Un día suelto', precio: t.precioDia })
+  for (const s of semanas) out.push({ value: `sem-${s.id}`, label: `${s.titulo} completa`, precio: t.precioSemana ?? null })
+  if (semanas.length > 1 && t.precioPack != null) out.push({ value: 'pack', label: `${t.packLabel || 'Pack completo'} (todas las semanas)`, precio: t.precioPack })
+  return out
+}
+
+/** Lista de todas las sesiones (para elegir un día suelto concreto). */
+function sesionesDe(t: Taller): string[] {
+  const out: string[] = []
+  for (const s of t.semanas ?? []) for (const d of s.dias) out.push(`${s.titulo} · ${d.dia} (${d.horario})`)
+  return out
 }
 
 // ─── Modal aviso / inscripción ────────────────────────────────────────────────
@@ -18,16 +47,25 @@ function ModalAviso({ taller, tipo, onClose }: {
   tipo: 'aviso' | 'inscripcion' | 'espera'
   onClose: () => void
 }) {
-  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', nivel: '' })
+  const multi = esMulti(taller)
+  const modalidades = useMemo(() => modalidadesDe(taller), [taller])
+  const sesiones = useMemo(() => sesionesDe(taller), [taller])
+  // Por defecto, la primera modalidad que no obligue a elegir día concreto.
+  const modPorDefecto = (modalidades.find(m => m.value !== 'dia') ?? modalidades[0])?.value ?? ''
+
+  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', nivel: '', modalidad: modPorDefecto, sesion: '' })
   const [enviado, setEnviado] = useState(false)
   const [enviando, setEnviando] = useState(false)
+
+  const modSel = modalidades.find(m => m.value === form.modalidad)
+  const precioSel = modSel?.precio
+  const necesitaSesion = multi && form.modalidad === 'dia'
 
   const titulos = {
     aviso:       `🔔 Avísame — ${taller.nombre}`,
     inscripcion: `✍️ Inscripción — ${taller.nombre}`,
     espera:      `📋 Lista de espera — ${taller.nombre}`,
   }
-
   const textos = {
     aviso:       'Te notificaremos en cuanto se abra la inscripción para este taller.',
     inscripcion: 'Completa tus datos para reservar tu plaza. Te confirmaremos la inscripción en breve.',
@@ -36,6 +74,15 @@ function ModalAviso({ taller, tipo, onClose }: {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault(); setEnviando(true)
+    const extra =
+      tipo === 'inscripcion' && multi
+        ? {
+            modalidad: modSel?.label ?? '',
+            precio: precioSel != null ? `${precioSel} €` : '',
+            ...(necesitaSesion && form.sesion ? { dia: form.sesion } : {}),
+            pago: 'Transferencia al Club Deportivo Origen o pago en la instalación',
+          }
+        : {}
     await submitForm({
       tipo: 'inscripcion',
       nombre: form.nombre,
@@ -46,6 +93,7 @@ function ModalAviso({ taller, tipo, onClose }: {
         taller: taller.nombre,
         solicitud: tipo === 'aviso' ? 'Avisar cuando abra' : tipo === 'espera' ? 'Lista de espera' : 'Inscripción',
         nivel: form.nivel,
+        ...extra,
       },
     })
     setEnviando(false); setEnviado(true)
@@ -54,9 +102,9 @@ function ModalAviso({ taller, tipo, onClose }: {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}/>
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden max-h-[92vh] overflow-y-auto">
         {/* Header */}
-        <div className={`bg-gradient-to-br ${taller.grad} text-white px-6 py-5 flex items-center justify-between`}>
+        <div className={`bg-gradient-to-br ${taller.grad} text-white px-6 py-5 flex items-center justify-between sticky top-0 z-10`}>
           <div>
             <div className="font-black text-base">{titulos[tipo]}</div>
             <div className="text-white/70 text-xs mt-0.5">{textos[tipo]}</div>
@@ -76,22 +124,64 @@ function ModalAviso({ taller, tipo, onClose }: {
               </svg>
             </div>
             <p className="font-black text-pm-navy text-lg mb-2">¡Recibido!</p>
-            <p className="text-gray-500 text-sm mb-5">
+            <p className="text-gray-500 text-sm mb-3">
               {tipo === 'aviso'   && 'Te avisaremos en cuanto se abra la inscripción.'}
               {tipo === 'espera'  && 'Te contactaremos si se libera alguna plaza.'}
               {tipo === 'inscripcion' && 'Nos pondremos en contacto contigo para confirmar tu plaza.'}
             </p>
+            {tipo === 'inscripcion' && multi && taller.pagoNota && (
+              <p className="text-gray-500 text-xs mb-5 bg-pm-bg border border-gray-200 rounded-xl p-3 leading-relaxed">
+                💳 {taller.pagoNota}
+              </p>
+            )}
             <button onClick={onClose} className="bg-pm-red hover:bg-pm-red-dark text-white font-bold px-6 py-2.5 rounded-xl transition-colors">
               Cerrar
             </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
-            {tipo === 'inscripcion' && taller.fecha && (
+            {/* Resumen de la edición */}
+            {tipo === 'inscripcion' && (
               <div className={`${taller.colorLight} border ${taller.colorBorder} rounded-xl p-3 text-sm`}>
                 <div className={`font-bold ${taller.colorText}`}>{taller.nombre}</div>
-                <div className="text-gray-600 text-xs mt-1">{taller.fecha} · {taller.horario} · {taller.precio}</div>
-                <div className="text-gray-500 text-xs">Plazas disponibles: {taller.plazasLibres} / {taller.plazasTotal}</div>
+                {multi
+                  ? <div className="text-gray-600 text-xs mt-1">{taller.fecha} · {taller.horario}</div>
+                  : taller.fecha && <div className="text-gray-600 text-xs mt-1">{taller.fecha} · {taller.horario} · {taller.precio}</div>}
+                {!multi && taller.fecha && <div className="text-gray-500 text-xs">Plazas disponibles: {taller.plazasLibres} / {taller.plazasTotal}</div>}
+              </div>
+            )}
+
+            {/* Selector de modalidad (intensivos de varias semanas) */}
+            {tipo === 'inscripcion' && multi && modalidades.length > 0 && (
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-pm-navy uppercase tracking-wider">Modalidad</label>
+                <div className="space-y-1.5">
+                  {modalidades.map(m => (
+                    <label key={m.value}
+                      className={`flex items-center justify-between gap-2 border-2 rounded-xl px-3 py-2.5 cursor-pointer transition-colors ${form.modalidad === m.value ? `${taller.colorBorder} ${taller.colorLight}` : 'border-gray-200 hover:border-gray-300'}`}>
+                      <span className="flex items-center gap-2 text-sm">
+                        <input type="radio" name="modalidad" value={m.value} checked={form.modalidad === m.value}
+                          onChange={e => setForm(f => ({ ...f, modalidad: e.target.value }))} className="accent-pm-red" />
+                        <span className="font-semibold text-pm-navy">{m.label}</span>
+                      </span>
+                      {m.precio != null && <span className={`font-black text-sm ${taller.colorText}`}>{m.precio} €</span>}
+                    </label>
+                  ))}
+                </div>
+                {/* Día concreto si es "un día suelto" */}
+                {necesitaSesion && (
+                  <select required value={form.sesion} onChange={e => setForm(f => ({ ...f, sesion: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red bg-white">
+                    <option value="">Elige el día *</option>
+                    {sesiones.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                )}
+                {precioSel != null && (
+                  <div className="flex items-center justify-between bg-pm-navy text-white rounded-xl px-4 py-2.5">
+                    <span className="text-xs font-semibold text-white/70">Precio</span>
+                    <span className="font-black text-lg">{precioSel} €</span>
+                  </div>
+                )}
               </div>
             )}
 
@@ -114,6 +204,13 @@ function ModalAviso({ taller, tipo, onClose }: {
                 <option>Intermedio (1-3 años)</option>
                 <option>Avanzado (+3 años)</option>
               </select>
+            )}
+
+            {/* Nota de pago (solo inscripción multi) */}
+            {tipo === 'inscripcion' && multi && taller.pagoNota && (
+              <p className="text-xs text-gray-500 bg-pm-bg border border-gray-200 rounded-xl p-3 leading-relaxed">
+                💳 {taller.pagoNota}
+              </p>
             )}
 
             <button type="submit" disabled={!form.nombre || !form.email || enviando}
@@ -158,6 +255,21 @@ function BarraPlazas({ taller }: { taller: Taller }) {
 function TarjetaTaller({ taller }: { taller: Taller }) {
   const [modal, setModal] = useState<'aviso' | 'inscripcion' | 'espera' | null>(null)
   const estado = ESTADO_CONFIG[taller.estado]
+  const multi = esMulti(taller)
+
+  const infoCells = multi
+    ? [
+        { icon: '🎯', label: 'Nivel', valor: taller.nivel },
+        { icon: '⏱',  label: 'Duración', valor: taller.duracion },
+        { icon: '👥', label: 'Plazas/sesión', valor: taller.plazasSesion ? String(taller.plazasSesion) : '—' },
+        { icon: '👨‍🏫', label: 'Instructor', valor: taller.profesor },
+      ]
+    : [
+        { icon: '🎯', label: 'Nivel', valor: taller.nivel },
+        { icon: '⏱',  label: 'Duración', valor: taller.duracion },
+        { icon: '💰', label: 'Precio', valor: taller.precio },
+        { icon: '👨‍🏫', label: 'Instructor', valor: taller.profesor },
+      ]
 
   return (
     <>
@@ -175,12 +287,28 @@ function TarjetaTaller({ taller }: { taller: Taller }) {
           <h3 className="text-2xl font-black mb-1">{taller.nombre}</h3>
           <p className="text-white/70 text-sm">{taller.subtitulo}</p>
 
-          {/* Fecha y horario si existen */}
-          {taller.fecha && (
-            <div className="mt-4 bg-white/10 border border-white/20 rounded-xl p-3 text-sm space-y-1">
-              <div className="flex items-center gap-2"><span>📅</span><span className="font-semibold">{taller.fecha}</span></div>
-              {taller.horario && <div className="flex items-center gap-2"><span>⏰</span><span>{taller.horario}</span></div>}
+          {/* Semanas y sesiones (modo multi) */}
+          {multi ? (
+            <div className="mt-4 space-y-2">
+              {taller.semanas!.map(s => {
+                const hc = horarioComun(s.dias)
+                return (
+                  <div key={s.id} className="bg-white/10 border border-white/20 rounded-xl p-3 text-sm">
+                    <div className="flex items-center gap-2 font-semibold"><span>📅</span><span>{s.titulo}</span></div>
+                    <div className="text-white/70 text-xs mt-1">
+                      {s.dias.map(d => d.dia).join(' · ')}{hc ? ` · ${hc}` : ''}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
+          ) : (
+            taller.fecha && (
+              <div className="mt-4 bg-white/10 border border-white/20 rounded-xl p-3 text-sm space-y-1">
+                <div className="flex items-center gap-2"><span>📅</span><span className="font-semibold">{taller.fecha}</span></div>
+                {taller.horario && <div className="flex items-center gap-2"><span>⏰</span><span>{taller.horario}</span></div>}
+              </div>
+            )
           )}
         </div>
 
@@ -189,6 +317,25 @@ function TarjetaTaller({ taller }: { taller: Taller }) {
 
           {/* Descripción */}
           <p className="text-gray-600 text-sm leading-relaxed">{taller.descripcion}</p>
+
+          {/* Precios por tramo (modo multi) */}
+          {multi && (
+            <div className={`${taller.colorLight} border ${taller.colorBorder} rounded-xl p-4`}>
+              <div className={`text-xs font-black uppercase tracking-wider ${taller.colorText} mb-2`}>Precios</div>
+              <ul className="text-sm text-pm-navy space-y-1.5">
+                {taller.precioDia != null && (
+                  <li className="flex justify-between"><span>1 día suelto</span><span className="font-bold">{taller.precioDia} €</span></li>
+                )}
+                {taller.precioSemana != null && (
+                  <li className="flex justify-between"><span>1 semana completa</span><span className="font-bold">{taller.precioSemana} €</span></li>
+                )}
+                {taller.precioPack != null && (taller.semanas?.length ?? 0) > 1 && (
+                  <li className="flex justify-between"><span>{taller.packLabel || 'Pack completo'}</span><span className="font-bold">{taller.precioPack} €</span></li>
+                )}
+              </ul>
+              <p className="text-xs text-gray-500 mt-2">Una semana completa equivale a todos los días de esa semana.</p>
+            </div>
+          )}
 
           {/* Objetivos */}
           <div>
@@ -204,12 +351,7 @@ function TarjetaTaller({ taller }: { taller: Taller }) {
 
           {/* Info rápida */}
           <div className="grid grid-cols-2 gap-2 text-xs">
-            {[
-              { icon: '🎯', label: 'Nivel', valor: taller.nivel },
-              { icon: '⏱',  label: 'Duración', valor: taller.duracion },
-              { icon: '💰', label: 'Precio', valor: taller.precio },
-              { icon: '👨‍🏫', label: 'Instructor', valor: taller.profesor },
-            ].map(({ icon, label, valor }) => (
+            {infoCells.map(({ icon, label, valor }) => (
               <div key={label} className="bg-pm-bg rounded-xl p-2.5">
                 <div className="text-gray-400 text-xs">{icon} {label}</div>
                 <div className="font-bold text-pm-navy mt-0.5 leading-tight">{valor}</div>
@@ -217,14 +359,14 @@ function TarjetaTaller({ taller }: { taller: Taller }) {
             ))}
           </div>
 
-          {/* Plazas (solo si hay fecha) */}
-          {taller.fecha && taller.estado !== 'proximamente' && (
+          {/* Plazas (solo legacy con fecha) */}
+          {!multi && taller.fecha && taller.estado !== 'proximamente' && taller.estado !== 'finalizado' && (
             <BarraPlazas taller={taller} />
           )}
 
           {/* Botón según estado */}
           <div className="mt-auto">
-            {taller.estado === 'abierto' && (
+            {(taller.estado === 'abierto') && (
               <button onClick={() => setModal('inscripcion')}
                 className="w-full bg-pm-red hover:bg-pm-red-dark text-white font-black py-3.5 rounded-xl transition-colors">
                 ✍️ Inscribirme
@@ -247,6 +389,11 @@ function TarjetaTaller({ taller }: { taller: Taller }) {
                 className="w-full border-2 border-pm-navy text-pm-navy hover:bg-pm-navy hover:text-white font-black py-3.5 rounded-xl transition-colors">
                 🔔 Avísame cuando se abra
               </button>
+            )}
+            {taller.estado === 'finalizado' && (
+              <div className="w-full text-center bg-gray-100 text-gray-500 font-bold py-3.5 rounded-xl text-sm">
+                ✓ Intensivo finalizado
+              </div>
             )}
           </div>
         </div>

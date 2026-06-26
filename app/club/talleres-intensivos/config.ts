@@ -3,7 +3,18 @@
 // Actualiza este archivo para cada nueva edición sin tocar el diseño.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type Estado = 'abierto' | 'ultimas' | 'completo' | 'proximamente'
+export type Estado = 'abierto' | 'ultimas' | 'completo' | 'proximamente' | 'finalizado'
+
+// ── Modo multi-fecha (intensivos con varias semanas y sesiones) ───────────────
+export type SesionDia = {
+  dia: string             // "Lunes", "Martes"…
+  horario: string         // "19:00 – 20:30"
+}
+export type SemanaIntensivo = {
+  id: string              // "s1", "s2"…
+  titulo: string          // "Semana del 6 de julio"
+  dias: SesionDia[]       // días con su horario
+}
 
 export type Taller = {
   id: string
@@ -26,6 +37,17 @@ export type Taller = {
   plazasTotal: number
   plazasLibres: number    // 0 = completo
   estado: Estado
+  // ── Intensivos de varias semanas (opcional) ─────────────────────────────────
+  // Si `semanas` tiene contenido, la web y el formulario funcionan en modo
+  // "multi": el usuario elige día suelto / semana / pack y se muestra el precio.
+  semanas?: SemanaIntensivo[]
+  precioDia?: number | null      // precio de un día suelto
+  precioSemana?: number | null   // precio de una semana completa
+  precioPack?: number | null     // precio del pack (todas las semanas)
+  packLabel?: string             // "Las dos semanas"
+  plazasSesion?: number | null   // plazas por sesión
+  plazasSemana?: number | null   // plazas por semana
+  pagoNota?: string              // instrucciones de pago (transferencia / instalación)
 }
 
 export const TALLERES: Taller[] = [
@@ -34,10 +56,10 @@ export const TALLERES: Taller[] = [
   // ────────────────────────────────────────────────────────────────────────────
   {
     id: 'telas',
-    nombre: 'Telas Aéreas',
-    subtitulo: 'Técnica, fuerza y figuras en altura',
+    nombre: 'Intensivo de Telas Aéreas',
+    subtitulo: '¡Vive el verano desde las alturas!',
     descripcion:
-      'Taller especializado para aprender y perfeccionar técnicas en telas aéreas. Una sesión intensiva con foco en la técnica de subida, figuras, transiciones y confianza en la altura.',
+      'Intensivo de verano para aprender y perfeccionar técnicas en telas aéreas. Sesiones de hora y media centradas en la técnica de subida, figuras, transiciones y confianza en la altura. Dos semanas de julio, plazas limitadas.',
     objetivos: ['Técnica de subida y descenso', 'Fuerza de agarre', 'Figuras aéreas', 'Transiciones fluidas', 'Flexibilidad', 'Confianza en altura'],
     nivel: 'Todos los niveles',
     profesor: 'Por confirmar',
@@ -47,13 +69,41 @@ export const TALLERES: Taller[] = [
     colorText: 'text-purple-700',
     colorBorder: 'border-purple-300',
     // ── Edición actual ────────────────────────────────────────────────────────
-    fecha: '',             // ← sin fecha aún
-    horario: '',
-    duracion: '4 horas',
-    precio: 'Consultar',
+    fecha: 'Semanas del 6 y 20 de julio',
+    horario: '19:00 – 20:30',
+    duracion: '1 h 30 min por sesión',
+    precio: 'Desde 20 €',
     plazasTotal: 10,
     plazasLibres: 10,
-    estado: 'proximamente',
+    estado: 'abierto',
+    // ── Intensivo de dos semanas ───────────────────────────────────────────────
+    semanas: [
+      {
+        id: 's1', titulo: 'Semana del 6 de julio',
+        dias: [
+          { dia: 'Lunes', horario: '19:00 – 20:30' },
+          { dia: 'Martes', horario: '19:00 – 20:30' },
+          { dia: 'Jueves', horario: '19:00 – 20:30' },
+          { dia: 'Viernes', horario: '19:00 – 20:30' },
+        ],
+      },
+      {
+        id: 's2', titulo: 'Semana del 20 de julio',
+        dias: [
+          { dia: 'Lunes', horario: '19:00 – 20:30' },
+          { dia: 'Martes', horario: '19:00 – 20:30' },
+          { dia: 'Jueves', horario: '19:00 – 20:30' },
+          { dia: 'Viernes', horario: '19:00 – 20:30' },
+        ],
+      },
+    ],
+    precioDia: 20,
+    precioSemana: 60,
+    precioPack: 100,
+    packLabel: 'Las dos semanas',
+    plazasSesion: 10,
+    plazasSemana: 10,
+    pagoNota: 'El pago se realiza por transferencia bancaria al Club Deportivo Origen o directamente en la instalación. Concepto recomendado: «Intensivo Telas Aéreas + nombre del participante».',
   },
 
   // ────────────────────────────────────────────────────────────────────────────

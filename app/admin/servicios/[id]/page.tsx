@@ -91,7 +91,7 @@ export default async function EditarServicioPage({ params }: { params: Promise<{
                       <div className="text-xs text-gray-400">{t.fecha || 'Sin fecha'} · {t.precio}</div>
                     </div>
                   </div>
-                  <EstadoBadge estado={t.estado === 'abierto' ? 'activo' : t.estado === 'proximamente' ? 'proximamente' : t.estado === 'completo' ? 'completo' : 'ultimas'} />
+                  <EstadoBadge estado={t.estado === 'abierto' ? 'activo' : t.estado === 'proximamente' ? 'proximamente' : t.estado === 'completo' ? 'completo' : t.estado === 'finalizado' ? 'finalizado' : 'ultimas'} />
                 </div>
                 <div className="flex items-center justify-between text-xs text-gray-400">
                   <span>Plazas: {t.plazasLibres}/{t.plazasTotal}</span>

@@ -116,6 +116,7 @@ export default async function TalleresIntensivosPage() {
                 { estado: 'ultimas',      label: 'Últimas plazas', color: 'bg-amber-100 text-amber-700 border-amber-300' },
                 { estado: 'completo',     label: 'Completo',      color: 'bg-gray-100 text-gray-500 border-gray-300' },
                 { estado: 'proximamente', label: 'Próximamente',  color: 'bg-blue-100 text-blue-700 border-blue-300' },
+                { estado: 'finalizado',   label: 'Finalizado',    color: 'bg-gray-100 text-gray-500 border-gray-300' },
               ].map(({ label, color }) => (
                 <span key={label} className={`text-xs font-semibold border px-2.5 py-1 rounded-full ${color}`}>{label}</span>
               ))}

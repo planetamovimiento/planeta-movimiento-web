@@ -38,6 +38,8 @@ const ESTADO_COLORS: Record<string, string> = {
   inactivo:      'bg-gray-100 text-gray-500',
   completo:      'bg-rose-100 text-rose-700',
   proximamente:  'bg-blue-100 text-blue-700',
+  ultimas:       'bg-amber-100 text-amber-700',
+  finalizado:    'bg-gray-100 text-gray-500',
   disponible:    'bg-green-100 text-green-700',
   bloqueado:     'bg-gray-200 text-gray-600',
   // pedidos
@@ -49,6 +51,8 @@ const ESTADO_COLORS: Record<string, string> = {
 
 const ESTADO_LABEL: Record<string, string> = {
   espera: 'Lista de espera',
+  ultimas: 'Últimas plazas',
+  finalizado: 'Finalizado',
 }
 
 export function EstadoBadge({ estado }: { estado: string }) {
