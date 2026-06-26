@@ -25,6 +25,7 @@ export type Taller = {
   nivel: string           // "Todos los niveles" | "Iniciación" | "Medio" | "Avanzado"
   profesor: string
   icon: string
+  imagen?: string         // Cartel del intensivo (si existe, se muestra como imagen principal)
   grad: string            // Tailwind gradient
   colorLight: string
   colorText: string

@@ -84,12 +84,9 @@ export default async function EditarServicioPage({ params }: { params: Promise<{
               <Link key={t.id} href={`/admin/talleres-intensivos/${t.id}`}
                 className="group bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md hover:border-pm-red/30 transition-all">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{t.icon}</span>
-                    <div>
-                      <div className="font-black text-pm-navy text-sm group-hover:text-pm-red transition-colors">{t.nombre}</div>
-                      <div className="text-xs text-gray-400">{t.fecha || 'Sin fecha'} · {t.precio}</div>
-                    </div>
+                  <div>
+                    <div className="font-black text-pm-navy text-sm group-hover:text-pm-red transition-colors">{t.nombre}</div>
+                    <div className="text-xs text-gray-400">{t.fecha || 'Sin fecha'} · {t.precio}</div>
                   </div>
                   <EstadoBadge estado={t.estado === 'abierto' ? 'activo' : t.estado === 'proximamente' ? 'proximamente' : t.estado === 'completo' ? 'completo' : t.estado === 'finalizado' ? 'finalizado' : 'ultimas'} />
                 </div>

@@ -15,7 +15,7 @@ export default async function EditarTallerPage({ params }: { params: Promise<{ i
 
   return (
     <>
-      <AdminHeader titulo={<span className="flex items-center gap-2"><span>{taller.icon}</span> {taller.nombre}</span>} subtitulo="Taller intensivo · Club Deportivo Origen" />
+      <AdminHeader titulo={taller.nombre} subtitulo="Taller intensivo · Club Deportivo Origen" />
       <div className="p-6 lg:p-8">
         <div className="flex items-center gap-3 mb-6 text-sm">
           <Link href="/admin/talleres-intensivos" className="text-gray-500 hover:text-pm-red">← Talleres intensivos</Link>

@@ -68,7 +68,6 @@ export default async function TalleresIntensivosPage() {
             <div className="grid grid-cols-2 gap-3">
               {TALLERES.map(t => (
                 <div key={t.id} className={`bg-gradient-to-br ${t.grad} rounded-2xl p-5 text-white relative overflow-hidden`}>
-                  <div className="text-3xl mb-2">{t.icon}</div>
                   <div className="font-black text-sm leading-tight">{t.nombre}</div>
                   <div className="text-white/60 text-xs mt-1">{t.subtitulo}</div>
                 </div>
@@ -83,12 +82,11 @@ export default async function TalleresIntensivosPage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
             {[
-              { icon: '🎯', titulo: 'Objetivo único',     desc: 'Cada taller se centra en una sola disciplina o habilidad concreta, sin dispersión.' },
-              { icon: '⚡', titulo: 'Alta intensidad',     desc: 'Más horas de práctica en menos tiempo. Avanzas más rápido que en las clases regulares.' },
-              { icon: '👥', titulo: 'Grupos reducidos',    desc: 'Plazas muy limitadas para garantizar atención personalizada de cada participante.' },
-            ].map(({ icon, titulo, desc }) => (
+              { titulo: 'Objetivo único',     desc: 'Cada taller se centra en una sola disciplina o habilidad concreta, sin dispersión.' },
+              { titulo: 'Alta intensidad',     desc: 'Más horas de práctica en menos tiempo. Avanzas más rápido que en las clases regulares.' },
+              { titulo: 'Grupos reducidos',    desc: 'Plazas muy limitadas para garantizar atención personalizada de cada participante.' },
+            ].map(({ titulo, desc }) => (
               <div key={titulo} className="bg-pm-bg border border-gray-200 rounded-2xl p-6">
-                <div className="text-4xl mb-3">{icon}</div>
                 <h3 className="font-black text-pm-navy text-base mb-2">{titulo}</h3>
                 <p className="text-gray-500 text-sm leading-relaxed">{desc}</p>
               </div>
@@ -127,7 +125,6 @@ export default async function TalleresIntensivosPage() {
 
           {/* Nota de escalabilidad */}
           <div className="mt-10 bg-white border border-gray-200 rounded-2xl p-5 text-center shadow-sm">
-            <div className="text-2xl mb-2">🗓️</div>
             <p className="text-gray-600 text-sm leading-relaxed max-w-lg mx-auto">
               <strong className="text-pm-navy">¿Hay alguna disciplina que te gustaría ver como taller?</strong><br/>
               Escríbenos y tendremos en cuenta tu interés para planificar las próximas ediciones.
@@ -146,7 +143,6 @@ export default async function TalleresIntensivosPage() {
       {/* ── CTA ── */}
       <section className="bg-pm-red py-14 text-white text-center">
         <div className="max-w-xl mx-auto px-4">
-          <div className="text-4xl mb-3">🏅</div>
           <h2 className="text-2xl font-black mb-3">¿Eres alumno del Club?</h2>
           <p className="text-red-100 text-sm mb-6">
             Los socios del Club Deportivo Origen tienen acceso prioritario a los talleres intensivos.

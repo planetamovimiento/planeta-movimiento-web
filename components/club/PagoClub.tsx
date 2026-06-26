@@ -21,7 +21,7 @@ export function PagoClub({ actividad, className = '' }: { actividad?: string; cl
 
   return (
     <div className={`bg-pm-bg border border-gray-200 rounded-xl p-4 text-left ${className}`}>
-      <div className="font-black text-pm-navy flex items-center gap-2 text-sm">💳 Cómo se paga</div>
+      <div className="font-black text-pm-navy text-sm">Cómo se paga</div>
       <p className="text-gray-600 text-xs mt-1 leading-relaxed">
         Las actividades del Club Deportivo Origen se pagan <strong>en efectivo en las instalaciones</strong> o
         por <strong>transferencia bancaria</strong>. No hay pago online.

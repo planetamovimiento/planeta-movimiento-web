@@ -42,6 +42,19 @@ function sesionesDe(t: Taller): string[] {
   return out
 }
 
+// ─── Lightbox del cartel ───────────────────────────────────────────────────────
+function CartelLightbox({ src, alt, onClose }: { src: string; alt: string; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/85" onClick={onClose}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={alt} className="max-h-[92vh] max-w-full w-auto rounded-lg shadow-2xl" onClick={e => e.stopPropagation()} />
+      <button onClick={onClose} className="absolute top-4 right-4 bg-white/15 hover:bg-white/25 text-white rounded-full w-10 h-10 flex items-center justify-center">
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+  )
+}
+
 // ─── Modal aviso / inscripción ────────────────────────────────────────────────
 function ModalAviso({ taller, tipo, onClose }: {
   taller: Taller
@@ -63,9 +76,9 @@ function ModalAviso({ taller, tipo, onClose }: {
   const necesitaSesion = multi && form.modalidad === 'dia'
 
   const titulos = {
-    aviso:       `🔔 Avísame — ${taller.nombre}`,
-    inscripcion: `✍️ Inscripción — ${taller.nombre}`,
-    espera:      `📋 Lista de espera — ${taller.nombre}`,
+    aviso:       `Avísame — ${taller.nombre}`,
+    inscripcion: `Inscripción — ${taller.nombre}`,
+    espera:      `Lista de espera — ${taller.nombre}`,
   }
   const textos = {
     aviso:       'Te notificaremos en cuanto se abra la inscripción para este taller.',
@@ -219,9 +232,9 @@ function ModalAviso({ taller, tipo, onClose }: {
             <button type="submit" disabled={!form.nombre || !form.email || enviando}
               className="w-full bg-pm-red hover:bg-pm-red-dark disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">
               {enviando ? 'Enviando...' : (
-                tipo === 'aviso'       ? '🔔 Avísame cuando se abra'  :
-                tipo === 'espera'      ? '📋 Apuntarme a la lista'    :
-                                        '✍️ Confirmar inscripción'
+                tipo === 'aviso'       ? 'Avísame cuando se abra' :
+                tipo === 'espera'      ? 'Apuntarme a la lista'   :
+                                        'Confirmar inscripción'
               )}
             </button>
           </form>
@@ -254,24 +267,68 @@ function BarraPlazas({ taller }: { taller: Taller }) {
   )
 }
 
+// ─── Botón de acción según estado ──────────────────────────────────────────────
+function BotonEstado({ estado, onAbrir }: { estado: Estado; onAbrir: (t: 'aviso' | 'inscripcion' | 'espera') => void }) {
+  if (estado === 'abierto')
+    return <button onClick={() => onAbrir('inscripcion')} className="w-full bg-pm-red hover:bg-pm-red-dark text-white font-black py-3.5 rounded-xl transition-colors">Inscribirme</button>
+  if (estado === 'ultimas')
+    return <button onClick={() => onAbrir('inscripcion')} className="w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-3.5 rounded-xl transition-colors">Últimas plazas — Inscribirme</button>
+  if (estado === 'completo')
+    return <button onClick={() => onAbrir('espera')} className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-black py-3.5 rounded-xl transition-colors">Apuntarme a la lista de espera</button>
+  if (estado === 'proximamente')
+    return <button onClick={() => onAbrir('aviso')} className="w-full border-2 border-pm-navy text-pm-navy hover:bg-pm-navy hover:text-white font-black py-3.5 rounded-xl transition-colors">Avísame cuando se abra</button>
+  return <div className="w-full text-center bg-gray-100 text-gray-500 font-bold py-3.5 rounded-xl text-sm">Intensivo finalizado</div>
+}
+
 // ─── Tarjeta de taller ────────────────────────────────────────────────────────
 function TarjetaTaller({ taller }: { taller: Taller }) {
   const [modal, setModal] = useState<'aviso' | 'inscripcion' | 'espera' | null>(null)
+  const [verCartel, setVerCartel] = useState(false)
   const estado = ESTADO_CONFIG[taller.estado]
   const multi = esMulti(taller)
+  const conCartel = !!taller.imagen
 
+  // ── Tarjeta con cartel: el cartel ya contiene la información, mostramos lo mínimo ──
+  if (conCartel) {
+    return (
+      <>
+        <div className="bg-white border-2 border-gray-100 rounded-3xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col">
+          <button type="button" onClick={() => setVerCartel(true)} className="relative block w-full bg-pm-navy group">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={taller.imagen} alt={`Cartel del ${taller.nombre}`} className="w-full h-auto block" />
+            <span className={`absolute top-3 right-3 flex items-center gap-1.5 border text-xs font-bold px-3 py-1 rounded-full shadow ${estado.color}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${estado.dot}`}/>{estado.label}
+            </span>
+            <span className="absolute bottom-3 right-3 bg-black/60 text-white text-xs font-semibold px-2.5 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">Ampliar cartel</span>
+          </button>
+          <div className="p-5 flex flex-col gap-3">
+            <div>
+              <h3 className="font-black text-pm-navy text-lg leading-tight">{taller.nombre}</h3>
+              {taller.subtitulo && <p className="text-gray-500 text-sm">{taller.subtitulo}</p>}
+            </div>
+            <BotonEstado estado={taller.estado} onAbrir={setModal} />
+          </div>
+        </div>
+
+        {verCartel && <CartelLightbox src={taller.imagen!} alt={`Cartel del ${taller.nombre}`} onClose={() => setVerCartel(false)} />}
+        {modal && <ModalAviso taller={taller} tipo={modal} onClose={() => setModal(null)} />}
+      </>
+    )
+  }
+
+  // ── Tarjeta sin cartel: diseño informativo completo ──
   const infoCells = multi
     ? [
-        { icon: '🎯', label: 'Nivel', valor: taller.nivel },
-        { icon: '⏱',  label: 'Duración', valor: taller.duracion },
-        { icon: '👥', label: 'Plazas/sesión', valor: taller.plazasSesion ? String(taller.plazasSesion) : '—' },
-        { icon: '👨‍🏫', label: 'Instructor', valor: taller.profesor },
+        { label: 'Nivel', valor: taller.nivel },
+        { label: 'Duración', valor: taller.duracion },
+        { label: 'Plazas/sesión', valor: taller.plazasSesion ? String(taller.plazasSesion) : '—' },
+        { label: 'Instructor', valor: taller.profesor },
       ]
     : [
-        { icon: '🎯', label: 'Nivel', valor: taller.nivel },
-        { icon: '⏱',  label: 'Duración', valor: taller.duracion },
-        { icon: '💰', label: 'Precio', valor: taller.precio },
-        { icon: '👨‍🏫', label: 'Instructor', valor: taller.profesor },
+        { label: 'Nivel', valor: taller.nivel },
+        { label: 'Duración', valor: taller.duracion },
+        { label: 'Precio', valor: taller.precio },
+        { label: 'Instructor', valor: taller.profesor },
       ]
 
   return (
@@ -280,8 +337,7 @@ function TarjetaTaller({ taller }: { taller: Taller }) {
 
         {/* Cabecera visual */}
         <div className={`relative bg-gradient-to-br ${taller.grad} p-8 text-white`}>
-          <div className="flex items-start justify-between mb-4">
-            <span className="text-5xl">{taller.icon}</span>
+          <div className="flex items-start justify-end mb-4">
             <span className={`flex items-center gap-1.5 border text-xs font-bold px-3 py-1 rounded-full ${estado.color}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${estado.dot}`}/>
               {estado.label}
@@ -297,7 +353,7 @@ function TarjetaTaller({ taller }: { taller: Taller }) {
                 const hc = horarioComun(s.dias)
                 return (
                   <div key={s.id} className="bg-white/10 border border-white/20 rounded-xl p-3 text-sm">
-                    <div className="flex items-center gap-2 font-semibold"><span>📅</span><span>{s.titulo}</span></div>
+                    <div className="font-semibold">{s.titulo}</div>
                     <div className="text-white/70 text-xs mt-1">
                       {s.dias.map(d => d.dia).join(' · ')}{hc ? ` · ${hc}` : ''}
                     </div>
@@ -308,8 +364,8 @@ function TarjetaTaller({ taller }: { taller: Taller }) {
           ) : (
             taller.fecha && (
               <div className="mt-4 bg-white/10 border border-white/20 rounded-xl p-3 text-sm space-y-1">
-                <div className="flex items-center gap-2"><span>📅</span><span className="font-semibold">{taller.fecha}</span></div>
-                {taller.horario && <div className="flex items-center gap-2"><span>⏰</span><span>{taller.horario}</span></div>}
+                <div className="font-semibold">{taller.fecha}</div>
+                {taller.horario && <div className="text-white/80">{taller.horario}</div>}
               </div>
             )
           )}
@@ -354,9 +410,9 @@ function TarjetaTaller({ taller }: { taller: Taller }) {
 
           {/* Info rápida */}
           <div className="grid grid-cols-2 gap-2 text-xs">
-            {infoCells.map(({ icon, label, valor }) => (
+            {infoCells.map(({ label, valor }) => (
               <div key={label} className="bg-pm-bg rounded-xl p-2.5">
-                <div className="text-gray-400 text-xs">{icon} {label}</div>
+                <div className="text-gray-400 text-xs">{label}</div>
                 <div className="font-bold text-pm-navy mt-0.5 leading-tight">{valor}</div>
               </div>
             ))}
@@ -369,35 +425,7 @@ function TarjetaTaller({ taller }: { taller: Taller }) {
 
           {/* Botón según estado */}
           <div className="mt-auto">
-            {(taller.estado === 'abierto') && (
-              <button onClick={() => setModal('inscripcion')}
-                className="w-full bg-pm-red hover:bg-pm-red-dark text-white font-black py-3.5 rounded-xl transition-colors">
-                ✍️ Inscribirme
-              </button>
-            )}
-            {taller.estado === 'ultimas' && (
-              <button onClick={() => setModal('inscripcion')}
-                className="w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-3.5 rounded-xl transition-colors">
-                ⚡ Últimas plazas — Inscribirme
-              </button>
-            )}
-            {taller.estado === 'completo' && (
-              <button onClick={() => setModal('espera')}
-                className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-black py-3.5 rounded-xl transition-colors">
-                📋 Apuntarme a la lista de espera
-              </button>
-            )}
-            {taller.estado === 'proximamente' && (
-              <button onClick={() => setModal('aviso')}
-                className="w-full border-2 border-pm-navy text-pm-navy hover:bg-pm-navy hover:text-white font-black py-3.5 rounded-xl transition-colors">
-                🔔 Avísame cuando se abra
-              </button>
-            )}
-            {taller.estado === 'finalizado' && (
-              <div className="w-full text-center bg-gray-100 text-gray-500 font-bold py-3.5 rounded-xl text-sm">
-                ✓ Intensivo finalizado
-              </div>
-            )}
+            <BotonEstado estado={taller.estado} onAbrir={setModal} />
           </div>
         </div>
       </div>

@@ -98,7 +98,11 @@ export default function EditorTaller({ taller }: { taller: Taller & { updatedAt?
           <div><label className={lbl}>Nivel</label><input className={inp} value={f.nivel} onChange={e => set('nivel', e.target.value)} /></div>
         </div>
         <div><label className={lbl}>Profesor / instructor</label><input className={inp} value={f.profesor} onChange={e => set('profesor', e.target.value)} /></div>
-        <div><label className={lbl}>Imagen</label><SubirImagen value={f.imagen} onChange={url => set('imagen', url)} carpeta="talleres" /></div>
+        <div>
+          <label className={lbl}>Cartel del intensivo (opcional)</label>
+          <SubirImagen value={f.imagen} onChange={url => set('imagen', url)} carpeta="talleres" />
+          <p className="text-xs text-gray-400 mt-1">Si subes el cartel, se muestra como imagen principal del taller en la web (se puede ampliar al tocarlo) y se oculta la información repetida, ya que el cartel la incluye. Recomendado: cartel en vertical (JPG/PNG).</p>
+        </div>
         <div>
           <label className={lbl}>Objetivos (uno por línea)</label>
           <textarea rows={4} className={inp + ' resize-none'} value={(f.objetivos || []).join('\n')} onChange={e => set('objetivos', e.target.value.split('\n').map(s => s.trim()).filter(Boolean))} />
