@@ -38,7 +38,6 @@ export type SeccionMeta = {
 /** Orden y agrupación = el que se muestra en la barra lateral. */
 export const SECCIONES: SeccionMeta[] = [
   { id: 'club',            label: 'Inscripciones Club',  icon: '🏅', href: '/admin/club',            grupo: 'Club Deportivo Origen' },
-  { id: 'circo-inclusivo', label: 'Circo Inclusivo',     icon: '🤸', href: '/admin/circo-inclusivo',  grupo: 'Club Deportivo Origen' },
   { id: 'calendario-club', label: 'Calendario Club',     icon: '🗓️', href: '/admin/calendario-club',  grupo: 'Club Deportivo Origen' },
   { id: 'familias',        label: 'Portal de Familias',  icon: '👨‍👩‍👧', href: '/admin/familias',         grupo: 'Club Deportivo Origen' },
   { id: 'reservas',        label: 'Reservas',            icon: '📋', href: '/admin/reservas',         grupo: 'Empresa' },
@@ -46,9 +45,10 @@ export const SECCIONES: SeccionMeta[] = [
   { id: 'productos',       label: 'Productos y pedidos', icon: '🛒', href: '/admin/productos',        grupo: 'Empresa' },
   { id: 'formularios',     label: 'Solicitudes',         icon: '✉️', href: '/admin/formularios',      grupo: 'Empresa' },
   { id: 'calendario',      label: 'Calendario',          icon: '🗓️', href: '/admin/calendario',       grupo: 'Empresa' },
-  { id: 'servicios',       label: 'Servicios',           icon: '🎪', href: '/admin/servicios',        grupo: 'Empresa' },
   { id: 'monitores',       label: 'Monitores',           icon: '🧑‍🏫', href: '/admin/monitores',        grupo: 'Equipo' },
+  { id: 'circo-inclusivo', label: 'Circo Inclusivo',     icon: '🤸', href: '/admin/circo-inclusivo',  grupo: 'Equipo' },
   { id: 'clientes',        label: 'Clientes',            icon: '👥', href: '/admin/clientes',         grupo: 'General' },
+  { id: 'servicios',       label: 'Servicios',           icon: '🎪', href: '/admin/servicios',        grupo: 'General' },
   { id: 'correos',         label: 'Correos',             icon: '📧', href: '/admin/correos',          grupo: 'General' },
   { id: 'seguridad',       label: 'Seguridad',           icon: '🛡️', href: '/admin/seguridad',        grupo: 'General' },
   { id: 'balance',         label: 'Balance Económico',   icon: '💰', href: '/admin/balance',          grupo: 'General' },
