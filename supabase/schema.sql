@@ -158,16 +158,10 @@ alter table products         enable row level security;
 alter table product_orders   enable row level security;
 alter table activity_log     enable row level security;
 
--- El público puede enviar formularios / reservas / pedidos (INSERT)
-do $$ begin
-  create policy "public insert forms"  on form_submissions for insert to anon with check (true);
-exception when duplicate_object then null; end $$;
-do $$ begin
-  create policy "public insert booking" on bookings for insert to anon with check (true);
-exception when duplicate_object then null; end $$;
-do $$ begin
-  create policy "public insert order"  on product_orders for insert to anon with check (true);
-exception when duplicate_object then null; end $$;
+-- Formularios, reservas y pedidos del público se insertan SIEMPRE desde server
+-- actions con la clave service-role (que ignora RLS) y pasan por la capa antispam.
+-- Por eso NO se da permiso de INSERT a la anon key: evita el alta directa de spam.
+-- (Si alguna vez se insertara desde el cliente, habría que añadir esas políticas.)
 
 -- Los servicios y productos activos pueden leerse públicamente (web)
 do $$ begin
