@@ -73,12 +73,12 @@ export default function CampamentosPageClient({ cfg, ocupacion }: { cfg: Campame
             Gimnasia acrobática, parkour, telas aéreas, circo, malabares y mucho más.
             Convertimos a los niños en auténticos superhéroes a través del movimiento.
           </p>
-          <div className="flex flex-wrap justify-center gap-2.5 max-w-3xl mx-auto">
+          <div className="flex flex-wrap justify-center gap-2.5 max-w-2xl mx-auto">
             {HABILIDADES.map(({ nombre, img, desc }) => (
-              <div key={nombre} className="w-[78px] bg-white/5 border border-white/10 rounded-xl p-2 text-center hover:bg-white/10 transition-colors cursor-default" title={desc}>
+              <div key={nombre} className="w-[84px] bg-white/5 border border-white/10 rounded-xl p-2 text-center hover:bg-white/10 transition-colors cursor-default" title={desc}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={img} alt={`Insignia ${nombre}`} className="h-9 w-9 object-contain mx-auto mb-1" />
-                <div className="text-white text-[11px] font-bold leading-tight">{nombre}</div>
+                <div className="text-white text-[10px] font-bold leading-tight break-words">{nombre}</div>
               </div>
             ))}
           </div>
