@@ -11,7 +11,9 @@ async function safe<T>(fn: () => Promise<{ data: T[] | null; error: unknown }>):
 }
 
 const str = (v: unknown) => (typeof v === 'string' ? v : v == null ? '' : String(v))
-const num = (v: unknown) => { const n = Number(v); return isNaN(n) ? null : n }
+// null / undefined / '' → null (NO 0): así un campo vacío de crm_gestion no pisa
+// con 0 el total/participantes reales del origen. (Number(null) === 0, ojo.)
+const num = (v: unknown) => { if (v == null || v === '') return null; const n = Number(v); return isNaN(n) ? null : n }
 
 /** Convierte importes en texto («950 €», «1.200,50 €») o número a number. */
 function importe(v: unknown): number | null {

@@ -277,6 +277,10 @@ async function comprobarReserva(p: PagoReservaPayload): Promise<{ ok: true; data
   if (!Number.isFinite(total) || total <= 0) {
     return { ok: false, error: 'El importe de la reserva no es válido.' }
   }
+  // El nº de participantes es obligatorio y nunca puede ser 0 (0 = no hay cliente).
+  if (participantes != null && (!Number.isInteger(participantes) || participantes < 1)) {
+    return { ok: false, error: 'Indica el número de participantes (al menos 1).' }
+  }
 
   // Capa antibots/antispam (honeypot, tiempo, rate-limit, spam, captcha).
   const g = await comprobarEnvioForm({
