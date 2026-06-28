@@ -163,25 +163,6 @@ export default function ClubPage() {
         </div>
       </section>
 
-      {/* ── VALORES / IMPACTO ── */}
-      <section className="bg-pm-bg py-14">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-black text-pm-navy text-center mb-3">Lo que aporta formar parte del Club</h2>
-          <p className="text-gray-500 text-sm text-center mb-10 max-w-xl mx-auto">El movimiento como motor de salud, aprendizaje y comunidad</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {VALORES.map(v => (
-              <div key={v.titulo} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-                <div className="w-10 h-10 bg-pm-red-light rounded-xl flex items-center justify-center mb-4">
-                  <svg className="w-5 h-5 text-pm-red" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
-                </div>
-                <h3 className="font-black text-pm-navy text-base mb-2">{v.titulo}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">{v.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── DISCIPLINAS ── */}
       <section className="bg-white py-16" id="disciplinas">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -214,6 +195,25 @@ export default function ClubPage() {
                   <div className={`font-black text-lg mb-2 ${nivel.text}`}>{nivel.nombre}</div>
                   <p className={`text-sm opacity-80 ${nivel.text}`}>{nivel.desc}</p>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── VALORES / IMPACTO ── */}
+      <section className="bg-white py-14">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-black text-pm-navy text-center mb-3">Lo que aporta formar parte del Club</h2>
+          <p className="text-gray-500 text-sm text-center mb-10 max-w-xl mx-auto">El movimiento como motor de salud, aprendizaje y comunidad</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {VALORES.map(v => (
+              <div key={v.titulo} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                <div className="w-10 h-10 bg-pm-red-light rounded-xl flex items-center justify-center mb-4">
+                  <svg className="w-5 h-5 text-pm-red" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <h3 className="font-black text-pm-navy text-base mb-2">{v.titulo}</h3>
+                <p className="text-gray-500 text-sm leading-relaxed">{v.desc}</p>
               </div>
             ))}
           </div>
