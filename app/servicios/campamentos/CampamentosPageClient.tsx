@@ -10,14 +10,19 @@ import { semanasResueltas, parseFechasLista, type CampamentosConfig } from '@/li
 type Panel = 'navidad' | 'semanasanta' | 'verano'
 
 const HABILIDADES = [
-  { nombre: 'Agilidad', icon: '⚡', desc: 'Parkour y movimiento libre' },
-  { nombre: 'Vuelo', icon: '🦅', desc: 'Telas aéreas y saltos' },
-  { nombre: 'Destreza', icon: '🤹', desc: 'Malabares y circo' },
-  { nombre: 'Fuerza', icon: '💪', desc: 'Gimnasia acrobática' },
-  { nombre: 'Resistencia', icon: '🔋', desc: 'Circuitos y retos' },
-  { nombre: 'Equilibrio', icon: '⚖️', desc: 'Equilibrios y precisión' },
-  { nombre: 'Coordinación', icon: '🎯', desc: 'Dinámicas grupales' },
-  { nombre: 'Equipo', icon: '🤝', desc: 'Trabajo cooperativo' },
+  { nombre: 'Agilidad',      img: '/insignias/agilidad.png',            desc: 'Parkour y movimiento libre' },
+  { nombre: 'Fuerza',        img: '/insignias/fuerza.png',              desc: 'Gimnasia acrobática' },
+  { nombre: 'Equilibrio',    img: '/insignias/equilibrio.png',          desc: 'Equilibrios y control del cuerpo' },
+  { nombre: 'Coordinación',  img: '/insignias/coordinacion.png',        desc: 'Dinámicas y juegos grupales' },
+  { nombre: 'Precisión',     img: '/insignias/precision.png',           desc: 'Puntería y control del movimiento' },
+  { nombre: 'Vuelo',         img: '/insignias/vuelo.png',               desc: 'Telas aéreas y saltos' },
+  { nombre: 'Concentración', img: '/insignias/concentracion.png',       desc: 'Foco y atención plena' },
+  { nombre: 'Rastreo',       img: '/insignias/rastreo.png',             desc: 'Pistas, juegos y orientación' },
+  { nombre: 'Exploración',   img: '/insignias/exploracion.png',         desc: 'Aventura y descubrimiento' },
+  { nombre: 'Empatía',       img: '/insignias/empatia.png',             desc: 'Ponerse en el lugar del otro' },
+  { nombre: 'Respeto',       img: '/insignias/respeto.png',             desc: 'Cuidar a los demás y al entorno' },
+  { nombre: 'Equipo',        img: '/insignias/trabajo-equipo.png',      desc: 'Trabajo cooperativo' },
+  { nombre: 'Naturaleza',    img: '/insignias/guardian-naturaleza.png', desc: 'Guardián del medio ambiente' },
 ]
 
 const dcorta = (s: string) => new Date(s + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
@@ -68,11 +73,12 @@ export default function CampamentosPageClient({ cfg, ocupacion }: { cfg: Campame
             Gimnasia acrobática, parkour, telas aéreas, circo, malabares y mucho más.
             Convertimos a los niños en auténticos superhéroes a través del movimiento.
           </p>
-          <div className="grid grid-cols-4 sm:grid-cols-8 gap-3 max-w-3xl mx-auto">
-            {HABILIDADES.map(({ nombre, icon, desc }) => (
-              <div key={nombre} className="bg-white/5 border border-white/10 rounded-xl p-2 text-center hover:bg-white/10 transition-colors cursor-default" title={desc}>
-                <div className="text-2xl mb-1">{icon}</div>
-                <div className="text-white text-xs font-bold leading-tight">{nombre}</div>
+          <div className="flex flex-wrap justify-center gap-2.5 max-w-3xl mx-auto">
+            {HABILIDADES.map(({ nombre, img, desc }) => (
+              <div key={nombre} className="w-[78px] bg-white/5 border border-white/10 rounded-xl p-2 text-center hover:bg-white/10 transition-colors cursor-default" title={desc}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={img} alt={`Insignia ${nombre}`} className="h-9 w-9 object-contain mx-auto mb-1" />
+                <div className="text-white text-[11px] font-bold leading-tight">{nombre}</div>
               </div>
             ))}
           </div>
