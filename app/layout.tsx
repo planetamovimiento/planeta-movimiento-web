@@ -4,6 +4,7 @@ import './globals.css'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import FooterGate from '@/components/layout/FooterGate'
+import { Analytics } from '@vercel/analytics/next'
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, NEGOCIO_JSONLD, SITE_NAV_JSONLD } from '@/lib/seo'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -56,6 +57,8 @@ export default function RootLayout({
         <Navbar />
         {children}
         <FooterGate><Footer /></FooterGate>
+        {/* Analítica web cookieless (sin banner de cookies) */}
+        <Analytics />
       </body>
     </html>
   )
