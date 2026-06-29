@@ -42,11 +42,23 @@ export function getRedsysConfig(): RedsysConfig | null {
   }
 }
 
-/** URL pública base del sitio para construir las URLs de retorno/notificación. */
+/**
+ * URL pública base del sitio para construir las URLs de retorno/notificación.
+ * Redsys EXIGE URLs absolutas con esquema (https://…). Si NEXT_PUBLIC_SITE_URL
+ * se configura sin esquema (p. ej. "www.planetamovimiento.com"), las URLs de
+ * pago saldrían inválidas y Redsys daría error / no entregaría la notificación;
+ * por eso aquí se garantiza el esquema.
+ */
 export function getBaseUrl(): string {
   const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim()
-  if (explicit) return explicit.replace(/\/$/, '')
+  if (explicit) return conEsquema(explicit)
   const vercel = process.env.VERCEL_URL?.trim()
-  if (vercel) return `https://${vercel.replace(/\/$/, '')}`
+  if (vercel) return `https://${vercel.replace(/\/+$/, '')}`
   return 'http://localhost:3000'
+}
+
+/** Normaliza a URL absoluta: añade https:// si falta y quita la barra final. */
+function conEsquema(u: string): string {
+  const sinBarra = u.trim().replace(/\/+$/, '')
+  return /^https?:\/\//i.test(sinBarra) ? sinBarra : `https://${sinBarra}`
 }
