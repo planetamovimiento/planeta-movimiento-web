@@ -322,11 +322,11 @@ function TarjetaServicio({ s, cat }: { s: Servicio; cat: typeof CATEGORIAS[0] })
             <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
           </>
         ) : (
-          <span className="text-5xl">{s.icon}</span>
+          <svg className="w-10 h-10 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
         )}
         {s.destacado && (
-          <span className="absolute top-3 right-3 bg-black/45 backdrop-blur-sm text-white text-xs font-black px-2 py-0.5 rounded-full">
-            ⭐ Destacado
+          <span className="absolute top-3 right-3 bg-black/45 backdrop-blur-sm text-white text-xs font-black px-2.5 py-0.5 rounded-full">
+            Destacado
           </span>
         )}
       </div>
@@ -369,7 +369,7 @@ export default function ActividadesUI({ initialCat = '6-15' }: { initialCat?: Ca
       <section className="bg-pm-navy text-white py-14">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-2 bg-pm-red/20 border border-pm-red/30 text-pm-red text-xs font-bold px-4 py-1.5 rounded-full mb-5">
-            🔍 Descubre todo lo que ofrecemos
+            Descubre todo lo que ofrecemos
           </div>
           <h1 className="text-4xl sm:text-5xl font-black mb-4">
             Encuentra tu actividad
@@ -394,7 +394,6 @@ export default function ActividadesUI({ initialCat = '6-15' }: { initialCat?: Ca
                     : 'border-transparent text-gray-500 hover:text-pm-navy hover:bg-pm-bg'
                 }`}
               >
-                <span className="text-xl">{c.emoji}</span>
                 <div className="text-center sm:text-left">
                   <div className="font-black text-xs sm:text-sm leading-tight">{c.label}</div>
                   <div className="text-xs font-normal opacity-60 hidden sm:block">{c.sublabel}</div>
@@ -410,7 +409,7 @@ export default function ActividadesUI({ initialCat = '6-15' }: { initialCat?: Ca
 
         {/* Intro de la categoría */}
         <div className={`${cat.colorBg} border ${cat.colorBorder} rounded-2xl px-6 py-5 mb-8 flex items-start gap-4`}>
-          <span className="text-4xl shrink-0">{cat.emoji}</span>
+          <span aria-hidden="true" className={`w-11 h-11 rounded-xl shrink-0 ${cat.color}`} />
           <div>
             <h2 className={`font-black text-lg ${cat.colorText} mb-1`}>
               {cat.label} — {cat.sublabel}
@@ -428,7 +427,7 @@ export default function ActividadesUI({ initialCat = '6-15' }: { initialCat?: Ca
           </div>
         ) : (
           <div className="text-center py-20 text-gray-400">
-            <div className="text-5xl mb-3">🔍</div>
+            <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z"/></svg>
             <p className="font-semibold">No hay actividades configuradas para este perfil.</p>
           </div>
         )}
@@ -446,7 +445,6 @@ export default function ActividadesUI({ initialCat = '6-15' }: { initialCat?: Ca
       {/* ── CTA ── */}
       <section className="bg-pm-navy py-12 text-white text-center mt-4">
         <div className="max-w-xl mx-auto px-4">
-          <div className="text-3xl mb-3">🤙</div>
           <h2 className="text-xl font-black mb-2">¿Tienes dudas sobre qué actividad elegir?</h2>
           <p className="text-white/60 text-sm mb-6">Cuéntanos tu situación y te ayudamos a encontrar la opción perfecta.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
