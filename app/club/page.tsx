@@ -68,7 +68,7 @@ const VALORES = [
 
 function TarjetaDisciplina({ d }: { d: typeof DISCIPLINAS[0] }) {
   return (
-    <div className="group flex flex-col bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all">
+    <div className="group flex flex-col bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm pm-card">
       <Foto src={d.foto} alt={d.nombre} gradient={d.grad} className="h-28" />
       <div className="p-5 flex flex-col flex-1 gap-2">
         <h3 className="font-black text-pm-navy text-base">{d.nombre}</h3>
@@ -208,7 +208,7 @@ export default function ClubPage() {
           <p className="text-gray-500 text-sm text-center mb-10 max-w-xl mx-auto">El movimiento como motor de salud, aprendizaje y comunidad</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {VALORES.map(v => (
-              <div key={v.titulo} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+              <div key={v.titulo} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm pm-card">
                 <div className="w-10 h-10 bg-pm-red-light rounded-xl flex items-center justify-center mb-4">
                   <svg className="w-5 h-5 text-pm-red" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/></svg>
                 </div>

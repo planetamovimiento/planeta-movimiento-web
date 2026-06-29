@@ -22,10 +22,10 @@ const STATS = [
 ]
 
 const DESTACADOS = [
-  { nombre: 'Campamentos', desc: 'Campamentos de Verano, Navidad y Semana Santa: la Escuela de Superhéroes en acción.', href: '/servicios/campamentos', icon: '⛺', grad: 'from-amber-500 to-orange-600' },
-  { nombre: 'Cumpleaños', desc: 'Cumpleaños infantiles y celebraciones temáticas con actividad guiada y merienda.', href: '/servicios/cumpleanos', icon: '🎂', grad: 'from-pm-red to-pm-red-dark' },
-  { nombre: 'Club Deportivo Origen', desc: 'Acrobacia, circo, telas aéreas y artes marciales para todas las edades.', href: '/club', icon: '🤸', grad: 'from-blue-600 to-pm-navy' },
-  { nombre: 'Más Actividades', desc: 'Descubre el catálogo completo: excursiones, talleres, extraescolares y mucho más.', href: '/actividades', icon: '✨', grad: 'from-slate-700 to-pm-navy' },
+  { nombre: 'Campamentos', desc: 'Campamentos de Verano, Navidad y Semana Santa: la Escuela de Superhéroes en acción.', href: '/servicios/campamentos', grad: 'from-amber-500 to-orange-600' },
+  { nombre: 'Cumpleaños', desc: 'Cumpleaños infantiles y celebraciones temáticas con actividad guiada y merienda.', href: '/servicios/cumpleanos', grad: 'from-pm-red to-pm-red-dark' },
+  { nombre: 'Club Deportivo Origen', desc: 'Acrobacia, circo, telas aéreas y artes marciales para todas las edades.', href: '/club', grad: 'from-blue-600 to-pm-navy' },
+  { nombre: 'Más Actividades', desc: 'Descubre el catálogo completo: excursiones, talleres, extraescolares y mucho más.', href: '/actividades', grad: 'from-slate-700 to-pm-navy' },
 ]
 
 const AUDIENCIAS = [
@@ -104,7 +104,6 @@ export default function HomePage() {
               <Reveal key={d.nombre} delay={i * 70}>
                 <Link href={d.href}
                   className={`group block h-full bg-gradient-to-br ${d.grad} rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl`}>
-                  <div className="text-3xl mb-3">{d.icon}</div>
                   <h3 className="text-lg font-black text-white mb-2">{d.nombre}</h3>
                   <p className="text-white/75 text-sm leading-relaxed mb-4">{d.desc}</p>
                   <span className="text-white text-sm font-bold inline-flex items-center gap-1.5">
@@ -232,7 +231,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {RESENAS.map((r, i) => (
               <Reveal key={r.nombre} delay={i * 80}>
-                <div className="h-full bg-white rounded-3xl p-7 shadow-sm border border-gray-100 flex flex-col">
+                <div className="h-full bg-white rounded-3xl p-7 shadow-sm border border-gray-100 flex flex-col pm-card">
                   <div className="flex gap-0.5 mb-4">
                     {Array.from({ length: r.estrellas }).map((_, j) => <span key={j} className="text-pm-red">★</span>)}
                   </div>
