@@ -25,6 +25,14 @@ const HABILIDADES = [
   { nombre: 'Naturaleza',    img: '/insignias/guardian-naturaleza.png', desc: 'Guardián del medio ambiente' },
 ]
 
+// Los 4 elementos del Campamento de Verano (Tierra · Agua · Fuego · Aire).
+const ELEMENTOS = [
+  { nombre: 'Tierra', cls: 'bg-emerald-500/20 border-emerald-400/40 text-emerald-100', dot: 'bg-emerald-400' },
+  { nombre: 'Agua',   cls: 'bg-blue-500/20 border-blue-400/40 text-blue-100',          dot: 'bg-blue-400' },
+  { nombre: 'Fuego',  cls: 'bg-red-500/20 border-red-400/40 text-red-100',             dot: 'bg-red-400' },
+  { nombre: 'Aire',   cls: 'bg-slate-300/20 border-slate-200/40 text-slate-100',       dot: 'bg-slate-200' },
+]
+
 const dcorta = (s: string) => new Date(s + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
 function rangoCorto(dias: string[]): string {
   if (!dias.length) return 'Fechas por confirmar'
@@ -214,24 +222,31 @@ export default function CampamentosPageClient({ cfg, ocupacion }: { cfg: Campame
         {panelActivo === 'verano' && (
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_460px] gap-10">
             <div className="space-y-6">
-              <div className="bg-gradient-to-br from-pm-navy to-pm-navy-md rounded-2xl p-8 text-white">
-                <div className="text-center mb-6">                  <h2 className="text-3xl font-black mb-2">Campamento de Verano</h2>
-                  <p className="text-white/65 text-sm mb-4">Escuela de Superhéroes · {SEMANAS.length} semanas</p>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {[SEMANAS.length ? `${dcorta(SEMANAS[0].inicio)} – ${dcorta(SEMANAS[SEMANAS.length - 1].fin)}` : '', 'L – V', cfg.veranoHorario, `${SEMANAS.length} semanas`, 'Desde 4 años'].filter(Boolean).map(b => (
-                      <span key={b} className="bg-white/10 border border-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full">{b}</span>
+              <div className="relative overflow-hidden rounded-2xl p-8 text-white bg-pm-navy">
+                {/* Auroras de los 4 elementos: Tierra (verde) · Agua (azul) · Fuego (rojo) · Aire (gris) */}
+                <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+                  <span className="absolute -top-12 -left-12 w-56 h-56 rounded-full bg-emerald-500/45 blur-3xl animate-pulse" style={{ animationDuration: '5s' }} />
+                  <span className="absolute -top-16 right-0 w-56 h-56 rounded-full bg-blue-500/45 blur-3xl animate-pulse" style={{ animationDuration: '6s', animationDelay: '.8s' }} />
+                  <span className="absolute -bottom-12 left-6 w-56 h-56 rounded-full bg-red-500/45 blur-3xl animate-pulse" style={{ animationDuration: '5.5s', animationDelay: '.4s' }} />
+                  <span className="absolute -bottom-16 -right-10 w-60 h-60 rounded-full bg-slate-300/35 blur-3xl animate-pulse" style={{ animationDuration: '6.5s', animationDelay: '1.2s' }} />
+                </div>
+
+                <div className="relative text-center">
+                  <h2 className="text-3xl font-black mb-2 drop-shadow">Campamento de Verano</h2>
+                  <p className="text-white/75 text-sm mb-4">Escuela de Superhéroes · {SEMANAS.length} semanas · Los 4 elementos</p>
+                  {/* Los 4 elementos */}
+                  <div className="flex flex-wrap justify-center gap-2 mb-3">
+                    {ELEMENTOS.map(e => (
+                      <span key={e.nombre} className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full border backdrop-blur-sm ${e.cls}`}>
+                        <span className={`w-2 h-2 rounded-full ${e.dot}`} />{e.nombre}
+                      </span>
                     ))}
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-white/10 border border-white/20 rounded-xl p-4 text-center">
-                    <div className="text-2xl font-black">{cfg.precioDiaSuelto} €</div>
-                    <div className="text-white/70 text-xs">día suelto</div>
-                  </div>
-                  <div className="bg-pm-red/80 border border-pm-red rounded-xl p-4 text-center">
-                    <div className="text-2xl font-black">{cfg.precioSemana} €</div>
-                    <div className="text-white/80 text-xs">semana completa</div>
-                    <div className="text-xs text-red-200 mt-0.5">vs {cfg.precioDiaSuelto * 5} € en días sueltos</div>
+                  {/* Datos del campamento */}
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {[SEMANAS.length ? `${dcorta(SEMANAS[0].inicio)} – ${dcorta(SEMANAS[SEMANAS.length - 1].fin)}` : '', 'L – V', cfg.veranoHorario, `${SEMANAS.length} semanas`, 'Desde 4 años'].filter(Boolean).map(b => (
+                      <span key={b} className="bg-white/10 border border-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full backdrop-blur-sm">{b}</span>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -247,6 +262,19 @@ export default function CampamentosPageClient({ cfg, ocupacion }: { cfg: Campame
                   <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-line">{cfg.veranoDescripcion}</p>
                 </div>
               )}
+
+              {/* Precios (mismo formato que Navidad y Semana Santa) */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center">
+                  <div className="text-2xl font-black text-emerald-800">{cfg.precioDiaSuelto} €</div>
+                  <div className="text-emerald-700 text-xs">día suelto</div>
+                </div>
+                <div className="bg-gradient-to-br from-emerald-600 to-blue-700 border border-emerald-700 rounded-xl p-4 text-center text-white">
+                  <div className="text-2xl font-black">{cfg.precioSemana} €</div>
+                  <div className="text-white/85 text-xs">semana completa</div>
+                  <div className="text-xs text-emerald-100 mt-0.5">vs {cfg.precioDiaSuelto * 5} € en días sueltos</div>
+                </div>
+              </div>
 
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <h3 className="font-black text-pm-navy text-base mb-4">Calendario de semanas</h3>
@@ -281,9 +309,9 @@ export default function CampamentosPageClient({ cfg, ocupacion }: { cfg: Campame
 
             <div className="lg:sticky lg:top-28 lg:self-start">
               <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-                <div className="bg-pm-red text-white px-5 py-4">
-                  <div className="font-black text-base">☀️ Reservar Campamento de Verano</div>
-                  <div className="text-red-200 text-xs mt-0.5">Selecciona semanas o días sueltos</div>
+                <div className="bg-gradient-to-r from-emerald-600 via-blue-600 to-red-600 text-white px-5 py-4">
+                  <div className="font-black text-base">Reservar Campamento de Verano</div>
+                  <div className="text-white/80 text-xs mt-0.5">Elige tu elemento: semanas o días sueltos</div>
                 </div>
                 <div className="p-5 max-h-[80vh] overflow-y-auto"><ReservaVerano cfg={cfg} ocupacionDia={ocupacion.verano} /></div>
               </div>
