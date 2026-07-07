@@ -5,10 +5,11 @@ import { Metric, EmptyState } from '@/components/admin/ui'
 import { waCliente } from '@/lib/whatsapp'
 import {
   MESES_TEMPORADA, ESTADO_PAGO_META, CICLO_PAGO, ESTADOS_GENERAL, GRUPOS_BASE, GRUPOS_EXTRA, TEMPORADAS, ACTIVIDADES_CLUB,
-  labelEstadoGeneral, mesActualKey, edadDe, fechaCorta,
+  labelEstadoGeneral, mesActualKey, edadDe, fechaCorta, temporadaDisplay,
   type Alumno, type Grupo, type EstadoPago, type EstadoGeneral,
 } from '@/lib/club/constants'
 import { guardarGestion, setPagoMes, crearGrupo, renombrarGrupo, eliminarGrupo, fijarHorarioGrupo, fijarWhatsappGrupo } from './actions'
+import { setTemporadaActiva } from './temporada-actions'
 import ImportarModal from './ImportarModal'
 import { SubirImagen } from '@/components/admin/SubirImagen'
 
@@ -22,20 +23,24 @@ function mensajeWhatsApp(a: Alumno): string {
 }
 
 export default function ClubInscripcionesClient({
-  alumnos: alumnosIniciales, grupos: gruposIniciales, puedeEditar, gestionOk,
+  alumnos: alumnosIniciales, grupos: gruposIniciales, puedeEditar, gestionOk, temporadaActiva,
 }: {
-  alumnos: Alumno[]; grupos: Grupo[]; puedeEditar: boolean; gestionOk: boolean
+  alumnos: Alumno[]; grupos: Grupo[]; puedeEditar: boolean; gestionOk: boolean; temporadaActiva: string
 }) {
   const [lista, setLista] = useState<Alumno[]>(alumnosIniciales)
   const [grupos, setGrupos] = useState<Grupo[]>(gruposIniciales)
   const [, startTransition] = useTransition()
   const [error, setError] = useState('')
 
-  // ── Filtros ──────────────────────────────────────────────────────────────
+  // ── Temporada activa (config editable) ─────────────────────────────────────
+  const [tempActiva, setTempActiva] = useState(temporadaActiva)
+  const [savingTemp, setSavingTemp] = useState(false)
+
+  // ── Filtros (por defecto, la temporada activa) ─────────────────────────────
   const [q, setQ] = useState('')
   const [fActividad, setFActividad] = useState('')
   const [fGrupo, setFGrupo] = useState('')
-  const [fTemporada, setFTemporada] = useState('')
+  const [fTemporada, setFTemporada] = useState(temporadaActiva)
   const [fEstado, setFEstado] = useState('')
   const [fMes, setFMes] = useState('')
   const [fPago, setFPago] = useState('')
@@ -193,6 +198,35 @@ export default function ClubInscripcionesClient({
         </div>
       )}
 
+      {/* Temporada activa */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-wrap items-center gap-x-6 gap-y-3">
+        <div>
+          <div className="text-xs font-black text-gray-400 uppercase tracking-wider">Temporada activa</div>
+          <div className="text-pm-navy font-black text-lg">{temporadaDisplay(tempActiva)}</div>
+        </div>
+        {puedeEditar && (
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <label className="text-sm text-gray-500">Cambiar a:</label>
+            <select value={tempActiva} disabled={savingTemp}
+              onChange={e => {
+                const val = e.target.value
+                const prev = tempActiva
+                setTempActiva(val); setSavingTemp(true)
+                startTransition(async () => {
+                  const r = await setTemporadaActiva(val)
+                  setSavingTemp(false)
+                  if (!r.ok) { setError(r.error || 'No se pudo cambiar la temporada'); setTempActiva(prev) }
+                })
+              }}
+              className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-pm-red disabled:opacity-60">
+              {TEMPORADAS.map(t => <option key={t} value={t}>{temporadaDisplay(t)}</option>)}
+              {!TEMPORADAS.includes(tempActiva) && <option value={tempActiva}>{temporadaDisplay(tempActiva)}</option>}
+            </select>
+            <span className="text-xs text-gray-400 max-w-sm">Las nuevas inscripciones del Club se registran automáticamente en esta temporada.</span>
+          </div>
+        )}
+      </div>
+
       {/* Métricas */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <Metric label="Alumnos inscritos" valor={metricas.inscritos} tono="navy" />
@@ -227,7 +261,8 @@ export default function ClubInscripcionesClient({
           <select value={fTemporada} onChange={e => setFTemporada(e.target.value)}
             className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-pm-red">
             <option value="">Toda temporada</option>
-            {TEMPORADAS.map(t => <option key={t} value={t}>{t}</option>)}
+            {TEMPORADAS.map(t => <option key={t} value={t}>{temporadaDisplay(t)}</option>)}
+            {fTemporada && !TEMPORADAS.includes(fTemporada) && <option value={fTemporada}>{temporadaDisplay(fTemporada)}</option>}
           </select>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
@@ -443,7 +478,7 @@ function FichaAlumno({ a, puedeEditar, gruposActividad, onClose, onGestion, onPa
         <div className="bg-pm-navy text-white px-5 py-4 flex items-center justify-between sticky top-0 z-10">
           <div>
             <div className="font-black text-lg">{a.nombre} {a.apellidos}</div>
-            <div className="text-white/60 text-xs">{a.actividad || 'Sin actividad'} · {a.temporada}</div>
+            <div className="text-white/60 text-xs">{a.actividad || 'Sin actividad'} · {temporadaDisplay(a.temporada)}</div>
           </div>
           <button onClick={onClose} className="text-white/60 hover:text-white">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
@@ -493,8 +528,8 @@ function FichaAlumno({ a, puedeEditar, gruposActividad, onClose, onGestion, onPa
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Temporada</label>
               <select value={a.temporada} disabled={!puedeEditar} onChange={e => onGestion({ temporada: e.target.value })}
                 className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:border-pm-red disabled:opacity-60">
-                {TEMPORADAS.map(t => <option key={t} value={t}>{t}</option>)}
-                {!TEMPORADAS.includes(a.temporada) && <option value={a.temporada}>{a.temporada}</option>}
+                {TEMPORADAS.map(t => <option key={t} value={t}>{temporadaDisplay(t)}</option>)}
+                {!TEMPORADAS.includes(a.temporada) && <option value={a.temporada}>{temporadaDisplay(a.temporada)}</option>}
               </select>
             </div>
           </div>

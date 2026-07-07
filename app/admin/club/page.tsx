@@ -1,7 +1,8 @@
 import { requireSeccion, can } from '@/lib/admin/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { AdminHeader } from '@/components/admin/ui'
-import { TEMPORADA_ACTUAL, type Alumno, type Grupo, type EstadoGeneral, type EstadoPago } from '@/lib/club/constants'
+import { type Alumno, type Grupo, type EstadoGeneral, type EstadoPago } from '@/lib/club/constants'
+import { getTemporadaActiva } from '@/lib/config/store'
 import ClubInscripcionesClient from './ClubInscripcionesClient'
 
 type SubRow = {
@@ -31,6 +32,7 @@ function str(v: unknown): string {
 export default async function ClubPage() {
   const admin = await requireSeccion('club')
   const db = createAdminClient()
+  const temporadaActiva = await getTemporadaActiva()
 
   const [subsRes, gestionRes, gruposRes] = await Promise.all([
     safe<SubRow>(() => db.from('form_submissions').select('id, nombre, email, telefono, mensaje, datos, created_at')
@@ -62,7 +64,7 @@ export default async function ClubPage() {
       created_at: s.created_at,
       grupo: g?.grupo ?? str(d.nivel),
       estado_general: (g?.estado_general as EstadoGeneral) ?? 'pendiente',
-      temporada: g?.temporada ?? TEMPORADA_ACTUAL,
+      temporada: g?.temporada ?? temporadaActiva,
       pagos: (g?.pagos as Record<string, EstadoPago>) ?? {},
       observaciones: g?.observaciones ?? '',
       observaciones_familia: g?.observaciones_familia ?? '',
@@ -86,6 +88,7 @@ export default async function ClubPage() {
           grupos={gruposRes.rows}
           puedeEditar={admin ? can.edit(admin.role) : false}
           gestionOk={gestionRes.ok}
+          temporadaActiva={temporadaActiva}
         />
       </div>
     </>

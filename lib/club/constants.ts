@@ -3,10 +3,19 @@
 // (compartidas entre el servidor y el cliente del panel)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const TEMPORADA_ACTUAL = '2025/26'
+// Temporada por defecto del código (fallback). La temporada ACTIVA real se
+// guarda en global_config('temporada_activa') y es editable desde el admin
+// (ver lib/config/store.ts → getTemporadaActiva). Formato interno: 'AAAA/AA'.
+export const TEMPORADA_ACTUAL = '2026/27'
 
 /** Temporadas seleccionables en el filtro (de más reciente a más antigua). */
-export const TEMPORADAS = ['2025/26', '2026/27', '2024/25']
+export const TEMPORADAS = ['2026/27', '2025/26', '2024/25']
+
+/** '2026/27' → '2026-2027' (formato largo para mostrar al público). */
+export function temporadaDisplay(t: string): string {
+  const y = parseInt(String(t).slice(0, 4), 10)
+  return Number.isNaN(y) ? t : `${y}-${y + 1}`
+}
 
 /** Meses de la temporada del club (septiembre → junio). */
 export const MESES_TEMPORADA = [

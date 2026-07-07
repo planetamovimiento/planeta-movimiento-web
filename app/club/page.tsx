@@ -3,6 +3,8 @@ import { waNegocio } from '@/lib/whatsapp'
 import { Foto } from '@/components/ui/Foto'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { breadcrumbsJsonLd } from '@/lib/seo'
+import { getTemporadaActiva } from '@/lib/config/store'
+import { temporadaDisplay } from '@/lib/club/constants'
 
 export const metadata = {
   title: 'Club Deportivo Origen — Acrobacia, Circo y Deporte en Cuenca | Planeta Movimiento',
@@ -85,7 +87,8 @@ function TarjetaDisciplina({ d }: { d: typeof DISCIPLINAS[0] }) {
   )
 }
 
-export default function ClubPage() {
+export default async function ClubPage() {
+  const temporada = temporadaDisplay(await getTemporadaActiva())
   return (
     <main className="bg-pm-bg min-h-screen">
       <JsonLd data={breadcrumbsJsonLd([{ name: 'Inicio', path: '/' }, { name: 'Club Deportivo Origen', path: '/club' }])} />
@@ -102,7 +105,7 @@ export default function ClubPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <span className="inline-block bg-pm-red text-white text-xs font-black px-3 py-1 rounded-full mb-5">
-                Temporada 2025-26 abierta
+                Temporada {temporada} abierta
               </span>
               <div className="text-pm-red text-sm font-black uppercase tracking-widest mb-2">Deporte · Salud · Comunidad</div>
               <div className="flex items-center gap-4 sm:gap-6 mb-4">

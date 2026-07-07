@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getTemporadaActiva } from '@/lib/config/store'
 import { enviarEmail, NOTIF_TO } from '@/lib/emails/enviar'
 import { enviarConfirmacionReserva } from '@/lib/emails/confirmacion'
 import { comprobarEnvioForm } from '@/lib/seguridad/guard'
@@ -75,7 +76,7 @@ export async function submitForm(input: {
     const mensaje = limpiarTexto(input.mensaje)
 
     await upsertCustomer(db, { nombre, email, telefono })
-    const { error } = await db.from('form_submissions').insert({
+    const { data: subRow, error } = await db.from('form_submissions').insert({
       tipo: input.tipo,
       nombre: nombre || null,
       email: email || null,
@@ -84,8 +85,20 @@ export async function submitForm(input: {
       mensaje: mensaje || null,
       datos: input.datos ?? null,
       estado: 'nueva',
-    })
+    }).select('id').single()
     if (error) return { ok: false, error: error.message }
+
+    // Inscripción del Club → queda registrada de inmediato en el CRM con la
+    // temporada ACTIVA (2026/27 por defecto, editable desde el admin).
+    if (input.tipo === 'inscripcion_club' && (subRow as { id?: string } | null)?.id) {
+      try {
+        const temporada = await getTemporadaActiva()
+        await db.from('club_gestion').upsert(
+          { submission_id: (subRow as { id: string }).id, temporada, estado_general: 'pendiente' },
+          { onConflict: 'submission_id' },
+        )
+      } catch { /* si falla, el CRM usará la temporada activa como fallback igualmente */ }
+    }
 
     const resumen = [
       { label: 'Tipo', valor: input.tipo },
