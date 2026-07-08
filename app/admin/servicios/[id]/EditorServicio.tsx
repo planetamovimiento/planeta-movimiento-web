@@ -47,6 +47,7 @@ export default function EditorServicio({ servicio }: { servicio: ServicioFull })
       botonTexto: f.botonTexto, botonAccion: f.botonAccion, enlace: f.enlace,
       imagen: f.imagen, galeria: f.galeria, profesores: f.profesores, niveles: f.niveles,
       faqs: f.faqs, condiciones: f.condiciones, notasInternas: f.notasInternas,
+      preciosClub: f.preciosClub, preciosNota: f.preciosNota,
     }
     startTransition(async () => {
       const r = await guardarServicio(servicio.id, contenido)
@@ -125,6 +126,16 @@ export default function EditorServicio({ servicio }: { servicio: ServicioFull })
         </Seccion>
       )}
 
+      {/* Club: precios informativos (sin compra online) */}
+      {esClub && (
+        <PreciosClubEditor
+          filas={f.preciosClub || []}
+          nota={f.preciosNota || ''}
+          onFilas={v => set('preciosClub', v)}
+          onNota={v => set('preciosNota', v)}
+        />
+      )}
+
       {/* Imágenes */}
       <Seccion titulo="Imagen principal" nota="Sube una foto desde tu ordenador (JPG, PNG o WebP).">
         <SubirImagen value={f.imagen} onChange={url => set('imagen', url)} carpeta="servicios" />
@@ -171,6 +182,36 @@ function Seccion({ titulo, nota, children }: { titulo: string; nota?: string; ch
       {nota && <p className="text-xs text-gray-400 mb-4">{nota}</p>}
       {!nota && <div className="mb-4" />}
       {children}
+    </div>
+  )
+}
+
+function PreciosClubEditor({ filas, nota, onFilas, onNota }: {
+  filas: { concepto: string; precio: string }[]; nota: string
+  onFilas: (v: { concepto: string; precio: string }[]) => void; onNota: (v: string) => void
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="font-black text-pm-navy">Precios del Club (informativos)</h2>
+        <button onClick={() => onFilas([...filas, { concepto: '', precio: '' }])} className="text-sm font-bold text-pm-red">+ Añadir precio</button>
+      </div>
+      <p className="text-xs text-gray-400 mb-4">Se muestran en la página del servicio bajo «Precios · Temporada …». El Club no tiene compra online: son solo informativos.</p>
+      <div className="space-y-2">
+        {filas.length === 0 && <p className="text-sm text-gray-400">Sin filas de precio. Usa la nota de abajo o pulsa «Añadir precio».</p>}
+        {filas.map((fila, i) => (
+          <div key={i} className="flex gap-2">
+            <input className={inp} placeholder="Concepto (ej. 1 hora/semana · ~4 sesiones al mes)" value={fila.concepto}
+              onChange={e => onFilas(filas.map((x, j) => j === i ? { ...x, concepto: e.target.value } : x))} />
+            <input className={inp + ' max-w-[130px]'} placeholder="45 €/mes" value={fila.precio}
+              onChange={e => onFilas(filas.map((x, j) => j === i ? { ...x, precio: e.target.value } : x))} />
+            <button onClick={() => onFilas(filas.filter((_, j) => j !== i))} className="text-gray-400 hover:text-pm-red px-2" title="Quitar">✕</button>
+          </div>
+        ))}
+      </div>
+      <label className={lbl + ' mt-4'}>Nota de precio (para servicios sin tarifa fija)</label>
+      <textarea rows={2} className={inp + ' resize-none'} value={nota} onChange={e => onNota(e.target.value)}
+        placeholder="Ej. Precio pendiente de confirmar. / Grupos cerrados y programas adaptados. Consultar información." />
     </div>
   )
 }
