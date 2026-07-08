@@ -37,6 +37,10 @@ export type ServicioContenido = {
   faqs: { q: string; a: string }[]
   condiciones: string
   notasInternas: string
+  // Precios informativos del Club (sin compra online). Cada fila: concepto + precio (texto libre).
+  preciosClub: { concepto: string; precio: string }[]
+  // Nota de precio para servicios sin tarifa fija (p.ej. «Precio pendiente de confirmar»).
+  preciosNota: string
 }
 
 export type ServicioCatalogo = { id: string; icon: string } & ServicioContenido
@@ -46,6 +50,7 @@ const D = {
   fechas: '', destacado: false, imagen: '', galeria: [] as string[],
   profesores: '', niveles: '', faqs: [] as { q: string; a: string }[],
   condiciones: '', notasInternas: '',
+  preciosClub: [] as { concepto: string; precio: string }[], preciosNota: '',
 }
 
 export const CATALOGO_SERVICIOS: ServicioCatalogo[] = [
@@ -58,6 +63,11 @@ export const CATALOGO_SERVICIOS: ServicioCatalogo[] = [
     edad: 'Desde 6 años', horarios: 'Consultar horarios', estado: 'activo',
     botonTexto: 'Solicitar inscripción', botonAccion: 'formulario', enlace: '/servicios/gimnasia-acrobatica',
     profesores: 'Equipo técnico del club', niveles: 'Iniciación · Intermedio · Avanzado',
+    preciosClub: [
+      { concepto: '1 hora/semana · ~4 sesiones al mes', precio: '45 €/mes' },
+      { concepto: '2 horas/semana · ~8 sesiones al mes', precio: '70 €/mes' },
+      { concepto: '3 horas/semana · ~12 sesiones al mes', precio: '100 €/mes' },
+    ],
   },
   {
     id: 'telas-aereas', icon: '🎪', ...D,
@@ -67,6 +77,11 @@ export const CATALOGO_SERVICIOS: ServicioCatalogo[] = [
     edad: 'Desde 6 años', horarios: 'Consultar horarios', estado: 'activo',
     botonTexto: 'Solicitar inscripción', botonAccion: 'formulario', enlace: '/servicios/telas-aereas',
     niveles: 'Iniciación · Intermedio · Avanzado',
+    preciosClub: [
+      { concepto: '1 hora/semana · ~4 sesiones al mes', precio: '45 €/mes' },
+      { concepto: '2 horas/semana · ~8 sesiones al mes', precio: '70 €/mes' },
+      { concepto: '3 horas/semana · ~12 sesiones al mes', precio: '100 €/mes' },
+    ],
   },
   {
     id: 'escuela-infantil', icon: '🧒', ...D,
@@ -75,6 +90,11 @@ export const CATALOGO_SERVICIOS: ServicioCatalogo[] = [
     descripcionLarga: 'Psicomotricidad, juego y primeras habilidades circenses adaptadas a la etapa infantil.',
     edad: '3 a 5 años', horarios: 'Consultar horarios', estado: 'activo',
     botonTexto: 'Solicitar inscripción', botonAccion: 'formulario', enlace: '/servicios/escuela-infantil',
+    preciosClub: [
+      { concepto: '1 día/semana · ~4 sesiones al mes', precio: '40 €/mes' },
+      { concepto: '2 días/semana · ~8 sesiones al mes', precio: '65 €/mes' },
+      { concepto: '3 días/semana · ~12 sesiones al mes', precio: '90 €/mes' },
+    ],
   },
   {
     id: 'jiu-jitsu', icon: '🥋', ...D,
@@ -84,6 +104,9 @@ export const CATALOGO_SERVICIOS: ServicioCatalogo[] = [
     edad: '+16 años', precio: 60, horarios: 'Sábados 11:30 – 13:30', estado: 'activo',
     botonTexto: 'Solicitar inscripción', botonAccion: 'formulario', enlace: '/servicios/jiu-jitsu',
     profesores: 'Academia Adamas · Madrid',
+    preciosClub: [
+      { concepto: 'Sábados · 1 sesión de 1 h 30 min · ~4 sábados al mes', precio: '60 €/mes' },
+    ],
   },
   {
     id: 'escuela-bienestar', icon: '🧘', ...D,
@@ -92,6 +115,7 @@ export const CATALOGO_SERVICIOS: ServicioCatalogo[] = [
     descripcionLarga: 'Actividad física para adultos centrada en bienestar, movilidad y relajación.',
     edad: 'Adultos', horarios: 'L, X, V · 09:30 – 10:30', estado: 'activo',
     botonTexto: 'Solicitar inscripción', botonAccion: 'formulario', enlace: '/servicios/escuela-bienestar',
+    preciosNota: 'Precio pendiente de confirmar. Consulta disponibilidad y precio.',
   },
   {
     id: 'circo-inclusivo', icon: '♿', ...D,
@@ -100,6 +124,7 @@ export const CATALOGO_SERVICIOS: ServicioCatalogo[] = [
     descripcionLarga: 'Programa de circo adaptado para personas con discapacidad intelectual, en colaboración con CADIG Crisol.',
     edad: 'Adultos', horarios: 'Miércoles', estado: 'activo',
     botonTexto: 'Pide más información', botonAccion: 'formulario', enlace: '/servicios/circo-inclusivo',
+    preciosNota: 'Grupos cerrados y programas adaptados. Consultar información.',
   },
   {
     id: 'talleres-intensivos', icon: '🎯', ...D,

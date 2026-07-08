@@ -3,6 +3,7 @@ import { Galeria } from '@/components/ui/Galeria'
 import { fotoPrincipal, fotosDe } from '@/lib/fotos'
 import { waNegocio } from '@/lib/whatsapp'
 import { BotonApuntarme } from './InscripcionModal'
+import { PreciosServicioClub } from '@/components/club/PreciosServicioClub'
 import TabsDescripcion from './TabsDescripcion'
 
 export const metadata = {
@@ -158,6 +159,11 @@ export default function JiuJitsuPage() {
               </svg>
               60 € / mes · pago al inicio de cada mes
             </p>
+
+            {/* Precios informativos (Temporada activa) */}
+            <div className="mt-6">
+              <PreciosServicioClub servicioId="jiu-jitsu" />
+            </div>
 
             {/* Contacto */}
             <div className="border-t border-gray-100 mt-8 pt-6">

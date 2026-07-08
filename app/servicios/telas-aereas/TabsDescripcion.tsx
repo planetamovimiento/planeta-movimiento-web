@@ -160,7 +160,7 @@ export default function TabsDescripcion() {
               Calendario de Aéreos
             </h3>
             <span className="bg-purple-600 text-white text-xs font-bold px-3 py-1 rounded-full">
-              Curso 2025-2026
+              Curso 2026-2027
             </span>
           </div>
           <div className="overflow-x-auto">

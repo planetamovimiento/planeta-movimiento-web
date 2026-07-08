@@ -3,6 +3,7 @@ import { Galeria } from '@/components/ui/Galeria'
 import { fotosDe } from '@/lib/fotos'
 import { waNegocio } from '@/lib/whatsapp'
 import { BotonApuntarme } from './InscripcionModal'
+import { PreciosServicioClub } from '@/components/club/PreciosServicioClub'
 import TabsDescripcion from './TabsDescripcion'
 
 export const metadata = {
@@ -116,6 +117,11 @@ export default function EscuelaBienestarPage() {
               </svg>
               Inscripción gratuita · Pago mensual al confirmar plaza
             </p>
+
+            {/* Precios informativos (Temporada activa) */}
+            <div className="mt-6">
+              <PreciosServicioClub servicioId="escuela-bienestar" />
+            </div>
 
             {/* Horario rápido */}
             <div className="mt-6 bg-teal-50 border border-teal-100 rounded-xl p-4">

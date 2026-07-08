@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Galeria } from '@/components/ui/Galeria'
 import { BotonColaboracion } from './FormColaboracion'
+import { PreciosServicioClub } from '@/components/club/PreciosServicioClub'
 
 export const metadata = {
   title: 'Circo Inclusivo — Psicomotricidad adaptada | Planeta Movimiento',
@@ -114,6 +115,11 @@ export default function CircoInclusivoPage() {
               </div>
 
               <BotonColaboracion />
+
+              {/* Precios informativos (Temporada activa) */}
+              <div className="mt-6">
+                <PreciosServicioClub servicioId="circo-inclusivo" />
+              </div>
 
               <p className="mt-4 text-indigo-400 text-xs">
                 ¿Tu asociación quiere colaborar? Escríbenos y diseñamos un programa a medida.

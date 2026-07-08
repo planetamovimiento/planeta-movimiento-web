@@ -3,6 +3,7 @@ import { Galeria } from '@/components/ui/Galeria'
 import { fotoPrincipal, fotosDe } from '@/lib/fotos'
 import { waNegocio } from '@/lib/whatsapp'
 import { BotonApuntarme } from './InscripcionModal'
+import { PreciosServicioClub } from '@/components/club/PreciosServicioClub'
 import TabsDescripcion from './TabsDescripcion'
 
 export const metadata = {
@@ -43,7 +44,7 @@ export default function EscuelaInfantilPage() {
                 <>
                   <div className="absolute inset-0 bg-gradient-to-br from-orange-600 via-orange-400 to-amber-300 opacity-90" />
                   <div className="relative text-center px-6 space-y-2">
-                    <div className="text-white/20 font-black text-7xl leading-none select-none">25/26</div>
+                    <div className="text-white/20 font-black text-7xl leading-none select-none">2026-2027</div>
                     <div className="text-white font-black text-lg tracking-widest uppercase">Temporada</div>
                     <div className="text-white font-black text-2xl tracking-wide mt-1">Movimiento</div>
                     <div className="mt-3 bg-white/20 rounded-xl px-4 py-2 inline-block">
@@ -56,7 +57,7 @@ export default function EscuelaInfantilPage() {
                 <>
                   <div className="absolute inset-0 bg-gradient-to-t from-orange-950/85 via-orange-900/15 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-6">
-                    <div className="text-white/70 font-black text-xs tracking-[0.2em] uppercase mb-1">Temporada 25/26 · Movimiento</div>
+                    <div className="text-white/70 font-black text-xs tracking-[0.2em] uppercase mb-1">Temporada 2026-2027 · Movimiento</div>
                     <div className="text-white font-black text-2xl leading-tight">Escuela de Infantil</div>
                     <div className="text-orange-100 font-bold text-sm italic mt-1">Grupos de 3 a 5 años</div>
                   </div>
@@ -128,6 +129,11 @@ export default function EscuelaInfantilPage() {
               </svg>
               Inscripción gratuita · Pago mensual al confirmar plaza
             </p>
+
+            {/* Precios informativos (Temporada activa) */}
+            <div className="mt-6">
+              <PreciosServicioClub servicioId="escuela-infantil" />
+            </div>
 
             {/* Grupos disponibles */}
             <div className="mt-6 bg-orange-50 border border-orange-100 rounded-xl p-4">

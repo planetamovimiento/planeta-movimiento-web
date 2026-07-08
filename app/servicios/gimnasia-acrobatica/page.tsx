@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { waNegocio } from '@/lib/whatsapp'
 import { BotonApuntarme } from './InscripcionModal'
+import { PreciosServicioClub } from '@/components/club/PreciosServicioClub'
 import TabsDescripcion from './TabsDescripcion'
 import { Galeria } from '@/components/ui/Galeria'
 import { fotoPrincipal, fotosDe } from '@/lib/fotos'
@@ -46,7 +47,7 @@ export default function GimnasiaAcrobaticaPage() {
               {/* Overlay degradado para legibilidad del texto */}
               <div className="absolute inset-0 bg-gradient-to-t from-pm-navy/85 via-pm-navy/25 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6">
-                <div className="text-white/60 font-black text-xs tracking-[0.2em] uppercase mb-1">Temporada 25/26</div>
+                <div className="text-white/60 font-black text-xs tracking-[0.2em] uppercase mb-1">Temporada 2026-2027</div>
                 <div className="text-white font-black text-2xl leading-tight">Gimnasia acrobática</div>
               </div>
             </div>
@@ -107,13 +108,10 @@ export default function GimnasiaAcrobaticaPage() {
             {/* Botón APUNTARME */}
             <BotonApuntarme />
 
-            {/* Precio / info pago */}
-            <p className="mt-4 text-xs text-gray-400 flex items-center gap-1.5">
-              <svg className="w-3.5 h-3.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
-              </svg>
-              Inscripción gratuita · Pago mensual al confirmar plaza
-            </p>
+            {/* Precios informativos (Temporada activa) */}
+            <div className="mt-6">
+              <PreciosServicioClub servicioId="gimnasia-acrobatica" />
+            </div>
 
             {/* Separador */}
             <div className="border-t border-gray-100 mt-8 pt-6">

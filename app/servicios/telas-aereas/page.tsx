@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { waNegocio } from '@/lib/whatsapp'
 import { BotonApuntarme } from './InscripcionModal'
+import { PreciosServicioClub } from '@/components/club/PreciosServicioClub'
 import TabsDescripcion from './TabsDescripcion'
 import { Galeria } from '@/components/ui/Galeria'
 import { fotoPrincipal, fotosDe } from '@/lib/fotos'
@@ -46,7 +47,7 @@ export default function TelasAereasPage() {
               {/* Overlay degradado para legibilidad del texto */}
               <div className="absolute inset-0 bg-gradient-to-t from-purple-950/85 via-purple-900/25 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6">
-                <div className="text-white/60 font-black text-xs tracking-[0.2em] uppercase mb-1">Temporada 25/26</div>
+                <div className="text-white/60 font-black text-xs tracking-[0.2em] uppercase mb-1">Temporada 2026-2027</div>
                 <div className="text-white font-black text-2xl leading-tight">Telas Aéreas · Aro Aéreo</div>
                 <div className="text-purple-200 font-bold text-sm italic mt-1">¿Te atreves a colgarte?</div>
               </div>
@@ -116,6 +117,11 @@ export default function TelasAereasPage() {
               </svg>
               Inscripción gratuita · Pago mensual al confirmar plaza
             </p>
+
+            {/* Precios informativos (Temporada activa) */}
+            <div className="mt-6">
+              <PreciosServicioClub servicioId="telas-aereas" />
+            </div>
 
             {/* Modalidades rápidas */}
             <div className="mt-6 bg-pm-bg rounded-xl p-4">
