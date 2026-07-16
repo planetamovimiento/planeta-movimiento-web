@@ -91,8 +91,11 @@ alter table reto50_faq            enable row level security;
 -- Salida 19/07/2026 en Cuenca (día 200 del reto anual) y cierre 06/09/2026 en
 -- Madrid (día 249). Solo se siembra si la tabla está vacía.
 -- ═══════════════════════════════════════════════════════════════════════════
+-- Ojo: la fecha se convierte a mano. A través de una subconsulta de values,
+-- Postgres deja '2026-07-19' como text y no lo casta solo a date.
 insert into reto50_etapas (dia, fecha, provincia, ciudad, burflips, km_aprox, tiempo_aprox, trayecto, notas_internas, orden)
-select * from (values
+select dia, fecha::date, provincia, ciudad, burflips, km_aprox, tiempo_aprox, trayecto, notas_internas, orden
+from (values
   (1, '2026-07-19', 'Cuenca', 'Cuenca / Planeta Movimiento', 200, '0', '0h', 'Inicio', 'Salida oficial. Origen, comunidad, equipo e instituciones.', 1),
   (2, '2026-07-20', 'Albacete', 'Albacete', 201, '170', '2h', 'Cuenca → Albacete', 'Actividad local, deporte o AECC provincial.', 2),
   (3, '2026-07-21', 'Murcia', 'Murcia / Cartagena', 202, '150', '1h45-2h', 'Albacete → Murcia', 'Comunidad local. Revisar actos de verano.', 3),
