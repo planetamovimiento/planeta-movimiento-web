@@ -16,8 +16,7 @@ create table if not exists reto50_etapas (
   dia               int not null unique,              -- 1..50
   fecha             date not null,
   provincia         text not null,
-  ciudad            text,                             -- orientativa hasta confirmar
-  ciudad_confirmada boolean default false,
+  ciudad            text,
   hora              text,                             -- sin dato oficial todavía
   punto_encuentro   text,                             -- sin dato oficial todavía
   lat               numeric,

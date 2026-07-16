@@ -148,16 +148,7 @@ export default function MapaEspana({ etapas }: { etapas: EtapaPublica[] }) {
             <h3 className="text-2xl font-black text-pm-navy mt-1">{activa.provincia}</h3>
             <p className="text-sm text-gray-500 capitalize">{fechaLarga(activa.fecha)}</p>
 
-            {activa.ciudad && (
-              <p className="text-sm text-gray-600 mt-3">
-                {activa.ciudad}
-                {!activa.ciudadConfirmada && (
-                  <span className="ml-2 text-xs text-amber-600 bg-amber-50 rounded-full px-2 py-0.5 whitespace-nowrap">
-                    por confirmar
-                  </span>
-                )}
-              </p>
-            )}
+            {activa.ciudad && <p className="text-sm text-gray-600 mt-3">{activa.ciudad}</p>}
 
             {activa.hora && <p className="text-sm text-gray-600 mt-1">Hora: {activa.hora}</p>}
             {activa.puntoEncuentro && <p className="text-sm text-gray-600 mt-1">{activa.puntoEncuentro}</p>}

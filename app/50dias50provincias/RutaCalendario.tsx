@@ -28,16 +28,7 @@ function Etiqueta({ etapa }: { etapa: EtapaPublica }) {
 
 function Ciudad({ etapa }: { etapa: EtapaPublica }) {
   if (!etapa.ciudad) return null
-  return (
-    <span className="text-sm text-gray-500">
-      {etapa.ciudad}
-      {!etapa.ciudadConfirmada && (
-        <span className="ml-1.5 text-xs text-amber-600 bg-amber-50 rounded-full px-1.5 py-0.5 whitespace-nowrap">
-          por confirmar
-        </span>
-      )}
-    </span>
-  )
+  return <span className="text-sm text-gray-500">{etapa.ciudad}</span>
 }
 
 export default function RutaCalendario({ etapas }: { etapas: EtapaPublica[] }) {

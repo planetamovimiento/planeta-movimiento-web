@@ -270,16 +270,7 @@ export default async function CincuentaDiasPage() {
                     </p>
 
                     <div className="mt-5 space-y-1.5">
-                      {proxima.ciudad && (
-                        <p className="text-white/80 text-sm">
-                          {proxima.ciudad}
-                          {!proxima.ciudadConfirmada && (
-                            <span className="ml-2 text-xs text-amber-200 bg-amber-500/20 rounded-full px-2 py-0.5 whitespace-nowrap">
-                              localidad por confirmar
-                            </span>
-                          )}
-                        </p>
-                      )}
+                      {proxima.ciudad && <p className="text-white/80 text-sm">{proxima.ciudad}</p>}
                       <p className="text-white/80 text-sm">
                         {proxima.hora ? `Hora: ${proxima.hora}` : 'Hora por confirmar'}
                       </p>
@@ -348,8 +339,8 @@ export default async function CincuentaDiasPage() {
               <p className={KICKER}>Calendario</p>
               <h2 className="text-3xl font-black text-pm-navy mt-2">Las 50 etapas, día a día</h2>
               <p className="text-gray-500 text-sm mt-3 max-w-2xl leading-relaxed">
-                Del {fechaLarga(RETO.fechaInicio)} al {fechaLarga(RETO.fechaFin)} de 2026. Las localidades y los horarios
-                se van confirmando en los días previos a cada parada.
+                Del {fechaLarga(RETO.fechaInicio)} al {fechaLarga(RETO.fechaFin)} de 2026. Los horarios y los puntos de
+                encuentro se confirman en los días previos a cada parada.
               </p>
             </Reveal>
             <RutaCalendario etapas={etapas} />

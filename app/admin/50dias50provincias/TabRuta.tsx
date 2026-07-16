@@ -27,13 +27,12 @@ export default function TabRuta({ etapas, pending, correr, editable }: Props) {
   }, [etapas, q, filtroEstado])
 
   const marcada = etapas.find(e => e.estado === 'proxima')
-  const porConfirmar = etapas.filter(e => !e.ciudadConfirmada).length
 
   return (
     <div className="space-y-4">
       <Bloque
         titulo="Las 50 etapas"
-        desc="Una provincia por día. La ciudad de cada etapa es orientativa hasta que la marques como confirmada."
+        desc="Una provincia por día, del 19 de julio al 6 de septiembre de 2026."
       >
         <div className="flex flex-wrap items-center gap-2">
           <input
@@ -54,7 +53,6 @@ export default function TabRuta({ etapas, pending, correr, editable }: Props) {
 
         <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3 text-xs text-gray-400">
           <span>{filtradas.length} de {etapas.length} etapas</span>
-          <span>{porConfirmar} ciudad(es) por confirmar</span>
           <span>
             Próxima parada:{' '}
             {marcada
@@ -104,11 +102,6 @@ function FilaEtapa({ etapa, abierta, onToggle, pending, correr, editable }: {
           <div className="flex items-center gap-2 flex-wrap">
             <span className={`w-2 h-2 rounded-full shrink-0 ${dotEstadoEtapa(etapa.estado)}`} />
             <span className="font-bold text-pm-navy truncate">{etapa.provincia}</span>
-            {!etapa.ciudadConfirmada && (
-              <span className="text-[10px] font-black uppercase tracking-wide bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">
-                Ciudad por confirmar
-              </span>
-            )}
           </div>
           <div className="text-xs text-gray-400 truncate">
             {etapa.ciudad || 'Sin ciudad'} · {fechaCorta(etapa.fecha)} · {etapa.burflips} burflips
@@ -147,30 +140,24 @@ function EditorEtapa({ etapa, pending, correr, editable, onCerrar }: {
   const [fecha, setFecha] = useState(etapa.fecha)
   const [provincia, setProvincia] = useState(etapa.provincia)
   const [ciudad, setCiudad] = useState(etapa.ciudad)
-  const [ciudadConfirmada, setCiudadConfirmada] = useState(etapa.ciudadConfirmada)
   const [hora, setHora] = useState(etapa.hora)
   const [puntoEncuentro, setPuntoEncuentro] = useState(etapa.puntoEncuentro)
-  const [lat, setLat] = useState(s(etapa.lat))
-  const [lng, setLng] = useState(s(etapa.lng))
   const [burflips, setBurflips] = useState(String(etapa.burflips))
-  const [descripcion, setDescripcion] = useState(etapa.descripcion)
   const [estado, setEstado] = useState<EstadoEtapa>(etapa.estado)
   const [recaudado, setRecaudado] = useState(s(etapa.recaudado))
   const [asistentes, setAsistentes] = useState(s(etapa.asistentes))
-  const [resumen, setResumen] = useState(etapa.resumen)
   const [galeria, setGaleria] = useState<string[]>(etapa.galeria)
   const [videoUrl, setVideoUrl] = useState(etapa.videoUrl)
   const [enlaceRedes, setEnlaceRedes] = useState(etapa.enlaceRedes)
   const [testimonios, setTestimonios] = useState(etapa.testimonios)
-  const [notasInternas, setNotasInternas] = useState(etapa.notasInternas)
 
   function guardar() {
     correr(async () => {
       const r = await guardarEtapa({
         id: etapa.id,
-        dia, fecha, provincia, ciudad, ciudadConfirmada, hora, puntoEncuentro,
-        lat, lng, burflips, descripcion, estado, recaudado, asistentes,
-        resumen, galeria, videoUrl, enlaceRedes, testimonios, notasInternas,
+        dia, fecha, provincia, ciudad, hora, puntoEncuentro,
+        burflips, estado, recaudado, asistentes,
+        galeria, videoUrl, enlaceRedes, testimonios,
       })
       if (r.ok) onCerrar()
       return r
@@ -198,26 +185,15 @@ function EditorEtapa({ etapa, pending, correr, editable, onCerrar }: {
       <div>
         <Titulo>Ciudad y punto de encuentro</Titulo>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          <Campo label="Ciudad" hint="Orientativa mientras no la confirmes.">
+          <Campo label="Ciudad">
             <input className={inputCls} value={ciudad} disabled={!editable} onChange={e => setCiudad(e.target.value)} />
           </Campo>
-          <div className="flex items-end pb-1">
-            <label className="flex items-center gap-2 text-sm font-semibold text-pm-navy cursor-pointer">
-              <input type="checkbox" checked={ciudadConfirmada} disabled={!editable}
-                onChange={e => setCiudadConfirmada(e.target.checked)}
-                className="w-4 h-4 accent-pm-red" />
-              Ciudad confirmada
-              <span className="text-xs font-normal text-gray-400">(si no, la web la marca como «por confirmar»)</span>
-            </label>
-          </div>
           <Campo label="Hora" hint="Déjalo vacío mientras no haya hora oficial: la web no mostrará ninguna.">
             <input className={inputCls} value={hora} disabled={!editable} placeholder="Sin hora oficial todavía" onChange={e => setHora(e.target.value)} />
           </Campo>
           <Campo label="Punto de encuentro" hint="Vacío = la web no anuncia ningún punto.">
             <input className={inputCls} value={puntoEncuentro} disabled={!editable} placeholder="Sin punto oficial todavía" onChange={e => setPuntoEncuentro(e.target.value)} />
           </Campo>
-          <Campo label="Latitud"><input className={inputCls} value={lat} disabled={!editable} onChange={e => setLat(e.target.value)} /></Campo>
-          <Campo label="Longitud"><input className={inputCls} value={lng} disabled={!editable} onChange={e => setLng(e.target.value)} /></Campo>
         </div>
       </div>
 
@@ -229,12 +205,6 @@ function EditorEtapa({ etapa, pending, correr, editable, onCerrar }: {
             <select className={inputCls} value={estado} disabled={!editable} onChange={e => setEstado(e.target.value as EstadoEtapa)}>
               {ESTADOS_ETAPA.map(x => <option key={x.id} value={x.id}>{x.label}</option>)}
             </select>
-          </Campo>
-          <Campo label="Descripción" hint="Texto público de la etapa antes de que ocurra.">
-            <textarea className={`${inputCls} resize-y leading-relaxed`} rows={3} value={descripcion} disabled={!editable} onChange={e => setDescripcion(e.target.value)} />
-          </Campo>
-          <Campo label="Crónica del día" hint="Se publica cuando la etapa ya ha pasado.">
-            <textarea className={`${inputCls} resize-y leading-relaxed`} rows={4} value={resumen} disabled={!editable} onChange={e => setResumen(e.target.value)} />
           </Campo>
           <Campo label="Testimonios">
             <textarea className={`${inputCls} resize-y leading-relaxed`} rows={3} value={testimonios} disabled={!editable} onChange={e => setTestimonios(e.target.value)} />
@@ -300,20 +270,6 @@ function EditorEtapa({ etapa, pending, correr, editable, onCerrar }: {
               <input className={inputCls} value={enlaceRedes} disabled={!editable} placeholder="https://…" onChange={e => setEnlaceRedes(e.target.value)} />
             </Campo>
           </div>
-        </div>
-      </div>
-
-      {/* Notas internas */}
-      <div>
-        <Titulo>Observaciones internas</Titulo>
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
-          <p className="text-xs font-bold text-amber-800 mb-2">
-            🔒 Uso interno. Esto NO se publica nunca en la web: solo lo ve el equipo desde este panel.
-          </p>
-          <textarea className="w-full border border-amber-200 bg-white rounded-lg px-2.5 py-2 text-sm resize-y leading-relaxed focus:outline-none focus:border-amber-400 disabled:bg-gray-50"
-            rows={3} value={notasInternas} disabled={!editable}
-            placeholder="Contactos del ayuntamiento, permisos, logística…"
-            onChange={e => setNotasInternas(e.target.value)} />
         </div>
       </div>
 

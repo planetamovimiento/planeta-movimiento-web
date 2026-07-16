@@ -9,9 +9,7 @@ export type Etapa = {
   dia: number
   fecha: string
   provincia: string
-  /** Orientativa mientras ciudadConfirmada sea false. */
   ciudad: string
-  ciudadConfirmada: boolean
   hora: string
   puntoEncuentro: string
   lat: number | null

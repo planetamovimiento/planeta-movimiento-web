@@ -61,23 +61,17 @@ export type EtapaInput = {
   dia?: number | string
   provincia?: string
   ciudad?: string
-  ciudadConfirmada?: boolean
   fecha?: string
   hora?: string
   puntoEncuentro?: string
-  lat?: number | string | null
-  lng?: number | string | null
   burflips?: number | string
-  descripcion?: string
   estado?: EstadoEtapa
   recaudado?: number | string | null
   asistentes?: number | string | null
-  resumen?: string
   galeria?: string[]
   videoUrl?: string
   enlaceRedes?: string
   testimonios?: string
-  notasInternas?: string
 }
 
 /** Guarda una etapa. Solo toca los campos presentes en el input. */
@@ -110,17 +104,12 @@ export async function guardarEtapa(input: EtapaInput): Promise<Res> {
     }
 
     if (input.ciudad !== undefined) patch.ciudad = txt(input.ciudad)
-    if (input.ciudadConfirmada !== undefined) patch.ciudad_confirmada = input.ciudadConfirmada === true
     if (input.hora !== undefined) patch.hora = txt(input.hora)
     if (input.puntoEncuentro !== undefined) patch.punto_encuentro = txt(input.puntoEncuentro)
-    if (input.lat !== undefined) patch.lat = numONull(input.lat)
-    if (input.lng !== undefined) patch.lng = numONull(input.lng)
     if (input.burflips !== undefined) patch.burflips = entONull(input.burflips)
-    if (input.descripcion !== undefined) patch.descripcion = txt(input.descripcion)
     // Sin dato ⇒ null. Un 0 aquí sería un dato inventado.
     if (input.recaudado !== undefined) patch.recaudado = numONull(input.recaudado)
     if (input.asistentes !== undefined) patch.asistentes = entONull(input.asistentes)
-    if (input.resumen !== undefined) patch.resumen = txt(input.resumen)
     if (input.galeria !== undefined) {
       patch.galeria = Array.isArray(input.galeria)
         ? input.galeria.map(u => String(u).trim()).filter(Boolean)
@@ -129,7 +118,6 @@ export async function guardarEtapa(input: EtapaInput): Promise<Res> {
     if (input.videoUrl !== undefined) patch.video_url = txt(input.videoUrl)
     if (input.enlaceRedes !== undefined) patch.enlace_redes = txt(input.enlaceRedes)
     if (input.testimonios !== undefined) patch.testimonios = txt(input.testimonios)
-    if (input.notasInternas !== undefined) patch.notas_internas = txt(input.notasInternas)
 
     if (Object.keys(patch).length === 0) return { ok: true }
     patch.updated_at = new Date().toISOString()
