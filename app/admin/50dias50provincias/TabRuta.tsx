@@ -3,11 +3,12 @@
 import { useMemo, useState } from 'react'
 import { SubirImagen } from '@/components/admin/SubirImagen'
 import {
-  ESTADOS_ETAPA, badgeEstadoEtapa, dotEstadoEtapa, euros, fechaCorta, fechaLarga, labelEstadoEtapa,
+  AQUI, ESTADOS_ETAPA, ESTADO_ACTUAL, badgeEstadoEtapa, dotEstadoEtapa, euros, fechaCorta,
+  fechaLarga, labelEstadoEtapa,
   type EstadoEtapa,
 } from '@/lib/reto50/constants'
 import type { Etapa } from '@/lib/reto50/tipos'
-import { guardarEtapa, marcarProximaParada } from './actions'
+import { guardarEtapa, marcarEtapaActual } from './actions'
 import { Bloque, BotonMini, Campo, inputCls, type Correr } from './piezas'
 
 type Props = { etapas: Etapa[]; pending: boolean; correr: Correr; editable: boolean }
@@ -26,7 +27,25 @@ export default function TabRuta({ etapas, pending, correr, editable }: Props) {
     })
   }, [etapas, q, filtroEstado])
 
-  const marcada = etapas.find(e => e.estado === 'proxima')
+  const actual = etapas.find(e => e.estado === ESTADO_ACTUAL)
+  const hechas = etapas.filter(e => e.estado === 'finalizada').length
+
+  /**
+   * Marca dónde está Brosjaca. Si ya había otra etapa actual, se pregunta antes
+   * de darla por completada: que la fecha haya pasado no significa que se hiciera.
+   */
+  function marcarActual(etapa: Etapa) {
+    const anterior = actual && actual.id !== etapa.id ? actual : null
+    let completar = false
+    if (anterior) {
+      completar = confirm(
+        `Vas a marcar el Día ${etapa.dia} · ${etapa.provincia} como etapa actual.\n\n` +
+        `¿Marcar también la anterior (Día ${anterior.dia} · ${anterior.provincia}) como completada?\n\n` +
+        `Aceptar = se marca completada.\nCancelar = vuelve a pendiente.`,
+      )
+    }
+    correr(() => marcarEtapaActual(etapa.id, completar))
+  }
 
   return (
     <div className="space-y-4">
@@ -53,13 +72,18 @@ export default function TabRuta({ etapas, pending, correr, editable }: Props) {
 
         <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3 text-xs text-gray-400">
           <span>{filtradas.length} de {etapas.length} etapas</span>
+          <span>{hechas} completadas</span>
           <span>
-            Próxima parada:{' '}
-            {marcada
-              ? <strong className="text-pm-red">Día {marcada.dia} · {marcada.provincia}</strong>
-              : <em>sin marcar (la web calcula la siguiente por fecha)</em>}
+            Etapa actual:{' '}
+            {actual
+              ? <strong className="text-pm-red">Día {actual.dia} · {actual.provincia}</strong>
+              : <em>sin marcar</em>}
           </span>
         </div>
+        <p className="text-xs text-gray-400 mt-2 leading-relaxed">
+          Marca cada día dónde estáis: la etapa actual sale en rojo en el mapa y en el calendario, y la próxima parada se
+          recalcula sola. Nada se completa por sí solo al pasar la fecha; lo confirmas tú.
+        </p>
       </Bloque>
 
       {filtradas.length === 0 ? (
@@ -74,6 +98,7 @@ export default function TabRuta({ etapas, pending, correr, editable }: Props) {
               etapa={e}
               abierta={abierta === e.id}
               onToggle={() => setAbierta(abierta === e.id ? null : e.id)}
+              onMarcarActual={() => marcarActual(e)}
               pending={pending}
               correr={correr}
               editable={editable}
@@ -87,11 +112,13 @@ export default function TabRuta({ etapas, pending, correr, editable }: Props) {
 
 // ── Fila + editor desplegable ────────────────────────────────────────────────
 
-function FilaEtapa({ etapa, abierta, onToggle, pending, correr, editable }: {
-  etapa: Etapa; abierta: boolean; onToggle: () => void; pending: boolean; correr: Correr; editable: boolean
+function FilaEtapa({ etapa, abierta, onToggle, onMarcarActual, pending, correr, editable }: {
+  etapa: Etapa; abierta: boolean; onToggle: () => void; onMarcarActual: () => void
+  pending: boolean; correr: Correr; editable: boolean
 }) {
+  const esActual = etapa.estado === ESTADO_ACTUAL
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+    <div className={`bg-white rounded-2xl border shadow-sm ${esActual ? 'border-pm-red border-2' : 'border-gray-100'}`}>
       <div className="flex items-center gap-3 px-4 py-3 flex-wrap">
         <div className="w-11 h-11 rounded-xl bg-pm-bg border border-gray-100 flex flex-col items-center justify-center shrink-0">
           <span className="text-[10px] font-bold text-gray-400 leading-none">DÍA</span>
@@ -112,13 +139,13 @@ function FilaEtapa({ etapa, abierta, onToggle, pending, correr, editable }: {
           <span className="text-xs font-bold text-emerald-600 hidden sm:block">{euros(etapa.recaudado)}</span>
         )}
         <span className={`text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap ${badgeEstadoEtapa(etapa.estado)}`}>
-          {labelEstadoEtapa(etapa.estado)}
+          {esActual ? AQUI : labelEstadoEtapa(etapa.estado)}
         </span>
 
-        {editable && etapa.estado !== 'proxima' && (
-          <BotonMini onClick={() => correr(() => marcarProximaParada(etapa.id))} disabled={pending}
-            titulo="Marcar como próxima parada del reto">
-            Próxima parada
+        {editable && !esActual && (
+          <BotonMini onClick={onMarcarActual} disabled={pending}
+            titulo="Marcar dónde está Brosjaca ahora mismo">
+            Estamos aquí
           </BotonMini>
         )}
         <BotonMini onClick={onToggle}>{abierta ? 'Cerrar' : editable ? 'Editar' : 'Ver'}</BotonMini>

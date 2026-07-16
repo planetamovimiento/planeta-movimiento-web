@@ -209,8 +209,23 @@ html { overflow-x: clip; }
   to   { background-position-x: 120px; }
 }
 
+/* ── Mapa del reto: pulso de la etapa actual («Estamos aquí») ─────────────── */
+/* Va en un <circle> del SVG, así que se anima el radio y la opacidad, no el
+   transform: no depende del origen de coordenadas y no mueve el layout.      */
+.pm-pulso {
+  animation: pmPulso 2.4s ease-out infinite;
+  transform-origin: center;
+}
+@keyframes pmPulso {
+  0%   { r: 6;  opacity: .55; }
+  70%  { r: 17; opacity: 0; }
+  100% { r: 17; opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pm-destacado { animation: none; }
   .pm-destacado:hover::after { animation: none; }
   .pm-ola, .pm-ola-2 { animation: none; }
+  /* Sin animación se queda un halo fijo: la etapa actual sigue destacando. */
+  .pm-pulso { animation: none; opacity: .3; }
 }

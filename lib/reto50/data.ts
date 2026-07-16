@@ -7,8 +7,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { COORDS_PROVINCIA, ESTADOS_CERRADOS, RUTA_SEED, TOTAL_PROVINCIAS, calcGasolina } from './constants'
-import type { EstadoEtapa, ResumenGasolina } from './constants'
+import { COORDS_PROVINCIA, ESTADOS_CERRADOS, ESTADO_ACTUAL, RUTA_SEED, TOTAL_PROVINCIAS, calcGasolina } from './constants'
+import type { CategoriaApoyo, EstadoEtapa, ResumenGasolina } from './constants'
 import type { ConfigReto, Donante, Etapa, EtapaPublica, FaqItem, Patrocinador, QrDonacion, ResumenReto } from './tipos'
 
 type Row = Record<string, unknown>
@@ -127,23 +127,27 @@ export async function hayTablaEtapas(): Promise<boolean> {
   }
 }
 
+/** La etapa donde está Brosjaca ahora. Se marca a mano; solo puede haber una. */
+export function etapaActual<T extends { estado: EstadoEtapa }>(etapas: T[]): T | null {
+  return etapas.find(e => e.estado === ESTADO_ACTUAL) ?? null
+}
+
 /**
- * La próxima parada: la marcada a mano como 'proxima' y, si no hay ninguna,
- * la primera etapa que no esté cerrada a partir de hoy.
+ * La próxima parada: la siguiente etapa no cerrada después de la actual. Si aún
+ * no hay etapa actual marcada, la primera que quede por delante según la fecha.
  */
 export function proximaParada<T extends { estado: EstadoEtapa; fecha: string; dia: number }>(
   etapas: T[],
   hoyISO?: string,
 ): T | null {
-  const marcada = etapas.find(e => e.estado === 'proxima')
-  if (marcada) return marcada
-  const enCurso = etapas.find(e => e.estado === 'en-curso')
-  if (enCurso) return enCurso
+  const ordenadas = [...etapas].sort((a, b) => a.dia - b.dia)
+  const actual = etapaActual(ordenadas)
+  const pendientes = ordenadas.filter(e => !ESTADOS_CERRADOS.includes(e.estado) && e.estado !== ESTADO_ACTUAL)
+
+  if (actual) return pendientes.find(e => e.dia > actual.dia) ?? null
+
   const hoy = hoyISO ?? new Date().toISOString().slice(0, 10)
-  const siguientes = etapas
-    .filter(e => !ESTADOS_CERRADOS.includes(e.estado) && e.fecha >= hoy)
-    .sort((a, b) => a.dia - b.dia)
-  return siguientes[0] ?? null
+  return pendientes.find(e => e.fecha >= hoy) ?? null
 }
 
 /** Totales del reto. Devuelve null en lo que todavía no tiene ningún dato. */
@@ -165,7 +169,9 @@ function aPatrocinador(r: Row): Patrocinador {
     descripcion: str(r.descripcion),
     logoUrl: str(r.logo_url),
     webUrl: str(r.web_url),
-    nivel: str(r.nivel) || 'colaborador',
+    // Si la columna aún no existe (migración de categorías sin ejecutar), es patrocinador.
+    categoria: str(r.categoria) === 'colaborador' ? 'colaborador' : 'patrocinador',
+    nivel: str(r.nivel) || 'apoyo',
     orden: num(r.orden),
     activo: r.activo !== false,
     destacado: r.destacado === true,
@@ -178,29 +184,34 @@ const PATROCINADORES_SEED: Patrocinador[] = [
     id: 'seed-planeta-movimiento',
     nombre: 'Planeta Movimiento',
     descripcion: 'Escuela conquense de deporte, ocio saludable y educación física. Organiza y coordina el reto: logística de la ruta, patrocinadores y comunicación diaria.',
-    logoUrl: '', webUrl: '/', nivel: 'organizador', orden: 1, activo: true, destacado: true,
+    logoUrl: '', webUrl: '/', categoria: 'patrocinador', nivel: 'organizador', orden: 1, activo: true, destacado: true,
   },
   {
     id: 'seed-kgm',
     nombre: 'KGM',
     descripcion: 'Aporta el vehículo todoterreno oficial que hace posible el recorrido por las 50 provincias.',
-    logoUrl: '', webUrl: '', nivel: 'principal', orden: 2, activo: true, destacado: true,
+    logoUrl: '', webUrl: '', categoria: 'patrocinador', nivel: 'principal', orden: 2, activo: true, destacado: true,
   },
 ]
 
-/** Todos los patrocinadores (incluidos los desactivados): para el panel. */
+/** Todos, de las dos categorías (incluidos los desactivados): para el panel. */
 export async function getPatrocinadores(): Promise<Patrocinador[]> {
   const db = createAdminClient()
   const rows = await safe<Row>(() => db.from('reto50_patrocinadores').select('*') as never)
   if (rows.length === 0) return PATROCINADORES_SEED
   return rows
     .map(aPatrocinador)
-    .sort((a, b) => a.orden - b.orden || a.nombre.localeCompare(b.nombre, 'es'))
+    // Destacados primero dentro de cada categoría, luego el orden manual.
+    .sort((a, b) =>
+      Number(b.destacado) - Number(a.destacado) ||
+      a.orden - b.orden ||
+      a.nombre.localeCompare(b.nombre, 'es'),
+    )
 }
 
-/** Solo los activos: para la web pública. */
-export async function getPatrocinadoresActivos(): Promise<Patrocinador[]> {
-  return (await getPatrocinadores()).filter(p => p.activo)
+/** Solo los activos de una categoría: para la web pública. */
+export async function getApoyosActivos(categoria: CategoriaApoyo): Promise<Patrocinador[]> {
+  return (await getPatrocinadores()).filter(p => p.activo && p.categoria === categoria)
 }
 
 /** Las mismas que siembra la migración, para que la web no salga vacía antes de ejecutarla. */

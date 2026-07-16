@@ -145,38 +145,45 @@ export async function guardarEtapa(input: EtapaInput): Promise<Res> {
   }
 }
 
-/** Marca esta etapa como próxima parada y quita el distintivo de las demás. */
-export async function marcarProximaParada(id: string): Promise<Res> {
+/**
+ * Marca dónde está Brosjaca ahora. Solo puede haber una etapa actual, así que
+ * la que lo estuviera deja de serlo: pasa a completada si se confirma y, si no,
+ * vuelve a pendiente. Nada se completa solo por que la fecha haya pasado.
+ */
+export async function marcarEtapaActual(id: string, completarAnterior = false): Promise<Res> {
   try {
     const { admin, error } = await exigir()
     if (!admin) return { ok: false, error }
     if (esSeed(id)) return { ok: false, error: MSG_SEED }
 
     const db = createAdminClient()
-    // Las demás que estuvieran marcadas vuelven a "Próximamente".
+    const ahora = new Date().toISOString()
+
+    // La anterior deja de ser la actual: completada solo si se ha confirmado.
     const { error: e1 } = await db
       .from('reto50_etapas')
-      .update({ estado: 'proximamente', updated_at: new Date().toISOString() })
-      .eq('estado', 'proxima')
+      .update({ estado: completarAnterior ? 'finalizada' : 'proximamente', updated_at: ahora })
+      .eq('estado', 'en-curso')
       .neq('id', id)
     if (e1) return { ok: false, error: e1.message }
 
     const { error: e2 } = await db
       .from('reto50_etapas')
-      .update({ estado: 'proxima', updated_at: new Date().toISOString() })
+      .update({ estado: 'en-curso', updated_at: ahora })
       .eq('id', id)
     if (e2) return { ok: false, error: e2.message }
 
     await logActivity({
       actorEmail: admin.email,
-      accion: 'Marcó la próxima parada (50 días, 50 provincias)',
+      accion: 'Marcó la etapa actual (50 días, 50 provincias)',
       entidad: 'reto50_etapa',
       entidadId: id,
+      detalle: completarAnterior ? 'La etapa anterior pasa a completada' : undefined,
     })
     revalidar()
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : 'Error al marcar la próxima parada' }
+    return { ok: false, error: e instanceof Error ? e.message : 'Error al marcar la etapa actual' }
   }
 }
 
@@ -188,6 +195,8 @@ export type PatrocinadorInput = {
   descripcion?: string
   logoUrl?: string
   webUrl?: string
+  /** patrocinador | colaborador */
+  categoria?: string
   nivel?: string
   orden?: number | string
   activo?: boolean
@@ -201,12 +210,14 @@ export async function guardarPatrocinador(input: PatrocinadorInput): Promise<Res
     if (input.id && esSeed(input.id)) return { ok: false, error: MSG_SEED }
     if (!input.nombre?.trim()) return { ok: false, error: 'El nombre es obligatorio' }
 
-    const nivel = input.nivel && NIVELES_PATROCINIO.some(n => n.id === input.nivel) ? input.nivel : 'colaborador'
+    const nivel = input.nivel && NIVELES_PATROCINIO.some(n => n.id === input.nivel) ? input.nivel : 'apoyo'
+    const categoria = input.categoria === 'colaborador' ? 'colaborador' : 'patrocinador'
     const row = {
       nombre: input.nombre.trim(),
       descripcion: txt(input.descripcion),
       logo_url: txt(input.logoUrl),
       web_url: txt(input.webUrl),
+      categoria,
       nivel,
       orden: entONull(input.orden) ?? 0,
       activo: input.activo !== false,
@@ -269,15 +280,20 @@ export async function reordenarPatrocinador(id: string, direccion: 'subir' | 'ba
     if (esSeed(id)) return { ok: false, error: MSG_SEED }
 
     const db = createAdminClient()
-    const { data, error: eSel } = await db.from('reto50_patrocinadores').select('id, nombre, orden')
+    const { data, error: eSel } = await db.from('reto50_patrocinadores').select('id, nombre, orden, categoria')
     if (eSel) return { ok: false, error: eSel.message }
 
-    const lista = ((data ?? []) as { id: string; nombre: string; orden: number | null }[])
-      .slice()
+    const todos = (data ?? []) as { id: string; nombre: string; orden: number | null; categoria: string | null }[]
+    const cat = todos.find(p => p.id === id)?.categoria ?? 'patrocinador'
+
+    // Se ordena solo dentro de su categoría: patrocinadores y colaboradores
+    // son listas independientes y no deben pisarse entre ellas.
+    const lista = todos
+      .filter(p => (p.categoria ?? 'patrocinador') === cat)
       .sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0) || String(a.nombre).localeCompare(String(b.nombre), 'es'))
 
     const i = lista.findIndex(p => p.id === id)
-    if (i === -1) return { ok: false, error: 'Patrocinador no encontrado' }
+    if (i === -1) return { ok: false, error: 'No se encuentra ese elemento' }
     const j = direccion === 'subir' ? i - 1 : i + 1
     if (j < 0 || j >= lista.length) return { ok: true } // ya está en el extremo
 
@@ -290,7 +306,7 @@ export async function reordenarPatrocinador(id: string, direccion: 'subir' | 'ba
 
     await logActivity({
       actorEmail: admin.email,
-      accion: 'Reordenó patrocinadores (50 días, 50 provincias)',
+      accion: `Reordenó ${cat === 'colaborador' ? 'colaboradores' : 'patrocinadores'} (50 días, 50 provincias)`,
       entidad: 'reto50_patrocinador',
       entidadId: id,
     })

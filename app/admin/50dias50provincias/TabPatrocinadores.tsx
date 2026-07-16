@@ -6,7 +6,8 @@
 
 import { useState } from 'react'
 import { SubirImagen } from '@/components/admin/SubirImagen'
-import { NIVELES_PATROCINIO, labelNivel } from '@/lib/reto50/constants'
+import { CATEGORIAS_APOYO, NIVELES_PATROCINIO, labelNivel } from '@/lib/reto50/constants'
+import type { CategoriaApoyo } from '@/lib/reto50/constants'
 import type { Patrocinador } from '@/lib/reto50/tipos'
 import { eliminarPatrocinador, guardarPatrocinador, reordenarPatrocinador } from './actions'
 import { Bloque, BotonGuardar, BotonMini, Campo, inputCls, type Correr } from './piezas'
@@ -24,19 +25,21 @@ type Draft = {
   descripcion: string
   logoUrl: string
   webUrl: string
+  categoria: CategoriaApoyo
   nivel: string
   activo: boolean
   destacado: boolean
 }
 
-const VACIO: Draft = {
+const vacio = (categoria: CategoriaApoyo): Draft => ({
   nombre: '', descripcion: '', logoUrl: '', webUrl: '',
-  nivel: 'colaborador', activo: true, destacado: false,
-}
+  categoria, nivel: categoria === 'colaborador' ? 'apoyo' : 'principal',
+  activo: true, destacado: false,
+})
 
 const aDraft = (p: Patrocinador): Draft => ({
   id: p.id, nombre: p.nombre, descripcion: p.descripcion, logoUrl: p.logoUrl,
-  webUrl: p.webUrl, nivel: p.nivel, activo: p.activo, destacado: p.destacado,
+  webUrl: p.webUrl, categoria: p.categoria, nivel: p.nivel, activo: p.activo, destacado: p.destacado,
 })
 
 function Formulario({ draft, setDraft, onGuardar, onCancelar, pending, editable }: {
@@ -51,12 +54,18 @@ function Formulario({ draft, setDraft, onGuardar, onCancelar, pending, editable 
 
   return (
     <div className="bg-pm-bg rounded-xl p-4 space-y-3">
-      <div className="grid sm:grid-cols-2 gap-3">
+      <div className="grid sm:grid-cols-3 gap-3">
         <Campo label="Nombre">
           <input className={inputCls} value={draft.nombre} disabled={!editable}
-            onChange={e => set('nombre', e.target.value)} placeholder="Nombre del patrocinador" />
+            onChange={e => set('nombre', e.target.value)} placeholder="Nombre" />
         </Campo>
-        <Campo label="Nivel de colaboración">
+        <Campo label="Categoría" hint="Cámbiala para moverlo de lista.">
+          <select className={inputCls} value={draft.categoria} disabled={!editable}
+            onChange={e => set('categoria', e.target.value as CategoriaApoyo)}>
+            {CATEGORIAS_APOYO.map(c => <option key={c.id} value={c.id}>{c.singular}</option>)}
+          </select>
+        </Campo>
+        <Campo label="Nivel">
           <select className={inputCls} value={draft.nivel} disabled={!editable}
             onChange={e => set('nivel', e.target.value)}>
             {NIVELES_PATROCINIO.map(n => <option key={n.id} value={n.id}>{n.label}</option>)}
@@ -104,12 +113,37 @@ function Formulario({ draft, setDraft, onGuardar, onCancelar, pending, editable 
 }
 
 export default function TabPatrocinadores({ patrocinadores, pending, correr, editable }: Props) {
+  return (
+    <div className="space-y-5">
+      {CATEGORIAS_APOYO.map(c => (
+        <BloqueCategoria
+          key={c.id}
+          categoria={c.id}
+          lista={patrocinadores.filter(p => p.categoria === c.id)}
+          pending={pending}
+          correr={correr}
+          editable={editable}
+        />
+      ))}
+    </div>
+  )
+}
+
+/** Una lista independiente por categoría: no se mezclan ni se pisan al ordenar. */
+function BloqueCategoria({ categoria, lista, pending, correr, editable }: {
+  categoria: CategoriaApoyo
+  lista: Patrocinador[]
+  pending: boolean
+  correr: Correr
+  editable: boolean
+}) {
+  const meta = CATEGORIAS_APOYO.find(c => c.id === categoria)!
   const [editando, setEditando] = useState<string | null>(null)
   const [creando, setCreando] = useState(false)
-  const [draft, setDraft] = useState<Draft>(VACIO)
+  const [draft, setDraft] = useState<Draft>(vacio(categoria))
 
   function abrirNuevo() {
-    setDraft({ ...VACIO })
+    setDraft(vacio(categoria))
     setCreando(true)
     setEditando(null)
   }
@@ -133,8 +167,9 @@ export default function TabPatrocinadores({ patrocinadores, pending, correr, edi
         descripcion: draft.descripcion,
         logoUrl: draft.logoUrl,
         webUrl: draft.webUrl,
+        categoria: draft.categoria,
         nivel: draft.nivel,
-        orden: patrocinadores.length + 1,
+        orden: draft.id ? undefined : lista.length + 1,
         activo: draft.activo,
         destacado: draft.destacado,
       })
@@ -144,16 +179,15 @@ export default function TabPatrocinadores({ patrocinadores, pending, correr, edi
   }
 
   return (
-    <Bloque
-      titulo="Patrocinadores y colaboradores"
-      desc="Se muestran en la web ordenados como los coloques aquí. Puedes añadir tantos como necesites."
-    >
+    <Bloque titulo={meta.label} desc={meta.desc}>
       <div className="space-y-3">
-        {patrocinadores.length === 0 && !creando && (
-          <p className="text-sm text-gray-400 py-4 text-center">Todavía no hay patrocinadores.</p>
+        {lista.length === 0 && !creando && (
+          <p className="text-sm text-gray-400 py-4 text-center">
+            Todavía no hay {meta.label.toLowerCase()}.
+          </p>
         )}
 
-        {patrocinadores.map((p, i) => (
+        {lista.map((p, i) => (
           <div key={p.id} className="border border-gray-100 rounded-xl overflow-hidden">
             <div className="flex items-center gap-3 p-3">
               <div className="w-14 h-14 shrink-0 rounded-lg bg-pm-bg border border-gray-100 flex items-center justify-center overflow-hidden">
@@ -177,7 +211,7 @@ export default function TabPatrocinadores({ patrocinadores, pending, correr, edi
 
               <div className="flex items-center gap-1.5 shrink-0">
                 <BotonMini onClick={() => correr(() => reordenarPatrocinador(p.id, 'subir'))} disabled={!editable || i === 0} titulo="Subir">↑</BotonMini>
-                <BotonMini onClick={() => correr(() => reordenarPatrocinador(p.id, 'bajar'))} disabled={!editable || i === patrocinadores.length - 1} titulo="Bajar">↓</BotonMini>
+                <BotonMini onClick={() => correr(() => reordenarPatrocinador(p.id, 'bajar'))} disabled={!editable || i === lista.length - 1} titulo="Bajar">↓</BotonMini>
                 <BotonMini onClick={() => correr(() => guardarPatrocinador({ ...aDraft(p), activo: !p.activo }))} disabled={!editable} titulo={p.activo ? 'Ocultar de la web' : 'Mostrar en la web'}>
                   {p.activo ? 'Ocultar' : 'Mostrar'}
                 </BotonMini>
@@ -211,7 +245,7 @@ export default function TabPatrocinadores({ patrocinadores, pending, correr, edi
             disabled={!editable}
             className="w-full border-2 border-dashed border-gray-200 hover:border-pm-red text-sm font-bold text-gray-400 hover:text-pm-red rounded-xl py-3 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:text-gray-400"
           >
-            + Añadir patrocinador
+            + Añadir {meta.singular.toLowerCase()}
           </button>
         )}
       </div>

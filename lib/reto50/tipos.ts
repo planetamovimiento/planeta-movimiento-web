@@ -2,7 +2,7 @@
 // 50 días, 50 provincias · Tipos del módulo.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import type { EstadoEtapa } from './constants'
+import type { CategoriaApoyo, EstadoEtapa } from './constants'
 
 export type Etapa = {
   id: string
@@ -48,6 +48,8 @@ export type Patrocinador = {
   descripcion: string
   logoUrl: string
   webUrl: string
+  /** patrocinador | colaborador. Nunca se mezclan en la web. */
+  categoria: CategoriaApoyo
   nivel: string
   orden: number
   activo: boolean

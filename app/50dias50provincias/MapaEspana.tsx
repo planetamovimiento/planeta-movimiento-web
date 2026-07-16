@@ -11,7 +11,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState } from 'react'
-import { badgeEstadoEtapa, dotEstadoEtapa, euros, fechaLarga, labelEstadoEtapa } from '@/lib/reto50/constants'
+import {
+  AQUI, ESTADOS_ETAPA, ESTADO_ACTUAL, badgeEstadoEtapa, colorEstadoEtapa, dotEstadoEtapa,
+  euros, fechaLarga, labelEstadoEtapa,
+} from '@/lib/reto50/constants'
 import type { EtapaPublica } from '@/lib/reto50/tipos'
 
 // Encuadre peninsular (incluye Baleares).
@@ -43,18 +46,10 @@ function posicion(e: EtapaPublica) {
   return esCanarias(e.lat) ? proyectarCanarias(e.lat, e.lng) : proyectar(e.lat, e.lng)
 }
 
-/** Color del punto según el estado, reutilizando la tabla de estados. */
-const colorPunto: Record<string, string> = {
-  proximamente: '#CBD5E1',
-  proxima: '#D42B2B',
-  'en-curso': '#F59E0B',
-  finalizada: '#10B981',
-  modificada: '#3B82F6',
-  cancelada: '#FCA5A5',
-}
-
 export default function MapaEspana({ etapas }: { etapas: EtapaPublica[] }) {
-  const [activa, setActiva] = useState<EtapaPublica | null>(null)
+  const actual = etapas.find(e => e.estado === ESTADO_ACTUAL) ?? null
+  // Al abrir, se enseña dónde está Brosjaca ahora mismo.
+  const [activa, setActiva] = useState<EtapaPublica | null>(actual)
 
   const conPos = etapas.filter(e => posicion(e) !== null)
   // La línea del recorrido solo une lo que se puede unir por tierra/mar en el
@@ -91,25 +86,31 @@ export default function MapaEspana({ etapas }: { etapas: EtapaPublica[] }) {
           {conPos.map(e => {
             const p = posicion(e)!
             const activo = activa?.dia === e.dia
+            const esActual = e.estado === ESTADO_ACTUAL
+            const color = colorEstadoEtapa(e.estado)
             return (
               <g
                 key={e.dia}
                 tabIndex={0}
                 role="button"
-                aria-label={`Día ${e.dia}: ${e.provincia}, ${fechaLarga(e.fecha)}`}
+                aria-label={`Día ${e.dia}: ${e.provincia}, ${fechaLarga(e.fecha)}. ${
+                  esActual ? `${AQUI}.` : labelEstadoEtapa(e.estado)
+                }`}
                 className="cursor-pointer focus:outline-none"
                 onMouseEnter={() => setActiva(e)}
                 onFocus={() => setActiva(e)}
                 onClick={() => setActiva(e)}
               >
-                {activo && <circle cx={p.x} cy={p.y} r={11} fill={colorPunto[e.estado] ?? '#CBD5E1'} opacity={0.25} />}
+                {/* La etapa actual late para que se encuentre de un vistazo */}
+                {esActual && <circle className="pm-pulso" cx={p.x} cy={p.y} r={6} fill={color} />}
+                {activo && !esActual && <circle cx={p.x} cy={p.y} r={11} fill={color} opacity={0.25} />}
                 <circle
                   cx={p.x}
                   cy={p.y}
-                  r={activo ? 6 : 4}
-                  fill={colorPunto[e.estado] ?? '#CBD5E1'}
-                  stroke="#0F1A3D"
-                  strokeWidth="1.5"
+                  r={esActual ? 7 : activo ? 6 : 4}
+                  fill={color}
+                  stroke={esActual ? '#fff' : '#0F1A3D'}
+                  strokeWidth={esActual ? 2 : 1.5}
                 />
                 {/* Área de pulsación cómoda en móvil */}
                 <circle cx={p.x} cy={p.y} r={13} fill="transparent" />
@@ -117,10 +118,39 @@ export default function MapaEspana({ etapas }: { etapas: EtapaPublica[] }) {
             )
           })}
 
-          {/* Salida y meta, siempre rotuladas */}
-          {peninsula.length > 0 && (() => {
-            const salida = peninsula[0]
-            const p = posicion(salida)!
+          {/* Etiqueta «Estamos aquí» pegada a la etapa actual */}
+          {actual && (() => {
+            const p = posicion(actual)
+            if (!p) return null
+            // Si el punto cae a la derecha del encuadre, la etiqueta va a la izquierda.
+            const derecha = p.x > 480
+            return (
+              <g aria-hidden="true">
+                <rect
+                  x={derecha ? p.x - 84 : p.x + 12}
+                  y={p.y - 9}
+                  width="72"
+                  height="18"
+                  rx="9"
+                  fill="#D42B2B"
+                />
+                <text
+                  x={derecha ? p.x - 48 : p.x + 48}
+                  y={p.y + 3.5}
+                  textAnchor="middle"
+                  fill="#fff"
+                  fontSize="9.5"
+                  fontWeight="800"
+                >
+                  {AQUI}
+                </text>
+              </g>
+            )
+          })()}
+
+          {/* Salida, rotulada mientras no haya etapa actual que destacar */}
+          {!actual && peninsula.length > 0 && (() => {
+            const p = posicion(peninsula[0])!
             return (
               <text x={p.x + 9} y={p.y + 3} fill="rgba(255,255,255,0.75)" fontSize="10" fontWeight="800">
                 Salida
@@ -142,7 +172,7 @@ export default function MapaEspana({ etapas }: { etapas: EtapaPublica[] }) {
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-black text-pm-red uppercase tracking-widest">Día {activa.dia}</span>
               <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${badgeEstadoEtapa(activa.estado)}`}>
-                {labelEstadoEtapa(activa.estado)}
+                {activa.estado === ESTADO_ACTUAL ? AQUI : labelEstadoEtapa(activa.estado)}
               </span>
             </div>
             <h3 className="text-2xl font-black text-pm-navy mt-1">{activa.provincia}</h3>
@@ -192,12 +222,14 @@ export default function MapaEspana({ etapas }: { etapas: EtapaPublica[] }) {
           </div>
         )}
 
-        {/* Leyenda */}
+        {/* Leyenda: los estados básicos y solo los excepcionales que se usen */}
         <div className="flex flex-wrap gap-x-4 gap-y-2 mt-4 px-1">
-          {['proximamente', 'proxima', 'en-curso', 'finalizada'].map(id => (
-            <span key={id} className="inline-flex items-center gap-1.5 text-xs text-gray-500">
-              <span className={`w-2.5 h-2.5 rounded-full ${dotEstadoEtapa(id)}`} />
-              {labelEstadoEtapa(id)}
+          {ESTADOS_ETAPA.filter(
+            s => ['proximamente', 'en-curso', 'finalizada'].includes(s.id) || etapas.some(e => e.estado === s.id),
+          ).map(s => (
+            <span key={s.id} className="inline-flex items-center gap-1.5 text-xs text-gray-500">
+              <span className={`w-2.5 h-2.5 rounded-full ${dotEstadoEtapa(s.id)}`} />
+              {s.label}
             </span>
           ))}
         </div>

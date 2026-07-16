@@ -3,10 +3,12 @@ import { Foto } from '@/components/ui/Foto'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { SITE_URL, breadcrumbsJsonLd } from '@/lib/seo'
 import {
-  IMPACTO, RETO, TOTAL_PROVINCIAS, euros, fechaLarga, labelNivel, litros,
+  CATEGORIAS_APOYO, IMPACTO, RETO, TOTAL_PROVINCIAS, euros, fechaLarga, labelNivel, litros,
 } from '@/lib/reto50/constants'
+import type { CategoriaApoyo } from '@/lib/reto50/constants'
+import type { Patrocinador } from '@/lib/reto50/tipos'
 import {
-  gasolinaDeConfig, getConfigReto, getEtapasPublicas, getFaqActivas, getPatrocinadoresActivos,
+  gasolinaDeConfig, getApoyosActivos, getConfigReto, getEtapasPublicas, getFaqActivas,
   getQrsActivos, getRankingPublico, proximaParada, resumenReto,
 } from '@/lib/reto50/data'
 import MapaEspana from './MapaEspana'
@@ -49,10 +51,72 @@ const btnPrimario =
 const btnSecundario =
   'inline-flex items-center justify-center gap-2 border-2 border-white/30 hover:bg-white/10 text-white font-bold text-sm px-6 py-3.5 rounded-xl transition-colors'
 
+/**
+ * Un bloque de apoyos (patrocinadores o colaboradores). La rejilla se adapta al
+ * número de elementos y los logos van con object-contain para que no se
+ * deformen. Si la categoría está vacía, el bloque no se pinta.
+ */
+function BloqueApoyos({ categoria, apoyos }: { categoria: CategoriaApoyo; apoyos: Patrocinador[] }) {
+  if (apoyos.length === 0) return null
+
+  const meta = CATEGORIAS_APOYO.find(c => c.id === categoria)!
+  // Con pocos elementos no se estira la rejilla: quedaría desangelada.
+  const cols =
+    apoyos.length === 1 ? 'grid-cols-1 max-w-md mx-auto'
+    : apoyos.length === 2 ? 'grid-cols-1 sm:grid-cols-2 max-w-3xl mx-auto'
+    : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+
+  return (
+    <div>
+      <Reveal className="text-center mb-6">
+        <h3 className="text-xl font-black text-pm-navy">{meta.label}</h3>
+        <p className="text-gray-400 text-sm mt-1.5 max-w-xl mx-auto leading-relaxed">{meta.desc}</p>
+      </Reveal>
+
+      <div className={`grid ${cols} gap-4`}>
+        {apoyos.map((p, i) => {
+          const contenido = (
+            <>
+              <div className={`${p.destacado ? 'h-24' : 'h-16'} flex items-center justify-center mb-4`}>
+                {p.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={p.logoUrl} alt={p.nombre} loading="lazy" className="max-h-full max-w-[80%] object-contain" />
+                ) : (
+                  <span className={`font-black text-pm-navy/15 ${p.destacado ? 'text-3xl' : 'text-2xl'} text-center leading-tight break-words px-2`}>
+                    {p.nombre}
+                  </span>
+                )}
+              </div>
+              <div className="text-center min-w-0">
+                <span className="text-xs font-black text-pm-red uppercase tracking-widest">{labelNivel(p.nivel)}</span>
+                <h4 className="font-black text-pm-navy mt-1 break-words">{p.nombre}</h4>
+                {p.descripcion && <p className="text-gray-500 text-sm mt-2 leading-relaxed">{p.descripcion}</p>}
+              </div>
+            </>
+          )
+          const clases = 'bg-white rounded-2xl border border-gray-100 shadow-sm p-6 pm-card block h-full'
+          return (
+            <Reveal key={p.id} delay={i * 60}>
+              {p.webUrl ? (
+                <a href={p.webUrl} target="_blank" rel="noopener noreferrer" className={clases}>
+                  {contenido}
+                </a>
+              ) : (
+                <div className={clases}>{contenido}</div>
+              )}
+            </Reveal>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default async function CincuentaDiasPage() {
-  const [etapas, patrocinadores, faq, qrs, ranking, config] = await Promise.all([
+  const [etapas, patrocinadores, colaboradores, faq, qrs, ranking, config] = await Promise.all([
     getEtapasPublicas(),
-    getPatrocinadoresActivos(),
+    getApoyosActivos('patrocinador'),
+    getApoyosActivos('colaborador'),
     getFaqActivas(),
     getQrsActivos(),
     getRankingPublico(),
@@ -105,7 +169,7 @@ export default async function CincuentaDiasPage() {
           <div className={`${CONTENEDOR} relative py-16 sm:py-24`}>
             <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
               <div>
-                <p className={KICKER}>{RETO.protagonista} · Reto 2026</p>
+                <p className={KICKER}>{RETO.protagonista} · Reto Solidario 2026</p>
                 <h1 className="text-white font-black text-4xl sm:text-5xl lg:text-6xl leading-[1.05] mt-3">
                   {heroTitulo}
                 </h1>
@@ -411,52 +475,18 @@ export default async function CincuentaDiasPage() {
           </div>
         </section>
 
-        {/* ── 8 · PATROCINADORES ─────────────────────────────────────────── */}
+        {/* ── 8 · PATROCINADORES Y COLABORADORES ─────────────────────────── */}
         <section className={`${CONTENEDOR} py-16 sm:py-20`}>
           <Reveal className="text-center max-w-2xl mx-auto mb-10">
             <p className={KICKER}>Quién lo hace posible</p>
             <h2 className="text-3xl font-black text-pm-navy mt-2">Patrocinadores y colaboradores</h2>
           </Reveal>
 
-          {patrocinadores.length > 0 && (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {patrocinadores.map((p, i) => {
-                const Contenido = (
-                  <>
-                    <div className={`${p.destacado ? 'h-24' : 'h-16'} flex items-center justify-center mb-4`}>
-                      {p.logoUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={p.logoUrl} alt={p.nombre} loading="lazy" className="max-h-full max-w-[80%] object-contain" />
-                      ) : (
-                        <span className={`font-black text-pm-navy/15 ${p.destacado ? 'text-3xl' : 'text-2xl'} text-center leading-tight break-words px-2`}>
-                          {p.nombre}
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-center">
-                      <span className="text-xs font-black text-pm-red uppercase tracking-widest">{labelNivel(p.nivel)}</span>
-                      <h3 className="font-black text-pm-navy mt-1">{p.nombre}</h3>
-                      {p.descripcion && <p className="text-gray-500 text-sm mt-2 leading-relaxed">{p.descripcion}</p>}
-                    </div>
-                  </>
-                )
-                const clases = `bg-white rounded-2xl border border-gray-100 shadow-sm p-6 pm-card block ${
-                  p.destacado ? 'sm:col-span-1' : ''
-                }`
-                return (
-                  <Reveal key={p.id} delay={i * 60}>
-                    {p.webUrl ? (
-                      <a href={p.webUrl} target="_blank" rel="noopener noreferrer" className={clases}>
-                        {Contenido}
-                      </a>
-                    ) : (
-                      <div className={clases}>{Contenido}</div>
-                    )}
-                  </Reveal>
-                )
-              })}
-            </div>
-          )}
+          {/* Dos categorías distintas: primero los patrocinadores, luego los colaboradores */}
+          <div className="space-y-12">
+            <BloqueApoyos categoria="patrocinador" apoyos={patrocinadores} />
+            <BloqueApoyos categoria="colaborador" apoyos={colaboradores} />
+          </div>
 
           <div className="bg-pm-bg rounded-3xl p-6 sm:p-10 mt-10 text-center">
             <h3 className="font-black text-pm-navy text-xl">¿Colaboramos?</h3>

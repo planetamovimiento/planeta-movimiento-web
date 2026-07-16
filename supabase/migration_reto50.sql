@@ -47,7 +47,8 @@ create table if not exists reto50_patrocinadores (
   descripcion text,
   logo_url    text,
   web_url     text,
-  nivel       text default 'colaborador',   -- ver NIVELES_PATROCINIO
+  categoria   text default 'patrocinador', -- patrocinador | colaborador
+  nivel       text default 'apoyo',        -- ver NIVELES_PATROCINIO
   orden       int default 0,
   activo      boolean default true,
   destacado   boolean default false,
@@ -149,11 +150,11 @@ from (values
 where not exists (select 1 from reto50_etapas);
 
 -- ── Patrocinadores iniciales ───────────────────────────────────────────────
-insert into reto50_patrocinadores (nombre, descripcion, nivel, orden, destacado)
+insert into reto50_patrocinadores (nombre, descripcion, categoria, nivel, orden, destacado)
 select * from (values
-  ('Planeta Movimiento', 'Escuela conquense de deporte, ocio saludable y educación física. Organiza y coordina el reto: logística de la ruta, patrocinadores y comunicación diaria.', 'organizador', 1, true),
-  ('KGM', 'Aporta el vehículo todoterreno oficial que hace posible el recorrido por las 50 provincias.', 'principal', 2, true)
-) as base(nombre, descripcion, nivel, orden, destacado)
+  ('Planeta Movimiento', 'Escuela conquense de deporte, ocio saludable y educación física. Organiza y coordina el reto: logística de la ruta, patrocinadores y comunicación diaria.', 'patrocinador', 'organizador', 1, true),
+  ('KGM', 'Aporta el vehículo todoterreno oficial que hace posible el recorrido por las 50 provincias.', 'patrocinador', 'principal', 2, true)
+) as base(nombre, descripcion, categoria, nivel, orden, destacado)
 where not exists (select 1 from reto50_patrocinadores);
 
 -- ── Preguntas frecuentes iniciales ─────────────────────────────────────────

@@ -1,14 +1,19 @@
 'use client'
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Las 50 etapas, en dos vistas: línea temporal y calendario por meses.
+// Calendario de las 50 etapas: la vista principal de la ruta.
+//
+// Con 50 días una línea temporal obligaba a un scroll enorme, así que la ruta
+// se consulta aquí (rejilla por meses) y en el mapa. Cada tarjeta se despliega
+// para ver el detalle de esa etapa.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useMemo, useState } from 'react'
-import { badgeEstadoEtapa, dotEstadoEtapa, euros, fechaCorta, fechaLarga, labelEstadoEtapa } from '@/lib/reto50/constants'
+import {
+  AQUI, ESTADOS_ETAPA, ESTADO_ACTUAL, badgeEstadoEtapa, dotEstadoEtapa, euros,
+  fechaCorta, fechaLarga, labelEstadoEtapa,
+} from '@/lib/reto50/constants'
 import type { EtapaPublica } from '@/lib/reto50/tipos'
-
-type Vista = 'linea' | 'calendario'
 
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
 
@@ -18,22 +23,70 @@ const anioDe = (iso: string) => iso.slice(0, 4)
 /** Quita acentos para que buscar "avila" encuentre "Ávila". */
 const normaliza = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 
-function Etiqueta({ etapa }: { etapa: EtapaPublica }) {
+const IconoOk = ({ className = 'w-3.5 h-3.5' }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+  </svg>
+)
+
+/** Estilo de la tarjeta según el estado: es lo que se lee de un vistazo. */
+function estiloTarjeta(estado: string): string {
+  switch (estado) {
+    case ESTADO_ACTUAL:
+      return 'border-pm-red border-2 bg-pm-red/[0.04] shadow-md'
+    case 'finalizada':
+      return 'border-emerald-200 bg-emerald-50/60'
+    case 'cancelada':
+      return 'border-gray-200 bg-gray-50 opacity-70'
+    case 'modificada':
+      return 'border-blue-200 bg-blue-50/50'
+    default:
+      return 'border-gray-100 bg-white'
+  }
+}
+
+function Detalle({ etapa }: { etapa: EtapaPublica }) {
+  const datos: [string, string][] = []
+  if (etapa.hora) datos.push(['Hora', etapa.hora])
+  if (etapa.puntoEncuentro) datos.push(['Punto de encuentro', etapa.puntoEncuentro])
+  datos.push(['Burflips del día', String(etapa.burflips)])
+  if (etapa.recaudado != null) datos.push(['Recaudado', euros(etapa.recaudado)])
+  if (etapa.asistentes != null) datos.push(['Personas', etapa.asistentes.toLocaleString('es-ES')])
+
   return (
-    <span className={`text-xs font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${badgeEstadoEtapa(etapa.estado)}`}>
-      {labelEstadoEtapa(etapa.estado)}
-    </span>
+    <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+      <dl className="space-y-1.5">
+        {datos.map(([k, v]) => (
+          <div key={k} className="flex justify-between gap-3 text-xs">
+            <dt className="text-gray-400 shrink-0">{k}</dt>
+            <dd className="font-bold text-pm-navy text-right break-words min-w-0">{v}</dd>
+          </div>
+        ))}
+      </dl>
+
+      {!etapa.hora && !etapa.puntoEncuentro && (
+        <p className="text-xs text-gray-400 leading-relaxed">
+          La hora y el punto de encuentro se confirman en los días previos.
+        </p>
+      )}
+
+      {etapa.enlaceRedes && (
+        <a
+          href={etapa.enlaceRedes}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block text-xs font-bold text-pm-red hover:text-pm-red-dark"
+        >
+          Ver la jornada →
+        </a>
+      )}
+    </div>
   )
 }
 
-function Ciudad({ etapa }: { etapa: EtapaPublica }) {
-  if (!etapa.ciudad) return null
-  return <span className="text-sm text-gray-500">{etapa.ciudad}</span>
-}
-
 export default function RutaCalendario({ etapas }: { etapas: EtapaPublica[] }) {
-  const [vista, setVista] = useState<Vista>('linea')
   const [busqueda, setBusqueda] = useState('')
+  const [abierta, setAbierta] = useState<number | null>(null)
 
   const filtradas = useMemo(() => {
     const q = normaliza(busqueda.trim())
@@ -56,27 +109,30 @@ export default function RutaCalendario({ etapas }: { etapas: EtapaPublica[] }) {
     return [...grupos.entries()].sort(([a], [b]) => a.localeCompare(b))
   }, [filtradas])
 
-  const btnVista = (v: Vista, label: string) => (
-    <button
-      type="button"
-      onClick={() => setVista(v)}
-      className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
-        vista === v ? 'bg-pm-navy text-white' : 'text-gray-500 hover:text-pm-navy hover:bg-pm-bg'
-      }`}
-    >
-      {label}
-    </button>
-  )
+  const hechas = etapas.filter(e => e.estado === 'finalizada').length
 
   return (
     <div>
       {/* Controles */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-1.5 flex gap-1 self-start">
-          {btnVista('linea', 'Línea temporal')}
-          {btnVista('calendario', 'Calendario')}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <span className="text-sm text-gray-500">
+            <strong className="text-pm-navy font-black">{hechas}</strong> de {etapas.length} completadas
+          </span>
+          {/* Leyenda: básicos siempre, excepcionales solo si se usan */}
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
+            {ESTADOS_ETAPA.filter(
+              s => ['proximamente', 'en-curso', 'finalizada'].includes(s.id) || etapas.some(e => e.estado === s.id),
+            ).map(s => (
+              <span key={s.id} className="inline-flex items-center gap-1.5 text-xs text-gray-400">
+                <span className={`w-2 h-2 rounded-full ${dotEstadoEtapa(s.id)}`} />
+                {s.label}
+              </span>
+            ))}
+          </div>
         </div>
-        <div className="relative sm:w-64">
+
+        <div className="relative sm:w-56 shrink-0">
           <input
             type="search"
             value={busqueda}
@@ -97,65 +153,74 @@ export default function RutaCalendario({ etapas }: { etapas: EtapaPublica[] }) {
         </p>
       )}
 
-      {/* Vista: línea temporal */}
-      {vista === 'linea' && filtradas.length > 0 && (
-        <ol className="relative border-l-2 border-gray-100 ml-3 sm:ml-4">
-          {filtradas.map(e => (
-            <li key={e.dia} className="relative pl-5 sm:pl-7 pb-5 last:pb-0">
-              <span className={`absolute -left-[7px] top-1.5 w-3 h-3 rounded-full ring-4 ring-white ${dotEstadoEtapa(e.estado)}`} />
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 pm-card">
-                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <span className="text-xs font-black text-pm-red uppercase tracking-widest">Día {e.dia}</span>
-                  <span className="text-xs text-gray-400 capitalize">{fechaLarga(e.fecha)}</span>
-                  <Etiqueta etapa={e} />
-                </div>
-                <div className="mt-1.5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <h3 className="text-lg font-black text-pm-navy">{e.provincia}</h3>
-                  <Ciudad etapa={e} />
-                </div>
-                {e.descripcion && <p className="text-sm text-gray-500 mt-2 leading-relaxed">{e.descripcion}</p>}
-
-                <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-gray-500">
-                  <span><strong className="text-pm-navy font-black">{e.burflips}</strong> burflips</span>
-                  {e.hora && <span>Hora: {e.hora}</span>}
-                  {e.puntoEncuentro && <span>{e.puntoEncuentro}</span>}
-                  {e.recaudado != null && <span>Recaudado: <strong className="text-pm-navy font-black">{euros(e.recaudado)}</strong></span>}
-                  {e.asistentes != null && <span><strong className="text-pm-navy font-black">{e.asistentes.toLocaleString('es-ES')}</strong> personas</span>}
-                </div>
-              </div>
-            </li>
-          ))}
-        </ol>
-      )}
-
-      {/* Vista: calendario por meses */}
-      {vista === 'calendario' && filtradas.length > 0 && (
-        <div className="space-y-8">
-          {porMes.map(([clave, dias]) => (
-            <div key={clave}>
-              <h3 className="text-xs font-black text-pm-red uppercase tracking-widest mb-3">
-                {MESES[mesDe(dias[0].fecha)]} {anioDe(dias[0].fecha)}
-              </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
-                {dias.map(e => (
-                  <div key={e.dia} className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 pm-card min-w-0">
+      {/* Calendario por meses */}
+      <div className="space-y-8">
+        {porMes.map(([clave, dias]) => (
+          <div key={clave}>
+            <h3 className="text-xs font-black text-pm-red uppercase tracking-widest mb-3">
+              {MESES[mesDe(dias[0].fecha)]} {anioDe(dias[0].fecha)}
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+              {dias.map(e => {
+                const esActual = e.estado === ESTADO_ACTUAL
+                const hecha = e.estado === 'finalizada'
+                const desplegada = abierta === e.dia
+                return (
+                  <div
+                    key={e.dia}
+                    className={`rounded-xl border p-3 min-w-0 transition-colors ${estiloTarjeta(e.estado)}`}
+                  >
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-black text-gray-300">{fechaCorta(e.fecha)}</span>
-                      <span className={`w-2 h-2 rounded-full shrink-0 ${dotEstadoEtapa(e.estado)}`} title={labelEstadoEtapa(e.estado)} />
+                      <span className="text-xs font-black text-gray-400">{fechaCorta(e.fecha)}</span>
+                      {hecha ? (
+                        <span className="text-emerald-600" title="Completada"><IconoOk /></span>
+                      ) : (
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${dotEstadoEtapa(e.estado)}`} title={labelEstadoEtapa(e.estado)} />
+                      )}
                     </div>
-                    <div className="text-xs font-black text-pm-red mt-1.5">Día {e.dia}</div>
+
+                    <div className={`text-xs font-black mt-1.5 ${esActual ? 'text-pm-red' : 'text-gray-400'}`}>
+                      Día {e.dia}
+                    </div>
                     <div className="font-black text-pm-navy text-sm leading-tight mt-0.5 break-words">{e.provincia}</div>
-                    {e.ciudad && <div className="text-xs text-gray-400 mt-0.5 truncate" title={e.ciudad}>{e.ciudad}</div>}
-                    <div className="text-xs text-gray-400 mt-2 pt-2 border-t border-gray-50">
-                      <strong className="text-pm-navy font-black">{e.burflips}</strong> burflips
+                    {e.ciudad && <div className="text-xs text-gray-400 mt-0.5 break-words">{e.ciudad}</div>}
+
+                    {/* Estado: lo que hay que entender de un vistazo */}
+                    <div className="mt-2">
+                      {esActual ? (
+                        <span className="inline-flex items-center gap-1.5 bg-pm-red text-white text-[11px] font-black uppercase tracking-wide rounded-full px-2 py-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                          {AQUI}
+                        </span>
+                      ) : e.estado !== 'proximamente' ? (
+                        <span className={`inline-block text-[11px] font-bold px-2 py-0.5 rounded-full ${badgeEstadoEtapa(e.estado)}`}>
+                          {labelEstadoEtapa(e.estado)}
+                        </span>
+                      ) : null}
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setAbierta(desplegada ? null : e.dia)}
+                      aria-expanded={desplegada}
+                      className="mt-2 text-xs font-bold text-gray-400 hover:text-pm-red transition-colors"
+                    >
+                      {desplegada ? 'Ocultar detalles' : 'Ver detalles'}
+                    </button>
+
+                    {desplegada && (
+                      <>
+                        <p className="sr-only">{fechaLarga(e.fecha)}</p>
+                        <Detalle etapa={e} />
+                      </>
+                    )}
                   </div>
-                ))}
-              </div>
+                )
+              })}
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

@@ -39,33 +39,72 @@ export const IMPACTO = [
   { valor: '+123.500', label: 'Interacciones' },
 ] as const
 
-export type EstadoEtapa =
-  | 'proximamente' | 'proxima' | 'en-curso' | 'finalizada' | 'modificada' | 'cancelada'
+/**
+ * Estado de cada etapa. Se marca a mano desde el panel: que una fecha haya
+ * pasado no significa que la etapa se hiciera (puede haber retrasos, cambios
+ * de ruta o cancelaciones), así que nada se completa solo.
+ */
+export type EstadoEtapa = 'proximamente' | 'en-curso' | 'finalizada' | 'modificada' | 'cancelada'
 
-export const ESTADOS_ETAPA: { id: EstadoEtapa; label: string; badge: string; dot: string }[] = [
-  { id: 'proximamente', label: 'Próximamente',  badge: 'bg-gray-100 text-gray-500',     dot: 'bg-gray-300' },
-  { id: 'proxima',      label: 'Próxima parada', badge: 'bg-pm-red text-white',          dot: 'bg-pm-red' },
-  { id: 'en-curso',     label: 'En curso',       badge: 'bg-amber-100 text-amber-700',   dot: 'bg-amber-500' },
-  { id: 'finalizada',   label: 'Finalizada',     badge: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
-  { id: 'modificada',   label: 'Modificada',     badge: 'bg-blue-100 text-blue-700',     dot: 'bg-blue-500' },
-  { id: 'cancelada',    label: 'Cancelada',      badge: 'bg-red-50 text-red-600',        dot: 'bg-red-400' },
+export const ESTADOS_ETAPA: {
+  id: EstadoEtapa
+  label: string
+  badge: string
+  dot: string
+  /** Color del punto en el mapa (SVG, necesita el valor, no la clase). */
+  color: string
+}[] = [
+  { id: 'proximamente', label: 'Pendiente',    badge: 'bg-gray-100 text-gray-500',       dot: 'bg-gray-300',    color: '#CBD5E1' },
+  { id: 'en-curso',     label: 'Etapa actual', badge: 'bg-pm-red text-white',            dot: 'bg-pm-red',      color: '#D42B2B' },
+  { id: 'finalizada',   label: 'Completada',   badge: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500', color: '#10B981' },
+  { id: 'modificada',   label: 'Modificada',   badge: 'bg-blue-100 text-blue-700',       dot: 'bg-blue-500',    color: '#3B82F6' },
+  { id: 'cancelada',    label: 'Cancelada',    badge: 'bg-gray-200 text-gray-600',       dot: 'bg-gray-500',    color: '#6B7280' },
 ]
 
-export const labelEstadoEtapa = (id: string) => ESTADOS_ETAPA.find(e => e.id === id)?.label ?? 'Próximamente'
+export const labelEstadoEtapa = (id: string) => ESTADOS_ETAPA.find(e => e.id === id)?.label ?? 'Pendiente'
 export const badgeEstadoEtapa = (id: string) => ESTADOS_ETAPA.find(e => e.id === id)?.badge ?? 'bg-gray-100 text-gray-500'
 export const dotEstadoEtapa = (id: string) => ESTADOS_ETAPA.find(e => e.id === id)?.dot ?? 'bg-gray-300'
+export const colorEstadoEtapa = (id: string) => ESTADOS_ETAPA.find(e => e.id === id)?.color ?? '#CBD5E1'
 
-/** Una etapa cuenta como completada cuando ya ha pasado. */
+/** La etapa donde está Brosjaca ahora mismo. Solo puede haber una. */
+export const ESTADO_ACTUAL: EstadoEtapa = 'en-curso'
+/** Etiqueta corta para el mapa y el calendario. */
+export const AQUI = 'Estamos aquí'
+
+/** Etapas ya hechas. */
 export const ESTADOS_HECHOS: EstadoEtapa[] = ['finalizada']
 /** Estados que sacan a la etapa de la carrera por ser "próxima parada". */
 export const ESTADOS_CERRADOS: EstadoEtapa[] = ['finalizada', 'cancelada']
 
+// ── Patrocinadores y colaboradores ───────────────────────────────────────────
+
+/** Dos categorías distintas, nunca mezcladas en la web. */
+export type CategoriaApoyo = 'patrocinador' | 'colaborador'
+
+export const CATEGORIAS_APOYO: { id: CategoriaApoyo; label: string; singular: string; desc: string }[] = [
+  {
+    id: 'patrocinador',
+    label: 'Patrocinadores',
+    singular: 'Patrocinador',
+    desc: 'Empresas y entidades que aportan al proyecto de forma económica, material o principal.',
+  },
+  {
+    id: 'colaborador',
+    label: 'Colaboradores',
+    singular: 'Colaborador',
+    desc: 'Asociaciones, entidades, personas y proyectos que ayudan en la organización, la difusión o el desarrollo del reto.',
+  },
+]
+
+export const labelCategoria = (id: string) => CATEGORIAS_APOYO.find(c => c.id === id)?.label ?? id
+
 export const NIVELES_PATROCINIO: { id: string; label: string }[] = [
-  { id: 'organizador',  label: 'Organizador' },
-  { id: 'principal',    label: 'Patrocinador principal' },
-  { id: 'colaborador',  label: 'Colaborador' },
+  { id: 'organizador',   label: 'Organizador' },
+  { id: 'principal',     label: 'Principal' },
+  { id: 'oficial',       label: 'Oficial' },
   { id: 'institucional', label: 'Institucional' },
-  { id: 'medios',       label: 'Medios' },
+  { id: 'medios',        label: 'Medios' },
+  { id: 'apoyo',         label: 'Apoyo' },
 ]
 
 export const labelNivel = (id: string) => NIVELES_PATROCINIO.find(n => n.id === id)?.label ?? id
