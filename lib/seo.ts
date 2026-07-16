@@ -60,6 +60,7 @@ export const SITE_NAV_JSONLD = {
     { '@type': 'SiteNavigationElement', position: 4, name: 'Más Actividades', description: 'Catálogo completo de actividades y servicios', url: `${SITE_URL}/actividades` },
     { '@type': 'SiteNavigationElement', position: 5, name: 'Ocio', url: `${SITE_URL}/ocio` },
     { '@type': 'SiteNavigationElement', position: 6, name: 'Educación', url: `${SITE_URL}/educacion` },
+    { '@type': 'SiteNavigationElement', position: 7, name: '50 días, 50 provincias', description: 'El reto solidario de Brosjaca por las 50 provincias de España', url: `${SITE_URL}/50dias50provincias` },
   ],
 }
 

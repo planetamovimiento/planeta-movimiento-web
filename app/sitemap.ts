@@ -31,6 +31,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...perfiles.map(s => p(`/actividades/${s}`, 0.6, 'monthly')),
     p('/club/talleres-intensivos', 0.7, 'monthly'),
     p('/colchonetas', 0.7, 'monthly'),
+    // Campaña viva: durante la ruta se actualiza a diario (próxima parada, recaudación, crónicas).
+    p('/50dias50provincias', 0.9, 'daily'),
     p('/planeta-tdah', 0.6, 'monthly'),
     p('/terminos-y-condiciones', 0.2, 'yearly'),
     p('/politica-privacidad', 0.2, 'yearly'),

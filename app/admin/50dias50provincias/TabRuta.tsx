@@ -1,0 +1,348 @@
+'use client'
+
+import { useMemo, useState } from 'react'
+import { SubirImagen } from '@/components/admin/SubirImagen'
+import {
+  ESTADOS_ETAPA, badgeEstadoEtapa, dotEstadoEtapa, euros, fechaCorta, fechaLarga, labelEstadoEtapa,
+  type EstadoEtapa,
+} from '@/lib/reto50/constants'
+import type { Etapa } from '@/lib/reto50/tipos'
+import { guardarEtapa, marcarProximaParada } from './actions'
+import { Bloque, BotonMini, Campo, inputCls, type Correr } from './piezas'
+
+type Props = { etapas: Etapa[]; pending: boolean; correr: Correr; editable: boolean }
+
+export default function TabRuta({ etapas, pending, correr, editable }: Props) {
+  const [q, setQ] = useState('')
+  const [filtroEstado, setFiltroEstado] = useState<'' | EstadoEtapa>('')
+  const [abierta, setAbierta] = useState<string | null>(null)
+
+  const filtradas = useMemo(() => {
+    const t = q.trim().toLowerCase()
+    return etapas.filter(e => {
+      if (filtroEstado && e.estado !== filtroEstado) return false
+      if (!t) return true
+      return `${e.dia} ${e.provincia} ${e.ciudad} ${e.fecha}`.toLowerCase().includes(t)
+    })
+  }, [etapas, q, filtroEstado])
+
+  const marcada = etapas.find(e => e.estado === 'proxima')
+  const porConfirmar = etapas.filter(e => !e.ciudadConfirmada).length
+
+  return (
+    <div className="space-y-4">
+      <Bloque
+        titulo="Las 50 etapas"
+        desc="Una provincia por día. La ciudad de cada etapa es orientativa hasta que la marques como confirmada."
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            placeholder="Buscar por provincia, ciudad, día o fecha…"
+            className="flex-1 min-w-[200px] border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pm-red"
+          />
+          <select
+            value={filtroEstado}
+            onChange={e => setFiltroEstado(e.target.value as '' | EstadoEtapa)}
+            className="border border-gray-200 rounded-xl px-3 py-2 text-sm font-semibold focus:outline-none focus:border-pm-red"
+          >
+            <option value="">Todos los estados</option>
+            {ESTADOS_ETAPA.map(e => <option key={e.id} value={e.id}>{e.label}</option>)}
+          </select>
+        </div>
+
+        <div className="flex flex-wrap gap-x-5 gap-y-1 mt-3 text-xs text-gray-400">
+          <span>{filtradas.length} de {etapas.length} etapas</span>
+          <span>{porConfirmar} ciudad(es) por confirmar</span>
+          <span>
+            Próxima parada:{' '}
+            {marcada
+              ? <strong className="text-pm-red">Día {marcada.dia} · {marcada.provincia}</strong>
+              : <em>sin marcar (la web calcula la siguiente por fecha)</em>}
+          </span>
+        </div>
+      </Bloque>
+
+      {filtradas.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center text-gray-400 text-sm">
+          Ninguna etapa coincide con la búsqueda.
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {filtradas.map(e => (
+            <FilaEtapa
+              key={e.id}
+              etapa={e}
+              abierta={abierta === e.id}
+              onToggle={() => setAbierta(abierta === e.id ? null : e.id)}
+              pending={pending}
+              correr={correr}
+              editable={editable}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Fila + editor desplegable ────────────────────────────────────────────────
+
+function FilaEtapa({ etapa, abierta, onToggle, pending, correr, editable }: {
+  etapa: Etapa; abierta: boolean; onToggle: () => void; pending: boolean; correr: Correr; editable: boolean
+}) {
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+      <div className="flex items-center gap-3 px-4 py-3 flex-wrap">
+        <div className="w-11 h-11 rounded-xl bg-pm-bg border border-gray-100 flex flex-col items-center justify-center shrink-0">
+          <span className="text-[10px] font-bold text-gray-400 leading-none">DÍA</span>
+          <span className="text-sm font-black text-pm-navy leading-tight">{etapa.dia}</span>
+        </div>
+
+        <div className="flex-1 min-w-[150px]">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`w-2 h-2 rounded-full shrink-0 ${dotEstadoEtapa(etapa.estado)}`} />
+            <span className="font-bold text-pm-navy truncate">{etapa.provincia}</span>
+            {!etapa.ciudadConfirmada && (
+              <span className="text-[10px] font-black uppercase tracking-wide bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">
+                Ciudad por confirmar
+              </span>
+            )}
+          </div>
+          <div className="text-xs text-gray-400 truncate">
+            {etapa.ciudad || 'Sin ciudad'} · {fechaCorta(etapa.fecha)} · {etapa.burflips} burflips
+          </div>
+        </div>
+
+        {etapa.recaudado != null && (
+          <span className="text-xs font-bold text-emerald-600 hidden sm:block">{euros(etapa.recaudado)}</span>
+        )}
+        <span className={`text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap ${badgeEstadoEtapa(etapa.estado)}`}>
+          {labelEstadoEtapa(etapa.estado)}
+        </span>
+
+        {editable && etapa.estado !== 'proxima' && (
+          <BotonMini onClick={() => correr(() => marcarProximaParada(etapa.id))} disabled={pending}
+            titulo="Marcar como próxima parada del reto">
+            Próxima parada
+          </BotonMini>
+        )}
+        <BotonMini onClick={onToggle}>{abierta ? 'Cerrar' : editable ? 'Editar' : 'Ver'}</BotonMini>
+      </div>
+
+      {abierta && (
+        <EditorEtapa key={etapa.id} etapa={etapa} pending={pending} correr={correr} editable={editable} onCerrar={onToggle} />
+      )}
+    </div>
+  )
+}
+
+function EditorEtapa({ etapa, pending, correr, editable, onCerrar }: {
+  etapa: Etapa; pending: boolean; correr: Correr; editable: boolean; onCerrar: () => void
+}) {
+  const s = (v: number | null) => (v == null ? '' : String(v))
+
+  const [dia, setDia] = useState(String(etapa.dia))
+  const [fecha, setFecha] = useState(etapa.fecha)
+  const [provincia, setProvincia] = useState(etapa.provincia)
+  const [ciudad, setCiudad] = useState(etapa.ciudad)
+  const [ciudadConfirmada, setCiudadConfirmada] = useState(etapa.ciudadConfirmada)
+  const [hora, setHora] = useState(etapa.hora)
+  const [puntoEncuentro, setPuntoEncuentro] = useState(etapa.puntoEncuentro)
+  const [lat, setLat] = useState(s(etapa.lat))
+  const [lng, setLng] = useState(s(etapa.lng))
+  const [burflips, setBurflips] = useState(String(etapa.burflips))
+  const [descripcion, setDescripcion] = useState(etapa.descripcion)
+  const [estado, setEstado] = useState<EstadoEtapa>(etapa.estado)
+  const [recaudado, setRecaudado] = useState(s(etapa.recaudado))
+  const [asistentes, setAsistentes] = useState(s(etapa.asistentes))
+  const [resumen, setResumen] = useState(etapa.resumen)
+  const [galeria, setGaleria] = useState<string[]>(etapa.galeria)
+  const [videoUrl, setVideoUrl] = useState(etapa.videoUrl)
+  const [enlaceRedes, setEnlaceRedes] = useState(etapa.enlaceRedes)
+  const [testimonios, setTestimonios] = useState(etapa.testimonios)
+  const [notasInternas, setNotasInternas] = useState(etapa.notasInternas)
+
+  function guardar() {
+    correr(async () => {
+      const r = await guardarEtapa({
+        id: etapa.id,
+        dia, fecha, provincia, ciudad, ciudadConfirmada, hora, puntoEncuentro,
+        lat, lng, burflips, descripcion, estado, recaudado, asistentes,
+        resumen, galeria, videoUrl, enlaceRedes, testimonios, notasInternas,
+      })
+      if (r.ok) onCerrar()
+      return r
+    })
+  }
+
+  return (
+    <div className="border-t border-gray-100 p-5 space-y-6">
+      {/* Identificación */}
+      <div>
+        <Titulo>Etapa</Titulo>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <Campo label="Día del reto"><input type="number" className={inputCls} value={dia} disabled={!editable} onChange={e => setDia(e.target.value)} /></Campo>
+          <Campo label="Fecha" hint={fecha ? fechaLarga(fecha) : undefined}>
+            <input type="date" className={inputCls} value={fecha} disabled={!editable} onChange={e => setFecha(e.target.value)} />
+          </Campo>
+          <Campo label="Provincia"><input className={inputCls} value={provincia} disabled={!editable} onChange={e => setProvincia(e.target.value)} /></Campo>
+          <Campo label="Burflips del día" hint="Repeticiones que le tocan ese día del reto anual.">
+            <input type="number" className={inputCls} value={burflips} disabled={!editable} onChange={e => setBurflips(e.target.value)} />
+          </Campo>
+        </div>
+      </div>
+
+      {/* Ciudad y punto de encuentro */}
+      <div>
+        <Titulo>Ciudad y punto de encuentro</Titulo>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <Campo label="Ciudad" hint="Orientativa mientras no la confirmes.">
+            <input className={inputCls} value={ciudad} disabled={!editable} onChange={e => setCiudad(e.target.value)} />
+          </Campo>
+          <div className="flex items-end pb-1">
+            <label className="flex items-center gap-2 text-sm font-semibold text-pm-navy cursor-pointer">
+              <input type="checkbox" checked={ciudadConfirmada} disabled={!editable}
+                onChange={e => setCiudadConfirmada(e.target.checked)}
+                className="w-4 h-4 accent-pm-red" />
+              Ciudad confirmada
+              <span className="text-xs font-normal text-gray-400">(si no, la web la marca como «por confirmar»)</span>
+            </label>
+          </div>
+          <Campo label="Hora" hint="Déjalo vacío mientras no haya hora oficial: la web no mostrará ninguna.">
+            <input className={inputCls} value={hora} disabled={!editable} placeholder="Sin hora oficial todavía" onChange={e => setHora(e.target.value)} />
+          </Campo>
+          <Campo label="Punto de encuentro" hint="Vacío = la web no anuncia ningún punto.">
+            <input className={inputCls} value={puntoEncuentro} disabled={!editable} placeholder="Sin punto oficial todavía" onChange={e => setPuntoEncuentro(e.target.value)} />
+          </Campo>
+          <Campo label="Latitud"><input className={inputCls} value={lat} disabled={!editable} onChange={e => setLat(e.target.value)} /></Campo>
+          <Campo label="Longitud"><input className={inputCls} value={lng} disabled={!editable} onChange={e => setLng(e.target.value)} /></Campo>
+        </div>
+      </div>
+
+      {/* Estado y textos públicos */}
+      <div>
+        <Titulo>Estado y textos públicos</Titulo>
+        <div className="space-y-3">
+          <Campo label="Estado de la etapa">
+            <select className={inputCls} value={estado} disabled={!editable} onChange={e => setEstado(e.target.value as EstadoEtapa)}>
+              {ESTADOS_ETAPA.map(x => <option key={x.id} value={x.id}>{x.label}</option>)}
+            </select>
+          </Campo>
+          <Campo label="Descripción" hint="Texto público de la etapa antes de que ocurra.">
+            <textarea className={`${inputCls} resize-y leading-relaxed`} rows={3} value={descripcion} disabled={!editable} onChange={e => setDescripcion(e.target.value)} />
+          </Campo>
+          <Campo label="Crónica del día" hint="Se publica cuando la etapa ya ha pasado.">
+            <textarea className={`${inputCls} resize-y leading-relaxed`} rows={4} value={resumen} disabled={!editable} onChange={e => setResumen(e.target.value)} />
+          </Campo>
+          <Campo label="Testimonios">
+            <textarea className={`${inputCls} resize-y leading-relaxed`} rows={3} value={testimonios} disabled={!editable} onChange={e => setTestimonios(e.target.value)} />
+          </Campo>
+        </div>
+      </div>
+
+      {/* Resultados */}
+      <div>
+        <Titulo>Resultados de la etapa</Titulo>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Campo label="Recaudado (€)" hint="Vacío = aún sin datos. No pongas 0: la web mostraría un dato falso.">
+            <input type="number" min="0" step="0.01" className={inputCls} value={recaudado} disabled={!editable}
+              placeholder="Aún sin datos" onChange={e => setRecaudado(e.target.value)} />
+          </Campo>
+          <Campo label="Asistentes" hint="Vacío = aún sin datos.">
+            <input type="number" min="0" className={inputCls} value={asistentes} disabled={!editable}
+              placeholder="Aún sin datos" onChange={e => setAsistentes(e.target.value)} />
+          </Campo>
+        </div>
+      </div>
+
+      {/* Fotos y vídeo */}
+      <div>
+        <Titulo>Fotos y vídeo</Titulo>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div>
+            <span className="block text-xs font-bold text-gray-500 mb-1">Galería ({galeria.length})</span>
+            {galeria.length > 0 && (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-3">
+                {galeria.map((url, i) => (
+                  <div key={`${url}-${i}`} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 bg-pm-bg">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt={`Foto ${i + 1}`} className="w-full h-full object-cover" />
+                    {editable && (
+                      <button type="button" onClick={() => setGaleria(g => g.filter((_, k) => k !== i))}
+                        className="absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs leading-none">
+                        ✕
+                      </button>
+                    )}
+                    {editable && i > 0 && (
+                      <button type="button" title="Mover antes"
+                        onClick={() => setGaleria(g => { const n = [...g]; [n[i - 1], n[i]] = [n[i], n[i - 1]]; return n })}
+                        className="absolute bottom-1 left-1 bg-black/60 hover:bg-black/80 text-white rounded w-5 h-5 flex items-center justify-center text-xs leading-none">
+                        ←
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+            {editable && (
+              <SubirImagen carpeta="reto50" value="" onChange={url => { if (url) setGaleria(g => [...g, url]) }} />
+            )}
+            <p className="text-xs text-gray-400 mt-1">Sube tantas fotos como quieras: se añaden al final de la galería.</p>
+          </div>
+
+          <div className="space-y-3">
+            <Campo label="Vídeo (enlace)" hint="Enlace a YouTube, Instagram o TikTok.">
+              <input className={inputCls} value={videoUrl} disabled={!editable} placeholder="https://…" onChange={e => setVideoUrl(e.target.value)} />
+            </Campo>
+            <Campo label="Enlace a redes" hint="Publicación de esa etapa en redes.">
+              <input className={inputCls} value={enlaceRedes} disabled={!editable} placeholder="https://…" onChange={e => setEnlaceRedes(e.target.value)} />
+            </Campo>
+          </div>
+        </div>
+      </div>
+
+      {/* Notas internas */}
+      <div>
+        <Titulo>Observaciones internas</Titulo>
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+          <p className="text-xs font-bold text-amber-800 mb-2">
+            🔒 Uso interno. Esto NO se publica nunca en la web: solo lo ve el equipo desde este panel.
+          </p>
+          <textarea className="w-full border border-amber-200 bg-white rounded-lg px-2.5 py-2 text-sm resize-y leading-relaxed focus:outline-none focus:border-amber-400 disabled:bg-gray-50"
+            rows={3} value={notasInternas} disabled={!editable}
+            placeholder="Contactos del ayuntamiento, permisos, logística…"
+            onChange={e => setNotasInternas(e.target.value)} />
+        </div>
+      </div>
+
+      {/* Planificación (informativo) */}
+      {(etapa.trayecto || etapa.kmAprox || etapa.tiempoAprox) && (
+        <div className="text-xs text-gray-400 border-t border-gray-100 pt-3">
+          <strong className="text-gray-500">Trayecto planificado:</strong>{' '}
+          {etapa.trayecto || '—'}
+          {etapa.kmAprox && ` · ${etapa.kmAprox}`}
+          {etapa.tiempoAprox && ` · ${etapa.tiempoAprox}`}
+        </div>
+      )}
+
+      {editable && (
+        <div className="flex items-center gap-2 border-t border-gray-100 pt-4">
+          <button type="button" onClick={guardar} disabled={pending}
+            className="bg-pm-red hover:bg-pm-red-dark disabled:opacity-40 text-white font-bold px-5 py-2 rounded-xl text-sm">
+            {pending ? 'Guardando…' : 'Guardar etapa'}
+          </button>
+          <button type="button" onClick={onCerrar} disabled={pending}
+            className="text-sm font-bold text-gray-400 hover:text-pm-navy px-3 py-2">
+            Cancelar
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Titulo({ children }: { children: string }) {
+  return <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-2">{children}</div>
+}

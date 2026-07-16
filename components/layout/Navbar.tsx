@@ -4,7 +4,15 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 
-const NAV_ITEMS = [
+type NavItem = {
+  label: string
+  /** Segunda línea del rótulo. Si existe, el enlace se pinta en dos líneas. */
+  label2?: string
+  href: string
+  items: { label: string; href: string; desc: string }[]
+}
+
+const NAV_ITEMS: NavItem[] = [
   {
     label: 'Club',
     href: '/club',
@@ -60,6 +68,12 @@ const NAV_ITEMS = [
     href: '/planeta-tdah',
     items: [],
   },
+  {
+    label: '50 días',
+    label2: '50 provincias',
+    href: '/50dias50provincias',
+    items: [],
+  },
 ]
 
 export default function Navbar() {
@@ -82,21 +96,31 @@ export default function Navbar() {
               alt="Planeta Movimiento"
               className="h-11 w-auto object-contain"
             />
-            <div className="leading-tight hidden sm:block">
+            {/* El rótulo se oculta mientras el menú de escritorio necesite el ancho. */}
+            <div className="leading-tight hidden xl:block">
               <span className="text-white font-bold text-sm">Planeta</span>
               <span className="text-pm-red font-bold text-sm ml-1">Movimiento</span>
             </div>
           </Link>
 
-          {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-1">
+          {/* Desktop nav — a partir de lg: por debajo, los 7 enlaces no caben y se cortarían */}
+          <div className="hidden lg:flex items-center gap-1">
             {NAV_ITEMS.map((nav) => (
               <div key={nav.label} className="relative group">
                 <Link
                   href={nav.href}
-                  className="flex items-center gap-1 text-white text-sm hover:text-pm-red transition-colors px-3 py-5 whitespace-nowrap"
+                  // El py-5 mantiene vivo el hover del desplegable mientras el ratón baja hacia él.
+                  // El enlace de dos líneas no tiene desplegable, así que ahí se reduce para caber en el h-16.
+                  className={`flex items-center gap-1 text-white text-sm hover:text-pm-red transition-colors px-3 whitespace-nowrap ${nav.label2 ? 'py-2' : 'py-5'}`}
                 >
-                  {nav.label}
+                  {nav.label2 ? (
+                    <span className="flex flex-col leading-tight text-center">
+                      <span>{nav.label}</span>
+                      <span className="text-xs text-white/70">{nav.label2}</span>
+                    </span>
+                  ) : (
+                    nav.label
+                  )}
                   {nav.items.length > 0 && (
                     <svg className="w-3 h-3 mt-0.5 opacity-60 group-hover:rotate-180 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
@@ -136,7 +160,7 @@ export default function Navbar() {
               Reservar
             </Link>
             <button
-              className="md:hidden text-white p-1"
+              className="lg:hidden text-white p-1"
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label="Menú"
             >
@@ -153,7 +177,7 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden bg-pm-navy-md border-t border-white/10">
+        <div className="lg:hidden bg-pm-navy-md border-t border-white/10">
           {NAV_ITEMS.map((nav) => (
             <div key={nav.label} className="border-b border-white/10">
               {nav.items.length === 0 ? (
@@ -163,7 +187,14 @@ export default function Navbar() {
                   className="flex items-center px-4 py-3 text-white text-sm font-semibold hover:text-pm-red transition-colors"
                   onClick={() => setMobileOpen(false)}
                 >
-                  {nav.label}
+                  {nav.label2 ? (
+                    <span className="flex flex-col leading-tight">
+                      <span>{nav.label}</span>
+                      <span className="text-xs font-normal text-white/70">{nav.label2}</span>
+                    </span>
+                  ) : (
+                    nav.label
+                  )}
                 </Link>
               ) : (
                 <>

@@ -74,6 +74,38 @@ export default function HomePage() {
       {/* ════ HERO ════ */}
       <Hero />
 
+      {/* ════ 50 DÍAS, 50 PROVINCIAS ════ */}
+      <section className="bg-pm-navy border-b border-white/10">
+        <Link
+          href="/50dias50provincias"
+          className="group block max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+            <div className="flex items-center gap-3 shrink-0">
+              <span className="text-white font-black text-3xl sm:text-4xl leading-none">50</span>
+              <div className="leading-tight">
+                <div className="text-pm-red font-black text-sm sm:text-base">días</div>
+                <div className="text-white/70 font-black text-sm sm:text-base">50 provincias</div>
+              </div>
+            </div>
+
+            <div className="hidden sm:block w-px h-10 bg-white/15 shrink-0" aria-hidden="true" />
+
+            <p className="text-white/70 text-sm leading-relaxed min-w-0 flex-1">
+              El reto deportivo y solidario de <strong className="text-white font-bold">Brosjaca</strong>: una provincia
+              cada día a beneficio de la lucha contra el cáncer.
+            </p>
+
+            <span className="inline-flex items-center gap-2 text-pm-red group-hover:text-white font-bold text-sm whitespace-nowrap transition-colors shrink-0">
+              Conoce el reto
+              <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </span>
+          </div>
+        </Link>
+      </section>
+
       {/* ════ COLABORADORES / CONFIANZA ════ */}
       <section className="bg-white border-b border-gray-100 py-10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
