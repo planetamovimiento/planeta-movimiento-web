@@ -3,15 +3,17 @@ import { Foto } from '@/components/ui/Foto'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { SITE_URL, breadcrumbsJsonLd } from '@/lib/seo'
 import {
-  IMPACTO, RETO, TOTAL_PROVINCIAS, euros, fechaLarga, labelNivel,
+  IMPACTO, RETO, TOTAL_PROVINCIAS, euros, fechaLarga, labelNivel, litros,
 } from '@/lib/reto50/constants'
 import {
-  getConfigReto, getEtapasPublicas, getFaqActivas, getPatrocinadoresActivos,
-  proximaParada, resumenReto,
+  gasolinaDeConfig, getConfigReto, getEtapasPublicas, getFaqActivas, getPatrocinadoresActivos,
+  getQrsActivos, getRankingPublico, proximaParada, resumenReto,
 } from '@/lib/reto50/data'
 import MapaEspana from './MapaEspana'
 import RutaCalendario from './RutaCalendario'
 import Faq from './Faq'
+import PanelQr from './PanelQr'
+import Gasolina from './Gasolina'
 import { BloqueCompartir, BotonCompartir } from './Compartir'
 
 export const dynamic = 'force-dynamic'
@@ -48,15 +50,18 @@ const btnSecundario =
   'inline-flex items-center justify-center gap-2 border-2 border-white/30 hover:bg-white/10 text-white font-bold text-sm px-6 py-3.5 rounded-xl transition-colors'
 
 export default async function CincuentaDiasPage() {
-  const [etapas, patrocinadores, faq, config] = await Promise.all([
+  const [etapas, patrocinadores, faq, qrs, ranking, config] = await Promise.all([
     getEtapasPublicas(),
     getPatrocinadoresActivos(),
     getFaqActivas(),
+    getQrsActivos(),
+    getRankingPublico(),
     getConfigReto(),
   ])
 
   const proxima = proximaParada(etapas)
   const resumen = resumenReto(etapas)
+  const gasolina = gasolinaDeConfig(config)
   const finalizadas = etapas.filter(e => e.estado === 'finalizada')
   const conGaleria = finalizadas.filter(e => e.galeria.length > 0 || e.resumen || e.videoUrl)
 
@@ -137,18 +142,20 @@ export default async function CincuentaDiasPage() {
                 </div>
               </div>
 
+              {/* Zona de colaboración: los QR mandan; si aún no hay, la imagen del reto */}
               <div className="relative">
-                {heroImagen ? (
+                {qrs.length > 0 ? (
+                  <PanelQr qrs={qrs} titulo={config.qr_titulo} texto={config.qr_texto} />
+                ) : heroImagen ? (
                   <div className="rounded-3xl overflow-hidden shadow-2xl aspect-[4/3] relative">
                     <Foto src={heroImagen} alt={`${RETO.protagonista} — ${RETO.nombre}`} />
                   </div>
                 ) : (
-                  <div className="rounded-3xl bg-gradient-to-br from-pm-navy-md to-pm-navy border border-white/10 aspect-[4/3] flex flex-col items-center justify-center p-8 text-center">
-                    <div className="text-white font-black text-6xl sm:text-7xl leading-none">50</div>
-                    <div className="text-pm-red font-black text-xl sm:text-2xl mt-1 tracking-tight">provincias</div>
-                    <div className="w-12 h-px bg-white/20 my-5" />
-                    <div className="text-white font-black text-6xl sm:text-7xl leading-none">50</div>
-                    <div className="text-white/60 font-black text-xl sm:text-2xl mt-1 tracking-tight">días</div>
+                  <div className="rounded-3xl bg-white/5 border border-white/10 p-8 text-center">
+                    <h2 className="text-white font-black text-lg">{config.qr_titulo || 'Colabora con el reto'}</h2>
+                    <p className="text-white/50 text-sm mt-2 leading-relaxed">
+                      Los códigos para colaborar se publicarán aquí antes de la salida.
+                    </p>
                   </div>
                 )}
               </div>
@@ -227,57 +234,22 @@ export default async function CincuentaDiasPage() {
           </div>
         </section>
 
-        {/* ── 3 · PROGRESIÓN ─────────────────────────────────────────────── */}
+        {/* ── 3 · OBJETIVO DE GASOLINA ───────────────────────────────────── */}
         <section className="bg-pm-bg py-16 sm:py-20">
           <div className={CONTENEDOR}>
-            <Reveal className="text-center max-w-2xl mx-auto">
-              <p className={KICKER}>La progresión</p>
+            <Reveal className="text-center max-w-2xl mx-auto mb-10">
+              <p className={KICKER}>Objetivo de gasolina</p>
               <h2 className="text-3xl font-black text-pm-navy mt-2">
-                De {RETO.burflipsInicio} a {RETO.burflipsFin} repeticiones
+                {litros(gasolina.objetivoLitros)} para cruzar España
               </h2>
               <p className="text-gray-500 text-sm mt-4 leading-relaxed">
-                Cuando la ruta arranca en {RETO.ciudadInicio}, el reto anual ya va por el día {RETO.burflipsInicio}: ese
-                día toca hacer <strong className="text-pm-navy">{RETO.burflipsInicio} burflips</strong>. Y cada jornada,
-                uno más. Al llegar a {RETO.ciudadFin}, el día {RETO.burflipsFin} del año, serán{' '}
-                <strong className="text-pm-navy">{RETO.burflipsFin}</strong>. La dificultad sube mientras el cuerpo
-                acumula 50 días de carretera.
+                Recorrer las {TOTAL_PROVINCIAS} provincias cuesta combustible. Este es el depósito del reto: se llena con
+                lo que aporta la gente y así llega hasta {RETO.ciudadFin}.
               </p>
             </Reveal>
 
             <Reveal delay={80}>
-              <div className="mt-10 bg-white rounded-3xl border border-gray-100 shadow-sm p-5 sm:p-8">
-                {/* Barras: una por etapa. La altura crece del día 1 al 50. */}
-                <div className="flex items-end justify-between gap-[2px] sm:gap-1 h-32 sm:h-44" aria-hidden="true">
-                  {etapas.map(e => {
-                    const min = RETO.burflipsInicio
-                    const max = RETO.burflipsFin
-                    const pct = 30 + ((e.burflips - min) / Math.max(1, max - min)) * 70
-                    const hecho = e.estado === 'finalizada'
-                    return (
-                      <div
-                        key={e.dia}
-                        className={`flex-1 rounded-t-sm transition-colors ${hecho ? 'bg-pm-red' : 'bg-pm-navy/15'}`}
-                        style={{ height: `${pct}%` }}
-                        title={`Día ${e.dia} · ${e.provincia} · ${e.burflips} burflips`}
-                      />
-                    )
-                  })}
-                </div>
-
-                <div className="flex justify-between mt-3 pt-3 border-t border-gray-100">
-                  <div>
-                    <div className="text-pm-navy font-black text-2xl">{RETO.burflipsInicio}</div>
-                    <div className="text-gray-400 text-xs">Día 1 · {RETO.ciudadInicio}</div>
-                  </div>
-                  <div className="text-center self-center">
-                    <div className="text-gray-300 text-xs font-bold uppercase tracking-widest">+1 cada día</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-pm-navy font-black text-2xl">{RETO.burflipsFin}</div>
-                    <div className="text-gray-400 text-xs">Día 50 · {RETO.ciudadFin}</div>
-                  </div>
-                </div>
-              </div>
+              <Gasolina gasolina={gasolina} ranking={ranking} />
             </Reveal>
           </div>
         </section>

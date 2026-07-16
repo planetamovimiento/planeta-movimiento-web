@@ -47,8 +47,9 @@ const entONull = (v: unknown) => {
 }
 
 const MSG_SEED =
-  'Esta es la ruta oficial de respaldo, todavía no está en la base de datos. ' +
-  'Ejecuta supabase/migration_reto50.sql en Supabase para poder guardar cambios.'
+  'Estos son los datos oficiales de respaldo, todavía no están en la base de datos. ' +
+  'Ejecuta supabase/migration_reto50.sql y supabase/migration_reto50_donaciones.sql ' +
+  'en Supabase para poder guardar cambios.'
 
 /** Las filas de respaldo (id 'seed-…') no existen en la base de datos. */
 const esSeed = (id: string) => !id || id.startsWith('seed-')
@@ -309,6 +310,175 @@ export async function reordenarPatrocinador(id: string, direccion: 'subir' | 'ba
     return { ok: true }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Error al reordenar' }
+  }
+}
+
+// ── Códigos QR de donación ───────────────────────────────────────────────────
+
+export type QrInput = {
+  id?: string
+  titulo: string
+  descripcion?: string
+  imagenUrl?: string
+  enlaceUrl?: string
+  activo?: boolean
+  orden?: number | string
+}
+
+export async function guardarQr(input: QrInput): Promise<Res> {
+  try {
+    const { admin, error } = await exigir()
+    if (!admin) return { ok: false, error }
+    if (input.id && esSeed(input.id)) return { ok: false, error: MSG_SEED }
+    if (!input.titulo?.trim()) return { ok: false, error: 'El título es obligatorio' }
+
+    const row = {
+      titulo: input.titulo.trim(),
+      descripcion: txt(input.descripcion),
+      imagen_url: txt(input.imagenUrl),
+      enlace_url: txt(input.enlaceUrl),
+      activo: input.activo !== false,
+      orden: entONull(input.orden) ?? 0,
+      updated_at: new Date().toISOString(),
+    }
+
+    const db = createAdminClient()
+    const { error: e } = input.id
+      ? await db.from('reto50_qr').update(row).eq('id', input.id)
+      : await db.from('reto50_qr').insert(row)
+    if (e) return { ok: false, error: e.message }
+
+    await logActivity({
+      actorEmail: admin.email,
+      accion: input.id ? 'Editó un QR de donación (50 días)' : 'Añadió un QR de donación (50 días)',
+      entidad: 'reto50_qr',
+      entidadId: input.id,
+      detalle: row.titulo,
+    })
+    revalidar()
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Error al guardar el QR' }
+  }
+}
+
+export async function eliminarQr(id: string): Promise<Res> {
+  try {
+    const { admin, error } = await exigir()
+    if (!admin) return { ok: false, error }
+    if (esSeed(id)) return { ok: false, error: MSG_SEED }
+
+    const db = createAdminClient()
+    const { error: e } = await db.from('reto50_qr').delete().eq('id', id)
+    if (e) return { ok: false, error: e.message }
+
+    await logActivity({ actorEmail: admin.email, accion: 'Eliminó un QR de donación (50 días)', entidad: 'reto50_qr', entidadId: id })
+    revalidar()
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Error al eliminar el QR' }
+  }
+}
+
+export async function reordenarQr(id: string, direccion: 'subir' | 'bajar'): Promise<Res> {
+  try {
+    const { admin, error } = await exigir()
+    if (!admin) return { ok: false, error }
+    if (esSeed(id)) return { ok: false, error: MSG_SEED }
+
+    const db = createAdminClient()
+    const { data, error: e } = await db.from('reto50_qr').select('id, orden').order('orden', { ascending: true })
+    if (e) return { ok: false, error: e.message }
+
+    const lista = (data ?? []) as { id: string; orden: number }[]
+    const i = lista.findIndex(q => q.id === id)
+    if (i === -1) return { ok: false, error: 'No se encuentra ese QR' }
+    const j = direccion === 'subir' ? i - 1 : i + 1
+    if (j < 0 || j >= lista.length) return { ok: true }
+
+    // Se reescribe el orden entero: así queda consistente aunque hubiera empates.
+    const reordenada = [...lista]
+    ;[reordenada[i], reordenada[j]] = [reordenada[j], reordenada[i]]
+    for (let k = 0; k < reordenada.length; k++) {
+      await db.from('reto50_qr').update({ orden: k + 1 }).eq('id', reordenada[k].id)
+    }
+
+    revalidar()
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Error al reordenar' }
+  }
+}
+
+// ── Ranking de colaboradores de gasolina ─────────────────────────────────────
+
+export type DonanteInput = {
+  id?: string
+  nombre: string
+  importe?: number | string
+  avatarUrl?: string
+  fecha?: string
+  /** Opt-in: si no está marcado, no sale en el ranking público. */
+  publico?: boolean
+  activo?: boolean
+}
+
+export async function guardarDonante(input: DonanteInput): Promise<Res> {
+  try {
+    const { admin, error } = await exigir()
+    if (!admin) return { ok: false, error }
+    if (input.id && esSeed(input.id)) return { ok: false, error: MSG_SEED }
+    if (!input.nombre?.trim()) return { ok: false, error: 'El nombre o alias es obligatorio' }
+
+    const importe = numONull(input.importe)
+    if (importe == null) return { ok: false, error: 'El importe es obligatorio' }
+    if (importe < 0) return { ok: false, error: 'El importe no puede ser negativo' }
+
+    const row = {
+      nombre: input.nombre.trim(),
+      importe,
+      avatar_url: txt(input.avatarUrl),
+      fecha: input.fecha || null,
+      publico: input.publico === true,
+      activo: input.activo !== false,
+      updated_at: new Date().toISOString(),
+    }
+
+    const db = createAdminClient()
+    const { error: e } = input.id
+      ? await db.from('reto50_donantes').update(row).eq('id', input.id)
+      : await db.from('reto50_donantes').insert(row)
+    if (e) return { ok: false, error: e.message }
+
+    await logActivity({
+      actorEmail: admin.email,
+      accion: input.id ? 'Editó un colaborador de gasolina (50 días)' : 'Añadió un colaborador de gasolina (50 días)',
+      entidad: 'reto50_donante',
+      entidadId: input.id,
+      detalle: `${row.nombre} · ${importe} €${row.publico ? '' : ' (no publicado)'}`,
+    })
+    revalidar()
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Error al guardar el colaborador' }
+  }
+}
+
+export async function eliminarDonante(id: string): Promise<Res> {
+  try {
+    const { admin, error } = await exigir()
+    if (!admin) return { ok: false, error }
+    if (esSeed(id)) return { ok: false, error: MSG_SEED }
+
+    const db = createAdminClient()
+    const { error: e } = await db.from('reto50_donantes').delete().eq('id', id)
+    if (e) return { ok: false, error: e.message }
+
+    await logActivity({ actorEmail: admin.email, accion: 'Eliminó un colaborador de gasolina (50 días)', entidad: 'reto50_donante', entidadId: id })
+    revalidar()
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Error al eliminar' }
   }
 }
 

@@ -1,6 +1,6 @@
 import { requireSeccion, can } from '@/lib/admin/auth'
 import { AdminHeader } from '@/components/admin/ui'
-import { getEtapas, getPatrocinadores, getFaq, getConfigReto, hayTablaEtapas, resumenReto } from '@/lib/reto50/data'
+import { getEtapas, getPatrocinadores, getFaq, getQrs, getDonantes, getConfigReto, hayTablaEtapas, resumenReto } from '@/lib/reto50/data'
 import Reto50Client from './Reto50Client'
 
 export const dynamic = 'force-dynamic'
@@ -9,10 +9,12 @@ export default async function Reto50Page() {
   const admin = await requireSeccion('50dias50provincias')
 
   // getEtapas() incluye las notas internas: aquí sí, es el panel.
-  const [etapas, patrocinadores, faq, config, migrado] = await Promise.all([
+  const [etapas, patrocinadores, faq, qrs, donantes, config, migrado] = await Promise.all([
     getEtapas(),
     getPatrocinadores(),
     getFaq(),
+    getQrs(),
+    getDonantes(),
     getConfigReto(),
     hayTablaEtapas(),
   ])
@@ -31,6 +33,8 @@ export default async function Reto50Page() {
           etapas={etapas}
           patrocinadores={patrocinadores}
           faq={faq}
+          qrs={qrs}
+          donantes={donantes}
           config={config}
           resumen={resumen}
           migrado={migrado}

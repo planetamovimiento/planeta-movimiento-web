@@ -8,6 +8,8 @@ type NavItem = {
   label: string
   /** Segunda línea del rótulo. Si existe, el enlace se pinta en dos líneas. */
   label2?: string
+  /** Resalta el enlace sobre el resto del menú (campaña en marcha). */
+  destacado?: boolean
   href: string
   items: { label: string; href: string; desc: string }[]
 }
@@ -69,8 +71,9 @@ const NAV_ITEMS: NavItem[] = [
     items: [],
   },
   {
-    label: '50 días',
+    label: '50 días en',
     label2: '50 provincias',
+    destacado: true,
     href: '/50dias50provincias',
     items: [],
   },
@@ -111,12 +114,27 @@ export default function Navbar() {
                   href={nav.href}
                   // El py-5 mantiene vivo el hover del desplegable mientras el ratón baja hacia él.
                   // El enlace de dos líneas no tiene desplegable, así que ahí se reduce para caber en el h-16.
-                  className={`flex items-center gap-1 text-white text-sm hover:text-pm-red transition-colors px-3 whitespace-nowrap ${nav.label2 ? 'py-2' : 'py-5'}`}
+                  className={`flex items-center gap-1 text-white text-sm transition-colors px-3 whitespace-nowrap ${
+                    nav.label2 ? 'py-2' : 'py-5'
+                  } ${nav.destacado ? '' : 'hover:text-pm-red'}`}
                 >
                   {nav.label2 ? (
-                    <span className="flex flex-col leading-tight text-center">
-                      <span>{nav.label}</span>
-                      <span className="text-xs text-white/70">{nav.label2}</span>
+                    // Las dos líneas van dentro de un único bloque: el hover ilumina el conjunto.
+                    <span
+                      className={`flex flex-col leading-tight text-center ${
+                        nav.destacado ? 'pm-destacado px-2.5 py-1' : ''
+                      }`}
+                    >
+                      <span className={nav.destacado ? 'font-semibold group-hover:text-white transition-colors' : ''}>
+                        {nav.label}
+                      </span>
+                      <span
+                        className={`text-xs transition-colors ${
+                          nav.destacado ? 'text-pm-red group-hover:text-white' : 'text-white/70 group-hover:text-pm-red'
+                        }`}
+                      >
+                        {nav.label2}
+                      </span>
                     </span>
                   ) : (
                     nav.label
@@ -184,13 +202,21 @@ export default function Navbar() {
                 /* Link directo sin acordeón */
                 <Link
                   href={nav.href}
-                  className="flex items-center px-4 py-3 text-white text-sm font-semibold hover:text-pm-red transition-colors"
+                  className={`group flex items-center px-4 py-3 text-white text-sm font-semibold transition-colors ${
+                    nav.destacado ? '' : 'hover:text-pm-red'
+                  }`}
                   onClick={() => setMobileOpen(false)}
                 >
                   {nav.label2 ? (
-                    <span className="flex flex-col leading-tight">
+                    <span className={`flex flex-col leading-tight ${nav.destacado ? 'pm-destacado px-3 py-1.5' : ''}`}>
                       <span>{nav.label}</span>
-                      <span className="text-xs font-normal text-white/70">{nav.label2}</span>
+                      <span
+                        className={`text-xs font-normal transition-colors ${
+                          nav.destacado ? 'text-pm-red group-hover:text-white' : 'text-white/70'
+                        }`}
+                      >
+                        {nav.label2}
+                      </span>
                     </span>
                   ) : (
                     nav.label

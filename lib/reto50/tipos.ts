@@ -64,6 +64,28 @@ export type FaqItem = {
   activo: boolean
 }
 
+export type QrDonacion = {
+  id: string
+  titulo: string
+  descripcion: string
+  imagenUrl: string
+  enlaceUrl: string
+  activo: boolean
+  orden: number
+}
+
+export type Donante = {
+  id: string
+  /** Nombre o alias autorizado. Nunca datos personales sensibles. */
+  nombre: string
+  importe: number
+  avatarUrl: string
+  fecha: string
+  /** Opt-in explícito: si es false no aparece en el ranking público. */
+  publico: boolean
+  activo: boolean
+}
+
 export type ConfigReto = Record<string, string>
 
 export type ResumenReto = {

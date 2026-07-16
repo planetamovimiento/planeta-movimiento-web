@@ -7,9 +7,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { COORDS_PROVINCIA, ESTADOS_CERRADOS, RUTA_SEED, TOTAL_PROVINCIAS } from './constants'
-import type { EstadoEtapa } from './constants'
-import type { ConfigReto, Etapa, EtapaPublica, FaqItem, Patrocinador, ResumenReto } from './tipos'
+import { COORDS_PROVINCIA, ESTADOS_CERRADOS, RUTA_SEED, TOTAL_PROVINCIAS, calcGasolina } from './constants'
+import type { EstadoEtapa, ResumenGasolina } from './constants'
+import type { ConfigReto, Donante, Etapa, EtapaPublica, FaqItem, Patrocinador, QrDonacion, ResumenReto } from './tipos'
 
 type Row = Record<string, unknown>
 
@@ -258,6 +258,81 @@ export async function getFaq(): Promise<FaqItem[]> {
 /** Solo las activas: para la web pública. */
 export async function getFaqActivas(): Promise<FaqItem[]> {
   return (await getFaq()).filter(f => f.activo)
+}
+
+// ── Códigos QR de donación ───────────────────────────────────────────────────
+
+/** Todos los QR (incluidos los desactivados): para el panel. */
+export async function getQrs(): Promise<QrDonacion[]> {
+  const db = createAdminClient()
+  const rows = await safe<Row>(() => db.from('reto50_qr').select('*') as never)
+  return rows
+    .map(r => ({
+      id: str(r.id),
+      titulo: str(r.titulo),
+      descripcion: str(r.descripcion),
+      imagenUrl: str(r.imagen_url),
+      enlaceUrl: str(r.enlace_url),
+      activo: r.activo !== false,
+      orden: num(r.orden),
+    }))
+    .sort((a, b) => a.orden - b.orden || a.titulo.localeCompare(b.titulo, 'es'))
+}
+
+/** Solo los activos: para la web pública. */
+export async function getQrsActivos(): Promise<QrDonacion[]> {
+  return (await getQrs()).filter(q => q.activo)
+}
+
+// ── Ranking de colaboradores de gasolina ─────────────────────────────────────
+
+function aDonante(r: Row): Donante {
+  return {
+    id: str(r.id),
+    nombre: str(r.nombre),
+    importe: num(r.importe),
+    avatarUrl: str(r.avatar_url),
+    fecha: r.fecha ? str(r.fecha).slice(0, 10) : '',
+    publico: r.publico === true,
+    activo: r.activo !== false,
+  }
+}
+
+/** Todos los donantes, de mayor a menor importe: para el panel. */
+export async function getDonantes(): Promise<Donante[]> {
+  const db = createAdminClient()
+  const rows = await safe<Row>(() => db.from('reto50_donantes').select('*') as never)
+  return rows.map(aDonante).sort((a, b) => b.importe - a.importe)
+}
+
+/**
+ * Ranking público: solo quien está activo Y ha autorizado aparecer, ordenado
+ * por importe y recortado a 10. Si hay menos, salen los que haya.
+ */
+export async function getRankingPublico(limite = 10): Promise<Donante[]> {
+  const todos = await getDonantes()
+  return todos.filter(d => d.activo && d.publico).slice(0, limite)
+}
+
+// ── Objetivo de gasolina ─────────────────────────────────────────────────────
+
+/**
+ * Cifras del depósito. Se introducen a mano desde el panel: no hay conexión
+ * automática con pagos. El total NO se calcula sumando el ranking, porque
+ * puede haber aportaciones anónimas o de quien no quiere aparecer.
+ */
+export function gasolinaDeConfig(config: ConfigReto): ResumenGasolina & { actualizado: string; nota: string } {
+  const recaudado = numONull(config.gasolina_recaudado)
+  const resumen = calcGasolina(
+    recaudado,
+    numONull(config.gasolina_objetivo_eur),
+    numONull(config.gasolina_objetivo_litros),
+  )
+  return {
+    ...resumen,
+    actualizado: config.gasolina_actualizado || '',
+    nota: config.gasolina_nota || '',
+  }
 }
 
 /** Textos, imágenes y enlaces editables. {} si no hay nada configurado. */

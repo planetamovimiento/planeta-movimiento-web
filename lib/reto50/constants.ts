@@ -76,6 +76,9 @@ export const CLAVES_CONFIG = [
   'intro_texto', 'quien_es_texto', 'dossier_url', 'donacion_url',
   'objetivo_global', 'instagram_url', 'tiktok_url', 'youtube_url',
   'facebook_url', 'web_brosjaca', 'contacto_email', 'contacto_telefono',
+  'qr_titulo', 'qr_texto',
+  'gasolina_recaudado', 'gasolina_actualizado', 'gasolina_nota',
+  'gasolina_objetivo_eur', 'gasolina_objetivo_litros',
 ] as const
 
 export type ClaveConfig = (typeof CLAVES_CONFIG)[number]
@@ -92,6 +95,60 @@ export function fechaCorta(iso: string): string {
   const d = new Date(iso + 'T12:00:00Z')
   if (Number.isNaN(d.getTime())) return iso
   return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+}
+
+// ── Objetivo de gasolina ─────────────────────────────────────────────────────
+
+/** Objetivo de partida: 750 litros ≈ 1.500 €. Editable desde el panel. */
+export const GASOLINA_DEFAULT = { objetivoEur: 1500, objetivoLitros: 750 }
+
+export type ResumenGasolina = {
+  /** null = todavía no se ha introducido ninguna cifra. */
+  recaudado: number | null
+  objetivoEur: number
+  objetivoLitros: number
+  /** Porcentaje real: puede pasar del 100 %. */
+  porcentaje: number
+  /** Porcentaje para pintar el depósito: nunca pasa del 100 %. */
+  porcentajeVisual: number
+  /** Litros equivalentes a lo recaudado. */
+  litros: number
+  restanteEur: number
+  restanteLitros: number
+  completado: boolean
+}
+
+/**
+ * Cuentas del depósito. La equivalencia litros/euro sale del propio objetivo
+ * (750 L / 1.500 € = 0,5 L por euro → 500 € = 250 litros), así que si mañana
+ * se cambia el objetivo los litros siguen cuadrando sin tocar el código.
+ */
+export function calcGasolina(
+  recaudado: number | null,
+  objetivoEur?: number | null,
+  objetivoLitros?: number | null,
+): ResumenGasolina {
+  const eur = objetivoEur && objetivoEur > 0 ? objetivoEur : GASOLINA_DEFAULT.objetivoEur
+  const litrosObjetivo = objetivoLitros && objetivoLitros > 0 ? objetivoLitros : GASOLINA_DEFAULT.objetivoLitros
+  const r = recaudado ?? 0
+  const porcentaje = (r / eur) * 100
+  const litros = r * (litrosObjetivo / eur)
+  return {
+    recaudado,
+    objetivoEur: eur,
+    objetivoLitros: litrosObjetivo,
+    porcentaje,
+    porcentajeVisual: Math.max(0, Math.min(100, porcentaje)),
+    litros,
+    restanteEur: Math.max(0, eur - r),
+    restanteLitros: Math.max(0, litrosObjetivo - litros),
+    completado: r >= eur,
+  }
+}
+
+/** Litros con como mucho un decimal: 250 L, 12,5 L. */
+export function litros(v: number): string {
+  return `${new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 }).format(v)} L`
 }
 
 /** Importe en euros. Devuelve '' si no hay dato (nunca inventa un 0 €). */

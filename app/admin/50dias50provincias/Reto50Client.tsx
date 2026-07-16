@@ -2,11 +2,13 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import type { ConfigReto, Etapa, FaqItem, Patrocinador, ResumenReto } from '@/lib/reto50/tipos'
+import type { ConfigReto, Donante, Etapa, FaqItem, Patrocinador, QrDonacion, ResumenReto } from '@/lib/reto50/tipos'
 import type { Correr, Resultado } from './piezas'
 import TabGeneral from './TabGeneral'
 import TabRuta from './TabRuta'
 import TabImpacto from './TabImpacto'
+import TabQr from './TabQr'
+import TabGasolina from './TabGasolina'
 import TabPatrocinadores from './TabPatrocinadores'
 import TabFaq from './TabFaq'
 
@@ -14,15 +16,17 @@ type Props = {
   etapas: Etapa[]
   patrocinadores: Patrocinador[]
   faq: FaqItem[]
+  qrs: QrDonacion[]
+  donantes: Donante[]
   config: ConfigReto
   resumen: ResumenReto
   migrado: boolean
   puedeEditar: boolean
 }
 
-type TabId = 'general' | 'ruta' | 'impacto' | 'patrocinadores' | 'faq'
+type TabId = 'general' | 'ruta' | 'qr' | 'gasolina' | 'impacto' | 'patrocinadores' | 'faq'
 
-export default function Reto50Client({ etapas, patrocinadores, faq, config, resumen, migrado, puedeEditar }: Props) {
+export default function Reto50Client({ etapas, patrocinadores, faq, qrs, donantes, config, resumen, migrado, puedeEditar }: Props) {
   const router = useRouter()
   const [tab, setTab] = useState<TabId>('general')
   const [pending, startTransition] = useTransition()
@@ -49,7 +53,9 @@ export default function Reto50Client({ etapas, patrocinadores, faq, config, resu
   const tabs: { id: TabId; label: string; extra?: string }[] = [
     { id: 'general', label: 'General' },
     { id: 'ruta', label: 'Ruta', extra: String(etapas.length) },
-    { id: 'impacto', label: 'Recaudación' },
+    { id: 'qr', label: 'Códigos QR', extra: String(qrs.length) },
+    { id: 'gasolina', label: 'Gasolina', extra: String(donantes.length) },
+    { id: 'impacto', label: 'Recaudación', extra: String(etapas.length) },
     { id: 'patrocinadores', label: 'Patrocinadores', extra: String(patrocinadores.length) },
     { id: 'faq', label: 'FAQ', extra: String(faq.length) },
   ]
@@ -58,11 +64,13 @@ export default function Reto50Client({ etapas, patrocinadores, faq, config, resu
     <div className="space-y-5">
       {!migrado && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-800">
-          <div className="font-black mb-1">⚙️ Falta una migración</div>
+          <div className="font-black mb-1">⚙️ Faltan las migraciones</div>
           <p className="text-amber-700 leading-relaxed">
-            Ejecuta <code className="bg-amber-100 px-1.5 py-0.5 rounded">supabase/migration_reto50.sql</code> en el SQL
-            Editor de Supabase para activar esta sección. Mientras tanto se muestra la{' '}
-            <strong>ruta oficial de respaldo</strong> (solo lectura) y <strong>no se puede guardar</strong> ningún cambio.
+            Ejecuta en el SQL Editor de Supabase, por este orden,{' '}
+            <code className="bg-amber-100 px-1.5 py-0.5 rounded">supabase/migration_reto50.sql</code> y{' '}
+            <code className="bg-amber-100 px-1.5 py-0.5 rounded">supabase/migration_reto50_donaciones.sql</code> para
+            activar esta sección. Mientras tanto se muestra la <strong>ruta oficial de respaldo</strong> (solo lectura) y{' '}
+            <strong>no se puede guardar</strong> ningún cambio.
           </p>
         </div>
       )}
@@ -98,6 +106,8 @@ export default function Reto50Client({ etapas, patrocinadores, faq, config, resu
 
       {tab === 'general' && <TabGeneral config={config} pending={pending} correr={correr} editable={editable} />}
       {tab === 'ruta' && <TabRuta etapas={etapas} pending={pending} correr={correr} editable={editable} />}
+      {tab === 'qr' && <TabQr qrs={qrs} pending={pending} correr={correr} editable={editable} />}
+      {tab === 'gasolina' && <TabGasolina config={config} donantes={donantes} pending={pending} correr={correr} editable={editable} />}
       {tab === 'impacto' && <TabImpacto etapas={etapas} resumen={resumen} pending={pending} correr={correr} editable={editable} />}
       {tab === 'patrocinadores' && <TabPatrocinadores patrocinadores={patrocinadores} pending={pending} correr={correr} editable={editable} />}
       {tab === 'faq' && <TabFaq faq={faq} pending={pending} correr={correr} editable={editable} />}
