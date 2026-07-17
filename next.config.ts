@@ -2,12 +2,17 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   experimental: {
-    // Las Server Actions rechazan por defecto los envíos de más de 1 MB, y al
-    // subir una imagen de portada (que pesa varios MB) el runtime cortaba la
-    // petición antes de ejecutar la action → pantalla "This page couldn't load".
-    // Se sube a 12 MB: por encima del tope de 10 MB que valida subirImagen, para
-    // que sea esa validación (con mensaje claro) la que rechace lo demasiado grande.
-    serverActions: { bodySizeLimit: '12mb' },
+    // Al subir una imagen (que pesa varios MB) había DOS topes de body que la
+    // cortaban antes de que subirImagen la procesara, y eso rompía la página:
+    //  1) serverActions.bodySizeLimit — por defecto 1 MB.
+    //  2) proxyClientMaxBodySize — por defecto 10 MB. Como este proyecto usa
+    //     middleware/proxy en /admin/*, el proxy vuelca el body con ESTE tope; si
+    //     se supera, el formulario llega cortado ("Unexpected end of form", 500).
+    // Los dos se suben a 30 MB, por encima del tope de 25 MB que valida
+    // subirImagen (con margen para la sobrecarga del envío), para que sea esa
+    // validación —con un mensaje claro— la que rechace lo demasiado grande.
+    serverActions: { bodySizeLimit: '30mb' },
+    proxyClientMaxBodySize: '30mb',
   },
 
   async headers() {

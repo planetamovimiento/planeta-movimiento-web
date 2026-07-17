@@ -47,7 +47,7 @@ export function SubirImagen({ value, onChange, carpeta = 'general' }: {
             <>
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 16.5V19a2 2 0 002 2h14a2 2 0 002-2v-2.5M16 7l-4-4m0 0L8 7m4-4v12"/></svg>
               <span className="text-sm font-semibold">Subir imagen desde tu PC</span>
-              <span className="text-xs">JPG, PNG o WebP · máx. 10 MB</span>
+              <span className="text-xs">JPG, PNG o WebP · máx. 25 MB</span>
             </>
           )}
         </button>

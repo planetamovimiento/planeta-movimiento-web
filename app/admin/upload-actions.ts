@@ -14,7 +14,7 @@ export async function subirImagen(formData: FormData) {
   const file = formData.get('file') as File | null
   const carpeta = (formData.get('carpeta') as string) || 'general'
   if (!file || file.size === 0) return { ok: false, error: 'No se ha seleccionado ningún archivo' }
-  if (file.size > 10 * 1024 * 1024) return { ok: false, error: 'La imagen supera los 10 MB' }
+  if (file.size > 25 * 1024 * 1024) return { ok: false, error: 'La imagen supera los 25 MB' }
   if (!['image/jpeg', 'image/png', 'image/webp', 'image/avif'].includes(file.type)) {
     return { ok: false, error: 'Formato no válido (usa JPG, PNG o WebP)' }
   }
