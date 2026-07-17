@@ -1,6 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Las Server Actions rechazan por defecto los envíos de más de 1 MB, y al
+    // subir una imagen de portada (que pesa varios MB) el runtime cortaba la
+    // petición antes de ejecutar la action → pantalla "This page couldn't load".
+    // Se sube a 12 MB: por encima del tope de 10 MB que valida subirImagen, para
+    // que sea esa validación (con mensaje claro) la que rechace lo demasiado grande.
+    serverActions: { bodySizeLimit: '12mb' },
+  },
+
   async headers() {
     return [
       {

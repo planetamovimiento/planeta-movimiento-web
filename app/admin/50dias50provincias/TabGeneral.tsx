@@ -69,9 +69,6 @@ export default function TabGeneral({ config, pending, correr, editable }: Props)
             <Campo label="Subtítulo de portada">
               {area('hero_subtitulo', 3)}
             </Campo>
-            <Campo label="Vídeo de portada (enlace)" hint="Opcional. Si lo dejas vacío se muestra la imagen.">
-              {txt('hero_video', 'https://…')}
-            </Campo>
           </div>
           <div className="space-y-4">
             <Campo label="Imagen de portada">
