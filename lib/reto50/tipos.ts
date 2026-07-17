@@ -34,6 +34,9 @@ export type Etapa = {
   /** Carátula propia. Si está vacía se usa la que sirve YouTube. */
   videoMiniatura: string
   videoFecha: string
+  /** Bandera de la provincia/territorio. La sube el admin; '' = sin bandera. */
+  banderaUrl: string
+  banderaAlt: string
   enlaceRedes: string
   testimonios: string
   /** Planificación interna. Solo el panel; jamás la web pública. */

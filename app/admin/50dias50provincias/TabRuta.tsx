@@ -179,6 +179,8 @@ function EditorEtapa({ etapa, pending, correr, editable, onCerrar }: {
   const [videoDescripcion, setVideoDescripcion] = useState(etapa.videoDescripcion)
   const [videoMiniatura, setVideoMiniatura] = useState(etapa.videoMiniatura)
   const [videoFecha, setVideoFecha] = useState(etapa.videoFecha)
+  const [banderaUrl, setBanderaUrl] = useState(etapa.banderaUrl)
+  const [banderaAlt, setBanderaAlt] = useState(etapa.banderaAlt)
   const [enlaceRedes, setEnlaceRedes] = useState(etapa.enlaceRedes)
   const [testimonios, setTestimonios] = useState(etapa.testimonios)
 
@@ -192,7 +194,7 @@ function EditorEtapa({ etapa, pending, correr, editable, onCerrar }: {
         dia, fecha, provincia, ciudad, hora, puntoEncuentro,
         burflips, estado, recaudado, asistentes,
         galeria, videoUrl, videoTitulo, videoDescripcion, videoMiniatura, videoFecha,
-        enlaceRedes, testimonios,
+        banderaUrl, banderaAlt, enlaceRedes, testimonios,
       })
       if (r.ok) onCerrar()
       return r
@@ -228,6 +230,20 @@ function EditorEtapa({ etapa, pending, correr, editable, onCerrar }: {
           </Campo>
           <Campo label="Punto de encuentro" hint="Vacío = la web no anuncia ningún punto.">
             <input className={inputCls} value={puntoEncuentro} disabled={!editable} placeholder="Sin punto oficial todavía" onChange={e => setPuntoEncuentro(e.target.value)} />
+          </Campo>
+        </div>
+      </div>
+
+      {/* Bandera de la provincia */}
+      <div>
+        <Titulo>Bandera de la provincia</Titulo>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <Campo label="Imagen de la bandera" hint="Se muestra en la tarjeta del calendario. Vacío = hueco neutro. Usa la bandera provincial, municipal o territorial que corresponda.">
+            <SubirImagen carpeta="reto50-banderas" value={banderaUrl} onChange={url => setBanderaUrl(url)} />
+          </Campo>
+          <Campo label="Texto alternativo" hint="Describe la bandera para accesibilidad. Si lo dejas vacío se usa «Bandera de {provincia}».">
+            <input className={inputCls} value={banderaAlt} disabled={!editable}
+              placeholder={`Bandera de ${provincia || 'la provincia'}`} onChange={e => setBanderaAlt(e.target.value)} />
           </Campo>
         </div>
       </div>

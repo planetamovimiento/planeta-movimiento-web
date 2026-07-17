@@ -74,6 +74,8 @@ export type EtapaInput = {
   videoDescripcion?: string
   videoMiniatura?: string
   videoFecha?: string
+  banderaUrl?: string
+  banderaAlt?: string
   enlaceRedes?: string
   testimonios?: string
 }
@@ -132,6 +134,8 @@ export async function guardarEtapa(input: EtapaInput): Promise<Res> {
     if (input.videoDescripcion !== undefined) patch.video_descripcion = txt(input.videoDescripcion)
     if (input.videoMiniatura !== undefined) patch.video_miniatura = txt(input.videoMiniatura)
     if (input.videoFecha !== undefined) patch.video_fecha = input.videoFecha || null
+    if (input.banderaUrl !== undefined) patch.bandera_url = txt(input.banderaUrl)
+    if (input.banderaAlt !== undefined) patch.bandera_alt = txt(input.banderaAlt)
     if (input.enlaceRedes !== undefined) patch.enlace_redes = txt(input.enlaceRedes)
     if (input.testimonios !== undefined) patch.testimonios = txt(input.testimonios)
 

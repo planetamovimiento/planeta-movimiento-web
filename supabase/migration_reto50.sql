@@ -37,6 +37,8 @@ create table if not exists reto50_etapas (
   video_descripcion text,
   video_miniatura   text,
   video_fecha       date,
+  bandera_url       text,                             -- bandera de la provincia (la sube el admin)
+  bandera_alt       text,
   enlace_redes      text,
   testimonios       text,
   notas_internas    text,                             -- NUNCA se publica en la web
