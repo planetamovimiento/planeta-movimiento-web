@@ -56,6 +56,10 @@ function aEtapa(r: Row): Etapa {
     resumen: str(r.resumen),
     galeria: Array.isArray(r.galeria) ? (r.galeria as unknown[]).map(str).filter(Boolean) : [],
     videoUrl: str(r.video_url),
+    videoTitulo: str(r.video_titulo),
+    videoDescripcion: str(r.video_descripcion),
+    videoMiniatura: str(r.video_miniatura),
+    videoFecha: r.video_fecha ? str(r.video_fecha).slice(0, 10) : '',
     enlaceRedes: str(r.enlace_redes),
     testimonios: str(r.testimonios),
     notasInternas: str(r.notas_internas),
@@ -89,6 +93,10 @@ function etapasDeSeed(): Etapa[] {
       resumen: '',
       galeria: [],
       videoUrl: '',
+      videoTitulo: '',
+      videoDescripcion: '',
+      videoMiniatura: '',
+      videoFecha: '',
       enlaceRedes: '',
       testimonios: '',
       notasInternas: '',
@@ -132,23 +140,6 @@ export function etapaActual<T extends { estado: EstadoEtapa }>(etapas: T[]): T |
   return etapas.find(e => e.estado === ESTADO_ACTUAL) ?? null
 }
 
-/**
- * La próxima parada: la siguiente etapa no cerrada después de la actual. Si aún
- * no hay etapa actual marcada, la primera que quede por delante según la fecha.
- */
-export function proximaParada<T extends { estado: EstadoEtapa; fecha: string; dia: number }>(
-  etapas: T[],
-  hoyISO?: string,
-): T | null {
-  const ordenadas = [...etapas].sort((a, b) => a.dia - b.dia)
-  const actual = etapaActual(ordenadas)
-  const pendientes = ordenadas.filter(e => !ESTADOS_CERRADOS.includes(e.estado) && e.estado !== ESTADO_ACTUAL)
-
-  if (actual) return pendientes.find(e => e.dia > actual.dia) ?? null
-
-  const hoy = hoyISO ?? new Date().toISOString().slice(0, 10)
-  return pendientes.find(e => e.fecha >= hoy) ?? null
-}
 
 /** Totales del reto. Devuelve null en lo que todavía no tiene ningún dato. */
 export function resumenReto(etapas: { estado: EstadoEtapa; recaudado: number | null; asistentes: number | null }[]): ResumenReto {

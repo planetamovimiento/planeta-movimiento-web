@@ -136,6 +136,41 @@ export function fechaCorta(iso: string): string {
   return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', timeZone: 'UTC' })
 }
 
+// ── Vídeos de YouTube ────────────────────────────────────────────────────────
+
+/**
+ * Saca el identificador de un enlace de YouTube. Admite los formatos que se
+ * copian de verdad desde el navegador o el móvil: watch, enlace corto, embed,
+ * shorts, directos y la variante sin cookies. Devuelve '' si no es válido.
+ */
+export function youtubeId(url: string): string {
+  const s = (url || '').trim()
+  if (!s) return ''
+  const patrones = [
+    /youtube\.com\/watch\?(?:[^#]*&)?v=([A-Za-z0-9_-]{11})/,
+    /youtu\.be\/([A-Za-z0-9_-]{11})/,
+    /youtube(?:-nocookie)?\.com\/embed\/([A-Za-z0-9_-]{11})/,
+    /youtube\.com\/shorts\/([A-Za-z0-9_-]{11})/,
+    /youtube\.com\/live\/([A-Za-z0-9_-]{11})/,
+    /youtube\.com\/v\/([A-Za-z0-9_-]{11})/,
+  ]
+  for (const p of patrones) {
+    const m = s.match(p)
+    if (m) return m[1]
+  }
+  // Alguien puede pegar solo el identificador.
+  return /^[A-Za-z0-9_-]{11}$/.test(s) ? s : ''
+}
+
+/** ¿Es un enlace de YouTube que sabemos reproducir? */
+export const esYoutubeValido = (url: string) => youtubeId(url) !== ''
+
+/** Reproductor. Se usa nocookie: no rastrea hasta que se le da al play. */
+export const youtubeEmbed = (id: string) => `https://www.youtube-nocookie.com/embed/${id}`
+export const youtubeWatch = (id: string) => `https://www.youtube.com/watch?v=${id}`
+/** Carátula que sirve el propio YouTube. */
+export const youtubeMiniatura = (id: string) => `https://i.ytimg.com/vi/${id}/hqdefault.jpg`
+
 // ── Objetivo de gasolina ─────────────────────────────────────────────────────
 
 /** Objetivo de partida: 750 litros ≈ 1.500 €. Editable desde el panel. */

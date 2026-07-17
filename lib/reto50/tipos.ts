@@ -27,7 +27,13 @@ export type Etapa = {
   asistentes: number | null
   resumen: string
   galeria: string[]
+  /** Vídeo resumen del día. Enlace de YouTube en cualquiera de sus formatos. */
   videoUrl: string
+  videoTitulo: string
+  videoDescripcion: string
+  /** Carátula propia. Si está vacía se usa la que sirve YouTube. */
+  videoMiniatura: string
+  videoFecha: string
   enlaceRedes: string
   testimonios: string
   /** Planificación interna. Solo el panel; jamás la web pública. */

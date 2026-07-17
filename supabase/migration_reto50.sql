@@ -31,7 +31,12 @@ create table if not exists reto50_etapas (
   asistentes        int,                              -- null = sin dato
   resumen           text,                             -- crónica del día
   galeria           text[] default '{}',
+  -- Vídeo resumen del día (YouTube). Es el archivo audiovisual del reto.
   video_url         text,
+  video_titulo      text,
+  video_descripcion text,
+  video_miniatura   text,
+  video_fecha       date,
   enlace_redes      text,
   testimonios       text,
   notas_internas    text,                             -- NUNCA se publica en la web

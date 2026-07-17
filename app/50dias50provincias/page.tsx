@@ -9,14 +9,14 @@ import type { CategoriaApoyo } from '@/lib/reto50/constants'
 import type { Patrocinador } from '@/lib/reto50/tipos'
 import {
   gasolinaDeConfig, getApoyosActivos, getConfigReto, getEtapasPublicas, getFaqActivas,
-  getQrsActivos, getRankingPublico, proximaParada, resumenReto,
+  getQrsActivos, getRankingPublico, resumenReto,
 } from '@/lib/reto50/data'
 import MapaEspana from './MapaEspana'
 import RutaCalendario from './RutaCalendario'
 import Faq from './Faq'
 import PanelQr from './PanelQr'
 import Gasolina from './Gasolina'
-import { BloqueCompartir, BotonCompartir } from './Compartir'
+import { BloqueCompartir } from './Compartir'
 
 export const dynamic = 'force-dynamic'
 
@@ -123,7 +123,6 @@ export default async function CincuentaDiasPage() {
     getConfigReto(),
   ])
 
-  const proxima = proximaParada(etapas)
   const resumen = resumenReto(etapas)
   const gasolina = gasolinaDeConfig(config)
   const finalizadas = etapas.filter(e => e.estado === 'finalizada')
@@ -181,8 +180,8 @@ export default async function CincuentaDiasPage() {
                 </p>
 
                 <div className="flex flex-wrap gap-3 mt-8">
-                  <a href="#ruta" className={btnPrimario}>Conoce la ruta</a>
-                  {proxima && <a href="#proxima" className={btnSecundario}>Próxima parada</a>}
+                  <a href="#mapa" className={btnPrimario}>Conoce la ruta</a>
+                  <a href="#ruta" className={btnSecundario}>Ver el calendario</a>
                   {donacion && (
                     <a href={donacion} target="_blank" rel="noopener noreferrer" className={`${btnPrimario} bg-white text-pm-navy hover:bg-white/90`}>
                       Colaborar
@@ -318,86 +317,24 @@ export default async function CincuentaDiasPage() {
           </div>
         </section>
 
-        {/* ── 4 · PRÓXIMA PARADA ─────────────────────────────────────────── */}
-        <section id="proxima" className="scroll-mt-20 py-16 sm:py-20">
-          <div className={CONTENEDOR}>
-            {proxima ? (
-              <div className="bg-pm-navy rounded-3xl overflow-hidden relative">
-                <div className="absolute inset-0 bg-grid opacity-[0.06]" aria-hidden="true" />
-                <div className="absolute -top-16 -right-10 w-64 h-64 rounded-full bg-pm-red/20 blur-3xl" aria-hidden="true" />
-                <div className="relative p-6 sm:p-10 grid lg:grid-cols-[1.4fr_1fr] gap-8 items-center">
-                  <div>
-                    <p className={KICKER}>Próxima parada</p>
-                    <h2 className="text-white font-black text-4xl sm:text-5xl mt-2">{proxima.provincia}</h2>
-                    <p className="text-white/60 text-sm mt-2 capitalize">
-                      Día {proxima.dia} de 50 · {fechaLarga(proxima.fecha)}
-                    </p>
-
-                    <div className="mt-5 space-y-1.5">
-                      {proxima.ciudad && <p className="text-white/80 text-sm">{proxima.ciudad}</p>}
-                      <p className="text-white/80 text-sm">
-                        {proxima.hora ? `Hora: ${proxima.hora}` : 'Hora por confirmar'}
-                      </p>
-                      <p className="text-white/80 text-sm">
-                        {proxima.puntoEncuentro || 'Punto de encuentro por confirmar'}
-                      </p>
-                    </div>
-
-                    {proxima.descripcion && (
-                      <p className="text-white/60 text-sm mt-4 leading-relaxed max-w-lg">{proxima.descripcion}</p>
-                    )}
-
-                    <div className="flex flex-wrap gap-3 mt-7">
-                      <a href="#ruta" className={`${btnPrimario} bg-white text-pm-navy hover:bg-white/90`}>
-                        Ver todos los detalles
-                      </a>
-                      <BotonCompartir
-                        texto={`${TEXTO_COMPARTIR} Próxima parada: ${proxima.provincia}, ${fechaLarga(proxima.fecha)}.`}
-                        url={URL_PAGINA}
-                        className={btnSecundario}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="bg-white/5 border border-white/10 rounded-2xl p-6 text-center">
-                    <div className="text-white font-black text-6xl leading-none">{proxima.burflips}</div>
-                    <div className="text-pm-red font-black text-sm uppercase tracking-widest mt-2">burflips</div>
-                    <p className="text-white/40 text-xs mt-3 leading-relaxed">
-                      Los que le tocan a {RETO.protagonista} ese día. Los que quieras hacer tú, los tuyos.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-pm-bg rounded-3xl p-10 text-center">
-                <p className={KICKER}>El reto</p>
-                <h2 className="text-3xl font-black text-pm-navy mt-2">50 provincias, completadas</h2>
-                <p className="text-gray-500 text-sm mt-3 max-w-xl mx-auto leading-relaxed">
-                  La ruta ha terminado. Gracias a todas las personas que salieron a la calle en cada provincia para
-                  sumarse al reto y apoyar la lucha contra el cáncer.
-                </p>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* ── 5 · MAPA ───────────────────────────────────────────────────── */}
-        <section className="bg-pm-bg py-16 sm:py-20">
+        {/* ── 4 · MAPA · el archivo audiovisual del reto ─────────────────── */}
+        <section id="mapa" className="scroll-mt-20 py-16 sm:py-20">
           <div className={CONTENEDOR}>
             <Reveal className="text-center max-w-2xl mx-auto mb-10">
               <p className={KICKER}>El recorrido</p>
               <h2 className="text-3xl font-black text-pm-navy mt-2">Toda España, provincia a provincia</h2>
               <p className="text-gray-500 text-sm mt-4 leading-relaxed">
                 De {RETO.ciudadInicio} a {RETO.ciudadFin}, pasando por las {TOTAL_PROVINCIAS} provincias. Pulsa sobre
-                cualquier punto para ver el día y la información de esa parada.
+                cualquier punto para ver esa jornada y su vídeo resumen: las 50 quedan guardadas aquí, así que se puede
+                recorrer el reto entero aunque se descubra al final.
               </p>
             </Reveal>
             <MapaEspana etapas={etapas} />
           </div>
         </section>
 
-        {/* ── 6 · RUTA COMPLETA ──────────────────────────────────────────── */}
-        <section id="ruta" className="scroll-mt-20 py-16 sm:py-20">
+        {/* ── 5 · RUTA COMPLETA ──────────────────────────────────────────── */}
+        <section id="ruta" className="bg-pm-bg scroll-mt-20 py-16 sm:py-20">
           <div className={CONTENEDOR}>
             <Reveal className="mb-8">
               <p className={KICKER}>Calendario</p>

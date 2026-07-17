@@ -14,8 +14,9 @@ import {
   fechaCorta, fechaLarga, labelEstadoEtapa,
 } from '@/lib/reto50/constants'
 import type { EtapaPublica } from '@/lib/reto50/tipos'
+import VideoEtapa from './VideoEtapa'
 
-const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
+const MESES =['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
 
 const mesDe = (iso: string) => Number(iso.slice(5, 7)) - 1
 const anioDe = (iso: string) => iso.slice(0, 4)
@@ -80,6 +81,9 @@ function Detalle({ etapa }: { etapa: EtapaPublica }) {
           Ver la jornada →
         </a>
       )}
+
+      {/* El mismo vídeo que en el mapa: misma etapa, mismos datos. */}
+      <VideoEtapa etapa={etapa} />
     </div>
   )
 }

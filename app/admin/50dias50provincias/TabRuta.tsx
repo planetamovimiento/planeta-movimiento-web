@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { SubirImagen } from '@/components/admin/SubirImagen'
 import {
   AQUI, ESTADOS_ETAPA, ESTADO_ACTUAL, badgeEstadoEtapa, dotEstadoEtapa, euros, fechaCorta,
-  fechaLarga, labelEstadoEtapa,
+  fechaLarga, labelEstadoEtapa, youtubeEmbed, youtubeId,
   type EstadoEtapa,
 } from '@/lib/reto50/constants'
 import type { Etapa } from '@/lib/reto50/tipos'
@@ -175,8 +175,15 @@ function EditorEtapa({ etapa, pending, correr, editable, onCerrar }: {
   const [asistentes, setAsistentes] = useState(s(etapa.asistentes))
   const [galeria, setGaleria] = useState<string[]>(etapa.galeria)
   const [videoUrl, setVideoUrl] = useState(etapa.videoUrl)
+  const [videoTitulo, setVideoTitulo] = useState(etapa.videoTitulo)
+  const [videoDescripcion, setVideoDescripcion] = useState(etapa.videoDescripcion)
+  const [videoMiniatura, setVideoMiniatura] = useState(etapa.videoMiniatura)
+  const [videoFecha, setVideoFecha] = useState(etapa.videoFecha)
   const [enlaceRedes, setEnlaceRedes] = useState(etapa.enlaceRedes)
   const [testimonios, setTestimonios] = useState(etapa.testimonios)
+
+  const videoId = youtubeId(videoUrl)
+  const videoRoto = videoUrl.trim() !== '' && !videoId
 
   function guardar() {
     correr(async () => {
@@ -184,7 +191,8 @@ function EditorEtapa({ etapa, pending, correr, editable, onCerrar }: {
         id: etapa.id,
         dia, fecha, provincia, ciudad, hora, puntoEncuentro,
         burflips, estado, recaudado, asistentes,
-        galeria, videoUrl, enlaceRedes, testimonios,
+        galeria, videoUrl, videoTitulo, videoDescripcion, videoMiniatura, videoFecha,
+        enlaceRedes, testimonios,
       })
       if (r.ok) onCerrar()
       return r
@@ -290,11 +298,95 @@ function EditorEtapa({ etapa, pending, correr, editable, onCerrar }: {
           </div>
 
           <div className="space-y-3">
-            <Campo label="Vídeo (enlace)" hint="Enlace a YouTube, Instagram o TikTok.">
-              <input className={inputCls} value={videoUrl} disabled={!editable} placeholder="https://…" onChange={e => setVideoUrl(e.target.value)} />
-            </Campo>
             <Campo label="Enlace a redes" hint="Publicación de esa etapa en redes.">
               <input className={inputCls} value={enlaceRedes} disabled={!editable} placeholder="https://…" onChange={e => setEnlaceRedes(e.target.value)} />
+            </Campo>
+          </div>
+        </div>
+      </div>
+
+      {/* Vídeo resumen del día: es lo que verá la gente al pulsar esta provincia */}
+      <div>
+        <Titulo>Vídeo resumen del día</Titulo>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <Campo
+              label="URL del vídeo de YouTube"
+              hint="Vale el enlace normal, el corto (youtu.be), un Short o un directo. Vacío = la web dirá «Vídeo resumen próximamente»."
+            >
+              <input
+                className={`${inputCls} ${videoRoto ? 'border-red-300 focus:border-red-400' : ''}`}
+                value={videoUrl}
+                disabled={!editable}
+                placeholder="https://www.youtube.com/watch?v=…"
+                onChange={e => setVideoUrl(e.target.value)}
+              />
+            </Campo>
+
+            {videoRoto && (
+              <p className="text-xs font-bold text-red-600 bg-red-50 border border-red-200 rounded-lg p-2.5 leading-relaxed">
+                Ese enlace no es de YouTube o no se reconoce. Copia la URL desde el navegador o desde «Compartir» en la
+                app de YouTube. No se guardará hasta que sea válido.
+              </p>
+            )}
+
+            <Campo label="Título del vídeo (opcional)" hint="Si lo dejas vacío se usa «Día X · Provincia».">
+              <input className={inputCls} value={videoTitulo} disabled={!editable}
+                onChange={e => setVideoTitulo(e.target.value)} />
+            </Campo>
+
+            <Campo label="Descripción (opcional)">
+              <textarea className={`${inputCls} resize-y leading-relaxed`} rows={3} value={videoDescripcion}
+                disabled={!editable} onChange={e => setVideoDescripcion(e.target.value)} />
+            </Campo>
+
+            <Campo label="Fecha de publicación (opcional)">
+              <input type="date" className={inputCls} value={videoFecha} disabled={!editable}
+                onChange={e => setVideoFecha(e.target.value)} />
+            </Campo>
+          </div>
+
+          <div className="space-y-3">
+            {/* Vista previa: lo mismo que se verá en la web */}
+            <span className="block text-xs font-bold text-gray-500 mb-1">Vista previa</span>
+            {videoId ? (
+              <>
+                <div className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 bg-pm-navy">
+                  <iframe
+                    key={videoId}
+                    src={youtubeEmbed(videoId)}
+                    title="Vista previa del vídeo"
+                    loading="lazy"
+                    allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="absolute inset-0 w-full h-full"
+                  />
+                </div>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <span className="text-xs text-emerald-600 font-bold">✓ Enlace válido · {videoId}</span>
+                  {editable && (
+                    <button
+                      type="button"
+                      onClick={() => setVideoUrl('')}
+                      className="text-xs font-bold text-gray-400 hover:text-red-600 transition-colors"
+                    >
+                      Quitar el vídeo
+                    </button>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="aspect-video rounded-xl border-2 border-dashed border-gray-200 grid place-items-center p-4">
+                <p className="text-xs text-gray-400 text-center leading-relaxed">
+                  {videoRoto
+                    ? 'El enlace no es válido: aquí verás la vista previa cuando lo sea.'
+                    : 'Pega arriba la URL de YouTube y aquí verás el vídeo.'}
+                </p>
+              </div>
+            )}
+
+            <Campo label="Miniatura propia (opcional)" hint="Si no subes ninguna, se usa la carátula del propio YouTube.">
+              <SubirImagen carpeta="reto50-videos" value={videoMiniatura} onChange={url => setVideoMiniatura(url)} />
             </Campo>
           </div>
         </div>

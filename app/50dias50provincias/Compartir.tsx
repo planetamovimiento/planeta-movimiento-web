@@ -81,10 +81,12 @@ const IconoCompartir = ({ className = 'w-4 h-4' }: { className?: string }) => (
  * Botón único de compartir. Usa la hoja nativa del sistema si el navegador la
  * ofrece (móvil) y, si no, copia el enlace al portapapeles.
  */
-export function BotonCompartir({ texto, url, className = '' }: {
+export function BotonCompartir({ texto, url, className = '', avisoClassName = 'text-white/60' }: {
   texto: string
   url: string
   className?: string
+  /** El aviso se pinta sobre fondos distintos: en claro hay que cambiarle el color. */
+  avisoClassName?: string
 }) {
   const [aviso, setAviso] = useState('')
 
@@ -109,7 +111,7 @@ export function BotonCompartir({ texto, url, className = '' }: {
         <IconoCompartir />
         Compartir
       </button>
-      <span aria-live="polite" className="text-xs text-white/60 min-h-[1rem]">{aviso}</span>
+      <span aria-live="polite" className={`text-xs ${avisoClassName} ${aviso ? 'min-h-[1rem]' : ''}`}>{aviso}</span>
     </span>
   )
 }

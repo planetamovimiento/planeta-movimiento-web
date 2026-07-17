@@ -11,7 +11,7 @@ import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAdminUser, logActivity } from '@/lib/admin/auth'
 import { puedeVerSeccion } from '@/lib/admin/secciones'
-import { CLAVES_CONFIG, ESTADOS_ETAPA, NIVELES_PATROCINIO, type EstadoEtapa } from '@/lib/reto50/constants'
+import { CLAVES_CONFIG, ESTADOS_ETAPA, NIVELES_PATROCINIO, esYoutubeValido, type EstadoEtapa } from '@/lib/reto50/constants'
 
 type Res = { ok: boolean; error?: string | null }
 
@@ -70,6 +70,10 @@ export type EtapaInput = {
   asistentes?: number | string | null
   galeria?: string[]
   videoUrl?: string
+  videoTitulo?: string
+  videoDescripcion?: string
+  videoMiniatura?: string
+  videoFecha?: string
   enlaceRedes?: string
   testimonios?: string
 }
@@ -115,7 +119,19 @@ export async function guardarEtapa(input: EtapaInput): Promise<Res> {
         ? input.galeria.map(u => String(u).trim()).filter(Boolean)
         : []
     }
-    if (input.videoUrl !== undefined) patch.video_url = txt(input.videoUrl)
+    if (input.videoUrl !== undefined) {
+      const url = txt(input.videoUrl)
+      // Se rechaza aquí también, no solo en el formulario: si no se puede
+      // reproducir, mejor no guardarlo que dejar un vídeo roto en la web.
+      if (url && !esYoutubeValido(url)) {
+        return { ok: false, error: 'El enlace de vídeo no es de YouTube o no tiene un formato reconocible.' }
+      }
+      patch.video_url = url
+    }
+    if (input.videoTitulo !== undefined) patch.video_titulo = txt(input.videoTitulo)
+    if (input.videoDescripcion !== undefined) patch.video_descripcion = txt(input.videoDescripcion)
+    if (input.videoMiniatura !== undefined) patch.video_miniatura = txt(input.videoMiniatura)
+    if (input.videoFecha !== undefined) patch.video_fecha = input.videoFecha || null
     if (input.enlaceRedes !== undefined) patch.enlace_redes = txt(input.enlaceRedes)
     if (input.testimonios !== undefined) patch.testimonios = txt(input.testimonios)
 

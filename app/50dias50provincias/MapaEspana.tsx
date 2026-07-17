@@ -16,6 +16,7 @@ import {
   euros, fechaLarga, labelEstadoEtapa,
 } from '@/lib/reto50/constants'
 import type { EtapaPublica } from '@/lib/reto50/tipos'
+import VideoEtapa from './VideoEtapa'
 
 // Encuadre peninsular (incluye Baleares).
 const LAT_MAX = 43.9
@@ -48,8 +49,18 @@ function posicion(e: EtapaPublica) {
 
 export default function MapaEspana({ etapas }: { etapas: EtapaPublica[] }) {
   const actual = etapas.find(e => e.estado === ESTADO_ACTUAL) ?? null
-  // Al abrir, se enseña dónde está Brosjaca ahora mismo.
-  const [activa, setActiva] = useState<EtapaPublica | null>(actual)
+  // Al abrir se enseña dónde está Brosjaca ahora y, si el reto no ha arrancado,
+  // la primera etapa: así el panel nunca sale vacío.
+  const [activa, setActiva] = useState<EtapaPublica | null>(actual ?? etapas[0] ?? null)
+  // Con un vídeo en marcha el ratón deja de cambiar la etapa: si no, pasar por
+  // encima del mapa te cortaría el vídeo que estás viendo.
+  const [bloqueada, setBloqueada] = useState(false)
+
+  const elegir = (e: EtapaPublica, porRaton: boolean) => {
+    if (porRaton && bloqueada) return
+    setActiva(e)
+    if (!porRaton) setBloqueada(false)
+  }
 
   const conPos = etapas.filter(e => posicion(e) !== null)
   // La línea del recorrido solo une lo que se puede unir por tierra/mar en el
@@ -66,7 +77,8 @@ export default function MapaEspana({ etapas }: { etapas: EtapaPublica[] }) {
     .join(' ')
 
   return (
-    <div className="grid lg:grid-cols-[1.6fr_1fr] gap-6 items-start">
+    // 1.4fr deja al panel derecho ancho suficiente para que el vídeo se vea bien.
+    <div className="grid lg:grid-cols-[1.4fr_1fr] gap-6 items-start">
       <div className="bg-pm-navy rounded-3xl p-3 sm:p-5 overflow-hidden">
         <svg
           viewBox="0 0 700 600"
@@ -97,9 +109,9 @@ export default function MapaEspana({ etapas }: { etapas: EtapaPublica[] }) {
                   esActual ? `${AQUI}.` : labelEstadoEtapa(e.estado)
                 }`}
                 className="cursor-pointer focus:outline-none"
-                onMouseEnter={() => setActiva(e)}
-                onFocus={() => setActiva(e)}
-                onClick={() => setActiva(e)}
+                onMouseEnter={() => elegir(e, true)}
+                onFocus={() => elegir(e, true)}
+                onClick={() => elegir(e, false)}
               >
                 {/* La etapa actual late para que se encuentre de un vistazo */}
                 {esActual && <circle className="pm-pulso" cx={p.x} cy={p.y} r={6} fill={color} />}
@@ -216,9 +228,16 @@ export default function MapaEspana({ etapas }: { etapas: EtapaPublica[] }) {
         ) : (
           <div className="bg-pm-bg rounded-2xl border border-gray-100 p-6 text-center">
             <p className="text-sm text-gray-500">
-              Pasa el ratón o pulsa sobre cualquier punto del mapa para ver el día, la fecha y la información de esa
+              Pasa el ratón o pulsa sobre cualquier punto del mapa para ver el día, la fecha y el vídeo resumen de esa
               provincia.
             </p>
+          </div>
+        )}
+
+        {/* Vídeo del día. La key reinicia el reproductor al cambiar de etapa. */}
+        {activa && (
+          <div className="mt-4">
+            <VideoEtapa key={activa.dia} etapa={activa} onReproducir={() => setBloqueada(true)} />
           </div>
         )}
 
