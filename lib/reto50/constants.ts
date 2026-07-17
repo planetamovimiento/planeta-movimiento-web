@@ -31,6 +31,19 @@ export const RETO = {
   ciudadFin: 'Madrid',
 } as const
 
+/**
+ * Perfiles oficiales de Brosjaca (facilitados por el equipo). Son la base;
+ * si algún día cambian, se pueden sobrescribir desde el panel (claves
+ * youtube_url, instagram_url, tiktok_url, web_brosjaca de la config).
+ */
+export const BROSJACA = {
+  alias: '@brosjaca',
+  youtube: 'https://www.youtube.com/@brosjaca',
+  instagram: 'https://www.instagram.com/brosjaca',
+  tiktok: 'https://www.tiktok.com/@brosjaca',
+  web: 'https://brosjaca.com',
+} as const
+
 /** Cifras de impacto publicadas en el dossier. */
 export const IMPACTO = [
   { valor: '+117.000', label: 'Seguidores en redes' },
@@ -115,7 +128,7 @@ export const CLAVES_CONFIG = [
   'intro_texto', 'quien_es_texto', 'dossier_url', 'donacion_url',
   'objetivo_global', 'instagram_url', 'tiktok_url', 'youtube_url',
   'facebook_url', 'web_brosjaca', 'contacto_email', 'contacto_telefono',
-  'qr_titulo', 'qr_texto',
+  'qr_titulo', 'qr_texto', 'brosjaca_logo',
   'gasolina_recaudado', 'gasolina_actualizado', 'gasolina_nota',
   'gasolina_objetivo_eur', 'gasolina_objetivo_litros',
 ] as const

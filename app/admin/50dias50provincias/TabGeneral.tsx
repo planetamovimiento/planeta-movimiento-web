@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { SubirImagen } from '@/components/admin/SubirImagen'
-import { CLAVES_CONFIG, RETO, type ClaveConfig } from '@/lib/reto50/constants'
+import { BROSJACA, CLAVES_CONFIG, RETO, type ClaveConfig } from '@/lib/reto50/constants'
 import type { ConfigReto } from '@/lib/reto50/tipos'
 import { guardarConfig } from './actions'
 import { Bloque, Campo, inputCls, type Correr } from './piezas'
@@ -73,9 +73,14 @@ export default function TabGeneral({ config, pending, correr, editable }: Props)
               {txt('hero_video', 'https://…')}
             </Campo>
           </div>
-          <Campo label="Imagen de portada">
-            <SubirImagen carpeta="reto50" value={draft.hero_imagen} onChange={url => set('hero_imagen', url)} />
-          </Campo>
+          <div className="space-y-4">
+            <Campo label="Imagen de portada">
+              <SubirImagen carpeta="reto50" value={draft.hero_imagen} onChange={url => set('hero_imagen', url)} />
+            </Campo>
+            <Campo label={`Logo de ${RETO.protagonista}`} hint="Se muestra en la portada, junto a sus redes. PNG con fondo transparente si es posible.">
+              <SubirImagen carpeta="reto50" value={draft.brosjaca_logo} onChange={url => set('brosjaca_logo', url)} />
+            </Campo>
+          </div>
         </div>
       </Bloque>
 
@@ -100,13 +105,13 @@ export default function TabGeneral({ config, pending, correr, editable }: Props)
         </div>
       </Bloque>
 
-      <Bloque titulo="Redes sociales" desc="Cada red se enlaza en la web solo si tiene valor aquí.">
+      <Bloque titulo="Redes sociales" desc="Los perfiles oficiales de Brosjaca ya están puestos por defecto. Rellena un campo solo si quieres cambiar uno.">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Campo label="Instagram">{txt('instagram_url', 'https://instagram.com/…')}</Campo>
-          <Campo label="TikTok">{txt('tiktok_url', 'https://tiktok.com/@…')}</Campo>
-          <Campo label="YouTube">{txt('youtube_url', 'https://youtube.com/…')}</Campo>
+          <Campo label="Instagram">{txt('instagram_url', BROSJACA.instagram)}</Campo>
+          <Campo label="TikTok">{txt('tiktok_url', BROSJACA.tiktok)}</Campo>
+          <Campo label="YouTube">{txt('youtube_url', BROSJACA.youtube)}</Campo>
           <Campo label="Facebook">{txt('facebook_url', 'https://facebook.com/…')}</Campo>
-          <Campo label={`Web de ${RETO.protagonista}`}>{txt('web_brosjaca', 'https://…')}</Campo>
+          <Campo label={`Web de ${RETO.protagonista}`}>{txt('web_brosjaca', BROSJACA.web)}</Campo>
         </div>
       </Bloque>
 

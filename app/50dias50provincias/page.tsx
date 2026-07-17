@@ -3,7 +3,7 @@ import { Foto } from '@/components/ui/Foto'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { SITE_URL, breadcrumbsJsonLd } from '@/lib/seo'
 import {
-  CATEGORIAS_APOYO, IMPACTO, RETO, TOTAL_PROVINCIAS, euros, fechaLarga, labelNivel, litros,
+  BROSJACA, CATEGORIAS_APOYO, IMPACTO, RETO, TOTAL_PROVINCIAS, euros, fechaLarga, labelNivel, litros,
 } from '@/lib/reto50/constants'
 import type { CategoriaApoyo } from '@/lib/reto50/constants'
 import type { Patrocinador } from '@/lib/reto50/tipos'
@@ -15,6 +15,7 @@ import MapaEspana from './MapaEspana'
 import RutaCalendario from './RutaCalendario'
 import Faq from './Faq'
 import PanelQr from './PanelQr'
+import PanelProtagonista from './PanelProtagonista'
 import Gasolina from './Gasolina'
 import { BloqueCompartir } from './Compartir'
 
@@ -205,8 +206,10 @@ export default async function CincuentaDiasPage() {
                 </div>
               </div>
 
-              {/* Zona de colaboración: los QR mandan; si aún no hay, la imagen del reto */}
-              <div className="relative">
+              {/* Columna derecha: el protagonista y, debajo, la colaboración por QR */}
+              <div className="relative space-y-5">
+                <PanelProtagonista config={config} />
+
                 {qrs.length > 0 ? (
                   <PanelQr qrs={qrs} titulo={config.qr_titulo} texto={config.qr_texto} />
                 ) : heroImagen ? (
@@ -551,22 +554,20 @@ export default async function CincuentaDiasPage() {
               <BloqueCompartir
                 url={URL_PAGINA}
                 texto={TEXTO_COMPARTIR}
-                instagram={config.instagram_url || ''}
-                tiktok={config.tiktok_url || ''}
-                youtube={config.youtube_url || ''}
+                instagram={config.instagram_url || BROSJACA.instagram}
+                tiktok={config.tiktok_url || BROSJACA.tiktok}
+                youtube={config.youtube_url || BROSJACA.youtube}
                 facebook={config.facebook_url || ''}
               />
             </div>
-            {config.web_brosjaca && (
-              <a
-                href={config.web_brosjaca}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block mt-8 text-white/70 hover:text-white text-sm font-bold underline underline-offset-4"
-              >
-                Conoce más sobre {RETO.protagonista}
-              </a>
-            )}
+            <a
+              href={config.web_brosjaca || BROSJACA.web}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block mt-8 text-white/70 hover:text-white text-sm font-bold underline underline-offset-4"
+            >
+              Conoce más sobre {RETO.protagonista}
+            </a>
           </div>
         </section>
       </main>
