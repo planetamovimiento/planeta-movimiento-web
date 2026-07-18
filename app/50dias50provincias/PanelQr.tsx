@@ -1,34 +1,57 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Panel de donación por QR en la portada del reto.
+// «Colabora con el reto» de la portada: dos vías, una al lado de la otra.
 //
-// Se adapta solo al número de QR activos: con uno se ve grande y con varios se
-// apilan. Las imágenes las sube el admin; aquí no se genera ningún código.
+//   · Con la lucha  → los códigos QR (donación a la causa).
+//   · Con la ruta   → Bizum para la gasolina que hace posible el trayecto.
+//
+// Los QR se adaptan al número de códigos activos; las imágenes las sube el
+// admin, aquí no se genera ninguno. Si falta una de las dos vías, la otra ocupa
+// todo el ancho y el panel sigue teniendo sentido.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import type { QrDonacion } from '@/lib/reto50/tipos'
+import type { ConfigReto, QrDonacion } from '@/lib/reto50/tipos'
+import BloqueBizum from './BloqueBizum'
 
-export default function PanelQr({ qrs, titulo, texto }: { qrs: QrDonacion[]; titulo?: string; texto?: string }) {
-  if (qrs.length === 0) return null
+export default function PanelQr({
+  qrs,
+  titulo,
+  texto,
+  config,
+}: {
+  qrs: QrDonacion[]
+  titulo?: string
+  texto?: string
+  config: ConfigReto
+}) {
+  const hayBizum = config.bizum_activo !== 'no'
+  if (qrs.length === 0 && !hayBizum) return null
 
-  const uno = qrs.length === 1
+  // Con las dos vías el QR se muestra compacto; si va solo, a lo grande.
+  const dosColumnas = qrs.length > 0 && hayBizum
+  const uno = qrs.length === 1 && !dosColumnas
 
   return (
     <div className="bg-white/5 border border-white/10 rounded-3xl p-5 sm:p-6 backdrop-blur-sm">
       <div className="text-center mb-5">
         <h2 className="text-white font-black text-lg">{titulo || 'Colabora con el reto'}</h2>
         <p className="text-white/50 text-xs mt-1 leading-relaxed">
-          {texto || 'Escanea el código con la cámara de tu móvil y aporta lo que quieras.'}
+          {texto || 'Dos formas de sumarte: con la causa y con la ruta.'}
         </p>
       </div>
 
-      <div className="space-y-3">
+      <div className={dosColumnas ? 'grid sm:grid-cols-2 gap-3 items-stretch' : ''}>
+        <div className={`space-y-3 ${dosColumnas ? 'flex flex-col' : ''}`}>
         {qrs.map(qr => {
           const contenido = (
             <>
               {/* El QR sobre blanco: hace falta contraste para que se escanee bien */}
               <div
                 className={`bg-white rounded-xl p-2 shrink-0 ${
-                  uno ? 'w-40 h-40 sm:w-44 sm:h-44 mx-auto' : 'w-28 h-28 sm:w-32 sm:h-32'
+                  uno
+                    ? 'w-40 h-40 sm:w-44 sm:h-44 mx-auto'
+                    : dosColumnas
+                      ? 'w-32 h-32 mx-auto' // con las dos vías: compacto pero escaneable
+                      : 'w-28 h-28 sm:w-32 sm:h-32'
                 }`}
               >
                 {qr.imagenUrl ? (
@@ -41,7 +64,7 @@ export default function PanelQr({ qrs, titulo, texto }: { qrs: QrDonacion[]; tit
                 )}
               </div>
 
-              <div className={`min-w-0 ${uno ? 'text-center mt-4' : ''}`}>
+              <div className={`min-w-0 ${uno ? 'text-center mt-4' : dosColumnas ? 'text-center mt-3' : ''}`}>
                 <h3 className="text-white font-black text-sm">{qr.titulo}</h3>
                 {qr.descripcion && (
                   <p className="text-white/50 text-xs mt-1 leading-relaxed">{qr.descripcion}</p>
@@ -60,7 +83,7 @@ export default function PanelQr({ qrs, titulo, texto }: { qrs: QrDonacion[]; tit
 
           const clases = `group block bg-white/5 border border-white/10 rounded-2xl p-4 transition-colors ${
             qr.enlaceUrl ? 'hover:bg-white/10 hover:border-white/25' : ''
-          } ${uno ? '' : 'flex items-center gap-4'}`
+          } ${uno || dosColumnas ? '' : 'flex items-center gap-4'} ${dosColumnas ? 'h-full' : ''}`
 
           return qr.enlaceUrl ? (
             <a key={qr.id} href={qr.enlaceUrl} target="_blank" rel="noopener noreferrer" className={clases}>
@@ -72,6 +95,10 @@ export default function PanelQr({ qrs, titulo, texto }: { qrs: QrDonacion[]; tit
             </div>
           )
         })}
+        </div>
+
+        {/* Colabora con la ruta: el Bizum de la gasolina */}
+        {hayBizum && <BloqueBizum config={config} />}
       </div>
     </div>
   )

@@ -44,6 +44,18 @@ export const BROSJACA = {
   web: 'https://brosjaca.com',
 } as const
 
+/**
+ * Bizum para la gasolina de la ruta. El número lo facilitó el equipo del reto.
+ * Se pide nombre y apellidos en el concepto para poder llevar el registro de
+ * quién colabora y darle las gracias en el ranking (si autoriza aparecer).
+ */
+export const BIZUM = {
+  telefono: '+34 649 69 18 72',
+  /** Sin espacios, para copiar y pegar en la app del banco. */
+  telefonoPlano: '+34649691872',
+  concepto: 'Donación gasolina',
+} as const
+
 /** Cifras de impacto publicadas en el dossier. */
 export const IMPACTO = [
   { valor: '+117.000', label: 'Seguidores en redes' },
@@ -129,6 +141,8 @@ export const CLAVES_CONFIG = [
   'objetivo_global', 'instagram_url', 'tiktok_url', 'youtube_url',
   'facebook_url', 'web_brosjaca', 'contacto_email', 'contacto_telefono',
   'qr_titulo', 'qr_texto', 'brosjaca_logo',
+  // Bizum para la gasolina de la ruta
+  'bizum_activo', 'bizum_telefono', 'bizum_concepto', 'bizum_titulo', 'bizum_texto',
   // Paisaje de fondo de la sección de la ruta
   'ruta_fondo_imagen', 'ruta_fondo_movil', 'ruta_fondo_alt',
   'ruta_fondo_posicion', 'ruta_fondo_oscuridad', 'ruta_fondo_activo',

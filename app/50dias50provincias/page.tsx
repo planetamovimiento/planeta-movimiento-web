@@ -127,6 +127,8 @@ export default async function CincuentaDiasPage() {
 
   const resumen = resumenReto(etapas)
   const gasolina = gasolinaDeConfig(config)
+  // El panel de colaborar sale si hay QR o si el Bizum de la gasolina está activo.
+  const hayColabora = qrs.length > 0 || config.bizum_activo !== 'no'
   const finalizadas = etapas.filter(e => e.estado === 'finalizada')
   const conGaleria = finalizadas.filter(e => e.galeria.length > 0 || e.resumen || e.videoUrl)
 
@@ -211,8 +213,8 @@ export default async function CincuentaDiasPage() {
               <div className="relative space-y-5">
                 <PanelProtagonista config={config} />
 
-                {qrs.length > 0 ? (
-                  <PanelQr qrs={qrs} titulo={config.qr_titulo} texto={config.qr_texto} />
+                {hayColabora ? (
+                  <PanelQr qrs={qrs} titulo={config.qr_titulo} texto={config.qr_texto} config={config} />
                 ) : heroImagen ? (
                   <div className="rounded-3xl overflow-hidden shadow-2xl aspect-[4/3] relative">
                     <Foto src={heroImagen} alt={`${RETO.protagonista} — ${RETO.nombre}`} />
@@ -302,7 +304,7 @@ export default async function CincuentaDiasPage() {
         </section>
 
         {/* ── 3 · OBJETIVO DE GASOLINA ───────────────────────────────────── */}
-        <section className="bg-pm-bg py-16 sm:py-20">
+        <section id="gasolina" className="bg-pm-bg scroll-mt-20 py-16 sm:py-20">
           <div className={CONTENEDOR}>
             <Reveal className="text-center max-w-2xl mx-auto mb-10">
               <p className={KICKER}>Objetivo de gasolina</p>

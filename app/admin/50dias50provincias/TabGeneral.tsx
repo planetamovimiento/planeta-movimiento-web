@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { SubirImagen } from '@/components/admin/SubirImagen'
 import {
-  BROSJACA, CLAVES_CONFIG, OSCURIDAD_FONDO_DEFECTO, POSICIONES_FONDO, RETO, type ClaveConfig,
+  BIZUM, BROSJACA, CLAVES_CONFIG, OSCURIDAD_FONDO_DEFECTO, POSICIONES_FONDO, RETO, type ClaveConfig,
 } from '@/lib/reto50/constants'
 import type { ConfigReto } from '@/lib/reto50/tipos'
 import { guardarConfig } from './actions'
@@ -143,6 +143,33 @@ export default function TabGeneral({ config, pending, correr, editable }: Props)
             {txt('objetivo_global')}
           </Campo>
         </div>
+      </Bloque>
+
+      <Bloque
+        titulo="Bizum para la gasolina"
+        desc="Aparece en la portada, junto a los QR, dentro de «Colabora con el reto». Es la vía para colaborar con la ruta."
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Campo label="Teléfono para el Bizum" hint={`Si lo dejas vacío se usa ${BIZUM.telefono}.`}>
+            {txt('bizum_telefono', BIZUM.telefono)}
+          </Campo>
+          <Campo label="Concepto" hint="Lo que debe escribir quien dona, además de su nombre y apellidos.">
+            {txt('bizum_concepto', BIZUM.concepto)}
+          </Campo>
+          <Campo label="Título del bloque">{txt('bizum_titulo', 'Colabora con la ruta')}</Campo>
+          <Campo label="Texto del bloque">
+            {txt('bizum_texto', 'Ayuda a llenar el depósito para que el reto llegue a las 50 provincias.')}
+          </Campo>
+        </div>
+        <label className="flex items-center gap-2 text-sm text-pm-navy mt-3">
+          <input
+            type="checkbox"
+            checked={draft.bizum_activo !== 'no'}
+            disabled={!editable}
+            onChange={e => set('bizum_activo', e.target.checked ? 'si' : 'no')}
+          />
+          Mostrar el Bizum en la portada
+        </label>
       </Bloque>
 
       <Bloque titulo="Enlaces del reto" desc="El botón de donar solo aparece en la web si hay un enlace aquí.">
