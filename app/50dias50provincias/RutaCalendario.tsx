@@ -15,7 +15,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  AQUI, ESTADOS_ETAPA, ESTADO_ACTUAL, badgeEstadoEtapa, dotEstadoEtapa, euros,
+  AQUI, ESTADOS_ETAPA, ESTADO_ACTUAL, RETO, badgeEstadoEtapa, dotEstadoEtapa, euros,
   fechaCorta, fechaLarga, labelEstadoEtapa,
 } from '@/lib/reto50/constants'
 import type { EtapaPublica } from '@/lib/reto50/tipos'
@@ -173,6 +173,13 @@ export default function RutaCalendario({ etapas }: { etapas: EtapaPublica[] }) {
   const totalHechas = etapas.filter(e => e.estado === 'finalizada').length
   const etapaAbierta = abierta == null ? null : filtradas.find(e => e.dia === abierta) ?? null
 
+  // Total recaudado en todo el reto, para situar lo de cada provincia.
+  // null mientras ninguna etapa tenga cifra: así no se inventa un 0 €.
+  const totalReto = useMemo(() => {
+    const conDato = etapas.filter(e => e.recaudado != null)
+    return conDato.length ? conDato.reduce((s, e) => s + (e.recaudado ?? 0), 0) : null
+  }, [etapas])
+
   function verDetalles(dia: number) {
     setAbierta(prev => (prev === dia ? null : dia))
     // Llevar el panel de detalle a la vista, suave.
@@ -262,7 +269,7 @@ export default function RutaCalendario({ etapas }: { etapas: EtapaPublica[] }) {
                   </button>
                 </div>
 
-                <DetalleCuerpo etapa={etapaAbierta} />
+                <DetalleCuerpo etapa={etapaAbierta} totalReto={totalReto} />
               </div>
             )}
           </div>
@@ -272,17 +279,55 @@ export default function RutaCalendario({ etapas }: { etapas: EtapaPublica[] }) {
   )
 }
 
+/**
+ * Lo recaudado en esa provincia. Se muestra SIEMPRE, también cuando todavía no
+ * hay cifra: en ese caso se dice que aún no hay datos, nunca un 0 € que daría a
+ * entender que no se recaudó nada. Si hay total del reto, se añade el peso que
+ * tuvo esa provincia sobre el conjunto.
+ */
+function RecaudacionProvincia({ etapa, totalReto }: { etapa: EtapaPublica; totalReto: number | null }) {
+  const hayDato = etapa.recaudado != null
+  const parte = hayDato && totalReto && totalReto > 0 ? Math.round(((etapa.recaudado ?? 0) / totalReto) * 100) : null
+
+  return (
+    <div
+      className={`rounded-xl border p-4 ${
+        hayDato ? 'bg-emerald-50 border-emerald-200' : 'bg-pm-bg border-gray-200'
+      }`}
+    >
+      <p className={`text-[11px] font-black uppercase tracking-widest ${hayDato ? 'text-emerald-700' : 'text-gray-500'}`}>
+        Recaudado en {etapa.provincia}
+      </p>
+
+      {hayDato ? (
+        <>
+          <p className="text-3xl font-black text-pm-navy mt-1 leading-none">{euros(etapa.recaudado)}</p>
+          <p className="text-xs text-gray-500 mt-2 leading-relaxed">
+            Va destinado a la lucha contra el cáncer a través de la {RETO.causa}.
+            {parte != null && parte > 0 && ` Supone el ${parte} % de lo recaudado en todo el reto.`}
+          </p>
+        </>
+      ) : (
+        <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">
+          Aún sin datos. La cifra se publica aquí cuando se cierra la jornada de esta provincia.
+        </p>
+      )}
+    </div>
+  )
+}
+
 /** Cuerpo del detalle: datos + vídeo. Mismo contenido que antes, sin cambios de lógica. */
-function DetalleCuerpo({ etapa }: { etapa: EtapaPublica }) {
+function DetalleCuerpo({ etapa, totalReto }: { etapa: EtapaPublica; totalReto: number | null }) {
   const datos: [string, string][] = []
   if (etapa.hora) datos.push(['Hora', etapa.hora])
   if (etapa.puntoEncuentro) datos.push(['Punto de encuentro', etapa.puntoEncuentro])
   datos.push(['Burflips del día', String(etapa.burflips)])
-  if (etapa.recaudado != null) datos.push(['Recaudado', euros(etapa.recaudado)])
   if (etapa.asistentes != null) datos.push(['Personas', etapa.asistentes.toLocaleString('es-ES')])
 
   return (
     <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+      <RecaudacionProvincia etapa={etapa} totalReto={totalReto} />
+
       <dl className="grid grid-cols-2 gap-x-6 gap-y-2">
         {datos.map(([k, v]) => (
           <div key={k} className="flex justify-between gap-2 text-sm border-b border-gray-50 pb-1.5">
