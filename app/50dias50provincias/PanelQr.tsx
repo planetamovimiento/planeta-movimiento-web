@@ -44,14 +44,16 @@ export default function PanelQr({
         {qrs.map(qr => {
           const contenido = (
             <>
+              {/* Título arriba, igual que el bloque del Bizum */}
+              <h3 className="text-white font-black text-sm">{qr.titulo}</h3>
+              {qr.descripcion && (
+                <p className="text-white/50 text-xs mt-1 leading-relaxed">{qr.descripcion}</p>
+              )}
+
               {/* El QR sobre blanco: hace falta contraste para que se escanee bien */}
               <div
-                className={`bg-white rounded-xl p-2 shrink-0 ${
-                  uno
-                    ? 'w-40 h-40 sm:w-44 sm:h-44 mx-auto'
-                    : dosColumnas
-                      ? 'w-32 h-32 mx-auto' // con las dos vías: compacto pero escaneable
-                      : 'w-28 h-28 sm:w-32 sm:h-32'
+                className={`bg-white rounded-xl p-2 shrink-0 mx-auto mt-3 ${
+                  uno ? 'w-40 h-40 sm:w-44 sm:h-44' : dosColumnas ? 'w-32 h-32' : 'w-28 h-28 sm:w-32 sm:h-32'
                 }`}
               >
                 {qr.imagenUrl ? (
@@ -64,26 +66,21 @@ export default function PanelQr({
                 )}
               </div>
 
-              <div className={`min-w-0 ${uno ? 'text-center mt-4' : dosColumnas ? 'text-center mt-3' : ''}`}>
-                <h3 className="text-white font-black text-sm">{qr.titulo}</h3>
-                {qr.descripcion && (
-                  <p className="text-white/50 text-xs mt-1 leading-relaxed">{qr.descripcion}</p>
-                )}
-                {qr.enlaceUrl && (
-                  <span className="inline-flex items-center gap-1 text-pm-red group-hover:text-white font-bold text-xs mt-2 transition-colors">
-                    Abrir enlace
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </span>
-                )}
-              </div>
+              {qr.enlaceUrl && (
+                <span className="inline-flex items-center justify-center gap-1 text-pm-red group-hover:text-white font-bold text-xs mt-auto pt-3 transition-colors">
+                  Abrir enlace
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </span>
+              )}
             </>
           )
 
-          const clases = `group block bg-white/5 border border-white/10 rounded-2xl p-4 transition-colors ${
+          // Misma estructura que el Bizum: título arriba y contenido centrado.
+          const clases = `group bg-white/5 border border-white/10 rounded-2xl p-4 transition-colors flex flex-col text-center ${
             qr.enlaceUrl ? 'hover:bg-white/10 hover:border-white/25' : ''
-          } ${uno || dosColumnas ? '' : 'flex items-center gap-4'} ${dosColumnas ? 'h-full' : ''}`
+          } ${dosColumnas ? 'h-full' : ''}`
 
           return qr.enlaceUrl ? (
             <a key={qr.id} href={qr.enlaceUrl} target="_blank" rel="noopener noreferrer" className={clases}>

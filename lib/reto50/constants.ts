@@ -50,11 +50,15 @@ export const BROSJACA = {
  * quién colabora y darle las gracias en el ranking (si autoriza aparecer).
  */
 export const BIZUM = {
-  telefono: '+34 649 69 18 72',
+  /** Nacional y sin prefijo: es como se marca un Bizum en España. */
+  telefono: '649 69 18 72',
   /** Sin espacios, para copiar y pegar en la app del banco. */
-  telefonoPlano: '+34649691872',
+  telefonoPlano: '649691872',
   concepto: 'Donación gasolina',
 } as const
+
+/** Quita el prefijo internacional para mostrar el número más limpio. */
+export const sinPrefijo = (tel: string) => tel.replace(/^\+34\s*/, '').trim()
 
 /** Cifras de impacto publicadas en el dossier. */
 export const IMPACTO = [
