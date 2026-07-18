@@ -129,11 +129,26 @@ export const CLAVES_CONFIG = [
   'objetivo_global', 'instagram_url', 'tiktok_url', 'youtube_url',
   'facebook_url', 'web_brosjaca', 'contacto_email', 'contacto_telefono',
   'qr_titulo', 'qr_texto', 'brosjaca_logo',
+  // Paisaje de fondo de la sección de la ruta
+  'ruta_fondo_imagen', 'ruta_fondo_movil', 'ruta_fondo_alt',
+  'ruta_fondo_posicion', 'ruta_fondo_oscuridad', 'ruta_fondo_activo',
   'gasolina_recaudado', 'gasolina_actualizado', 'gasolina_nota',
   'gasolina_objetivo_eur', 'gasolina_objetivo_litros',
 ] as const
 
 export type ClaveConfig = (typeof CLAVES_CONFIG)[number]
+
+/** Encuadres posibles del paisaje de la ruta (valor de object-position). */
+export const POSICIONES_FONDO: { id: string; label: string }[] = [
+  { id: 'center', label: 'Centrada' },
+  { id: 'top', label: 'Arriba' },
+  { id: 'bottom', label: 'Abajo' },
+  { id: 'left', label: 'Izquierda' },
+  { id: 'right', label: 'Derecha' },
+]
+
+/** Oscuridad de la capa sobre el paisaje: sin ella el texto no se leería. */
+export const OSCURIDAD_FONDO_DEFECTO = 70
 
 /** Fecha larga en español: 2026-07-19 → "domingo, 19 de julio" */
 export function fechaLarga(iso: string): string {

@@ -37,19 +37,23 @@ const IconoBanderin = ({ className = 'w-3 h-3' }: { className?: string }) => (
   </svg>
 )
 
-/** Estilo de la tarjeta según el estado: lo que se lee de un vistazo. */
+/**
+ * Estilo de la tarjeta según el estado. Van sobre el paisaje, así que llevan
+ * fondo sólido y sombra para separarse del fondo y seguir siendo legibles.
+ */
 function estiloTarjeta(estado: string): string {
+  const base = 'shadow-lg shadow-black/25'
   switch (estado) {
     case ESTADO_ACTUAL:
-      return 'border-pm-red border-2 bg-pm-red/[0.05] shadow-md ring-2 ring-pm-red/20'
+      return `${base} border-pm-red border-2 bg-white ring-4 ring-pm-red/30 shadow-pm-red/30`
     case 'finalizada':
-      return 'border-emerald-300 bg-emerald-50/70'
+      return `${base} border-emerald-300 bg-emerald-50`
     case 'cancelada':
-      return 'border-gray-200 bg-gray-50 opacity-70'
+      return `${base} border-gray-300 bg-gray-100 opacity-80`
     case 'modificada':
-      return 'border-blue-200 bg-blue-50/60'
+      return `${base} border-blue-300 bg-blue-50`
     default:
-      return 'border-gray-100 bg-white'
+      return `${base} border-white/60 bg-white`
   }
 }
 
@@ -80,14 +84,15 @@ function Tarjeta({ etapa, activa, onVer }: { etapa: EtapaPublica; activa: boolea
 
   return (
     <div className={`relative rounded-xl border p-2.5 min-w-0 pm-card ${estiloTarjeta(etapa.estado)} ${activa ? 'ring-2 ring-pm-navy/30' : ''}`}>
+      {/* Grises 500/600: el 400 no llega al contraste mínimo sobre blanco */}
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[11px] font-black text-gray-400">{fechaCorta(etapa.fecha)}</span>
+        <span className="text-[11px] font-black text-gray-500">{fechaCorta(etapa.fecha)}</span>
         <Bandera etapa={etapa} />
       </div>
 
-      <div className={`text-[11px] font-black mt-1.5 ${esActual ? 'text-pm-red' : 'text-gray-400'}`}>Día {etapa.dia}</div>
+      <div className={`text-[11px] font-black mt-1.5 ${esActual ? 'text-pm-red' : 'text-gray-500'}`}>Día {etapa.dia}</div>
       <div className="font-black text-pm-navy text-sm leading-tight mt-0.5 break-words">{etapa.provincia}</div>
-      {etapa.ciudad && <div className="text-[11px] text-gray-400 mt-0.5 break-words leading-tight">{etapa.ciudad}</div>}
+      {etapa.ciudad && <div className="text-[11px] text-gray-500 mt-0.5 break-words leading-tight">{etapa.ciudad}</div>}
 
       {/* Estado: siempre visible (accesibilidad), no depende de la carretera */}
       <div className="mt-1.5">
@@ -111,7 +116,7 @@ function Tarjeta({ etapa, activa, onVer }: { etapa: EtapaPublica; activa: boolea
         type="button"
         onClick={onVer}
         aria-expanded={activa}
-        className="mt-1.5 text-[11px] font-bold text-gray-400 hover:text-pm-red transition-colors cursor-pointer"
+        className="mt-1.5 text-[11px] font-bold text-gray-600 hover:text-pm-red transition-colors cursor-pointer"
       >
         {activa ? 'Detalles abajo ↓' : 'Ver detalles'}
       </button>
@@ -162,6 +167,9 @@ export default function RutaCalendario({ etapas }: { etapas: EtapaPublica[] }) {
     return idx + 1
   }, [filtradas])
 
+  // Posición de la etapa en curso, para iluminar su tramo de carretera.
+  const idxActual = useMemo(() => filtradas.findIndex(e => e.estado === ESTADO_ACTUAL), [filtradas])
+
   const totalHechas = etapas.filter(e => e.estado === 'finalizada').length
   const etapaAbierta = abierta == null ? null : filtradas.find(e => e.dia === abierta) ?? null
 
@@ -174,16 +182,17 @@ export default function RutaCalendario({ etapas }: { etapas: EtapaPublica[] }) {
   return (
     <div>
       {/* Controles */}
+      {/* Controles sobre el paisaje: en claro para que se lean */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <span className="text-sm text-gray-500">
-            <strong className="text-pm-navy font-black">{totalHechas}</strong> de {etapas.length} completadas
+          <span className="text-sm text-white/70">
+            <strong className="text-white font-black">{totalHechas}</strong> de {etapas.length} completadas
           </span>
           <div className="flex flex-wrap gap-x-3 gap-y-1">
             {ESTADOS_ETAPA.filter(
               s => ['proximamente', 'en-curso', 'finalizada'].includes(s.id) || etapas.some(e => e.estado === s.id),
             ).map(s => (
-              <span key={s.id} className="inline-flex items-center gap-1.5 text-xs text-gray-400">
+              <span key={s.id} className="inline-flex items-center gap-1.5 text-xs text-white/60">
                 <span className={`w-2 h-2 rounded-full ${dotEstadoEtapa(s.id)}`} />
                 {s.label}
               </span>
@@ -198,23 +207,24 @@ export default function RutaCalendario({ etapas }: { etapas: EtapaPublica[] }) {
             onChange={e => setBusqueda(e.target.value)}
             placeholder="Busca tu provincia…"
             aria-label="Buscar provincia"
-            className="w-full border border-gray-200 rounded-xl pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"
+            className="w-full bg-white/10 border border-white/20 text-white placeholder:text-white/50 rounded-xl pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:border-pm-red focus:bg-white/15 backdrop-blur-sm"
           />
-          <svg className="w-4 h-4 text-gray-300 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <svg className="w-4 h-4 text-white/40 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z" />
           </svg>
         </div>
       </div>
 
       {filtradas.length === 0 ? (
-        <p className="text-center text-sm text-gray-400 py-12">No hay ninguna parada que coincida con «{busqueda}».</p>
+        <p className="text-center text-sm text-white/60 py-12">No hay ninguna parada que coincida con «{busqueda}».</p>
       ) : (
         <>
-          {/* La ruta: carretera de fondo + tarjetas en serpiente */}
+          {/* La ruta: carretera de fondo + tarjetas en serpiente.
+              La separación es generosa a propósito: por ahí asoma el asfalto. */}
           <div className="relative">
-            <Carretera total={filtradas.length} cols={cols} hechas={hechas} />
+            <Carretera total={filtradas.length} cols={cols} hechas={hechas} actual={idxActual} />
             <div
-              className="relative grid gap-3.5 sm:gap-4"
+              className="relative grid gap-7 sm:gap-8"
               style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
             >
               {ordenVisual.map(e => (
@@ -238,7 +248,7 @@ export default function RutaCalendario({ etapas }: { etapas: EtapaPublica[] }) {
                         </span>
                       </div>
                       <h3 className="text-xl font-black text-pm-navy leading-tight mt-0.5">{etapaAbierta.provincia}</h3>
-                      <p className="text-xs text-gray-400 capitalize">{fechaLarga(etapaAbierta.fecha)}</p>
+                      <p className="text-xs text-gray-500 capitalize">{fechaLarga(etapaAbierta.fecha)}</p>
                       {etapaAbierta.ciudad && <p className="text-sm text-gray-500 mt-0.5">{etapaAbierta.ciudad}</p>}
                     </div>
                   </div>
@@ -276,14 +286,14 @@ function DetalleCuerpo({ etapa }: { etapa: EtapaPublica }) {
       <dl className="grid grid-cols-2 gap-x-6 gap-y-2">
         {datos.map(([k, v]) => (
           <div key={k} className="flex justify-between gap-2 text-sm border-b border-gray-50 pb-1.5">
-            <dt className="text-gray-400 shrink-0">{k}</dt>
+            <dt className="text-gray-500 shrink-0">{k}</dt>
             <dd className="font-bold text-pm-navy text-right break-words min-w-0">{v}</dd>
           </div>
         ))}
       </dl>
 
       {!etapa.hora && !etapa.puntoEncuentro && (
-        <p className="text-xs text-gray-400 leading-relaxed">La hora y el punto de encuentro se confirman en los días previos.</p>
+        <p className="text-xs text-gray-500 leading-relaxed">La hora y el punto de encuentro se confirman en los días previos.</p>
       )}
 
       {etapa.enlaceRedes && (

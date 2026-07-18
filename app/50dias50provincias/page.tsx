@@ -16,6 +16,7 @@ import RutaCalendario from './RutaCalendario'
 import Faq from './Faq'
 import PanelQr from './PanelQr'
 import PanelProtagonista from './PanelProtagonista'
+import FondoRuta from './FondoRuta'
 import Gasolina from './Gasolina'
 import { BloqueCompartir } from './Compartir'
 
@@ -337,14 +338,17 @@ export default async function CincuentaDiasPage() {
         </section>
 
         {/* ── 5 · RUTA COMPLETA ──────────────────────────────────────────── */}
-        <section id="ruta" className="bg-pm-bg scroll-mt-20 py-16 sm:py-20">
-          <div className={CONTENEDOR}>
+        {/* La ruta va sobre un paisaje: es un viaje por carretera, no una tabla */}
+        <section id="ruta" className="relative bg-pm-navy scroll-mt-20 py-16 sm:py-20 overflow-hidden">
+          <FondoRuta config={config} />
+          <div className={`${CONTENEDOR} relative`}>
             <Reveal className="mb-8">
               <p className={KICKER}>Calendario</p>
-              <h2 className="text-3xl font-black text-pm-navy mt-2">Las 50 etapas, día a día</h2>
-              <p className="text-gray-500 text-sm mt-3 max-w-2xl leading-relaxed">
-                Del {fechaLarga(RETO.fechaInicio)} al {fechaLarga(RETO.fechaFin)} de 2026. Los horarios y los puntos de
-                encuentro se confirman en los días previos a cada parada.
+              <h2 className="text-3xl font-black text-white mt-2">Las 50 etapas, día a día</h2>
+              <p className="text-white/60 text-sm mt-3 max-w-2xl leading-relaxed">
+                Del {fechaLarga(RETO.fechaInicio)} al {fechaLarga(RETO.fechaFin)} de 2026. Una sola carretera de{' '}
+                {RETO.ciudadInicio} a {RETO.ciudadFin}: los horarios y los puntos de encuentro se confirman en los días
+                previos a cada parada.
               </p>
             </Reveal>
             <RutaCalendario etapas={etapas} />

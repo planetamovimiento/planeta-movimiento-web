@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from 'react'
 import { SubirImagen } from '@/components/admin/SubirImagen'
-import { BROSJACA, CLAVES_CONFIG, RETO, type ClaveConfig } from '@/lib/reto50/constants'
+import {
+  BROSJACA, CLAVES_CONFIG, OSCURIDAD_FONDO_DEFECTO, POSICIONES_FONDO, RETO, type ClaveConfig,
+} from '@/lib/reto50/constants'
 import type { ConfigReto } from '@/lib/reto50/tipos'
 import { guardarConfig } from './actions'
 import { Bloque, Campo, inputCls, type Correr } from './piezas'
@@ -77,6 +79,58 @@ export default function TabGeneral({ config, pending, correr, editable }: Props)
             <Campo label={`Logo de ${RETO.protagonista}`} hint="Se muestra en la portada, junto a sus redes. PNG con fondo transparente si es posible.">
               <SubirImagen carpeta="reto50" value={draft.brosjaca_logo} onChange={url => set('brosjaca_logo', url)} />
             </Campo>
+          </div>
+        </div>
+      </Bloque>
+
+      <Bloque
+        titulo="Paisaje de la ruta"
+        desc="El fondo de la sección del calendario. Si no subes ninguna imagen se usa un paisaje de montaña dibujado, así que nunca se ve el fondo blanco."
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="space-y-4">
+            <Campo label="Imagen de fondo" hint="Un paisaje apaisado y de buena resolución (carretera, montaña, campo…). Máx. 25 MB.">
+              <SubirImagen carpeta="reto50-fondo" value={draft.ruta_fondo_imagen} onChange={url => set('ruta_fondo_imagen', url)} />
+            </Campo>
+            <Campo label="Imagen para móvil (opcional)" hint="Si la subes, en móvil se usa esta: carga menos y encuadra mejor en vertical.">
+              <SubirImagen carpeta="reto50-fondo" value={draft.ruta_fondo_movil} onChange={url => set('ruta_fondo_movil', url)} />
+            </Campo>
+          </div>
+
+          <div className="space-y-4">
+            <Campo label="Texto alternativo" hint="Describe el paisaje para accesibilidad.">
+              {txt('ruta_fondo_alt', 'Carretera entre montañas')}
+            </Campo>
+
+            <Campo label="Encuadre de la imagen">
+              <select className={inputCls} value={draft.ruta_fondo_posicion || 'center'} disabled={!editable}
+                onChange={e => set('ruta_fondo_posicion', e.target.value)}>
+                {POSICIONES_FONDO.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+              </select>
+            </Campo>
+
+            <Campo
+              label={`Oscuridad de la capa: ${draft.ruta_fondo_oscuridad || OSCURIDAD_FONDO_DEFECTO} %`}
+              hint="Cuanto más alta, más se lee el texto y menos se ve el paisaje. Por debajo de 40 % la lectura empieza a sufrir."
+            >
+              <input
+                type="range" min="0" max="95" step="5"
+                className="w-full accent-pm-red"
+                value={draft.ruta_fondo_oscuridad || String(OSCURIDAD_FONDO_DEFECTO)}
+                disabled={!editable}
+                onChange={e => set('ruta_fondo_oscuridad', e.target.value)}
+              />
+            </Campo>
+
+            <label className="flex items-center gap-2 text-sm text-pm-navy">
+              <input
+                type="checkbox"
+                checked={draft.ruta_fondo_activo !== 'no'}
+                disabled={!editable}
+                onChange={e => set('ruta_fondo_activo', e.target.checked ? 'si' : 'no')}
+              />
+              Mostrar el paisaje <span className="text-xs text-gray-400">(si lo desactivas, fondo azul liso)</span>
+            </label>
           </div>
         </div>
       </Bloque>
