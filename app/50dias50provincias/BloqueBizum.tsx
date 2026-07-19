@@ -28,7 +28,6 @@ export default function BloqueBizum({ config }: { config: Record<string, string>
   const telefono = sinPrefijo(config.bizum_telefono || BIZUM.telefono)
   const concepto = config.bizum_concepto || BIZUM.concepto
   const titulo = config.bizum_titulo || 'Colabora con la ruta'
-  const texto = config.bizum_texto || 'Ayuda a llenar el depósito para que el reto llegue a las 50 provincias.'
 
   const [estado, setEstado] = useState<'listo' | 'copiado' | 'manual'>('listo')
   const numeroRef = useRef<HTMLSpanElement>(null)
@@ -55,11 +54,10 @@ export default function BloqueBizum({ config }: { config: Record<string, string>
 
   return (
     <div className="bg-white/5 border border-white/10 rounded-2xl p-4 h-full flex flex-col text-center">
-      {/* Título arriba, igual que el bloque del QR */}
+      {/* Solo el título, igual que el bloque del QR: en la portada el texto de
+          apoyo sobraba. Lo que importa es el número. */}
       <h3 className="text-white font-black text-sm">{titulo}</h3>
-      <p className="text-white/50 text-xs mt-1 leading-relaxed">{texto}</p>
 
-      {/* El número: lo importante del bloque */}
       <div className="mt-3 bg-white/10 border border-white/15 rounded-xl px-3 py-3">
         <div className="text-[10px] font-black uppercase tracking-widest text-white/40">Bizum al</div>
         <span

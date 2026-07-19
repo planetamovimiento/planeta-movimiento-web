@@ -57,7 +57,7 @@ export default function PanelProtagonista({ config }: { config: ConfigReto }) {
         </div>
 
         <div className="min-w-0">
-          <p className="text-xs font-black text-pm-red uppercase tracking-widest">El reto es suyo</p>
+          <p className="text-xs font-black text-pm-red uppercase tracking-widest">El reto es de todos</p>
           <h2 className="text-white font-black text-xl leading-tight">{RETO.protagonista}</h2>
           <p className="text-white/50 text-xs mt-0.5">{BROSJACA.alias}</p>
         </div>

@@ -245,10 +245,6 @@ export default async function CincuentaDiasPage() {
                 <p className="text-white/70 text-base sm:text-lg mt-5 leading-relaxed max-w-xl">
                   {heroSubtitulo}
                 </p>
-                <p className="text-white/50 text-sm mt-3 max-w-xl leading-relaxed">
-                  Un reto deportivo y solidario en beneficio de la {RETO.causa}, organizado por {RETO.organiza}.
-                </p>
-
                 <div className="flex flex-wrap gap-3 mt-8">
                   <a href="#mapa" className={btnPrimario}>Conoce la ruta</a>
                   <a href="#ruta" className={btnSecundario}>Ver el calendario</a>
@@ -265,9 +261,15 @@ export default async function CincuentaDiasPage() {
                   {cifras.map(c => (
                     <div key={c.label}>
                       {c.valor ? (
-                        <div className="text-white font-black text-2xl xl:text-3xl break-words leading-none">{c.valor}</div>
+                        // Las cifras van en una sola línea: partir «50.000 €» a
+                        // la mitad se leía fatal. El tamaño baja antes que romper.
+                        <div className="text-white font-black text-2xl sm:text-xl lg:text-lg xl:text-xl leading-none whitespace-nowrap tabular-nums">
+                          {c.valor}
+                        </div>
                       ) : (
-                        <div className="text-white/40 font-bold text-sm leading-none py-1.5">Aún sin datos</div>
+                        <div className="text-white/40 font-bold text-sm lg:text-xs xl:text-sm leading-none py-1.5 whitespace-nowrap">
+                          Aún sin datos
+                        </div>
                       )}
                       <div className="text-white/50 text-xs mt-1.5 leading-tight">{c.label}</div>
                     </div>

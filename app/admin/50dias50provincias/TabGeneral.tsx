@@ -158,9 +158,6 @@ export default function TabGeneral({ config, pending, correr, editable }: Props)
             {txt('bizum_concepto', BIZUM.concepto)}
           </Campo>
           <Campo label="Título del bloque">{txt('bizum_titulo', 'Colabora con la ruta')}</Campo>
-          <Campo label="Texto del bloque">
-            {txt('bizum_texto', 'Ayuda a llenar el depósito para que el reto llegue a las 50 provincias.')}
-          </Campo>
         </div>
         <label className="flex items-center gap-2 text-sm text-pm-navy mt-3">
           <input

@@ -44,11 +44,9 @@ export default function PanelQr({
         {qrs.map(qr => {
           const contenido = (
             <>
-              {/* Título arriba, igual que el bloque del Bizum */}
+              {/* Solo el título: el panel de la portada va sin texto de apoyo
+                  para no sobrecargarlo. El QR se explica solo. */}
               <h3 className="text-white font-black text-sm">{qr.titulo}</h3>
-              {qr.descripcion && (
-                <p className="text-white/50 text-xs mt-1 leading-relaxed">{qr.descripcion}</p>
-              )}
 
               {/* El QR sobre blanco: hace falta contraste para que se escanee bien */}
               <div

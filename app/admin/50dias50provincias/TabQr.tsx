@@ -57,7 +57,7 @@ function Formulario({ draft, setDraft, onGuardar, onCancelar, pending, editable 
         </Campo>
       </div>
 
-      <Campo label="Descripción" hint="Una frase corta explicando para qué es este QR.">
+      <Campo label="Nota interna (opcional)" hint="Para tu control. NO se muestra en la web: la portada solo enseña el título y el código.">
         <textarea className={`${inputCls} min-h-[70px]`} value={draft.descripcion} disabled={!editable}
           onChange={e => set('descripcion', e.target.value)} />
       </Campo>
