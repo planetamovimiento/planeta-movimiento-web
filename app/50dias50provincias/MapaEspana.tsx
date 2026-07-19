@@ -10,13 +10,14 @@
 // deformaría la península entera.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import {
   AQUI, ESTADOS_ETAPA, ESTADO_ACTUAL, badgeEstadoEtapa, colorEstadoEtapa, dotEstadoEtapa,
   euros, fechaLarga, labelEstadoEtapa,
 } from '@/lib/reto50/constants'
 import type { EtapaPublica } from '@/lib/reto50/tipos'
 import VideoEtapa from './VideoEtapa'
+import CieloMapa from './CieloMapa'
 
 // Encuadre peninsular (incluye Baleares).
 const LAT_MAX = 43.9
@@ -56,6 +57,24 @@ export default function MapaEspana({ etapas }: { etapas: EtapaPublica[] }) {
   // encima del mapa te cortaría el vídeo que estás viendo.
   const [bloqueada, setBloqueada] = useState(false)
 
+  // Paralaje del cielo. Se toca el nodo directamente en vez de guardar la
+  // posición en el estado: mover el ratón no debe repintar 50 puntos y un vídeo.
+  const cieloRef = useRef<SVGGElement>(null)
+
+  const moverCielo = (ev: React.MouseEvent<HTMLDivElement>) => {
+    const cielo = cieloRef.current
+    if (!cielo) return
+    const caja = ev.currentTarget.getBoundingClientRect()
+    // -1..1 desde el centro, con un recorrido corto: es profundidad, no deriva.
+    const dx = ((ev.clientX - caja.left) / caja.width - 0.5) * -14
+    const dy = ((ev.clientY - caja.top) / caja.height - 0.5) * -10
+    cielo.style.transform = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`
+  }
+
+  const devolverCielo = () => {
+    if (cieloRef.current) cieloRef.current.style.transform = ''
+  }
+
   const elegir = (e: EtapaPublica, porRaton: boolean) => {
     if (porRaton && bloqueada) return
     setActiva(e)
@@ -79,13 +98,22 @@ export default function MapaEspana({ etapas }: { etapas: EtapaPublica[] }) {
   return (
     // 1.4fr deja al panel derecho ancho suficiente para que el vídeo se vea bien.
     <div className="grid lg:grid-cols-[1.4fr_1fr] gap-6 items-start">
-      <div className="bg-pm-navy rounded-3xl p-3 sm:p-5 overflow-hidden">
+      <div
+        className="bg-pm-navy rounded-3xl p-3 sm:p-5 overflow-hidden"
+        onMouseMove={moverCielo}
+        onMouseLeave={devolverCielo}
+      >
         <svg
           viewBox="0 0 700 600"
           className="w-full h-auto"
           role="img"
           aria-label="Esquema de la ruta por las 50 provincias de España"
         >
+          {/* El cielo, detrás de todo: la ruta se lee como una constelación */}
+          <g ref={cieloRef} className="pm-cielo">
+            <CieloMapa />
+          </g>
+
           {/* Recuadro de Canarias */}
           <rect x="30" y="440" width="150" height="105" rx="10" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
           <text x="38" y="458" fill="rgba(255,255,255,0.4)" fontSize="9" fontWeight="700">CANARIAS</text>

@@ -222,10 +222,44 @@ html { overflow-x: clip; }
   100% { r: 17; opacity: 0; }
 }
 
+/* ── Mapa del reto: el cielo estrellado del fondo ─────────────────────────── */
+/* Cada estrella trae su propia opacidad, duración y retardo en variables CSS,
+   así ninguna parpadea a la vez que su vecina con una sola regla.            */
+.pm-estrella {
+  opacity: var(--o, .4);
+  animation: pmTitila var(--dur, 4s) ease-in-out var(--delay, 0s) infinite;
+}
+@keyframes pmTitila {
+  0%, 100% { opacity: var(--o, .4); }
+  50%      { opacity: calc(var(--o, .4) * .2); }
+}
+
+/* La fugaz pasa el 92 % del ciclo invisible y cruza en el 8 % restante: es un
+   destello ocasional, no un elemento en movimiento constante.                */
+.pm-fugaz {
+  opacity: 0;
+  animation: pmFugaz var(--dur, 12s) linear var(--delay, 0s) infinite;
+}
+@keyframes pmFugaz {
+  0%, 92% { opacity: 0; transform: translate(0, 0); }
+  94%     { opacity: 1; }
+  100%    { opacity: 0; transform: translate(var(--dx, -140px), var(--dy, 98px)); }
+}
+
+/* Paralaje del cielo: lo mueve el ratón desde MapaEspana, unos pocos píxeles. */
+.pm-cielo {
+  transition: transform .5s cubic-bezier(.22, 1, .36, 1);
+  will-change: transform;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pm-destacado { animation: none; }
   .pm-destacado:hover::after { animation: none; }
   .pm-ola, .pm-ola-2 { animation: none; }
   /* Sin animación se queda un halo fijo: la etapa actual sigue destacando. */
   .pm-pulso { animation: none; opacity: .3; }
+  /* El cielo se queda quieto, pero se sigue viendo. */
+  .pm-estrella { animation: none; }
+  .pm-fugaz { animation: none; opacity: 0; }
+  .pm-cielo { transition: none; transform: none !important; }
 }
