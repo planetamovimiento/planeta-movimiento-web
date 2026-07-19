@@ -182,6 +182,17 @@ export default async function CincuentaDiasPage() {
 
   const resumen = resumenReto(etapas)
   const gasolina = gasolinaDeConfig(config)
+
+  /**
+   * Las cifras del reto, en la portada. valor null = todavía sin dato: se dice
+   * así, nunca con un 0 que daría a entender que no se ha recaudado nada.
+   */
+  const cifras: { label: string; valor: string | null }[] = [
+    { label: 'Recaudado', valor: resumen.recaudadoTotal != null ? euros(resumen.recaudadoTotal) : null },
+    { label: 'Personas participando', valor: resumen.participantes != null ? resumen.participantes.toLocaleString('es-ES') : null },
+    { label: 'Provincias completadas', valor: `${resumen.provinciasCompletadas} / ${resumen.totalProvincias}` },
+    { label: 'Objetivo', valor: config.objetivo_global || RETO.objetivo },
+  ]
   // El panel de colaborar sale si hay QR o si el Bizum de la gasolina está activo.
   const hayColabora = qrs.length > 0 || config.bizum_activo !== 'no'
   const finalizadas = etapas.filter(e => e.estado === 'finalizada')
@@ -248,20 +259,27 @@ export default async function CincuentaDiasPage() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-3 gap-4 mt-10 pt-8 border-t border-white/10 max-w-md">
-                  <div>
-                    <div className="text-white font-black text-3xl">50</div>
-                    <div className="text-white/50 text-xs mt-0.5">provincias</div>
-                  </div>
-                  <div>
-                    <div className="text-white font-black text-3xl">50</div>
-                    <div className="text-white/50 text-xs mt-0.5">días seguidos</div>
-                  </div>
-                  <div>
-                    <div className="text-white font-black text-3xl">1</div>
-                    <div className="text-white/50 text-xs mt-0.5">causa</div>
-                  </div>
+                {/* Las cifras reales del reto: se actualizan solas según avanza
+                    la ruta. Lo que no tiene dato lo dice, nunca sale un 0. */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-10 pt-8 border-t border-white/10">
+                  {cifras.map(c => (
+                    <div key={c.label}>
+                      {c.valor ? (
+                        <div className="text-white font-black text-2xl xl:text-3xl break-words leading-none">{c.valor}</div>
+                      ) : (
+                        <div className="text-white/40 font-bold text-sm leading-none py-1.5">Aún sin datos</div>
+                      )}
+                      <div className="text-white/50 text-xs mt-1.5 leading-tight">{c.label}</div>
+                    </div>
+                  ))}
                 </div>
+
+                {resumen.recaudadoTotal == null && (
+                  <p className="text-white/40 text-xs mt-4 leading-relaxed max-w-md">
+                    Lo recaudado va destinado a la lucha contra el cáncer a través de la {RETO.causa}. Las cifras se
+                    publican aquí a medida que avanza la ruta, provincia a provincia.
+                  </p>
+                )}
               </div>
 
               {/* Columna derecha: el protagonista y, debajo, la colaboración por QR */}
@@ -404,71 +422,7 @@ export default async function CincuentaDiasPage() {
           </div>
         </section>
 
-        {/* ── 7 · RECAUDACIÓN ────────────────────────────────────────────── */}
-        <section className="bg-pm-navy py-16 sm:py-20">
-          <div className={CONTENEDOR}>
-            <div className="text-center max-w-2xl mx-auto">
-              <p className={KICKER}>La causa</p>
-              <h2 className="text-3xl font-black text-white mt-2">Cada provincia suma</h2>
-              <p className="text-white/60 text-sm mt-4 leading-relaxed">
-                Lo recaudado va destinado a la lucha contra el cáncer a través de la {RETO.causa}.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-10">
-              {[
-                {
-                  label: 'Recaudado',
-                  valor: resumen.recaudadoTotal != null ? euros(resumen.recaudadoTotal) : null,
-                },
-                {
-                  label: 'Personas participando',
-                  valor: resumen.participantes != null ? resumen.participantes.toLocaleString('es-ES') : null,
-                },
-                {
-                  label: 'Provincias completadas',
-                  valor: `${resumen.provinciasCompletadas} / ${resumen.totalProvincias}`,
-                },
-                {
-                  label: 'Objetivo',
-                  valor: config.objetivo_global || null,
-                },
-              ].map(m => (
-                <div key={m.label} className="bg-white/5 border border-white/10 rounded-2xl p-5 text-center">
-                  {m.valor ? (
-                    <div className="text-white font-black text-2xl sm:text-3xl break-words">{m.valor}</div>
-                  ) : (
-                    <div className="text-white/30 font-bold text-sm py-2">Aún sin datos</div>
-                  )}
-                  <div className="text-white/50 text-xs mt-1.5 leading-tight">{m.label}</div>
-                </div>
-              ))}
-            </div>
-
-            {resumen.recaudadoTotal == null && (
-              <p className="text-white/40 text-xs text-center mt-6 max-w-xl mx-auto leading-relaxed">
-                Las cifras se publicarán aquí a medida que avance la ruta, provincia a provincia.
-              </p>
-            )}
-
-            {donacion ? (
-              <div className="text-center mt-10">
-                <a href={donacion} target="_blank" rel="noopener noreferrer" className={`${btnPrimario} bg-white text-pm-navy hover:bg-white/90`}>
-                  Donar a la lucha contra el cáncer
-                </a>
-                <p className="text-white/40 text-xs mt-3">
-                  La donación se realiza en la página oficial de la campaña, fuera de esta web.
-                </p>
-              </div>
-            ) : (
-              <p className="text-white/50 text-sm text-center mt-10 max-w-xl mx-auto leading-relaxed">
-                El canal oficial de donación se anunciará próximamente en esta misma página y en los perfiles del reto.
-              </p>
-            )}
-          </div>
-        </section>
-
-        {/* ── 8 · PATROCINADORES Y COLABORADORES ─────────────────────────── */}
+        {/* ── 6 · PATROCINADORES Y COLABORADORES ─────────────────────────── */}
         <section className={`${CONTENEDOR} py-16 sm:py-20`}>
           <Reveal className="text-center max-w-2xl mx-auto mb-10">
             <p className={KICKER}>Quién lo hace posible</p>
@@ -514,7 +468,7 @@ export default async function CincuentaDiasPage() {
           </div>
         </section>
 
-        {/* ── 9 · GALERÍA Y SEGUIMIENTO ──────────────────────────────────── */}
+        {/* ── 7 · GALERÍA Y SEGUIMIENTO ──────────────────────────────────── */}
         <section className="bg-pm-bg py-16 sm:py-20">
           <div className={CONTENEDOR}>
             <Reveal className="text-center max-w-2xl mx-auto mb-10">
@@ -586,7 +540,7 @@ export default async function CincuentaDiasPage() {
           </div>
         </section>
 
-        {/* ── 10 · FAQ ───────────────────────────────────────────────────── */}
+        {/* ── 8 · FAQ ───────────────────────────────────────────────────── */}
         {faq.length > 0 && (
           <section className={`${CONTENEDOR} py-16 sm:py-20`}>
             <Reveal className="text-center max-w-2xl mx-auto mb-8">
@@ -597,7 +551,7 @@ export default async function CincuentaDiasPage() {
           </section>
         )}
 
-        {/* ── 11 · CIERRE Y COMPARTIR ────────────────────────────────────── */}
+        {/* ── 9 · CIERRE Y COMPARTIR ────────────────────────────────────── */}
         <section className="bg-pm-red">
           <div className={`${CONTENEDOR} py-16 sm:py-20 text-center`}>
             <h2 className="text-white font-black text-3xl sm:text-4xl">Nos vemos en tu provincia</h2>
