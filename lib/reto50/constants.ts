@@ -60,13 +60,24 @@ export const BIZUM = {
 /** Quita el prefijo internacional para mostrar el número más limpio. */
 export const sinPrefijo = (tel: string) => tel.replace(/^\+34\s*/, '').trim()
 
-/** Cifras de impacto publicadas en el dossier. */
-export const IMPACTO = [
-  { valor: '+117.000', label: 'Seguidores en redes' },
-  { valor: '+5 M', label: 'Visualizaciones' },
-  { valor: '+981.000', label: 'Cuentas alcanzadas' },
-  { valor: '+123.500', label: 'Interacciones' },
-] as const
+/**
+ * WhatsApp de contacto para colaborar en una etapa concreta. El número lo
+ * facilitó el equipo del reto; se puede cambiar desde el panel sin tocar código.
+ */
+export const WHATSAPP = {
+  prefijo: '34',
+  /** Nacional, tal y como se muestra. */
+  numero: '618 82 71 26',
+  textoBoton: 'Colabora en esta etapa por WhatsApp',
+  /** {provincia} se sustituye por la etapa abierta. */
+  mensaje: 'Hola, he visto el reto 50 días en 50 provincias de Brosjaca y me gustaría colaborar en la etapa de {provincia}.',
+} as const
+
+/** Enlace de WhatsApp con el mensaje ya escrito y codificado. */
+export function enlaceWhatsapp(prefijo: string, numero: string, mensaje: string): string {
+  const tel = `${prefijo}${numero}`.replace(/[^\d]/g, '')
+  return `https://wa.me/${tel}?text=${encodeURIComponent(mensaje)}`
+}
 
 /**
  * Estado de cada etapa. Se marca a mano desde el panel: que una fecha haya
@@ -147,6 +158,8 @@ export const CLAVES_CONFIG = [
   'qr_titulo', 'qr_texto', 'brosjaca_logo',
   // Bizum para la gasolina de la ruta
   'bizum_activo', 'bizum_telefono', 'bizum_concepto', 'bizum_titulo', 'bizum_texto',
+  // WhatsApp para colaborar en una etapa concreta
+  'wa_activo', 'wa_prefijo', 'wa_numero', 'wa_mensaje', 'wa_boton',
   // Paisaje de fondo de la sección de la ruta
   'ruta_fondo_imagen', 'ruta_fondo_movil', 'ruta_fondo_alt',
   'ruta_fondo_posicion', 'ruta_fondo_oscuridad', 'ruta_fondo_activo',

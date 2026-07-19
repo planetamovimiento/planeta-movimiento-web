@@ -3,7 +3,8 @@
 import { useMemo, useState } from 'react'
 import { SubirImagen } from '@/components/admin/SubirImagen'
 import {
-  BIZUM, BROSJACA, CLAVES_CONFIG, OSCURIDAD_FONDO_DEFECTO, POSICIONES_FONDO, RETO, type ClaveConfig,
+  BIZUM, BROSJACA, CLAVES_CONFIG, OSCURIDAD_FONDO_DEFECTO, POSICIONES_FONDO, RETO, WHATSAPP,
+  enlaceWhatsapp, type ClaveConfig,
 } from '@/lib/reto50/constants'
 import type { ConfigReto } from '@/lib/reto50/tipos'
 import { guardarConfig } from './actions'
@@ -169,6 +170,45 @@ export default function TabGeneral({ config, pending, correr, editable }: Props)
             onChange={e => set('bizum_activo', e.target.checked ? 'si' : 'no')}
           />
           Mostrar el Bizum en la portada
+        </label>
+      </Bloque>
+
+      <Bloque
+        titulo="WhatsApp de cada etapa"
+        desc="El botón sale en el detalle de TODAS las etapas, sin configurarlas una a una. El mensaje se escribe solo con la provincia de la etapa desde la que escriben."
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Campo label="Número de WhatsApp" hint={`Si lo dejas vacío se usa ${WHATSAPP.numero}.`}>
+            {txt('wa_numero', WHATSAPP.numero)}
+          </Campo>
+          <Campo label="Prefijo internacional" hint="Sin el «+». España es 34.">
+            {txt('wa_prefijo', WHATSAPP.prefijo)}
+          </Campo>
+          <Campo label="Texto del botón">{txt('wa_boton', WHATSAPP.textoBoton)}</Campo>
+          <Campo label="Mensaje predeterminado" hint="Escribe {provincia} donde quieras que aparezca el nombre de la etapa.">
+            {area('wa_mensaje', 3, WHATSAPP.mensaje)}
+          </Campo>
+        </div>
+
+        {/* Vista previa: así se ve antes de guardar si el mensaje queda bien */}
+        <div className="mt-3 bg-pm-bg border border-gray-200 rounded-xl p-3">
+          <div className="text-[11px] font-black uppercase tracking-widest text-gray-400">Vista previa (etapa de Cuenca)</div>
+          <p className="text-sm text-pm-navy mt-1 leading-relaxed">
+            {(draft.wa_mensaje || WHATSAPP.mensaje).replace(/\{provincia\}/g, 'Cuenca')}
+          </p>
+          <div className="text-xs text-gray-500 mt-2 break-all">
+            {enlaceWhatsapp(draft.wa_prefijo || WHATSAPP.prefijo, draft.wa_numero || WHATSAPP.numero, 'Ejemplo').split('?')[0]}
+          </div>
+        </div>
+
+        <label className="flex items-center gap-2 text-sm text-pm-navy mt-3">
+          <input
+            type="checkbox"
+            checked={draft.wa_activo !== 'no'}
+            disabled={!editable}
+            onChange={e => set('wa_activo', e.target.checked ? 'si' : 'no')}
+          />
+          Mostrar el botón de WhatsApp en el detalle de las etapas
         </label>
       </Bloque>
 

@@ -15,10 +15,10 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  AQUI, ESTADOS_ETAPA, ESTADO_ACTUAL, RETO, badgeEstadoEtapa, dotEstadoEtapa, euros,
-  fechaCorta, fechaLarga, labelEstadoEtapa,
+  AQUI, ESTADOS_ETAPA, ESTADO_ACTUAL, RETO, WHATSAPP, badgeEstadoEtapa, dotEstadoEtapa, enlaceWhatsapp,
+  euros, fechaCorta, fechaLarga, labelEstadoEtapa,
 } from '@/lib/reto50/constants'
-import type { EtapaPublica } from '@/lib/reto50/tipos'
+import type { ConfigReto, EtapaPublica } from '@/lib/reto50/tipos'
 import VideoEtapa from './VideoEtapa'
 import Carretera from './Carretera'
 
@@ -124,7 +124,7 @@ function Tarjeta({ etapa, activa, onVer }: { etapa: EtapaPublica; activa: boolea
   )
 }
 
-export default function RutaCalendario({ etapas }: { etapas: EtapaPublica[] }) {
+export default function RutaCalendario({ etapas, config }: { etapas: EtapaPublica[]; config: ConfigReto }) {
   const [busqueda, setBusqueda] = useState('')
   const [abierta, setAbierta] = useState<number | null>(null)
   // Columnas de la ruta: móvil 1, tablet 3, escritorio 5. Se calcula al montar.
@@ -269,13 +269,49 @@ export default function RutaCalendario({ etapas }: { etapas: EtapaPublica[] }) {
                   </button>
                 </div>
 
-                <DetalleCuerpo etapa={etapaAbierta} totalReto={totalReto} />
+                <DetalleCuerpo etapa={etapaAbierta} totalReto={totalReto} config={config} />
               </div>
             )}
           </div>
         </>
       )}
     </div>
+  )
+}
+
+const IconoWhatsapp = ({ className = 'w-4 h-4' }: { className?: string }) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+  </svg>
+)
+
+/**
+ * Contacto para colaborar en esa etapa concreta. Sale en todas: el mensaje se
+ * arma con la provincia abierta, así quien escribe ya dice dónde puede ayudar.
+ */
+function BotonWhatsapp({ etapa, config }: { etapa: EtapaPublica; config: ConfigReto }) {
+  if (config.wa_activo === 'no') return null
+
+  const prefijo = config.wa_prefijo || WHATSAPP.prefijo
+  const numero = config.wa_numero || WHATSAPP.numero
+  const plantilla = config.wa_mensaje || WHATSAPP.mensaje
+  const texto = config.wa_boton || WHATSAPP.textoBoton
+  // Siempre la provincia: algunas ciudades llevan coletillas («Cuenca / Planeta
+  // Movimiento») que en un mensaje de WhatsApp quedan raras.
+  const lugar = etapa.provincia
+  const mensaje = plantilla.replace(/\{provincia\}/g, lugar)
+
+  return (
+    <a
+      href={enlaceWhatsapp(prefijo, numero, mensaje)}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`Escribir por WhatsApp para colaborar en la etapa de ${lugar}`}
+      className="w-full inline-flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1da851] text-white font-bold text-sm px-4 py-3 rounded-xl transition-colors"
+    >
+      <IconoWhatsapp />
+      {texto}
+    </a>
   )
 }
 
@@ -317,7 +353,7 @@ function RecaudacionProvincia({ etapa, totalReto }: { etapa: EtapaPublica; total
 }
 
 /** Cuerpo del detalle: datos + vídeo. Mismo contenido que antes, sin cambios de lógica. */
-function DetalleCuerpo({ etapa, totalReto }: { etapa: EtapaPublica; totalReto: number | null }) {
+function DetalleCuerpo({ etapa, totalReto, config }: { etapa: EtapaPublica; totalReto: number | null; config: ConfigReto }) {
   const datos: [string, string][] = []
   if (etapa.hora) datos.push(['Hora', etapa.hora])
   if (etapa.puntoEncuentro) datos.push(['Punto de encuentro', etapa.puntoEncuentro])
@@ -348,6 +384,9 @@ function DetalleCuerpo({ etapa, totalReto }: { etapa: EtapaPublica; totalReto: n
       )}
 
       <VideoEtapa etapa={etapa} />
+
+      {/* Contacto para colaborar en esta etapa: va tras el vídeo para no taparlo */}
+      <BotonWhatsapp etapa={etapa} config={config} />
     </div>
   )
 }

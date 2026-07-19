@@ -3,7 +3,7 @@ import { Foto } from '@/components/ui/Foto'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { SITE_URL, breadcrumbsJsonLd } from '@/lib/seo'
 import {
-  BROSJACA, CATEGORIAS_APOYO, IMPACTO, RETO, TOTAL_PROVINCIAS, euros, fechaLarga, labelNivel, litros,
+  BROSJACA, CATEGORIAS_APOYO, RETO, TOTAL_PROVINCIAS, euros, fechaLarga, labelNivel, litros,
 } from '@/lib/reto50/constants'
 import type { CategoriaApoyo } from '@/lib/reto50/constants'
 import type { Patrocinador } from '@/lib/reto50/tipos'
@@ -290,14 +290,6 @@ export default async function CincuentaDiasPage() {
                   ))}
                 </ul>
 
-                <div className="mt-6 pt-6 border-t border-gray-200 grid grid-cols-2 gap-4">
-                  {IMPACTO.map(i => (
-                    <div key={i.label}>
-                      <div className="text-pm-navy font-black text-xl">{i.valor}</div>
-                      <div className="text-gray-400 text-xs leading-tight mt-0.5">{i.label}</div>
-                    </div>
-                  ))}
-                </div>
               </div>
             </Reveal>
           </div>
@@ -353,7 +345,7 @@ export default async function CincuentaDiasPage() {
                 previos a cada parada.
               </p>
             </Reveal>
-            <RutaCalendario etapas={etapas} />
+            <RutaCalendario etapas={etapas} config={config} />
           </div>
         </section>
 
