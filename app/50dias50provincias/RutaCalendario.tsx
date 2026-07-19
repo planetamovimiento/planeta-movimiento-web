@@ -18,7 +18,7 @@ import {
   AQUI, ESTADOS_ETAPA, ESTADO_ACTUAL, RETO, WHATSAPP, badgeEstadoEtapa, dotEstadoEtapa, enlaceWhatsapp,
   euros, fechaCorta, fechaLarga, labelEstadoEtapa,
 } from '@/lib/reto50/constants'
-import type { ConfigReto, EtapaPublica } from '@/lib/reto50/tipos'
+import type { ColaboradorLocal, ConfigReto, EtapaPublica } from '@/lib/reto50/tipos'
 import VideoEtapa from './VideoEtapa'
 import Carretera from './Carretera'
 
@@ -124,7 +124,9 @@ function Tarjeta({ etapa, activa, onVer }: { etapa: EtapaPublica; activa: boolea
   )
 }
 
-export default function RutaCalendario({ etapas, config }: { etapas: EtapaPublica[]; config: ConfigReto }) {
+export default function RutaCalendario({ etapas, config, colaboradores }: {
+  etapas: EtapaPublica[]; config: ConfigReto; colaboradores: ColaboradorLocal[]
+}) {
   const [busqueda, setBusqueda] = useState('')
   const [abierta, setAbierta] = useState<number | null>(null)
   // Columnas de la ruta: móvil 1, tablet 3, escritorio 5. Se calcula al montar.
@@ -269,7 +271,7 @@ export default function RutaCalendario({ etapas, config }: { etapas: EtapaPublic
                   </button>
                 </div>
 
-                <DetalleCuerpo etapa={etapaAbierta} totalReto={totalReto} config={config} />
+                <DetalleCuerpo etapa={etapaAbierta} totalReto={totalReto} config={config} colaboradores={colaboradores} />
               </div>
             )}
           </div>
@@ -316,6 +318,51 @@ function BotonWhatsapp({ etapa, config }: { etapa: EtapaPublica; config: ConfigR
 }
 
 /**
+ * Quien echa una mano en esta provincia concreta: solo nombre y logo. Si no hay
+ * ninguno el bloque no se pinta, para no dejar un hueco vacío en la etapa.
+ */
+function ColaboradoresEtapa({ etapa, colaboradores }: { etapa: EtapaPublica; colaboradores: ColaboradorLocal[] }) {
+  const suyos = colaboradores.filter(c => c.provincias.includes(etapa.provincia))
+  if (suyos.length === 0) return null
+
+  return (
+    <div className="rounded-xl border border-gray-200 bg-pm-bg p-4">
+      <p className="text-[11px] font-black uppercase tracking-widest text-gray-500">
+        Colaboradores locales de esta etapa
+      </p>
+      <ul className="flex flex-wrap gap-2 mt-3">
+        {suyos.map(c => {
+          const contenido = (
+            <>
+              {c.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={c.logoUrl} alt={c.nombre} loading="lazy" className="h-8 w-auto max-w-[7rem] object-contain" />
+              ) : (
+                <span className="text-sm font-bold text-pm-navy">{c.nombre}</span>
+              )}
+            </>
+          )
+          const clases = 'bg-white border border-gray-200 rounded-lg px-3 py-2 flex items-center justify-center min-h-[3rem]'
+          return (
+            <li key={c.id} title={c.nombre}>
+              {c.webUrl ? (
+                <a href={c.webUrl} target="_blank" rel="noopener noreferrer"
+                  aria-label={`Web de ${c.nombre}`}
+                  className={`${clases} hover:border-pm-red transition-colors`}>
+                  {contenido}
+                </a>
+              ) : (
+                <div className={clases}>{contenido}</div>
+              )}
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
+/**
  * Lo recaudado en esa provincia. Se muestra SIEMPRE, también cuando todavía no
  * hay cifra: en ese caso se dice que aún no hay datos, nunca un 0 € que daría a
  * entender que no se recaudó nada. Si hay total del reto, se añade el peso que
@@ -353,7 +400,9 @@ function RecaudacionProvincia({ etapa, totalReto }: { etapa: EtapaPublica; total
 }
 
 /** Cuerpo del detalle: datos + vídeo. Mismo contenido que antes, sin cambios de lógica. */
-function DetalleCuerpo({ etapa, totalReto, config }: { etapa: EtapaPublica; totalReto: number | null; config: ConfigReto }) {
+function DetalleCuerpo({ etapa, totalReto, config, colaboradores }: {
+  etapa: EtapaPublica; totalReto: number | null; config: ConfigReto; colaboradores: ColaboradorLocal[]
+}) {
   const datos: [string, string][] = []
   if (etapa.hora) datos.push(['Hora', etapa.hora])
   if (etapa.puntoEncuentro) datos.push(['Punto de encuentro', etapa.puntoEncuentro])
@@ -384,6 +433,8 @@ function DetalleCuerpo({ etapa, totalReto, config }: { etapa: EtapaPublica; tota
       )}
 
       <VideoEtapa etapa={etapa} />
+
+      <ColaboradoresEtapa etapa={etapa} colaboradores={colaboradores} />
 
       {/* Contacto para colaborar en esta etapa: va tras el vídeo para no taparlo */}
       <BotonWhatsapp etapa={etapa} config={config} />

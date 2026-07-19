@@ -6,10 +6,10 @@ import {
   BROSJACA, CATEGORIAS_APOYO, RETO, TOTAL_PROVINCIAS, euros, fechaLarga, labelNivel, litros,
 } from '@/lib/reto50/constants'
 import type { CategoriaApoyo } from '@/lib/reto50/constants'
-import type { Patrocinador } from '@/lib/reto50/tipos'
+import type { ColaboradorLocal, Patrocinador } from '@/lib/reto50/tipos'
 import {
-  gasolinaDeConfig, getApoyosActivos, getConfigReto, getEtapasPublicas, getFaqActivas,
-  getQrsActivos, getRankingPublico, resumenReto,
+  gasolinaDeConfig, getApoyosActivos, getColaboradoresLocalesActivos, getConfigReto, getEtapasPublicas,
+  getFaqActivas, getQrsActivos, getRankingPublico, resumenReto,
 } from '@/lib/reto50/data'
 import MapaEspana from './MapaEspana'
 import RutaCalendario from './RutaCalendario'
@@ -114,11 +114,66 @@ function BloqueApoyos({ categoria, apoyos }: { categoria: CategoriaApoyo; apoyos
   )
 }
 
+/**
+ * Colaboradores locales: la tercera categoría. Solo nombre y logo, sin nivel ni
+ * descripción, porque son apoyos de una provincia concreta. Debajo de cada uno
+ * se dice en qué etapas colabora. Si no hay ninguno, el bloque no se pinta.
+ */
+function BloqueLocales({ locales }: { locales: ColaboradorLocal[] }) {
+  if (locales.length === 0) return null
+
+  return (
+    <div>
+      <Reveal className="text-center mb-6">
+        <h3 className="text-xl font-black text-pm-navy">Colaboradores locales</h3>
+        <p className="text-gray-400 text-sm mt-1.5 max-w-xl mx-auto leading-relaxed">
+          Quien echa una mano en cada provincia para que la parada de ese día salga adelante.
+        </p>
+      </Reveal>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        {locales.map((c, i) => {
+          const contenido = (
+            <>
+              {/* Sin logo no se pinta el hueco: el nombre ya va justo debajo */}
+              {c.logoUrl && (
+                <div className="h-14 flex items-center justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={c.logoUrl} alt={c.nombre} loading="lazy" className="max-h-full max-w-[85%] object-contain" />
+                </div>
+              )}
+              <div className={`text-center min-w-0 ${c.logoUrl ? 'mt-3' : ''}`}>
+                <h4 className="font-black text-pm-navy text-sm break-words">{c.nombre}</h4>
+                {c.provincias.length > 0 && (
+                  <p className="text-gray-500 text-xs mt-1 leading-relaxed break-words">{c.provincias.join(' · ')}</p>
+                )}
+              </div>
+            </>
+          )
+          const clases = 'bg-white rounded-2xl border border-gray-100 shadow-sm p-4 pm-card block h-full'
+          return (
+            <Reveal key={c.id} delay={i * 50}>
+              {c.webUrl ? (
+                <a href={c.webUrl} target="_blank" rel="noopener noreferrer" className={clases}>
+                  {contenido}
+                </a>
+              ) : (
+                <div className={clases}>{contenido}</div>
+              )}
+            </Reveal>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 export default async function CincuentaDiasPage() {
-  const [etapas, patrocinadores, colaboradores, faq, qrs, ranking, config] = await Promise.all([
+  const [etapas, patrocinadores, colaboradores, locales, faq, qrs, ranking, config] = await Promise.all([
     getEtapasPublicas(),
     getApoyosActivos('patrocinador'),
     getApoyosActivos('colaborador'),
+    getColaboradoresLocalesActivos(),
     getFaqActivas(),
     getQrsActivos(),
     getRankingPublico(),
@@ -345,7 +400,7 @@ export default async function CincuentaDiasPage() {
                 previos a cada parada.
               </p>
             </Reveal>
-            <RutaCalendario etapas={etapas} config={config} />
+            <RutaCalendario etapas={etapas} config={config} colaboradores={locales} />
           </div>
         </section>
 
@@ -424,6 +479,7 @@ export default async function CincuentaDiasPage() {
           <div className="space-y-12">
             <BloqueApoyos categoria="patrocinador" apoyos={patrocinadores} />
             <BloqueApoyos categoria="colaborador" apoyos={colaboradores} />
+            <BloqueLocales locales={locales} />
           </div>
 
           <div className="bg-pm-bg rounded-3xl p-6 sm:p-10 mt-10 text-center">

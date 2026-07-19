@@ -403,3 +403,6 @@ export const RUTA_SEED: {
   { dia: 49, fecha: '2026-09-05', provincia: 'Santa Cruz de Tenerife', ciudad: 'Tenerife', burflips: 248, kmAprox: 'Vuelo/ferry', tiempoAprox: '40m-1h30' },
   { dia: 50, fecha: '2026-09-06', provincia: 'Madrid', ciudad: 'Madrid', burflips: 249, kmAprox: 'Vuelo', tiempoAprox: '2h45-3h' },
 ]
+
+/** Las 50 provincias del reto, en orden de ruta. Respaldo para el panel. */
+export const PROVINCIAS_RETO: string[] = RUTA_SEED.map(e => e.provincia)

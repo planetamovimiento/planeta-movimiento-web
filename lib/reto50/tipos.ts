@@ -65,6 +65,23 @@ export type Patrocinador = {
   destacado: boolean
 }
 
+/**
+ * Apoyo de ámbito local: solo nombre y logo. Se asocia a una o varias
+ * provincias del reto y sale en el detalle de esas etapas. Es una categoría
+ * aparte de patrocinadores y colaboradores; no se mezclan nunca.
+ */
+export type ColaboradorLocal = {
+  id: string
+  nombre: string
+  logoUrl: string
+  /** Opcional: si está vacío, el logo no enlaza a ninguna parte. */
+  webUrl: string
+  /** Provincias donde colabora. Un mismo registro puede estar en varias. */
+  provincias: string[]
+  orden: number
+  activo: boolean
+}
+
 export type FaqItem = {
   id: string
   pregunta: string

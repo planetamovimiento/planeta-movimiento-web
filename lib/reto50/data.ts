@@ -9,7 +9,9 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { COORDS_PROVINCIA, ESTADOS_CERRADOS, ESTADO_ACTUAL, RUTA_SEED, TOTAL_PROVINCIAS, calcGasolina } from './constants'
 import type { CategoriaApoyo, EstadoEtapa, ResumenGasolina } from './constants'
-import type { ConfigReto, Donante, Etapa, EtapaPublica, FaqItem, Patrocinador, QrDonacion, ResumenReto } from './tipos'
+import type {
+  ColaboradorLocal, ConfigReto, Donante, Etapa, EtapaPublica, FaqItem, Patrocinador, QrDonacion, ResumenReto,
+} from './tipos'
 
 type Row = Record<string, unknown>
 
@@ -207,6 +209,51 @@ export async function getPatrocinadores(): Promise<Patrocinador[]> {
 /** Solo los activos de una categoría: para la web pública. */
 export async function getApoyosActivos(categoria: CategoriaApoyo): Promise<Patrocinador[]> {
   return (await getPatrocinadores()).filter(p => p.activo && p.categoria === categoria)
+}
+
+// ── Colaboradores locales ────────────────────────────────────────────────────
+
+/**
+ * Todos los colaboradores locales con sus provincias, incluidos los
+ * desactivados: para el panel. Se leen las dos tablas y se cruzan aquí; así
+ * cada colaborador es UN registro aunque apoye a varias provincias.
+ */
+export async function getColaboradoresLocales(): Promise<ColaboradorLocal[]> {
+  const db = createAdminClient()
+  const [filas, vinculos] = await Promise.all([
+    safe<Row>(() => db.from('reto50_colaboradores_locales').select('*') as never),
+    safe<Row>(() => db.from('reto50_colaborador_provincia').select('*') as never),
+  ])
+
+  const porColaborador = new Map<string, string[]>()
+  for (const v of vinculos) {
+    const id = str(v.colaborador_id)
+    const provincia = str(v.provincia)
+    if (!id || !provincia) continue
+    const lista = porColaborador.get(id)
+    if (lista) lista.push(provincia)
+    else porColaborador.set(id, [provincia])
+  }
+
+  return filas
+    .map(r => {
+      const id = str(r.id)
+      return {
+        id,
+        nombre: str(r.nombre),
+        logoUrl: str(r.logo_url),
+        webUrl: str(r.web_url),
+        provincias: (porColaborador.get(id) ?? []).sort((a, b) => a.localeCompare(b, 'es')),
+        orden: num(r.orden),
+        activo: r.activo !== false,
+      }
+    })
+    .sort((a, b) => a.orden - b.orden || a.nombre.localeCompare(b.nombre, 'es'))
+}
+
+/** Solo los activos: para la web pública. */
+export async function getColaboradoresLocalesActivos(): Promise<ColaboradorLocal[]> {
+  return (await getColaboradoresLocales()).filter(c => c.activo)
 }
 
 /** Las mismas que siembra la migración, para que la web no salga vacía antes de ejecutarla. */

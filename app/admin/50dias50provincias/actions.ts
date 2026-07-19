@@ -11,7 +11,9 @@ import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAdminUser, logActivity } from '@/lib/admin/auth'
 import { puedeVerSeccion } from '@/lib/admin/secciones'
-import { CLAVES_CONFIG, ESTADOS_ETAPA, NIVELES_PATROCINIO, esYoutubeValido, type EstadoEtapa } from '@/lib/reto50/constants'
+import {
+  CLAVES_CONFIG, ESTADOS_ETAPA, NIVELES_PATROCINIO, PROVINCIAS_RETO, esYoutubeValido, type EstadoEtapa,
+} from '@/lib/reto50/constants'
 
 type Res = { ok: boolean; error?: string | null }
 
@@ -638,5 +640,153 @@ export async function guardarConfig(clave: string, valor: string): Promise<Res> 
     return { ok: true }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Error al guardar la configuración' }
+  }
+}
+
+// ── Colaboradores locales ────────────────────────────────────────────────────
+
+export type ColaboradorLocalInput = {
+  id?: string
+  nombre: string
+  logoUrl?: string
+  /** Opcional: si va vacío, el logo no enlaza a ninguna parte. */
+  webUrl?: string
+  /** Provincias del reto donde colabora. Un registro puede estar en varias. */
+  provincias?: string[]
+  orden?: number | string
+  activo?: boolean
+}
+
+/** Las provincias que existen de verdad en la ruta. Sirve para no guardar basura. */
+async function provinciasValidas(): Promise<Set<string>> {
+  const db = createAdminClient()
+  try {
+    const { data, error } = await db.from('reto50_etapas').select('provincia')
+    if (!error && data?.length) {
+      return new Set((data as { provincia: string | null }[]).map(r => String(r.provincia ?? '')).filter(Boolean))
+    }
+  } catch {
+    // Tabla sin migrar: se valida contra la ruta oficial de respaldo.
+  }
+  return new Set(PROVINCIAS_RETO)
+}
+
+/**
+ * Crea o actualiza un colaborador local y sus provincias.
+ * El vínculo se reescribe entero (borrar + insertar): es una lista corta y así
+ * no quedan provincias sueltas de una edición anterior.
+ */
+export async function guardarColaboradorLocal(input: ColaboradorLocalInput): Promise<Res> {
+  try {
+    const { admin, error } = await exigir()
+    if (!admin) return { ok: false, error }
+    if (input.id && esSeed(input.id)) return { ok: false, error: MSG_SEED }
+    if (!input.nombre?.trim()) return { ok: false, error: 'El nombre es obligatorio' }
+
+    const validas = await provinciasValidas()
+    const provincias = [...new Set((input.provincias ?? []).map(p => String(p).trim()).filter(Boolean))]
+    const desconocida = provincias.find(p => !validas.has(p))
+    if (desconocida) return { ok: false, error: `«${desconocida}» no es una provincia de la ruta` }
+
+    const row = {
+      nombre: input.nombre.trim(),
+      logo_url: txt(input.logoUrl),
+      web_url: txt(input.webUrl),
+      orden: entONull(input.orden) ?? 0,
+      activo: input.activo !== false,
+      updated_at: new Date().toISOString(),
+    }
+
+    const db = createAdminClient()
+    let id = input.id
+    if (id) {
+      const { error: e } = await db.from('reto50_colaboradores_locales').update(row).eq('id', id)
+      if (e) return { ok: false, error: e.message }
+    } else {
+      const { data, error: e } = await db.from('reto50_colaboradores_locales').insert(row).select('id').single()
+      if (e) return { ok: false, error: e.message }
+      id = (data as { id: string } | null)?.id
+      if (!id) return { ok: false, error: 'No se ha podido crear el colaborador' }
+    }
+
+    const { error: eDel } = await db.from('reto50_colaborador_provincia').delete().eq('colaborador_id', id)
+    if (eDel) return { ok: false, error: eDel.message }
+
+    if (provincias.length) {
+      const { error: eIns } = await db
+        .from('reto50_colaborador_provincia')
+        .insert(provincias.map(provincia => ({ colaborador_id: id, provincia })))
+      if (eIns) return { ok: false, error: eIns.message }
+    }
+
+    await logActivity({
+      actorEmail: admin.email,
+      accion: input.id ? 'Editó un colaborador local (50 días)' : 'Añadió un colaborador local (50 días)',
+      entidad: 'reto50_colaborador_local',
+      entidadId: id,
+      detalle: `${row.nombre} · ${provincias.length ? provincias.join(', ') : 'sin provincias'}`,
+    })
+    revalidar()
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Error al guardar el colaborador local' }
+  }
+}
+
+export async function eliminarColaboradorLocal(id: string): Promise<Res> {
+  try {
+    const { admin, error } = await exigir()
+    if (!admin) return { ok: false, error }
+    if (esSeed(id)) return { ok: false, error: MSG_SEED }
+
+    // Los vínculos caen solos: la tabla puente va con on delete cascade.
+    const db = createAdminClient()
+    const { error: e } = await db.from('reto50_colaboradores_locales').delete().eq('id', id)
+    if (e) return { ok: false, error: e.message }
+
+    await logActivity({
+      actorEmail: admin.email,
+      accion: 'Eliminó un colaborador local (50 días)',
+      entidad: 'reto50_colaborador_local',
+      entidadId: id,
+    })
+    revalidar()
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Error al eliminar el colaborador local' }
+  }
+}
+
+/** Sube o baja un colaborador local una posición (reasigna `orden` a toda la lista). */
+export async function reordenarColaboradorLocal(id: string, direccion: 'subir' | 'bajar'): Promise<Res> {
+  try {
+    const { admin, error } = await exigir()
+    if (!admin) return { ok: false, error }
+    if (esSeed(id)) return { ok: false, error: MSG_SEED }
+
+    const db = createAdminClient()
+    const { data, error: eSel } = await db.from('reto50_colaboradores_locales').select('id, nombre, orden')
+    if (eSel) return { ok: false, error: eSel.message }
+
+    const lista = ((data ?? []) as { id: string; nombre: string; orden: number | null }[])
+      .slice()
+      .sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0) || String(a.nombre).localeCompare(String(b.nombre), 'es'))
+
+    const i = lista.findIndex(c => c.id === id)
+    if (i === -1) return { ok: false, error: 'No se encuentra ese colaborador' }
+    const j = direccion === 'subir' ? i - 1 : i + 1
+    if (j < 0 || j >= lista.length) return { ok: true }
+
+    ;[lista[i], lista[j]] = [lista[j], lista[i]]
+
+    for (let k = 0; k < lista.length; k++) {
+      const { error: eUpd } = await db.from('reto50_colaboradores_locales').update({ orden: k + 1 }).eq('id', lista[k].id)
+      if (eUpd) return { ok: false, error: eUpd.message }
+    }
+
+    revalidar()
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Error al reordenar' }
   }
 }

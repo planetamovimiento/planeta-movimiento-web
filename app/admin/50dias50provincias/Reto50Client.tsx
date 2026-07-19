@@ -2,7 +2,9 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import type { ConfigReto, Donante, Etapa, FaqItem, Patrocinador, QrDonacion, ResumenReto } from '@/lib/reto50/tipos'
+import type {
+  ColaboradorLocal, ConfigReto, Donante, Etapa, FaqItem, Patrocinador, QrDonacion, ResumenReto,
+} from '@/lib/reto50/tipos'
 import type { Correr, Resultado } from './piezas'
 import TabGeneral from './TabGeneral'
 import TabRuta from './TabRuta'
@@ -10,11 +12,13 @@ import TabImpacto from './TabImpacto'
 import TabQr from './TabQr'
 import TabGasolina from './TabGasolina'
 import TabPatrocinadores from './TabPatrocinadores'
+import TabColaboradoresLocales from './TabColaboradoresLocales'
 import TabFaq from './TabFaq'
 
 type Props = {
   etapas: Etapa[]
   patrocinadores: Patrocinador[]
+  locales: ColaboradorLocal[]
   faq: FaqItem[]
   qrs: QrDonacion[]
   donantes: Donante[]
@@ -24,9 +28,11 @@ type Props = {
   puedeEditar: boolean
 }
 
-type TabId = 'general' | 'ruta' | 'qr' | 'gasolina' | 'impacto' | 'patrocinadores' | 'faq'
+type TabId = 'general' | 'ruta' | 'qr' | 'gasolina' | 'impacto' | 'patrocinadores' | 'locales' | 'faq'
 
-export default function Reto50Client({ etapas, patrocinadores, faq, qrs, donantes, config, resumen, migrado, puedeEditar }: Props) {
+export default function Reto50Client({
+  etapas, patrocinadores, locales, faq, qrs, donantes, config, resumen, migrado, puedeEditar,
+}: Props) {
   const router = useRouter()
   const [tab, setTab] = useState<TabId>('general')
   const [pending, startTransition] = useTransition()
@@ -57,6 +63,7 @@ export default function Reto50Client({ etapas, patrocinadores, faq, qrs, donante
     { id: 'gasolina', label: 'Gasolina', extra: String(donantes.length) },
     { id: 'impacto', label: 'Recaudación', extra: String(etapas.length) },
     { id: 'patrocinadores', label: 'Patrocinadores', extra: String(patrocinadores.length) },
+    { id: 'locales', label: 'Colaboradores locales', extra: String(locales.length) },
     { id: 'faq', label: 'FAQ', extra: String(faq.length) },
   ]
 
@@ -110,6 +117,7 @@ export default function Reto50Client({ etapas, patrocinadores, faq, qrs, donante
       {tab === 'gasolina' && <TabGasolina config={config} donantes={donantes} pending={pending} correr={correr} editable={editable} />}
       {tab === 'impacto' && <TabImpacto etapas={etapas} resumen={resumen} pending={pending} correr={correr} editable={editable} />}
       {tab === 'patrocinadores' && <TabPatrocinadores patrocinadores={patrocinadores} pending={pending} correr={correr} editable={editable} />}
+      {tab === 'locales' && <TabColaboradoresLocales colaboradores={locales} etapas={etapas} pending={pending} correr={correr} editable={editable} />}
       {tab === 'faq' && <TabFaq faq={faq} pending={pending} correr={correr} editable={editable} />}
     </div>
   )
