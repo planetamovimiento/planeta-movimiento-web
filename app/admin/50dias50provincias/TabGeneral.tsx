@@ -3,8 +3,8 @@
 import { useMemo, useState } from 'react'
 import { SubirImagen } from '@/components/admin/SubirImagen'
 import {
-  BIZUM, BROSJACA, CLAVES_CONFIG, OSCURIDAD_FONDO_DEFECTO, POSICIONES_FONDO, RETO, WHATSAPP,
-  enlaceWhatsapp, type ClaveConfig,
+  BIZUM, BROSJACA, CANCION, CLAVES_CONFIG, OSCURIDAD_FONDO_DEFECTO, POSICIONES_FONDO, RETO, WHATSAPP,
+  enlaceWhatsapp, youtubeId, type ClaveConfig,
 } from '@/lib/reto50/constants'
 import type { ConfigReto } from '@/lib/reto50/tipos'
 import { guardarConfig } from './actions'
@@ -167,6 +167,48 @@ export default function TabGeneral({ config, pending, correr, editable }: Props)
             onChange={e => set('bizum_activo', e.target.checked ? 'si' : 'no')}
           />
           Mostrar el Bizum en la portada
+        </label>
+      </Bloque>
+
+      <Bloque
+        titulo="La canción del reto"
+        desc="Se escucha en la portada, dentro del panel de Brosjaca. No empieza a cargar hasta que alguien pulsa el play."
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Campo label="Enlace de YouTube" hint={`Si lo dejas vacío se usa ${CANCION.url}`}>
+            {txt('cancion_url', CANCION.url)}
+          </Campo>
+          <Campo label="Nombre de la canción" hint="Lo que se lee bajo la etiqueta. Pon aquí el título real.">
+            {txt('cancion_titulo', CANCION.titulo)}
+          </Campo>
+          <Campo label="Etiqueta" hint="El texto pequeño en rojo, encima del título.">
+            {txt('cancion_etiqueta', CANCION.etiqueta)}
+          </Campo>
+        </div>
+
+        {/* El enlace se valida aquí: si no es de YouTube, en la web no sale nada */}
+        {(() => {
+          const url = draft.cancion_url || CANCION.url
+          const id = youtubeId(url)
+          return id ? (
+            <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 mt-3">
+              Enlace correcto. Vídeo <strong>{id}</strong>.
+            </p>
+          ) : (
+            <p className="text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mt-3">
+              Ese enlace no es de YouTube o no se reconoce. Mientras no se arregle, la canción no aparecerá en la portada.
+            </p>
+          )
+        })()}
+
+        <label className="flex items-center gap-2 text-sm text-pm-navy mt-3">
+          <input
+            type="checkbox"
+            checked={draft.cancion_activa !== 'no'}
+            disabled={!editable}
+            onChange={e => set('cancion_activa', e.target.checked ? 'si' : 'no')}
+          />
+          Mostrar la canción en la portada
         </label>
       </Bloque>
 

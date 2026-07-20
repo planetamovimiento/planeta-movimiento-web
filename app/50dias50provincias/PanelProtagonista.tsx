@@ -8,6 +8,7 @@
 
 import { BROSJACA, RETO } from '@/lib/reto50/constants'
 import type { ConfigReto } from '@/lib/reto50/tipos'
+import CancionReto from './CancionReto'
 
 const IconoYoutube = ({ className = 'w-5 h-5' }: { className?: string }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -88,6 +89,9 @@ export default function PanelProtagonista({ config }: { config: ConfigReto }) {
           brosjaca.com
         </a>
       </div>
+
+      {/* La canción del reto: se escucha aquí mismo, sin salir de la página */}
+      <CancionReto config={config} />
     </div>
   )
 }

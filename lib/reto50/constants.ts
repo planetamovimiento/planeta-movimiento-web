@@ -59,6 +59,18 @@ export const BIZUM = {
   concepto: 'Donación gasolina',
 } as const
 
+/**
+ * La canción del reto solidario. Se escucha en la portada, en el panel de
+ * Brosjaca, sin salir de la web. El enlace se puede cambiar desde el panel
+ * (claves cancion_url, cancion_titulo, cancion_etiqueta).
+ */
+export const CANCION = {
+  url: 'https://www.youtube.com/watch?v=S_3wwCbD6Bo',
+  etiqueta: 'La canción del reto',
+  /** El nombre real lo pone el equipo desde el panel; esto es solo el respaldo. */
+  titulo: 'Escúchala aquí mismo',
+} as const
+
 /** Quita el prefijo internacional para mostrar el número más limpio. */
 export const sinPrefijo = (tel: string) => tel.replace(/^\+34\s*/, '').trim()
 
@@ -158,6 +170,8 @@ export const CLAVES_CONFIG = [
   'objetivo_global', 'instagram_url', 'tiktok_url', 'youtube_url',
   'facebook_url', 'web_brosjaca', 'contacto_email', 'contacto_telefono',
   'qr_titulo', 'qr_texto', 'brosjaca_logo',
+  // Canción del reto, en el panel del protagonista de la portada
+  'cancion_activa', 'cancion_url', 'cancion_titulo', 'cancion_etiqueta',
   // Bizum para la gasolina de la ruta
   'bizum_activo', 'bizum_telefono', 'bizum_concepto', 'bizum_titulo', 'bizum_texto',
   // WhatsApp para colaborar en una etapa concreta
