@@ -263,7 +263,7 @@ export default async function CincuentaDiasPage() {
                       {c.valor ? (
                         // Las cifras van en una sola línea: partir «50.000 €» a
                         // la mitad se leía fatal. El tamaño baja antes que romper.
-                        <div className="text-white font-black text-2xl sm:text-xl lg:text-lg xl:text-xl leading-none whitespace-nowrap tabular-nums">
+                        <div className="text-white font-black text-2xl sm:text-xl lg:text-base xl:text-xl leading-none whitespace-nowrap tabular-nums">
                           {c.valor}
                         </div>
                       ) : (

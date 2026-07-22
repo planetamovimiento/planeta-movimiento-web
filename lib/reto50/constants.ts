@@ -30,7 +30,7 @@ export const RETO = {
   ciudadInicio: 'Cuenca',
   ciudadFin: 'Madrid',
   /** Meta de recaudación del reto. Se puede cambiar en Admin → General. */
-  objetivo: '50.000 €',
+  objetivo: '100.000 €',
 } as const
 
 /**
