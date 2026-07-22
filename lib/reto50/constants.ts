@@ -166,6 +166,8 @@ export const labelNivel = (id: string) => NIVELES_PATROCINIO.find(n => n.id === 
 /** Claves de texto/enlace editables desde el panel. */
 export const CLAVES_CONFIG = [
   'hero_titulo', 'hero_subtitulo', 'hero_imagen',
+  // Encuadre y contraste de la imagen de portada (es el fondo del hero)
+  'hero_fondo_movil', 'hero_fondo_posicion', 'hero_fondo_oscuridad', 'hero_fondo_activo',
   'intro_texto', 'quien_es_texto', 'dossier_url', 'donacion_url',
   'objetivo_global', 'instagram_url', 'tiktok_url', 'youtube_url',
   'facebook_url', 'web_brosjaca', 'contacto_email', 'contacto_telefono',

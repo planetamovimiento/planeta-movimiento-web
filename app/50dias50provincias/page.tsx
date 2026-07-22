@@ -1,5 +1,4 @@
 import Reveal from '@/components/home/Reveal'
-import { Foto } from '@/components/ui/Foto'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { SITE_URL, breadcrumbsJsonLd } from '@/lib/seo'
 import {
@@ -17,6 +16,7 @@ import Faq from './Faq'
 import PanelQr from './PanelQr'
 import PanelProtagonista from './PanelProtagonista'
 import FondoRuta from './FondoRuta'
+import FondoHero from './FondoHero'
 import Gasolina from './Gasolina'
 import { BloqueCompartir } from './Compartir'
 
@@ -201,7 +201,6 @@ export default async function CincuentaDiasPage() {
   // Solo se enlaza lo que existe de verdad: nada de URLs inventadas.
   const donacion = config.donacion_url || ''
   const dossier = config.dossier_url || ''
-  const heroImagen = config.hero_imagen || ''
   const heroTitulo = config.hero_titulo || RETO.nombre
   const heroSubtitulo =
     config.hero_subtitulo ||
@@ -231,6 +230,8 @@ export default async function CincuentaDiasPage() {
       <main className="bg-white min-h-screen">
         {/* ── 1 · HERO ───────────────────────────────────────────────────── */}
         <section className="relative bg-pm-navy overflow-hidden">
+          {/* La imagen de portada, si la hay. Va la primera: todo lo demás encima */}
+          <FondoHero config={config} />
           <div className="absolute inset-0 bg-grid opacity-[0.07]" aria-hidden="true" />
           <div className="absolute -top-24 -right-16 w-80 h-80 rounded-full bg-pm-red/20 blur-3xl animate-orb" aria-hidden="true" />
           <div className="absolute -bottom-32 -left-16 w-96 h-96 rounded-full bg-pm-navy-md/60 blur-3xl" aria-hidden="true" />
@@ -242,7 +243,9 @@ export default async function CincuentaDiasPage() {
                 <h1 className="text-white font-black text-4xl sm:text-5xl lg:text-6xl leading-[1.05] mt-3">
                   {heroTitulo}
                 </h1>
-                <p className="text-white/70 text-base sm:text-lg mt-5 leading-relaxed max-w-xl">
+                {/* Opacidades altas a propósito: sobre la foto de portada, un
+                    white/70 se queda por debajo del contraste mínimo legible. */}
+                <p className="text-white/85 text-base sm:text-lg mt-5 leading-relaxed max-w-xl">
                   {heroSubtitulo}
                 </p>
                 <div className="flex flex-wrap gap-3 mt-8">
@@ -267,17 +270,17 @@ export default async function CincuentaDiasPage() {
                           {c.valor}
                         </div>
                       ) : (
-                        <div className="text-white/40 font-bold text-sm lg:text-xs xl:text-sm leading-none py-1.5 whitespace-nowrap">
+                        <div className="text-white/70 font-bold text-sm lg:text-xs xl:text-sm leading-none py-1.5 whitespace-nowrap">
                           Aún sin datos
                         </div>
                       )}
-                      <div className="text-white/50 text-xs mt-1.5 leading-tight">{c.label}</div>
+                      <div className="text-white/80 text-xs mt-1.5 leading-tight">{c.label}</div>
                     </div>
                   ))}
                 </div>
 
                 {resumen.recaudadoTotal == null && (
-                  <p className="text-white/40 text-xs mt-4 leading-relaxed max-w-md">
+                  <p className="text-white/70 text-xs mt-4 leading-relaxed max-w-md">
                     Lo recaudado va destinado a la lucha contra el cáncer a través de la {RETO.causa}. Las cifras se
                     publican aquí a medida que avanza la ruta, provincia a provincia.
                   </p>
@@ -290,10 +293,6 @@ export default async function CincuentaDiasPage() {
 
                 {hayColabora ? (
                   <PanelQr qrs={qrs} titulo={config.qr_titulo} texto={config.qr_texto} config={config} />
-                ) : heroImagen ? (
-                  <div className="rounded-3xl overflow-hidden shadow-2xl aspect-[4/3] relative">
-                    <Foto src={heroImagen} alt={`${RETO.protagonista} — ${RETO.nombre}`} />
-                  </div>
                 ) : (
                   <div className="rounded-3xl bg-white/5 border border-white/10 p-8 text-center">
                     <h2 className="text-white font-black text-lg">{config.qr_titulo || 'Colabora con el reto'}</h2>

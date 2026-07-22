@@ -72,14 +72,63 @@ export default function TabGeneral({ config, pending, correr, editable }: Props)
             <Campo label="Subtítulo de portada">
               {area('hero_subtitulo', 3)}
             </Campo>
-          </div>
-          <div className="space-y-4">
-            <Campo label="Imagen de portada">
-              <SubirImagen carpeta="reto50" value={draft.hero_imagen} onChange={url => set('hero_imagen', url)} />
-            </Campo>
             <Campo label={`Logo de ${RETO.protagonista}`} hint="Se muestra en la portada, junto a sus redes. PNG con fondo transparente si es posible.">
               <SubirImagen carpeta="reto50" value={draft.brosjaca_logo} onChange={url => set('brosjaca_logo', url)} />
             </Campo>
+          </div>
+
+          <div className="space-y-4">
+            <Campo
+              label="Imagen de portada"
+              hint="Es el fondo de la portada, detrás del título y de los paneles. Apaisada y de buena resolución. Máx. 25 MB."
+            >
+              <SubirImagen carpeta="reto50" value={draft.hero_imagen} onChange={url => set('hero_imagen', url)} />
+            </Campo>
+
+            {/* Los ajustes solo tienen sentido si hay imagen que ajustar */}
+            {draft.hero_imagen ? (
+              <>
+                <Campo label="Imagen para móvil (opcional)" hint="Si la subes, en móvil se usa esta: carga menos y encuadra mejor en vertical.">
+                  <SubirImagen carpeta="reto50" value={draft.hero_fondo_movil} onChange={url => set('hero_fondo_movil', url)} />
+                </Campo>
+
+                <Campo label="Encuadre de la imagen">
+                  <select className={inputCls} value={draft.hero_fondo_posicion || 'center'} disabled={!editable}
+                    onChange={e => set('hero_fondo_posicion', e.target.value)}>
+                    {POSICIONES_FONDO.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
+                  </select>
+                </Campo>
+
+                <Campo
+                  label={`Oscuridad de la capa: ${draft.hero_fondo_oscuridad || OSCURIDAD_FONDO_DEFECTO} %`}
+                  hint="Cuanto más alta, más se lee el texto y menos se ve la foto. Por debajo de 40 % el título blanco empieza a costar."
+                >
+                  <input
+                    type="range" min="0" max="95" step="5"
+                    className="w-full accent-pm-red"
+                    value={draft.hero_fondo_oscuridad || String(OSCURIDAD_FONDO_DEFECTO)}
+                    disabled={!editable}
+                    onChange={e => set('hero_fondo_oscuridad', e.target.value)}
+                  />
+                </Campo>
+
+                <label className="flex items-center gap-2 text-sm text-pm-navy">
+                  <input
+                    type="checkbox"
+                    checked={draft.hero_fondo_activo !== 'no'}
+                    disabled={!editable}
+                    onChange={e => set('hero_fondo_activo', e.target.checked ? 'si' : 'no')}
+                  />
+                  Mostrar la imagen de portada
+                  <span className="text-xs text-gray-400">(si la desactivas, fondo azul)</span>
+                </label>
+              </>
+            ) : (
+              <p className="text-xs text-gray-400 leading-relaxed">
+                Sin imagen, la portada usa el fondo azul de siempre. Al subir una aparecerán aquí el encuadre y el
+                contraste.
+              </p>
+            )}
           </div>
         </div>
       </Bloque>
