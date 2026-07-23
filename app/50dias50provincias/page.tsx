@@ -236,9 +236,11 @@ export default async function CincuentaDiasPage() {
           <div className="absolute -top-24 -right-16 w-80 h-80 rounded-full bg-pm-red/20 blur-3xl animate-orb" aria-hidden="true" />
           <div className="absolute -bottom-32 -left-16 w-96 h-96 rounded-full bg-pm-navy-md/60 blur-3xl" aria-hidden="true" />
 
-          <div className={`${CONTENEDOR} relative py-16 sm:py-24`}>
-            <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
-              <div>
+          {/* En escritorio el contenido se aparta a los lados y deja libre la
+              franja central: es donde está el protagonista de la foto. */}
+          <div className={`${CONTENEDOR} relative py-16 sm:py-24 lg:min-h-[38rem] flex items-center`}>
+            <div className="w-full grid lg:grid-cols-[minmax(0,1fr)_19rem] gap-10 lg:gap-20 xl:gap-28 items-start">
+              <div className="lg:max-w-lg xl:max-w-xl">
                 <p className={KICKER}>{RETO.protagonista} · Reto Solidario 2026</p>
                 <h1 className="text-white font-black text-4xl sm:text-5xl lg:text-6xl leading-[1.05] mt-3">
                   {heroTitulo}
@@ -287,26 +289,36 @@ export default async function CincuentaDiasPage() {
                 )}
               </div>
 
-              {/* Columna derecha: el protagonista y, debajo, la colaboración por QR */}
-              <div className="relative space-y-5">
+              {/* Columna derecha: solo el protagonista. Lo de colaborar baja a su
+                  propia banda para no tapar media foto. */}
+              <div className="relative">
                 <PanelProtagonista config={config} />
-
-                {hayColabora ? (
-                  <PanelQr qrs={qrs} titulo={config.qr_titulo} texto={config.qr_texto} config={config} />
-                ) : (
-                  <div className="rounded-3xl bg-white/5 border border-white/10 p-8 text-center">
-                    <h2 className="text-white font-black text-lg">{config.qr_titulo || 'Colabora con el reto'}</h2>
-                    <p className="text-white/50 text-sm mt-2 leading-relaxed">
-                      Los códigos para colaborar se publicarán aquí antes de la salida.
-                    </p>
-                  </div>
-                )}
               </div>
             </div>
           </div>
         </section>
 
-        {/* ── 2 · EL RETO ────────────────────────────────────────────────── */}
+        {/* ── 2 · COLABORA ───────────────────────────────────────────────── */}
+        {/* Estaba dentro de la portada, encima de la foto. Aquí se lee mejor y
+            sigue siendo lo primero que aparece tras el titular. */}
+        <section className="bg-pm-navy border-t border-white/10">
+          <div className={`${CONTENEDOR} py-10 sm:py-12`}>
+            <div className="max-w-3xl mx-auto">
+              {hayColabora ? (
+                <PanelQr qrs={qrs} titulo={config.qr_titulo} texto={config.qr_texto} config={config} />
+              ) : (
+                <div className="rounded-3xl bg-white/5 border border-white/10 p-8 text-center">
+                  <h2 className="text-white font-black text-lg">{config.qr_titulo || 'Colabora con el reto'}</h2>
+                  <p className="text-white/60 text-sm mt-2 leading-relaxed">
+                    Los códigos para colaborar se publicarán aquí antes de la salida.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* ── 3 · EL RETO ────────────────────────────────────────────────── */}
         <section className={`${CONTENEDOR} py-16 sm:py-20`}>
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
             <Reveal>
@@ -369,7 +381,7 @@ export default async function CincuentaDiasPage() {
           </div>
         </section>
 
-        {/* ── 3 · OBJETIVO DE GASOLINA ───────────────────────────────────── */}
+        {/* ── 4 · OBJETIVO DE GASOLINA ───────────────────────────────────── */}
         <section id="gasolina" className="bg-pm-bg scroll-mt-20 py-16 sm:py-20">
           <div className={CONTENEDOR}>
             <Reveal className="text-center max-w-2xl mx-auto mb-10">
@@ -389,7 +401,7 @@ export default async function CincuentaDiasPage() {
           </div>
         </section>
 
-        {/* ── 4 · MAPA · el archivo audiovisual del reto ─────────────────── */}
+        {/* ── 5 · MAPA · el archivo audiovisual del reto ─────────────────── */}
         <section id="mapa" className="scroll-mt-20 py-16 sm:py-20">
           <div className={CONTENEDOR}>
             <Reveal className="text-center max-w-2xl mx-auto mb-10">
@@ -405,7 +417,7 @@ export default async function CincuentaDiasPage() {
           </div>
         </section>
 
-        {/* ── 5 · RUTA COMPLETA ──────────────────────────────────────────── */}
+        {/* ── 6 · RUTA COMPLETA ──────────────────────────────────────────── */}
         {/* La ruta va sobre un paisaje: es un viaje por carretera, no una tabla */}
         <section id="ruta" className="relative bg-pm-navy scroll-mt-20 py-16 sm:py-20 overflow-hidden">
           <FondoRuta config={config} />
@@ -423,7 +435,7 @@ export default async function CincuentaDiasPage() {
           </div>
         </section>
 
-        {/* ── 6 · PATROCINADORES Y COLABORADORES ─────────────────────────── */}
+        {/* ── 7 · PATROCINADORES Y COLABORADORES ─────────────────────────── */}
         <section className={`${CONTENEDOR} py-16 sm:py-20`}>
           <Reveal className="text-center max-w-2xl mx-auto mb-10">
             <p className={KICKER}>Quién lo hace posible</p>
@@ -469,7 +481,7 @@ export default async function CincuentaDiasPage() {
           </div>
         </section>
 
-        {/* ── 7 · GALERÍA Y SEGUIMIENTO ──────────────────────────────────── */}
+        {/* ── 8 · GALERÍA Y SEGUIMIENTO ──────────────────────────────────── */}
         <section className="bg-pm-bg py-16 sm:py-20">
           <div className={CONTENEDOR}>
             <Reveal className="text-center max-w-2xl mx-auto mb-10">
@@ -541,7 +553,7 @@ export default async function CincuentaDiasPage() {
           </div>
         </section>
 
-        {/* ── 8 · FAQ ───────────────────────────────────────────────────── */}
+        {/* ── 9 · FAQ ───────────────────────────────────────────────────── */}
         {faq.length > 0 && (
           <section className={`${CONTENEDOR} py-16 sm:py-20`}>
             <Reveal className="text-center max-w-2xl mx-auto mb-8">
@@ -552,7 +564,7 @@ export default async function CincuentaDiasPage() {
           </section>
         )}
 
-        {/* ── 9 · CIERRE Y COMPARTIR ────────────────────────────────────── */}
+        {/* ── 10 · CIERRE Y COMPARTIR ────────────────────────────────────── */}
         <section className="bg-pm-red">
           <div className={`${CONTENEDOR} py-16 sm:py-20 text-center`}>
             <h2 className="text-white font-black text-3xl sm:text-4xl">Nos vemos en tu provincia</h2>

@@ -153,8 +153,10 @@ function Ranking({ ranking }: { ranking: Donante[] }) {
 }
 
 export default function Gasolina({ gasolina, ranking }: Props) {
+  // grid-cols-1 explícito: sin él, en móvil la columna se dimensiona por el
+  // contenido más ancho (el ranking) y desborda la pantalla a lo ancho.
   return (
-    <div className="grid lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)] gap-5 lg:gap-6 items-start">
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)] gap-5 lg:gap-6 items-start">
       <Deposito g={gasolina} />
       <Ranking ranking={ranking} />
     </div>
