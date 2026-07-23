@@ -407,7 +407,6 @@ function DetalleCuerpo({ etapa, totalReto, config, colaboradores }: {
   if (etapa.hora) datos.push(['Hora', etapa.hora])
   if (etapa.puntoEncuentro) datos.push(['Punto de encuentro', etapa.puntoEncuentro])
   datos.push(['Burflips del día', String(etapa.burflips)])
-  if (etapa.asistentes != null) datos.push(['Personas', etapa.asistentes.toLocaleString('es-ES')])
 
   return (
     <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">

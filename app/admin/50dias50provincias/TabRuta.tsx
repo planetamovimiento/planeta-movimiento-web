@@ -172,7 +172,6 @@ function EditorEtapa({ etapa, pending, correr, editable, onCerrar }: {
   const [burflips, setBurflips] = useState(String(etapa.burflips))
   const [estado, setEstado] = useState<EstadoEtapa>(etapa.estado)
   const [recaudado, setRecaudado] = useState(s(etapa.recaudado))
-  const [asistentes, setAsistentes] = useState(s(etapa.asistentes))
   const [galeria, setGaleria] = useState<string[]>(etapa.galeria)
   const [videoUrl, setVideoUrl] = useState(etapa.videoUrl)
   const [videoTitulo, setVideoTitulo] = useState(etapa.videoTitulo)
@@ -192,7 +191,7 @@ function EditorEtapa({ etapa, pending, correr, editable, onCerrar }: {
       const r = await guardarEtapa({
         id: etapa.id,
         dia, fecha, provincia, ciudad, hora, puntoEncuentro,
-        burflips, estado, recaudado, asistentes,
+        burflips, estado, recaudado,
         galeria, videoUrl, videoTitulo, videoDescripcion, videoMiniatura, videoFecha,
         banderaUrl, banderaAlt, enlaceRedes, testimonios,
       })
@@ -266,16 +265,10 @@ function EditorEtapa({ etapa, pending, correr, editable, onCerrar }: {
       {/* Resultados */}
       <div>
         <Titulo>Resultados de la etapa</Titulo>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Campo label="Recaudado (€)" hint="Vacío = aún sin datos. No pongas 0: la web mostraría un dato falso.">
-            <input type="number" min="0" step="0.01" className={inputCls} value={recaudado} disabled={!editable}
-              placeholder="Aún sin datos" onChange={e => setRecaudado(e.target.value)} />
-          </Campo>
-          <Campo label="Asistentes" hint="Vacío = aún sin datos.">
-            <input type="number" min="0" className={inputCls} value={asistentes} disabled={!editable}
-              placeholder="Aún sin datos" onChange={e => setAsistentes(e.target.value)} />
-          </Campo>
-        </div>
+        <Campo label="Recaudado en esta provincia (€)" hint="Vacío = aún sin datos. No pongas 0: la web mostraría un dato falso.">
+          <input type="number" min="0" step="0.01" className={inputCls} value={recaudado} disabled={!editable}
+            placeholder="Aún sin datos" onChange={e => setRecaudado(e.target.value)} />
+        </Campo>
       </div>
 
       {/* Fotos y vídeo */}

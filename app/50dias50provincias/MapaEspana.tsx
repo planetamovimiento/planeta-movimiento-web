@@ -236,12 +236,6 @@ export default function MapaEspana({ etapas }: { etapas: EtapaPublica[] }) {
               </div>
             </div>
 
-            {activa.asistentes != null && (
-              <p className="text-sm text-gray-600 mt-3">
-                {activa.asistentes.toLocaleString('es-ES')} personas se sumaron.
-              </p>
-            )}
-
             {activa.enlaceRedes && (
               <a
                 href={activa.enlaceRedes}

@@ -115,7 +115,7 @@ export default function Reto50Client({
       {tab === 'ruta' && <TabRuta etapas={etapas} pending={pending} correr={correr} editable={editable} />}
       {tab === 'qr' && <TabQr qrs={qrs} pending={pending} correr={correr} editable={editable} />}
       {tab === 'gasolina' && <TabGasolina config={config} donantes={donantes} pending={pending} correr={correr} editable={editable} />}
-      {tab === 'impacto' && <TabImpacto etapas={etapas} resumen={resumen} pending={pending} correr={correr} editable={editable} />}
+      {tab === 'impacto' && <TabImpacto etapas={etapas} resumen={resumen} config={config} pending={pending} correr={correr} editable={editable} />}
       {tab === 'patrocinadores' && <TabPatrocinadores patrocinadores={patrocinadores} pending={pending} correr={correr} editable={editable} />}
       {tab === 'locales' && <TabColaboradoresLocales colaboradores={locales} etapas={etapas} pending={pending} correr={correr} editable={editable} />}
       {tab === 'faq' && <TabFaq faq={faq} pending={pending} correr={correr} editable={editable} />}

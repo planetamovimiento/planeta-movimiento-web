@@ -8,7 +8,7 @@ import type { CategoriaApoyo } from '@/lib/reto50/constants'
 import type { ColaboradorLocal, Patrocinador } from '@/lib/reto50/tipos'
 import {
   gasolinaDeConfig, getApoyosActivos, getColaboradoresLocalesActivos, getConfigReto, getEtapasPublicas,
-  getFaqActivas, getQrsActivos, getRankingPublico, resumenReto,
+  getFaqActivas, getQrsActivos, getRankingPublico, recaudadoOnlineDeConfig, resumenReto,
 } from '@/lib/reto50/data'
 import MapaEspana from './MapaEspana'
 import RutaCalendario from './RutaCalendario'
@@ -180,7 +180,8 @@ export default async function CincuentaDiasPage() {
     getConfigReto(),
   ])
 
-  const resumen = resumenReto(etapas)
+  // Lo recaudado son dos vías que se suman: las paradas y lo donado por la web.
+  const resumen = resumenReto(etapas, recaudadoOnlineDeConfig(config))
   const gasolina = gasolinaDeConfig(config)
 
   /**
@@ -189,7 +190,6 @@ export default async function CincuentaDiasPage() {
    */
   const cifras: { label: string; valor: string | null }[] = [
     { label: 'Recaudado', valor: resumen.recaudadoTotal != null ? euros(resumen.recaudadoTotal) : null },
-    { label: 'Personas participando', valor: resumen.participantes != null ? resumen.participantes.toLocaleString('es-ES') : null },
     { label: 'Provincias completadas', valor: `${resumen.provinciasCompletadas} / ${resumen.totalProvincias}` },
     { label: 'Objetivo', valor: config.objetivo_global || RETO.objetivo },
   ]
@@ -262,17 +262,17 @@ export default async function CincuentaDiasPage() {
 
                 {/* Las cifras reales del reto: se actualizan solas según avanza
                     la ruta. Lo que no tiene dato lo dice, nunca sale un 0. */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-10 pt-8 border-t border-white/10">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-10 pt-8 border-t border-white/10">
                   {cifras.map(c => (
                     <div key={c.label}>
                       {c.valor ? (
-                        // Las cifras van en una sola línea: partir «50.000 €» a
-                        // la mitad se leía fatal. El tamaño baja antes que romper.
-                        <div className="text-white font-black text-2xl sm:text-xl lg:text-base xl:text-xl leading-none whitespace-nowrap tabular-nums">
+                        // Una sola línea siempre: partir «100.000 €» a la mitad
+                        // se leía fatal. Con tres cifras hay sitio de sobra.
+                        <div className="text-white font-black text-2xl leading-none whitespace-nowrap tabular-nums">
                           {c.valor}
                         </div>
                       ) : (
-                        <div className="text-white/70 font-bold text-sm lg:text-xs xl:text-sm leading-none py-1.5 whitespace-nowrap">
+                        <div className="text-white/70 font-bold text-sm leading-none py-2 whitespace-nowrap">
                           Aún sin datos
                         </div>
                       )}
@@ -504,7 +504,6 @@ export default async function CincuentaDiasPage() {
 
                       <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-3 text-xs text-gray-500">
                         {e.recaudado != null && <span>Recaudado: <strong className="text-pm-navy font-black">{euros(e.recaudado)}</strong></span>}
-                        {e.asistentes != null && <span><strong className="text-pm-navy font-black">{e.asistentes.toLocaleString('es-ES')}</strong> personas</span>}
                         <span><strong className="text-pm-navy font-black">{e.burflips}</strong> burflips</span>
                       </div>
 

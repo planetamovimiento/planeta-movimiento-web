@@ -181,6 +181,8 @@ export const CLAVES_CONFIG = [
   // Paisaje de fondo de la sección de la ruta
   'ruta_fondo_imagen', 'ruta_fondo_movil', 'ruta_fondo_alt',
   'ruta_fondo_posicion', 'ruta_fondo_oscuridad', 'ruta_fondo_activo',
+  // Donaciones recibidas por la web, al margen de las paradas de la ruta
+  'online_recaudado', 'online_actualizado', 'online_nota',
   'gasolina_recaudado', 'gasolina_actualizado', 'gasolina_nota',
   'gasolina_objetivo_eur', 'gasolina_objetivo_litros',
 ] as const

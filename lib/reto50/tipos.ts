@@ -23,8 +23,6 @@ export type Etapa = {
   estado: EstadoEtapa
   /** null = todavía sin dato. Nunca se muestra como 0 €. */
   recaudado: number | null
-  /** null = todavía sin dato. */
-  asistentes: number | null
   resumen: string
   galeria: string[]
   /** Vídeo resumen del día. Enlace de YouTube en cualquiera de sus formatos. */
@@ -115,10 +113,15 @@ export type Donante = {
 export type ConfigReto = Record<string, string>
 
 export type ResumenReto = {
-  /** Suma de lo recaudado por etapa. null si todavía no hay ni un dato. */
+  /**
+   * Todo lo recaudado: las provincias más las donaciones online. null solo si
+   * no hay ni un dato en ninguna de las dos vías.
+   */
   recaudadoTotal: number | null
-  /** Suma de asistentes. null si todavía no hay ni un dato. */
-  participantes: number | null
+  /** Solo la suma de las etapas. null si ninguna tiene cifra. */
+  recaudadoProvincias: number | null
+  /** Donaciones recibidas por la web, al margen de las paradas. */
+  recaudadoOnline: number | null
   provinciasCompletadas: number
   totalProvincias: number
 }

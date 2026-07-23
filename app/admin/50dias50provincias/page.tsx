@@ -2,7 +2,7 @@ import { requireSeccion, can } from '@/lib/admin/auth'
 import { AdminHeader } from '@/components/admin/ui'
 import {
   getColaboradoresLocales, getConfigReto, getDonantes, getEtapas, getFaq, getPatrocinadores, getQrs,
-  hayTablaEtapas, resumenReto,
+  hayTablaEtapas, recaudadoOnlineDeConfig, resumenReto,
 } from '@/lib/reto50/data'
 import Reto50Client from './Reto50Client'
 
@@ -24,7 +24,7 @@ export default async function Reto50Page() {
   ])
 
   // resumenReto vive en data.ts (service-role): se calcula aquí y viaja como prop.
-  const resumen = resumenReto(etapas)
+  const resumen = resumenReto(etapas, recaudadoOnlineDeConfig(config))
 
   return (
     <>

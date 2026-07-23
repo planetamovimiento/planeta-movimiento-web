@@ -69,7 +69,6 @@ export type EtapaInput = {
   burflips?: number | string
   estado?: EstadoEtapa
   recaudado?: number | string | null
-  asistentes?: number | string | null
   galeria?: string[]
   videoUrl?: string
   videoTitulo?: string
@@ -117,7 +116,6 @@ export async function guardarEtapa(input: EtapaInput): Promise<Res> {
     if (input.burflips !== undefined) patch.burflips = entONull(input.burflips)
     // Sin dato ⇒ null. Un 0 aquí sería un dato inventado.
     if (input.recaudado !== undefined) patch.recaudado = numONull(input.recaudado)
-    if (input.asistentes !== undefined) patch.asistentes = entONull(input.asistentes)
     if (input.galeria !== undefined) {
       patch.galeria = Array.isArray(input.galeria)
         ? input.galeria.map(u => String(u).trim()).filter(Boolean)

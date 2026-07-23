@@ -54,7 +54,6 @@ function aEtapa(r: Row): Etapa {
     descripcion: str(r.descripcion),
     estado: (str(r.estado) || 'proximamente') as EstadoEtapa,
     recaudado: numONull(r.recaudado),
-    asistentes: numONull(r.asistentes),
     resumen: str(r.resumen),
     galeria: Array.isArray(r.galeria) ? (r.galeria as unknown[]).map(str).filter(Boolean) : [],
     videoUrl: str(r.video_url),
@@ -93,7 +92,6 @@ function etapasDeSeed(): Etapa[] {
       descripcion: '',
       estado: 'proximamente' as EstadoEtapa,
       recaudado: null,
-      asistentes: null,
       resumen: '',
       galeria: [],
       videoUrl: '',
@@ -147,16 +145,35 @@ export function etapaActual<T extends { estado: EstadoEtapa }>(etapas: T[]): T |
 }
 
 
-/** Totales del reto. Devuelve null en lo que todavía no tiene ningún dato. */
-export function resumenReto(etapas: { estado: EstadoEtapa; recaudado: number | null; asistentes: number | null }[]): ResumenReto {
+/**
+ * Totales del reto. Devuelve null en lo que todavía no tiene ningún dato.
+ *
+ * Lo recaudado son DOS vías que se suman: lo de cada provincia y lo que llega
+ * por la web (la campaña arrancó el 1 de enero, antes de la ruta). El total es
+ * null solo si no hay ni un dato en ninguna de las dos: un 0 € daría a entender
+ * que no se ha recaudado nada.
+ */
+export function resumenReto(
+  etapas: { estado: EstadoEtapa; recaudado: number | null }[],
+  online: number | null = null,
+): ResumenReto {
   const conRecaudacion = etapas.filter(e => e.recaudado != null)
-  const conAsistentes = etapas.filter(e => e.asistentes != null)
+  const provincias = conRecaudacion.length
+    ? conRecaudacion.reduce((s, e) => s + (e.recaudado ?? 0), 0)
+    : null
+
   return {
-    recaudadoTotal: conRecaudacion.length ? conRecaudacion.reduce((s, e) => s + (e.recaudado ?? 0), 0) : null,
-    participantes: conAsistentes.length ? conAsistentes.reduce((s, e) => s + (e.asistentes ?? 0), 0) : null,
+    recaudadoTotal: provincias == null && online == null ? null : (provincias ?? 0) + (online ?? 0),
+    recaudadoProvincias: provincias,
+    recaudadoOnline: online,
     provinciasCompletadas: etapas.filter(e => e.estado === 'finalizada').length,
     totalProvincias: TOTAL_PROVINCIAS,
   }
+}
+
+/** Lo donado por la web, que se introduce a mano desde el panel. */
+export function recaudadoOnlineDeConfig(config: ConfigReto): number | null {
+  return numONull(config.online_recaudado)
 }
 
 function aPatrocinador(r: Row): Patrocinador {
