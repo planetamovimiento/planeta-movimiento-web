@@ -13,6 +13,7 @@ export type SeccionId =
   | 'familias'
   | 'reservas'
   | 'pagos'
+  | 'facturacion'
   | 'productos'
   | 'formularios'
   | 'calendario'
@@ -44,6 +45,7 @@ export const SECCIONES: SeccionMeta[] = [
   { id: 'balance',         label: 'Balance Económico',   icon: '💰', href: '/admin/balance',          grupo: 'Empresa' },
   { id: 'reservas',        label: 'Reservas',            icon: '📋', href: '/admin/reservas',         grupo: 'Empresa' },
   { id: 'pagos',           label: 'Pagos',               icon: '💳', href: '/admin/pagos',            grupo: 'Empresa' },
+  { id: 'facturacion',     label: 'Facturación',         icon: '🧾', href: '/admin/facturacion',      grupo: 'Empresa' },
   { id: 'productos',       label: 'Productos y pedidos', icon: '🛒', href: '/admin/productos',        grupo: 'Empresa' },
   { id: 'formularios',     label: 'Solicitudes',         icon: '✉️', href: '/admin/formularios',      grupo: 'Empresa' },
   { id: 'calendario',      label: 'Calendario',          icon: '🗓️', href: '/admin/calendario',       grupo: 'Empresa' },

@@ -86,6 +86,14 @@ export const can = {
   // Balance económico: principal hace todo; gestor crea/edita; lectura solo ve.
   manageFinance:  (r: AdminRole) => r === 'principal',                 // borrar, importar, categorías
   editFinance:    (r: AdminRole) => r === 'principal' || r === 'gestor', // crear/editar
+  // Facturación. Datos fiscales sensibles (perfiles) y anulación: solo principal.
+  facturaVer:      (_r: AdminRole) => true,
+  facturaEditar:   (r: AdminRole) => r === 'principal' || r === 'gestor', // crear/editar borradores
+  facturaEmitir:   (r: AdminRole) => r === 'principal' || r === 'gestor',
+  facturaPago:     (r: AdminRole) => r === 'principal' || r === 'gestor',
+  facturaClientes: (r: AdminRole) => r === 'principal' || r === 'gestor',
+  facturaPerfiles: (r: AdminRole) => r === 'principal',                 // datos fiscales del emisor
+  facturaAnular:   (r: AdminRole) => r === 'principal',
 }
 
 /** Registra una acción en el log de actividad */
