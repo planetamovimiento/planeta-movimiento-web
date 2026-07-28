@@ -1,6 +1,6 @@
 import { requireSeccion, can } from '@/lib/admin/auth'
 import { AdminHeader } from '@/components/admin/ui'
-import { getPerfiles, getSeries, getClientesFactura, hayTablasFacturacion } from '@/lib/facturacion/data'
+import { getPerfiles, getSeries, getClientesFactura, getDocumentos, hayTablasFacturacion } from '@/lib/facturacion/data'
 import FacturacionClient from './FacturacionClient'
 
 export const dynamic = 'force-dynamic'
@@ -9,9 +9,9 @@ export default async function FacturacionPage() {
   const admin = await requireSeccion('facturacion')
   const migrado = await hayTablasFacturacion()
 
-  const [perfiles, series, clientes] = migrado
-    ? await Promise.all([getPerfiles(), getSeries(), getClientesFactura()])
-    : [[], [], []]
+  const [perfiles, series, clientes, documentos] = migrado
+    ? await Promise.all([getPerfiles(), getSeries(), getClientesFactura(), getDocumentos()])
+    : [[], [], [], []]
 
   return (
     <>
@@ -24,9 +24,12 @@ export default async function FacturacionPage() {
           perfiles={perfiles}
           series={series}
           clientes={clientes}
+          documentos={documentos}
           migrado={migrado}
           puedePerfiles={can.facturaPerfiles(admin.role)}
           puedeClientes={can.facturaClientes(admin.role)}
+          puedeEditar={can.facturaEditar(admin.role)}
+          puedeEmitir={can.facturaEmitir(admin.role)}
         />
       </div>
     </>

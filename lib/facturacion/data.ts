@@ -4,7 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import type { ClienteFactura, PerfilFacturacion, SerieFacturacion } from './tipos'
+import type { ClienteFactura, Documento, LineaDocumento, PagoDocumento, PerfilFacturacion, SerieFacturacion } from './tipos'
 
 type Row = Record<string, unknown>
 
@@ -148,4 +148,107 @@ export async function clienteTieneDocumentos(clientId: string): Promise<boolean>
     const { count, error } = await db.from('billing_documents').select('id', { count: 'exact', head: true }).eq('client_id', clientId)
     return !error && (count ?? 0) > 0
   } catch { return false }
+}
+
+// ── Documentos (facturas + proformas) ──────────────────────────────────────
+
+function aLinea(r: Row): LineaDocumento {
+  return {
+    id: str(r.id),
+    orden: num(r.orden),
+    concepto: str(r.concepto),
+    descripcion: str(r.descripcion),
+    cantidad: num(r.cantidad),
+    unidad: str(r.unidad),
+    precioCents: num(r.precio_cents),
+    descuentoPct: num(r.descuento_pct),
+    descuentoCents: num(r.descuento_cents),
+    ivaPct: num(r.iva_pct),
+    ivaTipo: (str(r.iva_tipo) || 'normal') as LineaDocumento['ivaTipo'],
+    irpfPct: num(r.irpf_pct),
+    baseCents: num(r.base_cents),
+    totalCents: num(r.total_cents),
+  }
+}
+
+function aPago(r: Row): PagoDocumento {
+  return {
+    id: str(r.id),
+    fecha: r.fecha ? str(r.fecha).slice(0, 10) : '',
+    importeCents: num(r.importe_cents),
+    metodo: str(r.metodo),
+    referencia: str(r.referencia),
+    observaciones: str(r.observaciones),
+  }
+}
+
+function aDocumento(r: Row, lineas: LineaDocumento[], pagos: PagoDocumento[]): Documento {
+  const snap = (v: unknown) => (v && typeof v === 'object' ? v as Record<string, unknown> : null)
+  return {
+    id: str(r.id),
+    tipo: str(r.tipo) === 'proforma' ? 'proforma' : 'factura',
+    profileId: r.profile_id ? str(r.profile_id) : null,
+    serieId: r.serie_id ? str(r.serie_id) : null,
+    clientId: r.client_id ? str(r.client_id) : null,
+    numero: str(r.numero),
+    numeroInt: r.numero_int == null ? null : num(r.numero_int),
+    fecha: r.fecha ? str(r.fecha).slice(0, 10) : '',
+    vencimiento: r.vencimiento ? str(r.vencimiento).slice(0, 10) : '',
+    estado: str(r.estado) || 'borrador',
+    moneda: str(r.moneda) || 'EUR',
+    formaPago: str(r.forma_pago),
+    condicionesPago: str(r.condiciones_pago),
+    referencia: str(r.referencia),
+    numPedido: str(r.num_pedido),
+    observaciones: str(r.observaciones),
+    notasInternas: str(r.notas_internas),
+    pieLegal: str(r.pie_legal),
+    validezDias: r.validez_dias == null ? null : num(r.validez_dias),
+    emisorSnapshot: snap(r.emisor_snapshot),
+    clienteSnapshot: snap(r.cliente_snapshot),
+    baseCents: num(r.base_cents),
+    descuentoCents: num(r.descuento_cents),
+    ivaCents: num(r.iva_cents),
+    irpfCents: num(r.irpf_cents),
+    suplidosCents: num(r.suplidos_cents),
+    totalCents: num(r.total_cents),
+    pagadoCents: num(r.pagado_cents),
+    origenDocumentoId: r.origen_documento_id ? str(r.origen_documento_id) : null,
+    convertidaDocumentoId: r.convertida_documento_id ? str(r.convertida_documento_id) : null,
+    createdBy: str(r.created_by),
+    createdAt: str(r.created_at),
+    lineas,
+    pagos,
+  }
+}
+
+/** Todos los documentos con sus líneas y pagos. ponytail: sin paginar; ok con
+ *  pocos cientos, añadir paginación cuando el volumen crezca. */
+export async function getDocumentos(): Promise<Documento[]> {
+  const db = createAdminClient()
+  const [docs, lineas, pagos] = await Promise.all([
+    safe<Row>(() => db.from('billing_documents').select('*') as never),
+    safe<Row>(() => db.from('billing_document_lines').select('*') as never),
+    safe<Row>(() => db.from('billing_payments').select('*') as never),
+  ])
+  const lineasPorDoc = new Map<string, LineaDocumento[]>()
+  for (const raw of lineas) {
+    const did = str(raw.documento_id)
+    const arr = lineasPorDoc.get(did) ?? []
+    arr.push(aLinea(raw))
+    lineasPorDoc.set(did, arr)
+  }
+  for (const arr of lineasPorDoc.values()) arr.sort((a, b) => a.orden - b.orden)
+
+  const pagosPorDoc = new Map<string, PagoDocumento[]>()
+  for (const raw of pagos) {
+    const did = str(raw.documento_id)
+    const arr = pagosPorDoc.get(did) ?? []
+    arr.push(aPago(raw))
+    pagosPorDoc.set(did, arr)
+  }
+
+  return docs
+    .map(d => aDocumento(d, lineasPorDoc.get(str(d.id)) ?? [], pagosPorDoc.get(str(d.id)) ?? []))
+    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
 }

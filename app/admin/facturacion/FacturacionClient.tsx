@@ -2,18 +2,22 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import type { ClienteFactura, PerfilFacturacion, SerieFacturacion } from '@/lib/facturacion/tipos'
+import type { ClienteFactura, Documento, PerfilFacturacion, SerieFacturacion } from '@/lib/facturacion/tipos'
 import type { Resultado } from '../50dias50provincias/piezas'
 import TabPerfiles from './TabPerfiles'
 import TabClientes from './TabClientes'
+import TabDocumentos from './TabDocumentos'
 
 type Props = {
   perfiles: PerfilFacturacion[]
   series: SerieFacturacion[]
   clientes: ClienteFactura[]
+  documentos: Documento[]
   migrado: boolean
   puedePerfiles: boolean
   puedeClientes: boolean
+  puedeEditar: boolean
+  puedeEmitir: boolean
 }
 
 type TabId = 'resumen' | 'facturas' | 'proformas' | 'perfiles' | 'clientes' | 'config'
@@ -40,7 +44,7 @@ function Proximamente({ que }: { que: string }) {
   )
 }
 
-export default function FacturacionClient({ perfiles, series, clientes, migrado, puedePerfiles, puedeClientes }: Props) {
+export default function FacturacionClient({ perfiles, series, clientes, documentos, migrado, puedePerfiles, puedeClientes, puedeEditar, puedeEmitir }: Props) {
   const router = useRouter()
   const [tab, setTab] = useState<TabId>(perfiles.length === 0 ? 'perfiles' : 'resumen')
   const [pending, startTransition] = useTransition()
@@ -56,8 +60,11 @@ export default function FacturacionClient({ perfiles, series, clientes, migrado,
     })
   }
 
+  const nFacturas = documentos.filter(d => d.tipo === 'factura').length
+  const nProformas = documentos.filter(d => d.tipo === 'proforma').length
   const cuenta = (id: TabId) =>
-    id === 'perfiles' ? perfiles.length : id === 'clientes' ? clientes.length : null
+    id === 'perfiles' ? perfiles.length : id === 'clientes' ? clientes.length
+    : id === 'facturas' ? nFacturas : id === 'proformas' ? nProformas : null
 
   return (
     <div className="space-y-5">
@@ -95,9 +102,15 @@ export default function FacturacionClient({ perfiles, series, clientes, migrado,
       {tab === 'clientes' && (
         <TabClientes clientes={clientes} pending={pending} correr={correr} editable={migrado && puedeClientes} />
       )}
+      {tab === 'facturas' && (
+        <TabDocumentos tipo="factura" documentos={documentos} perfiles={perfiles} series={series} clientes={clientes}
+          correr={correr} pending={pending} editable={migrado && puedeEditar} puedeEmitir={migrado && puedeEmitir} />
+      )}
+      {tab === 'proformas' && (
+        <TabDocumentos tipo="proforma" documentos={documentos} perfiles={perfiles} series={series} clientes={clientes}
+          correr={correr} pending={pending} editable={migrado && puedeEditar} puedeEmitir={migrado && puedeEmitir} />
+      )}
       {tab === 'resumen' && <Proximamente que="Resumen de facturación" />}
-      {tab === 'facturas' && <Proximamente que="Facturas" />}
-      {tab === 'proformas' && <Proximamente que="Proformas" />}
       {tab === 'config' && <Proximamente que="Configuración" />}
     </div>
   )

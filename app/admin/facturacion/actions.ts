@@ -10,8 +10,11 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getAdminUser, logActivity, can } from '@/lib/admin/auth'
 import { puedeVerSeccion } from '@/lib/admin/secciones'
 import { perfilTieneDocumentos, clienteTieneDocumentos } from '@/lib/facturacion/data'
+import { calcularDocumento, type LineaEntrada } from '@/lib/facturacion/dinero'
+import { ESTADOS_EMITIDOS } from '@/lib/facturacion/constants'
 
 type Res = { ok: boolean; error?: string | null }
+type ResId = Res & { id?: string }
 
 /** Sesión + acceso a la sección. Devuelve el admin o un error. */
 async function exigir() {
@@ -245,7 +248,7 @@ export type ClienteInput = {
   archivado?: boolean
 }
 
-export async function guardarClienteFactura(input: ClienteInput): Promise<Res> {
+export async function guardarClienteFactura(input: ClienteInput): Promise<ResId> {
   try {
     const { admin, error } = await exigir()
     if (!admin) return { ok: false, error }
@@ -264,15 +267,31 @@ export async function guardarClienteFactura(input: ClienteInput): Promise<Res> {
       updated_at: new Date().toISOString(),
     }
     const db = createAdminClient()
-    const { error: e } = input.id
-      ? await db.from('billing_clients').update(fila).eq('id', input.id)
-      : await db.from('billing_clients').insert(fila)
+    const { data, error: e } = input.id
+      ? await db.from('billing_clients').update(fila).eq('id', input.id).select('id').single()
+      : await db.from('billing_clients').insert(fila).select('id').single()
     if (e) return { ok: false, error: e.message }
 
     await auditar(admin.email, input.id ? 'cliente editado' : 'cliente creado', { detalle: { nombre: fila.nombre } })
     revalidar()
-    return { ok: true }
+    return { ok: true, id: (data as { id?: string } | null)?.id }
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'Error al guardar el cliente' } }
+}
+
+/** Clientes con datos similares (NIF/correo/nombre): evita duplicados accidentales. */
+export async function buscarClientesSimilares(input: { nif?: string; email?: string; nombre?: string }): Promise<{ id: string; nombre: string; nif: string }[]> {
+  try {
+    const { admin } = await exigir()
+    if (!admin) return []
+    const db = createAdminClient()
+    const ors: string[] = []
+    if (input.nif?.trim()) ors.push(`nif.ilike.%${input.nif.trim()}%`)
+    if (input.email?.trim()) ors.push(`email.ilike.%${input.email.trim()}%`)
+    if (input.nombre?.trim()) ors.push(`nombre.ilike.%${input.nombre.trim()}%`)
+    if (ors.length === 0) return []
+    const { data } = await db.from('billing_clients').select('id, nombre, nif').or(ors.join(',')).limit(5)
+    return (data ?? []) as { id: string; nombre: string; nif: string }[]
+  } catch { return [] }
 }
 
 export async function archivarClienteFactura(id: string, archivado: boolean): Promise<Res> {
@@ -299,6 +318,318 @@ export async function eliminarClienteFactura(id: string): Promise<Res> {
     const { error: e } = await db.from('billing_clients').delete().eq('id', id)
     if (e) return { ok: false, error: e.message }
     await auditar(admin.email, 'cliente eliminado', { detalle: { id } })
+    revalidar()
+    return { ok: true }
+  } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'Error al eliminar' } }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DOCUMENTOS  (facturas y proformas)
+// Los importes llegan en céntimos desde el formulario, pero SIEMPRE se
+// recalculan aquí (nunca se confía en el navegador). El número correlativo se
+// asigna solo al EMITIR (RPC con bloqueo), nunca en un borrador: así no se
+// crean huecos en la numeración.
+// ═══════════════════════════════════════════════════════════════════════════
+
+export type LineaInput = {
+  concepto: string
+  descripcion?: string
+  cantidad?: number
+  unidad?: string
+  precioCents: number
+  descuentoPct?: number
+  descuentoCents?: number
+  ivaPct?: number
+  ivaTipo?: 'normal' | 'exento' | 'no_sujeto'
+  irpfPct?: number
+}
+
+export type DocumentoInput = {
+  id?: string
+  tipo: 'factura' | 'proforma'
+  profileId: string
+  serieId?: string | null
+  clientId?: string | null
+  /** Datos del receptor cuando NO se guarda como cliente (solo para este documento). */
+  clienteInline?: Record<string, string> | null
+  fecha: string
+  vencimiento?: string | null
+  referencia?: string
+  numPedido?: string
+  formaPago?: string
+  condicionesPago?: string
+  observaciones?: string
+  notasInternas?: string
+  pieLegal?: string
+  validezDias?: number | null
+  suplidosCents?: number
+  lineas: LineaInput[]
+}
+
+function aEntradas(lineas: LineaInput[]): LineaEntrada[] {
+  return lineas.map(l => ({
+    cantidad: Number(l.cantidad ?? 1) || 0,
+    precioCents: Math.round(Number(l.precioCents) || 0),
+    descuentoPct: Number(l.descuentoPct) || 0,
+    descuentoCents: Math.round(Number(l.descuentoCents) || 0),
+    ivaPct: Number(l.ivaPct) || 0,
+    ivaTipo: l.ivaTipo ?? 'normal',
+    irpfPct: Number(l.irpfPct) || 0,
+  }))
+}
+
+function filasLineas(documentoId: string, lineas: LineaInput[]) {
+  const entradas = aEntradas(lineas)
+  const calc = calcularDocumento(entradas)
+  const filas = lineas.map((l, i) => ({
+    documento_id: documentoId,
+    orden: i,
+    concepto: (l.concepto || '').trim(),
+    descripcion: txt(l.descripcion),
+    cantidad: Number(l.cantidad ?? 1) || 0,
+    unidad: txt(l.unidad),
+    precio_cents: Math.round(Number(l.precioCents) || 0),
+    descuento_pct: Number(l.descuentoPct) || 0,
+    descuento_cents: Math.round(Number(l.descuentoCents) || 0),
+    iva_pct: Number(l.ivaPct) || 0,
+    iva_tipo: l.ivaTipo ?? 'normal',
+    irpf_pct: Number(l.irpfPct) || 0,
+    base_cents: calc.lineas[i].baseCents,
+    total_cents: calc.lineas[i].totalCents,
+  }))
+  return { filas, calc }
+}
+
+/** Recorta un perfil al conjunto de campos que necesita el PDF (snapshot). */
+async function snapshotEmisor(profileId: string): Promise<Record<string, unknown> | null> {
+  const db = createAdminClient()
+  const { data } = await db.from('billing_profiles').select('*').eq('id', profileId).single()
+  if (!data) return null
+  const r = data as Record<string, unknown>
+  const campos = ['nombre_comercial', 'razon_social', 'nif', 'direccion', 'cp', 'localidad', 'provincia', 'pais',
+    'telefono', 'email', 'web', 'iban', 'bic', 'texto_legal', 'pie_factura', 'datos_registrales', 'logo_url',
+    'sello_url', 'firma_url', 'color', 'moneda', 'forma_pago', 'condiciones_pago', 'notas']
+  return Object.fromEntries(campos.map(k => [k, r[k] ?? null]))
+}
+
+async function snapshotCliente(clientId: string | null | undefined, inline: Record<string, string> | null | undefined): Promise<Record<string, unknown> | null> {
+  if (clientId) {
+    const db = createAdminClient()
+    const { data } = await db.from('billing_clients').select('*').eq('id', clientId).single()
+    if (data) {
+      const r = data as Record<string, unknown>
+      const campos = ['tipo', 'nombre', 'nif', 'direccion', 'cp', 'localidad', 'provincia', 'pais', 'email', 'telefono', 'contacto', 'forma_pago', 'iban']
+      return Object.fromEntries(campos.map(k => [k, r[k] ?? null]))
+    }
+  }
+  if (inline && (inline.nombre || '').trim()) return { ...inline }
+  return null
+}
+
+async function cargarDoc(id: string) {
+  const db = createAdminClient()
+  const { data } = await db.from('billing_documents').select('*').eq('id', id).single()
+  return data as Record<string, unknown> | null
+}
+
+/**
+ * Crea o actualiza un BORRADOR. Recalcula totales en el servidor. No asigna
+ * número. No se puede tocar un documento ya emitido por esta vía.
+ */
+export async function guardarBorrador(input: DocumentoInput): Promise<ResId> {
+  try {
+    const { admin, error } = await exigir()
+    if (!admin) return { ok: false, error }
+    if (!can.facturaEditar(admin.role)) return { ok: false, error: 'Sin permiso para editar documentos' }
+    if (!input.profileId) return { ok: false, error: 'Selecciona un emisor' }
+    if (!input.fecha) return { ok: false, error: 'La fecha de emisión es obligatoria' }
+
+    if (input.id) {
+      const actual = await cargarDoc(input.id)
+      if (actual && ESTADOS_EMITIDOS.includes(String(actual.estado))) {
+        return { ok: false, error: 'Este documento ya está emitido: no se puede editar como borrador.' }
+      }
+    }
+
+    const entradas = aEntradas(input.lineas || [])
+    const calc = calcularDocumento(entradas, Math.round(Number(input.suplidosCents) || 0))
+
+    const cabecera: Record<string, unknown> = {
+      tipo: input.tipo === 'proforma' ? 'proforma' : 'factura',
+      profile_id: input.profileId,
+      serie_id: input.serieId || null,
+      client_id: input.clientId || null,
+      fecha: input.fecha,
+      vencimiento: input.vencimiento || null,
+      referencia: txt(input.referencia),
+      num_pedido: txt(input.numPedido),
+      forma_pago: txt(input.formaPago),
+      condiciones_pago: txt(input.condicionesPago),
+      observaciones: txt(input.observaciones),
+      notas_internas: txt(input.notasInternas),
+      pie_legal: txt(input.pieLegal),
+      validez_dias: input.validezDias ?? null,
+      // El receptor sin guardar se conserva en el snapshot desde el borrador.
+      cliente_snapshot: input.clientId ? null : (input.clienteInline && input.clienteInline.nombre ? input.clienteInline : null),
+      base_cents: calc.baseCents,
+      descuento_cents: calc.descuentoCents,
+      iva_cents: calc.ivaCents,
+      irpf_cents: calc.irpfCents,
+      suplidos_cents: calc.suplidosCents,
+      total_cents: calc.totalCents,
+      updated_at: new Date().toISOString(),
+    }
+
+    const db = createAdminClient()
+    let docId = input.id
+    if (docId) {
+      const { error: e } = await db.from('billing_documents').update(cabecera).eq('id', docId)
+      if (e) return { ok: false, error: e.message }
+    } else {
+      const { data, error: e } = await db.from('billing_documents').insert({ ...cabecera, estado: 'borrador', created_by: admin.email }).select('id').single()
+      if (e) return { ok: false, error: e.message }
+      docId = (data as { id?: string } | null)?.id
+      if (!docId) return { ok: false, error: 'No se pudo crear el documento' }
+    }
+
+    // Líneas: se reescriben enteras (lista corta).
+    await db.from('billing_document_lines').delete().eq('documento_id', docId)
+    if ((input.lineas || []).length) {
+      const { filas } = filasLineas(docId, input.lineas)
+      const { error: eL } = await db.from('billing_document_lines').insert(filas)
+      if (eL) return { ok: false, error: eL.message }
+    }
+
+    await auditar(admin.email, input.id ? 'documento editado' : 'borrador creado', { documentoId: docId, detalle: { tipo: cabecera.tipo, total: calc.totalCents } })
+    revalidar()
+    return { ok: true, id: docId }
+  } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'Error al guardar el borrador' } }
+}
+
+/**
+ * Emite un documento: valida, asigna número correlativo (RPC con bloqueo) y
+ * congela el snapshot del emisor y del receptor. A partir de aquí es inmutable.
+ */
+export async function emitirDocumento(id: string): Promise<Res> {
+  try {
+    const { admin, error } = await exigir()
+    if (!admin) return { ok: false, error }
+    if (!can.facturaEmitir(admin.role)) return { ok: false, error: 'Sin permiso para emitir' }
+
+    const doc = await cargarDoc(id)
+    if (!doc) return { ok: false, error: 'Documento no encontrado' }
+    if (ESTADOS_EMITIDOS.includes(String(doc.estado)) || doc.numero) return { ok: false, error: 'Este documento ya está emitido.' }
+    if (!doc.serie_id) return { ok: false, error: 'Falta la serie: elige una serie en el documento (o créala en el perfil emisor).' }
+    if (!doc.fecha) return { ok: false, error: 'Falta la fecha de emisión.' }
+    if (Number(doc.total_cents) <= 0) return { ok: false, error: 'El total debe ser mayor que 0.' }
+    if (doc.vencimiento && String(doc.vencimiento) < String(doc.fecha)) return { ok: false, error: 'El vencimiento no puede ser anterior a la emisión.' }
+
+    const emisor = await snapshotEmisor(String(doc.profile_id))
+    if (!emisor) return { ok: false, error: 'El emisor ya no existe.' }
+    const cliente = await snapshotCliente(doc.client_id as string | null, doc.cliente_snapshot as Record<string, string> | null)
+    if (!cliente) return { ok: false, error: 'Selecciona o crea un cliente antes de emitir.' }
+
+    const db = createAdminClient()
+    const ejercicio = Number(String(doc.fecha).slice(0, 4))
+    const { data: num, error: eNum } = await db.rpc('billing_siguiente_numero', { p_serie_id: doc.serie_id, p_ejercicio: ejercicio })
+    if (eNum || !num || !num[0]) return { ok: false, error: eNum?.message || 'No se pudo asignar el número.' }
+
+    const esProforma = String(doc.tipo) === 'proforma'
+    const { error: e } = await db.from('billing_documents').update({
+      numero: num[0].numero,
+      numero_int: num[0].numero_int,
+      estado: esProforma ? 'enviada' : 'emitida',
+      emisor_snapshot: emisor,
+      cliente_snapshot: cliente,
+      updated_at: new Date().toISOString(),
+    }).eq('id', id)
+    if (e) return { ok: false, error: e.message }
+
+    await auditar(admin.email, esProforma ? 'proforma emitida' : 'factura emitida', { documentoId: id, detalle: { numero: num[0].numero } })
+    revalidar()
+    return { ok: true }
+  } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'Error al emitir' } }
+}
+
+/** Duplica cualquier documento como un borrador nuevo (sin número). */
+export async function duplicarDocumento(id: string): Promise<ResId> {
+  try {
+    const { admin, error } = await exigir()
+    if (!admin) return { ok: false, error }
+    if (!can.facturaEditar(admin.role)) return { ok: false, error: 'Sin permiso' }
+    const db = createAdminClient()
+    const doc = await cargarDoc(id)
+    if (!doc) return { ok: false, error: 'No encontrado' }
+
+    const { id: _i, numero: _n, numero_int: _ni, estado: _e, emisor_snapshot: _es, created_at: _c, updated_at: _u,
+      origen_documento_id: _o, convertida_documento_id: _cv, ...resto } = doc as Record<string, unknown>
+    const { data, error: eI } = await db.from('billing_documents').insert({ ...resto, estado: 'borrador', created_by: admin.email }).select('id').single()
+    if (eI) return { ok: false, error: eI.message }
+    const nuevo = (data as { id?: string } | null)?.id
+    if (!nuevo) return { ok: false, error: 'No se pudo duplicar' }
+
+    const { data: lineas } = await db.from('billing_document_lines').select('*').eq('documento_id', id)
+    for (const l of (lineas ?? []) as Record<string, unknown>[]) {
+      const { id: _li, documento_id: _d, ...restoL } = l
+      await db.from('billing_document_lines').insert({ ...restoL, documento_id: nuevo })
+    }
+    await auditar(admin.email, 'documento duplicado', { documentoId: nuevo, detalle: { origen: id } })
+    revalidar()
+    return { ok: true, id: nuevo }
+  } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'Error al duplicar' } }
+}
+
+/** Convierte una proforma en una factura borrador (número al emitirla). */
+export async function convertirEnFactura(proformaId: string): Promise<ResId> {
+  try {
+    const { admin, error } = await exigir()
+    if (!admin) return { ok: false, error }
+    if (!can.facturaEditar(admin.role)) return { ok: false, error: 'Sin permiso' }
+    const db = createAdminClient()
+    const pf = await cargarDoc(proformaId)
+    if (!pf || String(pf.tipo) !== 'proforma') return { ok: false, error: 'No es una proforma' }
+    if (pf.convertida_documento_id) return { ok: false, error: 'Esta proforma ya se convirtió en factura.' }
+
+    // Serie de facturas del mismo perfil (la primera activa).
+    const { data: series } = await db.from('billing_series').select('id').eq('profile_id', pf.profile_id).eq('tipo', 'factura').eq('activa', true).limit(1)
+    const serieFactura = (series ?? [])[0]?.id ?? null
+
+    const { id: _i, numero: _n, numero_int: _ni, estado: _e, emisor_snapshot: _es, created_at: _c, updated_at: _u,
+      tipo: _t, serie_id: _s, convertida_documento_id: _cv, origen_documento_id: _o, validez_dias: _v, ...resto } = pf as Record<string, unknown>
+    const { data, error: eI } = await db.from('billing_documents').insert({
+      ...resto, tipo: 'factura', serie_id: serieFactura, estado: 'borrador',
+      origen_documento_id: proformaId, created_by: admin.email,
+    }).select('id').single()
+    if (eI) return { ok: false, error: eI.message }
+    const facturaId = (data as { id?: string } | null)?.id
+    if (!facturaId) return { ok: false, error: 'No se pudo convertir' }
+
+    const { data: lineas } = await db.from('billing_document_lines').select('*').eq('documento_id', proformaId)
+    for (const l of (lineas ?? []) as Record<string, unknown>[]) {
+      const { id: _li, documento_id: _d, ...restoL } = l
+      await db.from('billing_document_lines').insert({ ...restoL, documento_id: facturaId })
+    }
+
+    await db.from('billing_documents').update({ estado: 'convertida', convertida_documento_id: facturaId, updated_at: new Date().toISOString() }).eq('id', proformaId)
+    await auditar(admin.email, 'proforma convertida en factura', { documentoId: facturaId, detalle: { proforma: proformaId } })
+    revalidar()
+    return { ok: true, id: facturaId }
+  } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'Error al convertir' } }
+}
+
+/** Borra un BORRADOR (nunca un documento emitido). */
+export async function eliminarBorrador(id: string): Promise<Res> {
+  try {
+    const { admin, error } = await exigir()
+    if (!admin) return { ok: false, error }
+    if (!can.facturaEditar(admin.role)) return { ok: false, error: 'Sin permiso' }
+    const doc = await cargarDoc(id)
+    if (!doc) return { ok: false, error: 'No encontrado' }
+    if (ESTADOS_EMITIDOS.includes(String(doc.estado)) || doc.numero) return { ok: false, error: 'No se puede borrar un documento emitido. Anúlalo o haz una rectificativa.' }
+    const db = createAdminClient()
+    const { error: e } = await db.from('billing_documents').delete().eq('id', id)
+    if (e) return { ok: false, error: e.message }
+    await auditar(admin.email, 'borrador eliminado', { documentoId: id })
     revalidar()
     return { ok: true }
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'Error al eliminar' } }
