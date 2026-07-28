@@ -90,7 +90,7 @@ export default function TabDocumentos({ tipo, documentos, perfiles, series, clie
               {lista.map(d => {
                 const meta = estadoMeta(tipo, d.estado)
                 const esBorrador = d.estado === 'borrador'
-                const emitido = ESTADOS_EMITIDOS.includes(d.estado) || !!d.numero
+                const emitido = ESTADOS_EMITIDOS.includes(d.estado)
                 return (
                   <tr key={d.id} className="border-b border-gray-50 last:border-0 align-middle">
                     <td className="py-2 pr-2 font-bold text-pm-navy whitespace-nowrap">{d.numero || <span className="text-gray-400 italic">Borrador</span>}</td>

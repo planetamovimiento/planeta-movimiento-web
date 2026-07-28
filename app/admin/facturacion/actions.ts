@@ -348,6 +348,8 @@ export type DocumentoInput = {
   id?: string
   tipo: 'factura' | 'proforma'
   profileId: string
+  /** Número escrito a mano (p. ej. "18/2026"). Alternativa a la serie automática. */
+  numero?: string
   serieId?: string | null
   clientId?: string | null
   /** Datos del receptor cuando NO se guarda como cliente (solo para este documento). */
@@ -457,6 +459,8 @@ export async function guardarBorrador(input: DocumentoInput): Promise<ResId> {
     const cabecera: Record<string, unknown> = {
       tipo: input.tipo === 'proforma' ? 'proforma' : 'factura',
       profile_id: input.profileId,
+      // Número a mano en el borrador (se confirma al emitir). Vacío = automático por serie.
+      numero: txt(input.numero),
       serie_id: input.serieId || null,
       client_id: input.clientId || null,
       fecha: input.fecha,
@@ -518,8 +522,7 @@ export async function emitirDocumento(id: string): Promise<Res> {
 
     const doc = await cargarDoc(id)
     if (!doc) return { ok: false, error: 'Documento no encontrado' }
-    if (ESTADOS_EMITIDOS.includes(String(doc.estado)) || doc.numero) return { ok: false, error: 'Este documento ya está emitido.' }
-    if (!doc.serie_id) return { ok: false, error: 'Falta la serie: elige una serie en el documento (o créala en el perfil emisor).' }
+    if (ESTADOS_EMITIDOS.includes(String(doc.estado))) return { ok: false, error: 'Este documento ya está emitido.' }
     if (!doc.fecha) return { ok: false, error: 'Falta la fecha de emisión.' }
     if (Number(doc.total_cents) <= 0) return { ok: false, error: 'El total debe ser mayor que 0.' }
     if (doc.vencimiento && String(doc.vencimiento) < String(doc.fecha)) return { ok: false, error: 'El vencimiento no puede ser anterior a la emisión.' }
@@ -530,14 +533,27 @@ export async function emitirDocumento(id: string): Promise<Res> {
     if (!cliente) return { ok: false, error: 'Selecciona o crea un cliente antes de emitir.' }
 
     const db = createAdminClient()
-    const ejercicio = Number(String(doc.fecha).slice(0, 4))
-    const { data: num, error: eNum } = await db.rpc('billing_siguiente_numero', { p_serie_id: doc.serie_id, p_ejercicio: ejercicio })
-    if (eNum || !num || !num[0]) return { ok: false, error: eNum?.message || 'No se pudo asignar el número.' }
+    // Número: el que se ha escrito a mano, o el automático de la serie si la hay.
+    let numero = txt(doc.numero as string | null)
+    let numeroInt: number | null = null
+    if (numero) {
+      // ponytail: unicidad comprobada en la app (no en la BD) para el número manual.
+      const { data: dup } = await db.from('billing_documents').select('id').eq('tipo', doc.tipo).eq('numero', numero).neq('id', id).limit(1)
+      if (dup && dup.length) return { ok: false, error: `Ya existe otro documento con el número ${numero}.` }
+    } else if (doc.serie_id) {
+      const ejercicio = Number(String(doc.fecha).slice(0, 4))
+      const { data: num, error: eNum } = await db.rpc('billing_siguiente_numero', { p_serie_id: doc.serie_id, p_ejercicio: ejercicio })
+      if (eNum || !num || !num[0]) return { ok: false, error: eNum?.message || 'No se pudo asignar el número.' }
+      numero = num[0].numero
+      numeroInt = num[0].numero_int
+    } else {
+      return { ok: false, error: 'Escribe un número de documento (o elige una serie para numerarlo automáticamente).' }
+    }
 
     const esProforma = String(doc.tipo) === 'proforma'
     const { error: e } = await db.from('billing_documents').update({
-      numero: num[0].numero,
-      numero_int: num[0].numero_int,
+      numero,
+      numero_int: numeroInt,
       estado: esProforma ? 'enviada' : 'emitida',
       emisor_snapshot: emisor,
       cliente_snapshot: cliente,
@@ -545,7 +561,7 @@ export async function emitirDocumento(id: string): Promise<Res> {
     }).eq('id', id)
     if (e) return { ok: false, error: e.message }
 
-    await auditar(admin.email, esProforma ? 'proforma emitida' : 'factura emitida', { documentoId: id, detalle: { numero: num[0].numero } })
+    await auditar(admin.email, esProforma ? 'proforma emitida' : 'factura emitida', { documentoId: id, detalle: { numero } })
     revalidar()
     return { ok: true }
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'Error al emitir' } }
@@ -625,7 +641,7 @@ export async function eliminarBorrador(id: string): Promise<Res> {
     if (!can.facturaEditar(admin.role)) return { ok: false, error: 'Sin permiso' }
     const doc = await cargarDoc(id)
     if (!doc) return { ok: false, error: 'No encontrado' }
-    if (ESTADOS_EMITIDOS.includes(String(doc.estado)) || doc.numero) return { ok: false, error: 'No se puede borrar un documento emitido. Anúlalo o haz una rectificativa.' }
+    if (ESTADOS_EMITIDOS.includes(String(doc.estado))) return { ok: false, error: 'No se puede borrar un documento emitido. Anúlalo o haz una rectificativa.' }
     const db = createAdminClient()
     const { error: e } = await db.from('billing_documents').delete().eq('id', id)
     if (e) return { ok: false, error: e.message }

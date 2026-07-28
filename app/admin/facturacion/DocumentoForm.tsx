@@ -58,7 +58,8 @@ export default function DocumentoForm({ tipo, perfiles, series, clientes, doc, c
   const [profileId, setProfileId] = useState(doc?.profileId ?? predeterminado?.id ?? '')
   const perfil = perfiles.find(p => p.id === profileId)
   const seriesTipo = series.filter(s => s.profileId === profileId && s.tipo === tipo && s.activa)
-  const [serieId, setSerieId] = useState(doc?.serieId ?? seriesTipo[0]?.id ?? '')
+  const [serieId, setSerieId] = useState(doc?.serieId ?? '')
+  const [numero, setNumero] = useState(doc?.numero ?? '')
   const [fecha, setFecha] = useState(doc?.fecha || hoyISO())
   const [vencimiento, setVencimiento] = useState(doc?.vencimiento ?? '')
   const [referencia, setReferencia] = useState(doc?.referencia ?? '')
@@ -114,7 +115,8 @@ export default function DocumentoForm({ tipo, perfiles, series, clientes, doc, c
   if (lineas.every(l => !l.concepto.trim())) errores.push('Añade al menos un concepto.')
   if (calc.totalCents <= 0) errores.push('El total debe ser mayor que 0.')
   if (vencimiento && vencimiento < fecha) errores.push('El vencimiento no puede ser anterior a la emisión.')
-  const emitibleSerie = !!serieId
+  if (!numero.trim() && !serieId) errores.push('Escribe el número del documento.')
+  const puedeEmitirse = !!numero.trim() || !!serieId
 
   const setLinea = (i: number, patch: Partial<Linea>) => setLineas(ls => ls.map((l, j) => j === i ? { ...l, ...patch } : l))
   const quitarLinea = (i: number) => setLineas(ls => ls.length > 1 ? ls.filter((_, j) => j !== i) : ls)
@@ -126,7 +128,7 @@ export default function DocumentoForm({ tipo, perfiles, series, clientes, doc, c
 
   function construirInput(): DocumentoInput {
     return {
-      id: docId ?? undefined, tipo, profileId, serieId: serieId || null,
+      id: docId ?? undefined, tipo, profileId, numero: numero.trim() || undefined, serieId: serieId || null,
       clientId: modoCliente === 'guardado' ? clientId : null,
       clienteInline: modoCliente === 'nuevo' ? inline : null,
       fecha, vencimiento: vencimiento || null, referencia, formaPago,
@@ -202,19 +204,11 @@ export default function DocumentoForm({ tipo, perfiles, series, clientes, doc, c
             <Campo label="Fecha de emisión">
               <input type="date" className={inputCls} value={fecha} disabled={!editable} onChange={e => setFecha(e.target.value)} />
             </Campo>
-            <Campo label="Número">
-              <div className="text-sm font-bold text-pm-navy border border-gray-200 rounded-lg px-2.5 py-2 bg-gray-50">
-                {doc?.numero || (numeroPrevio ? <span className="text-gray-400">Al emitir: {numeroPrevio}</span> : <span className="text-gray-300">Elige serie</span>)}
-              </div>
+            <Campo label={`Número de ${titulo.toLowerCase()}`} hint={serieId && !numero ? `Auto al emitir: ${numeroPrevio}` : 'Escríbelo tú. Ej.: 18/2026'}>
+              <input className={inputCls} value={numero} disabled={!editable} placeholder="18/2026"
+                onChange={e => setNumero(e.target.value)} />
             </Campo>
           </div>
-          <Campo label="Serie" hint="Facturas y proformas tienen series y numeración separadas.">
-            <select className={inputCls} value={serieId} disabled={!editable} onChange={e => setSerieId(e.target.value)}>
-              <option value="">— elige serie —</option>
-              {seriesTipo.map(s => <option key={s.id} value={s.id}>{s.prefijo}</option>)}
-            </select>
-            {seriesTipo.length === 0 && <span className="block text-xs text-amber-600 mt-1">Este emisor no tiene series de {titulo.toLowerCase()}. Créala en Perfiles.</span>}
-          </Campo>
         </div>
 
         <div className="space-y-3">
@@ -358,6 +352,12 @@ export default function DocumentoForm({ tipo, perfiles, series, clientes, doc, c
       {/* ── Avanzado: documento ── */}
       {avanzado && (
         <section className="grid sm:grid-cols-2 gap-3">
+          <Campo label="Serie (numeración automática, opcional)" hint="Si eliges serie y dejas el número vacío, se numera solo al emitir.">
+            <select className={inputCls} value={serieId} disabled={!editable} onChange={e => setSerieId(e.target.value)}>
+              <option value="">— sin serie (número manual) —</option>
+              {seriesTipo.map(s => <option key={s.id} value={s.id}>{s.prefijo}</option>)}
+            </select>
+          </Campo>
           <Campo label="Vencimiento (opcional)"><input type="date" className={inputCls} value={vencimiento} disabled={!editable} onChange={e => setVencimiento(e.target.value)} /></Campo>
           <Campo label="Referencia interna (opcional)"><input className={inputCls} value={referencia} disabled={!editable} onChange={e => setReferencia(e.target.value)} /></Campo>
           <Campo label="Forma de pago">
@@ -384,7 +384,7 @@ export default function DocumentoForm({ tipo, perfiles, series, clientes, doc, c
             {pending ? 'Guardando…' : 'Guardar borrador'}
           </button>
           {puedeEmitir && (
-            <button type="button" onClick={() => guardar(true)} disabled={pending || errores.length > 0 || !emitibleSerie}
+            <button type="button" onClick={() => guardar(true)} disabled={pending || errores.length > 0 || !puedeEmitirse}
               className="bg-pm-red hover:bg-pm-red-dark text-white font-bold px-5 py-2 rounded-xl text-sm disabled:opacity-40">
               {tipo === 'proforma' ? 'Emitir proforma' : 'Emitir factura'}
             </button>
