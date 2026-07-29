@@ -252,3 +252,28 @@ export async function getDocumentos(): Promise<Documento[]> {
     .map(d => aDocumento(d, lineasPorDoc.get(str(d.id)) ?? [], pagosPorDoc.get(str(d.id)) ?? []))
     .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
 }
+
+/** Un documento con sus líneas y pagos. null si no existe. */
+export async function getDocumento(id: string): Promise<Documento | null> {
+  const db = createAdminClient()
+  const { data, error } = await db.from('billing_documents').select('*').eq('id', id).maybeSingle()
+  if (error || !data) return null
+  const [lineas, pagos] = await Promise.all([
+    safe<Row>(() => db.from('billing_document_lines').select('*').eq('documento_id', id) as never),
+    safe<Row>(() => db.from('billing_payments').select('*').eq('documento_id', id) as never),
+  ])
+  return aDocumento(data as Row, lineas.map(aLinea).sort((a, b) => a.orden - b.orden), pagos.map(aPago))
+}
+
+/** El perfil emisor de un documento (fila cruda → tipo). Para el PDF de borradores. */
+export async function getPerfil(id: string): Promise<PerfilFacturacion | null> {
+  const db = createAdminClient()
+  const { data } = await db.from('billing_profiles').select('*').eq('id', id).maybeSingle()
+  return data ? aPerfil(data as Row) : null
+}
+
+export async function getClienteFactura(id: string): Promise<ClienteFactura | null> {
+  const db = createAdminClient()
+  const { data } = await db.from('billing_clients').select('*').eq('id', id).maybeSingle()
+  return data ? aCliente(data as Row) : null
+}

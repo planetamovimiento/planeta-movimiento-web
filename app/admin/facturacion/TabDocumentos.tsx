@@ -103,6 +103,7 @@ export default function TabDocumentos({ tipo, documentos, perfiles, series, clie
                         <button type="button" onClick={() => setModo({ tipo: 'form', doc: d })} className="text-xs font-bold text-pm-navy border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-pm-red">
                           {esBorrador && editable ? 'Editar' : 'Ver'}
                         </button>
+                        <a href={`/admin/facturacion/${d.id}/pdf`} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-pm-navy border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-pm-red">PDF</a>
                         <button type="button" disabled={!editable} onClick={() => correr(() => duplicarDocumento(d.id))} className="text-xs font-bold text-pm-navy border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-pm-red disabled:opacity-30">Duplicar</button>
                         {tipo === 'proforma' && emitido && !d.convertidaDocumentoId && (
                           <button type="button" disabled={!editable} onClick={() => correr(() => convertirEnFactura(d.id))} className="text-xs font-bold text-pm-red border border-pm-red/30 rounded-lg px-2.5 py-1.5 hover:bg-pm-red/5 disabled:opacity-30">Convertir en factura</button>

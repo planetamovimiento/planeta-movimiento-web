@@ -175,6 +175,20 @@ export default function DocumentoForm({ tipo, perfiles, series, clientes, doc, c
     })
   }
 
+  // Vista previa / PDF: guarda el borrador y abre la vista imprimible en otra pestaña.
+  function vistaPrevia() {
+    if (!editable) { if (docId) window.open(`/admin/facturacion/${docId}/pdf`, '_blank'); return }
+    correr(async () => {
+      const rc = await resolverCliente()
+      if ('error' in rc) return { ok: false, error: rc.error }
+      const r = await guardarBorrador(rc.input)
+      if (!r.ok || !r.id) return r
+      setDocId(r.id)
+      window.open(`/admin/facturacion/${r.id}/pdf`, '_blank')
+      return { ok: true }
+    })
+  }
+
   const titulo = tipo === 'proforma' ? 'Proforma' : 'Factura'
 
   return (
@@ -382,6 +396,10 @@ export default function DocumentoForm({ tipo, perfiles, series, clientes, doc, c
           <button type="button" onClick={() => guardar(false)} disabled={pending}
             className="bg-white border border-gray-200 hover:border-pm-navy text-pm-navy font-bold px-4 py-2 rounded-xl text-sm disabled:opacity-40">
             {pending ? 'Guardando…' : 'Guardar borrador'}
+          </button>
+          <button type="button" onClick={vistaPrevia} disabled={pending || errores.length > 0}
+            className="bg-white border border-gray-200 hover:border-pm-navy text-pm-navy font-bold px-4 py-2 rounded-xl text-sm disabled:opacity-40">
+            Vista previa / PDF
           </button>
           {puedeEmitir && (
             <button type="button" onClick={() => guardar(true)} disabled={pending || errores.length > 0 || !puedeEmitirse}

@@ -263,3 +263,16 @@ html { overflow-x: clip; }
   .pm-fugaz { animation: none; opacity: 0; }
   .pm-cielo { transition: none; transform: none !important; }
 }
+
+/* ── Factura imprimible (A4). El navegador imprime a PDF (Guardar como PDF). ── */
+/* Aísla el documento: en impresión solo se ve .pm-print-root, no el panel. */
+@media print {
+  body * { visibility: hidden !important; }
+  .pm-print-root, .pm-print-root * { visibility: visible !important; }
+  .pm-print-root { position: absolute; inset: 0; margin: 0; box-shadow: none !important; }
+  .pm-no-print { display: none !important; }
+  @page { size: A4; margin: 14mm; }
+  /* Que la tabla no parta filas y repita cabecera si hay varias páginas. */
+  thead { display: table-header-group; }
+  tr { page-break-inside: avoid; }
+}
