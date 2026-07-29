@@ -1,4 +1,4 @@
-import { requireSeccion } from '@/lib/admin/auth'
+import { requireSeccion, can } from '@/lib/admin/auth'
 import { getParticipantes, getGrupos, getActividades } from '@/lib/circo-inclusivo/data'
 import { AdminHeader } from '@/components/admin/ui'
 import CircoNav from './CircoNav'
@@ -11,7 +11,9 @@ export default async function CircoInclusivoPage() {
   const [participantes, grupos, actividades] = await Promise.all([
     getParticipantes(), getGrupos(), getActividades(),
   ])
-  const puedeGestionar = admin.role === 'principal'
+  // Gestor y principal pueden crear/editar participantes; solo el principal borra.
+  const puedeGestionar = can.edit(admin.role)
+  const puedeEliminar = admin.role === 'principal'
 
   return (
     <>
@@ -25,6 +27,7 @@ export default async function CircoInclusivoPage() {
         grupos={grupos}
         actividades={actividades}
         puedeGestionar={puedeGestionar}
+        puedeEliminar={puedeEliminar}
       />
     </>
   )

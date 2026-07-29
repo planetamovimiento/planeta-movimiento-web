@@ -18,9 +18,9 @@ function calcEdad(fecha?: string | null): number | null {
 
 const estadoColor = (e: EstadoParticipante) => ESTADOS.find(x => x.valor === e)?.color ?? 'bg-gray-100 text-gray-500 border-gray-300'
 
-type Props = { participantes: Participante[]; grupos: Grupo[]; actividades: Actividad[]; puedeGestionar: boolean }
+type Props = { participantes: Participante[]; grupos: Grupo[]; actividades: Actividad[]; puedeGestionar: boolean; puedeEliminar: boolean }
 
-export default function ParticipantesClient({ participantes, grupos, actividades, puedeGestionar }: Props) {
+export default function ParticipantesClient({ participantes, grupos, actividades, puedeGestionar, puedeEliminar }: Props) {
   const [q, setQ] = useState('')
   const [fGrupo, setFGrupo] = useState('')
   const [fEntidad, setFEntidad] = useState('')
@@ -131,6 +131,7 @@ export default function ParticipantesClient({ participantes, grupos, actividades
           grupos={grupos}
           entidades={entidades}
           actividades={actividadesNombres}
+          puedeEliminar={puedeEliminar}
           onClose={() => { setCreando(false); setEditando(null) }}
         />
       )}
@@ -139,8 +140,8 @@ export default function ParticipantesClient({ participantes, grupos, actividades
 }
 
 function FormParticipante(
-  { inicial, grupos, entidades, actividades, onClose }:
-  { inicial: Participante | null; grupos: Grupo[]; entidades: string[]; actividades: string[]; onClose: () => void },
+  { inicial, grupos, entidades, actividades, puedeEliminar, onClose }:
+  { inicial: Participante | null; grupos: Grupo[]; entidades: string[]; actividades: string[]; puedeEliminar: boolean; onClose: () => void },
 ) {
   const [f, setF] = useState<ParticipanteInput>({
     id: inicial?.id,
@@ -221,7 +222,7 @@ function FormParticipante(
           {error && <p className="text-pm-red text-sm">{error}</p>}
         </div>
         <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
-          {f.id ? <button onClick={borrar} disabled={pending} className="text-sm text-gray-400 hover:text-pm-red font-semibold">Eliminar</button> : <span />}
+          {f.id && puedeEliminar ? <button onClick={borrar} disabled={pending} className="text-sm text-gray-400 hover:text-pm-red font-semibold">Eliminar</button> : <span />}
           <div className="flex gap-2">
             <button onClick={onClose} className="border border-gray-200 text-gray-600 font-bold px-5 py-2 rounded-xl text-sm">Cancelar</button>
             <button onClick={guardar} disabled={pending || !f.nombre.trim()} className="bg-pm-red hover:bg-pm-red-dark disabled:opacity-50 text-white font-bold px-5 py-2 rounded-xl text-sm">

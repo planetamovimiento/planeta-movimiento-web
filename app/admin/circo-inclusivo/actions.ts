@@ -33,7 +33,8 @@ export type ParticipanteInput = {
 }
 
 export async function guardarParticipante(input: ParticipanteInput) {
-  const { admin, error: permErr } = await exigir('principal')
+  // Crear/editar participantes es gestión habitual: gestor y principal (no solo lectura).
+  const { admin, error: permErr } = await exigir('editar')
   if (!admin) return { ok: false, error: permErr }
   if (!input.nombre?.trim()) return { ok: false, error: 'El nombre es obligatorio' }
 
@@ -68,6 +69,7 @@ export async function guardarParticipante(input: ParticipanteInput) {
 }
 
 export async function eliminarParticipante(id: string) {
+  // Borrar es destructivo: solo el administrador del módulo (principal).
   const { admin, error: permErr } = await exigir('principal')
   if (!admin) return { ok: false, error: permErr }
   const db = createAdminClient()
