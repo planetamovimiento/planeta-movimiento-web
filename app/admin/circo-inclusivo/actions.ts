@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAdminUser, logActivity } from '@/lib/admin/auth'
 import { puedeVerSeccion } from '@/lib/admin/secciones'
+import { CRITERIOS_SESION, mediaSesion, type Asistencia } from '@/lib/circo-inclusivo/tipos'
 
 /** Comprueba sesión + acceso a la sección + nivel de permiso. */
 async function exigir(nivel: 'principal' | 'editar') {
@@ -204,5 +205,102 @@ export async function eliminarEvaluacion(id: string, participanteId: string) {
   await logActivity({ actorEmail: admin.email, accion: 'Eliminó evaluación (Circo Inclusivo)', entidad: 'ci_evaluacion', entidadId: id })
   revalidatePath(`/admin/circo-inclusivo/participantes/${participanteId}`)
   revalidatePath('/admin/circo-inclusivo/evaluaciones')
+  return { ok: true }
+}
+
+// ── Sesiones (jornada semanal) ───────────────────────────────────────────────
+export type SesionInput = {
+  id?: string
+  fecha: string
+  hora?: string
+  grupo_id?: string | null
+  lugar?: string
+  monitor?: string
+  estado?: string
+  observaciones?: string
+}
+
+export async function guardarSesion(input: SesionInput) {
+  const { admin, error: permErr } = await exigir('editar')
+  if (!admin) return { ok: false, error: permErr }
+  if (!input.fecha) return { ok: false, error: 'La fecha es obligatoria' }
+
+  const db = createAdminClient()
+  const row = {
+    fecha: input.fecha,
+    hora: txt(input.hora),
+    grupo_id: input.grupo_id || null,
+    lugar: txt(input.lugar),
+    monitor: txt(input.monitor),
+    estado: input.estado || 'programada',
+    observaciones: txt(input.observaciones),
+    updated_at: new Date().toISOString(),
+  }
+  const { data, error } = input.id
+    ? await db.from('ci_sesiones').update(row).eq('id', input.id).select('id').single()
+    : await db.from('ci_sesiones').insert(row).select('id').single()
+  if (error) return { ok: false, error: error.message }
+
+  await logActivity({ actorEmail: admin.email, accion: input.id ? 'Editó sesión (Circo Inclusivo)' : 'Creó sesión (Circo Inclusivo)', entidad: 'ci_sesion', entidadId: (data as { id?: string } | null)?.id, detalle: input.fecha })
+  revalidatePath('/admin/circo-inclusivo/sesiones')
+  return { ok: true, id: (data as { id?: string } | null)?.id }
+}
+
+export async function eliminarSesion(id: string) {
+  // Borrar es destructivo (arrastra sus evaluaciones): solo el principal.
+  const { admin, error: permErr } = await exigir('principal')
+  if (!admin) return { ok: false, error: permErr }
+  const db = createAdminClient()
+  const { error } = await db.from('ci_sesiones').delete().eq('id', id)
+  if (error) return { ok: false, error: error.message }
+  await logActivity({ actorEmail: admin.email, accion: 'Eliminó sesión (Circo Inclusivo)', entidad: 'ci_sesion', entidadId: id })
+  revalidatePath('/admin/circo-inclusivo/sesiones')
+  return { ok: true }
+}
+
+// ── Evaluación por sesión (lote: todos los participantes a la vez) ───────────
+export type EvalSesionInput = {
+  participante_id: string
+  asistencia: Asistencia
+  items: Record<string, number>
+  observaciones?: string
+  estado: 'borrador' | 'completada'
+}
+
+export async function guardarEvalsSesion(sesionId: string, evals: EvalSesionInput[]) {
+  const { admin, error: permErr } = await exigir('editar')
+  if (!admin) return { ok: false, error: permErr }
+  if (!sesionId) return { ok: false, error: 'Falta la sesión' }
+
+  const db = createAdminClient()
+  const filas = evals.map(e => {
+    // La ausencia no puntúa: items vacíos y media null (no cuenta como 0).
+    const asiste = e.asistencia === 'asiste'
+    const items = asiste ? Object.fromEntries(
+      CRITERIOS_SESION.map(c => [c.key, Number(e.items?.[c.key])]).filter(([, v]) => Number.isFinite(v) && (v as number) >= 1 && (v as number) <= 4),
+    ) : {}
+    const media = asiste ? mediaSesion(items as Record<string, number>) : null
+    // Solo se marca completada si asiste y tiene todos los criterios; si no, borrador.
+    const completa = e.estado === 'completada' && (!asiste || Object.keys(items).length === CRITERIOS_SESION.length)
+    return {
+      sesion_id: sesionId,
+      participante_id: e.participante_id,
+      asistencia: e.asistencia,
+      items,
+      media,
+      observaciones: txt(e.observaciones),
+      estado: completa ? 'completada' : 'borrador',
+      evaluador: admin.email,
+      updated_at: new Date().toISOString(),
+    }
+  })
+
+  // upsert por (sesion_id, participante_id): no crea duplicados en reguardados.
+  const { error } = await db.from('ci_eval_sesion').upsert(filas, { onConflict: 'sesion_id,participante_id' })
+  if (error) return { ok: false, error: error.message }
+
+  await logActivity({ actorEmail: admin.email, accion: 'Guardó evaluación de sesión (Circo Inclusivo)', entidad: 'ci_sesion', entidadId: sesionId, detalle: `${filas.length} participante(s)` })
+  revalidatePath(`/admin/circo-inclusivo/sesiones/${sesionId}`)
+  revalidatePath('/admin/circo-inclusivo/sesiones')
   return { ok: true }
 }

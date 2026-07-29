@@ -192,3 +192,80 @@ export const ACTIVIDADES_SUGERIDAS = [
   'Movimiento adaptado',
   'Actividades en residencia',
 ]
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sesiones y evaluación por sesión (jornada semanal).
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type EstadoSesion = 'programada' | 'realizada' | 'cancelada' | 'aplazada'
+export type Asistencia = 'asiste' | 'justificada' | 'no_justificada' | 'no_evaluable'
+export type EstadoEvalSesion = 'borrador' | 'completada'
+
+export type Sesion = {
+  id: string
+  fecha: string
+  hora: string | null
+  grupo_id: string | null
+  lugar: string | null
+  monitor: string | null
+  estado: EstadoSesion
+  observaciones: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+export type EvalSesion = {
+  id: string
+  sesion_id: string
+  participante_id: string
+  asistencia: Asistencia
+  items: Record<string, number>
+  media: number | null
+  observaciones: string | null
+  estado: EstadoEvalSesion
+  evaluador: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+export const ESTADOS_SESION: { valor: EstadoSesion; label: string; color: string }[] = [
+  { valor: 'programada', label: 'Programada', color: 'bg-blue-100 text-blue-700 border-blue-300' },
+  { valor: 'realizada',  label: 'Realizada',  color: 'bg-green-100 text-green-700 border-green-300' },
+  { valor: 'aplazada',   label: 'Aplazada',   color: 'bg-amber-100 text-amber-700 border-amber-300' },
+  { valor: 'cancelada',  label: 'Cancelada',  color: 'bg-gray-100 text-gray-500 border-gray-300' },
+]
+export const labelEstadoSesion = (e: EstadoSesion) => ESTADOS_SESION.find(x => x.valor === e)?.label ?? e
+
+export const ASISTENCIA_OPCIONES: { valor: Asistencia; label: string; cuenta: boolean }[] = [
+  { valor: 'asiste',          label: 'Asiste',                cuenta: true },
+  { valor: 'justificada',     label: 'Ausencia justificada',  cuenta: false },
+  { valor: 'no_justificada',  label: 'Ausencia no justificada', cuenta: false },
+  { valor: 'no_evaluable',    label: 'No evaluable',          cuenta: false },
+]
+export const labelAsistencia = (a: Asistencia) => ASISTENCIA_OPCIONES.find(x => x.valor === a)?.label ?? a
+
+/**
+ * Criterios de la evaluación por sesión. Se reutilizan las áreas de la
+ * evaluación mensual (una nota 1–4 por área): rápido de rellenar cada semana y
+ * coherente con el modelo existente.
+ * ponytail: fijos en código de momento; configurables desde el panel = fase §5.
+ */
+export const CRITERIOS_SESION: { key: string; label: string }[] = [
+  { key: 'participacion', label: 'Participación' },
+  { key: 'motricidad',    label: 'Motricidad y psicomotricidad' },
+  { key: 'seguridad',     label: 'Seguridad y protección' },
+  { key: 'autonomia',     label: 'Autonomía y rutinas' },
+  { key: 'social',        label: 'Social y emocional' },
+]
+
+/** Media de los criterios puntuados (1–4). Redondeo a 2 decimales. null si ninguno. */
+export function mediaSesion(items: Record<string, number>): number | null {
+  const vals = CRITERIOS_SESION.map(c => items[c.key]).filter(v => typeof v === 'number' && v >= 1 && v <= 4)
+  if (vals.length === 0) return null
+  return Math.round((vals.reduce((s, v) => s + v, 0) / vals.length) * 100) / 100
+}
+
+/** ¿La evaluación cuenta para las medias? Solo si asiste y tiene media. */
+export function evalCuenta(e: { asistencia: Asistencia; media: number | null; estado: EstadoEvalSesion }): boolean {
+  return e.asistencia === 'asiste' && e.media != null && e.estado === 'completada'
+}

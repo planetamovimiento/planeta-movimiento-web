@@ -7,6 +7,7 @@ const BASE = '/admin/circo-inclusivo'
 
 const TABS: { href: string; label: string; match: (p: string) => boolean }[] = [
   { href: BASE,                  label: 'Participantes', match: p => p === BASE || p.startsWith(`${BASE}/participantes`) },
+  { href: `${BASE}/sesiones`,    label: 'Sesiones',      match: p => p.startsWith(`${BASE}/sesiones`) },
   { href: `${BASE}/grupos`,      label: 'Grupos',        match: p => p.startsWith(`${BASE}/grupos`) },
   { href: `${BASE}/actividades`, label: 'Actividades',   match: p => p.startsWith(`${BASE}/actividades`) },
   { href: `${BASE}/evaluaciones`,label: 'Evaluaciones',  match: p => p.startsWith(`${BASE}/evaluaciones`) },
