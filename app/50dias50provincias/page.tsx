@@ -193,6 +193,7 @@ export default async function CincuentaDiasPage() {
    */
   const cifras: { label: string; valor: string | null }[] = [
     { label: 'Recaudado', valor: resumen.recaudadoTotal != null ? euros(resumen.recaudadoTotal) : null },
+    { label: 'Kilos de céntimos', valor: resumen.centimosKg != null ? kilos(resumen.centimosKg) : null },
     { label: 'Provincias completadas', valor: `${resumen.provinciasCompletadas} / ${resumen.totalProvincias}` },
     { label: 'Objetivo', valor: config.objetivo_global || RETO.objetivo },
   ]
@@ -265,13 +266,13 @@ export default async function CincuentaDiasPage() {
 
                 {/* Las cifras reales del reto: se actualizan solas según avanza
                     la ruta. Lo que no tiene dato lo dice, nunca sale un 0. */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-10 pt-8 border-t border-white/10">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-10 pt-8 border-t border-white/10">
                   {cifras.map(c => (
                     <div key={c.label}>
                       {c.valor ? (
-                        // Una sola línea siempre: partir «100.000 €» a la mitad
-                        // se leía fatal. Con tres cifras hay sitio de sobra.
-                        <div className="text-white font-black text-2xl leading-none whitespace-nowrap tabular-nums">
+                        // Una sola línea siempre; con 4 cifras el tamaño baja en
+                        // pantallas medianas para que no se parta «100.000 €».
+                        <div className="text-white font-black text-2xl sm:text-lg lg:text-base xl:text-xl leading-none whitespace-nowrap tabular-nums">
                           {c.valor}
                         </div>
                       ) : (

@@ -13,7 +13,7 @@
 import { useRef, useState } from 'react'
 import {
   AQUI, ESTADOS_ETAPA, ESTADO_ACTUAL, badgeEstadoEtapa, colorEstadoEtapa, dotEstadoEtapa,
-  euros, fechaLarga, labelEstadoEtapa,
+  kilos, fechaLarga, labelEstadoEtapa,
 } from '@/lib/reto50/constants'
 import type { EtapaPublica } from '@/lib/reto50/tipos'
 import VideoEtapa from './VideoEtapa'
@@ -230,9 +230,10 @@ export default function MapaEspana({ etapas }: { etapas: EtapaPublica[] }) {
               </div>
               <div>
                 <div className="text-xl font-black text-pm-navy">
-                  {activa.recaudado != null ? euros(activa.recaudado) : <span className="text-gray-300">—</span>}
+                  {activa.recaudacionEstado !== 'pendiente' && activa.centimosKg != null
+                    ? kilos(activa.centimosKg) : <span className="text-gray-300">—</span>}
                 </div>
-                <div className="text-xs text-gray-400">recaudado</div>
+                <div className="text-xs text-gray-400">kilos ese día</div>
               </div>
             </div>
 
