@@ -21,8 +21,19 @@ export type Etapa = {
   tiempoAprox: string
   descripcion: string
   estado: EstadoEtapa
-  /** null = todavía sin dato. Nunca se muestra como 0 €. */
+  /**
+   * COPIA de seguridad del antiguo importe único (euros). Migrado a billetes.
+   * No se muestra ya en la web; se conserva por si hace falta revisar.
+   */
   recaudado: number | null
+  /** Kilos de monedas de céntimos recogidos ese día. null = sin dato. */
+  centimosKg: number | null
+  /** Dinero en billetes de ese día, en CÉNTIMOS de euro. null = sin dato. */
+  billetesCents: number | null
+  /** pendiente | registrado | revisado | confirmado. Solo != pendiente cuenta en la web. */
+  recaudacionEstado: string
+  recaudacionActualizado: string
+  recaudacionNotas: string
   resumen: string
   galeria: string[]
   /** Vídeo resumen del día. Enlace de YouTube en cualquiera de sus formatos. */
@@ -114,14 +125,19 @@ export type ConfigReto = Record<string, string>
 
 export type ResumenReto = {
   /**
-   * Todo lo recaudado: las provincias más las donaciones online. null solo si
-   * no hay ni un dato en ninguna de las dos vías.
+   * Total CONFIRMADO en euros: billetes de las provincias + donaciones online.
+   * Los kilos de céntimos NO se suman aquí (no tienen valor en euros aún).
+   * null solo si no hay ni un dato en ninguna de las dos vías.
    */
   recaudadoTotal: number | null
-  /** Solo la suma de las etapas. null si ninguna tiene cifra. */
+  /** Suma de los billetes de las etapas (euros). null si ninguna tiene cifra. */
   recaudadoProvincias: number | null
   /** Donaciones recibidas por la web, al margen de las paradas. */
   recaudadoOnline: number | null
+  /** Kilos de céntimos acumulados (magnitud aparte; nunca en euros). null si sin dato. */
+  centimosKg: number | null
+  /** Nº de etapas con algún dato de recaudación registrado (billetes o kilos). */
+  etapasConDatos: number
   provinciasCompletadas: number
   totalProvincias: number
 }

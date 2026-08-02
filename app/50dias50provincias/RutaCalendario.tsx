@@ -16,7 +16,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   AQUI, ESTADOS_ETAPA, ESTADO_ACTUAL, RETO, WHATSAPP, badgeEstadoEtapa, dotEstadoEtapa, enlaceWhatsapp,
-  euros, fechaCorta, fechaLarga, labelEstadoEtapa,
+  euros, kilos, fechaCorta, fechaLarga, labelEstadoEtapa,
 } from '@/lib/reto50/constants'
 import type { ColaboradorLocal, ConfigReto, EtapaPublica } from '@/lib/reto50/tipos'
 import VideoEtapa from './VideoEtapa'
@@ -175,11 +175,21 @@ export default function RutaCalendario({ etapas, config, colaboradores }: {
   const totalHechas = etapas.filter(e => e.estado === 'finalizada').length
   const etapaAbierta = abierta == null ? null : filtradas.find(e => e.dia === abierta) ?? null
 
-  // Total recaudado en todo el reto, para situar lo de cada provincia.
-  // null mientras ninguna etapa tenga cifra: así no se inventa un 0 €.
-  const totalReto = useMemo(() => {
-    const conDato = etapas.filter(e => e.recaudado != null)
-    return conDato.length ? conDato.reduce((s, e) => s + (e.recaudado ?? 0), 0) : null
+  // Acumulados de recaudación por día (billetes en céntimos y kilos de céntimos).
+  // Solo cuentan las etapas con estado != «pendiente». Se recorre en orden de día.
+  const acumPorDia = useMemo(() => {
+    const cuenta = (e: EtapaPublica) => (e.recaudacionEstado ?? 'registrado') !== 'pendiente'
+    const orden = [...etapas].sort((a, b) => a.dia - b.dia)
+    const map = new Map<number, { kg: number; billetes: number }>()
+    let kg = 0, billetes = 0
+    for (const e of orden) {
+      if (cuenta(e)) {
+        if (e.centimosKg != null) kg += e.centimosKg
+        if (e.billetesCents != null) billetes += e.billetesCents
+      }
+      map.set(e.dia, { kg, billetes })
+    }
+    return map
   }, [etapas])
 
   function verDetalles(dia: number) {
@@ -271,7 +281,7 @@ export default function RutaCalendario({ etapas, config, colaboradores }: {
                   </button>
                 </div>
 
-                <DetalleCuerpo etapa={etapaAbierta} totalReto={totalReto} config={config} colaboradores={colaboradores} />
+                <DetalleCuerpo etapa={etapaAbierta} acum={acumPorDia.get(etapaAbierta.dia) ?? null} config={config} colaboradores={colaboradores} />
               </div>
             )}
           </div>
@@ -363,36 +373,39 @@ function ColaboradoresEtapa({ etapa, colaboradores }: { etapa: EtapaPublica; col
 }
 
 /**
- * Lo recaudado en esa provincia. Se muestra SIEMPRE, también cuando todavía no
- * hay cifra: en ese caso se dice que aún no hay datos, nunca un 0 € que daría a
- * entender que no se recaudó nada. Si hay total del reto, se añade el peso que
- * tuvo esa provincia sobre el conjunto.
+ * Recaudación de esa provincia: DOS magnitudes separadas (billetes en euros y
+ * kilos de céntimos), con el dato del día y el acumulado hasta esa etapa. Los
+ * kilos nunca se convierten a euros. Si la etapa está «pendiente» de registrar,
+ * no se muestra su dato como público.
  */
-function RecaudacionProvincia({ etapa, totalReto }: { etapa: EtapaPublica; totalReto: number | null }) {
-  const hayDato = etapa.recaudado != null
-  const parte = hayDato && totalReto && totalReto > 0 ? Math.round(((etapa.recaudado ?? 0) / totalReto) * 100) : null
+function RecaudacionProvincia({ etapa, acum }: { etapa: EtapaPublica; acum: { kg: number; billetes: number } | null }) {
+  const publica = (etapa.recaudacionEstado ?? 'registrado') !== 'pendiente'
+  const kgHoy = publica ? etapa.centimosKg : null
+  const billetesHoy = publica ? etapa.billetesCents : null
+  const hayDato = kgHoy != null || billetesHoy != null
 
   return (
-    <div
-      className={`rounded-xl border p-4 ${
-        hayDato ? 'bg-emerald-50 border-emerald-200' : 'bg-pm-bg border-gray-200'
-      }`}
-    >
+    <div className={`rounded-xl border p-4 ${hayDato ? 'bg-emerald-50 border-emerald-200' : 'bg-pm-bg border-gray-200'}`}>
       <p className={`text-[11px] font-black uppercase tracking-widest ${hayDato ? 'text-emerald-700' : 'text-gray-500'}`}>
-        Recaudado en {etapa.provincia}
+        Recaudación en {etapa.provincia}
       </p>
 
       {hayDato ? (
-        <>
-          <p className="text-3xl font-black text-pm-navy mt-1 leading-none">{euros(etapa.recaudado)}</p>
-          <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-            Va destinado a la lucha contra el cáncer a través de la {RETO.causa}.
-            {parte != null && parte > 0 && ` Supone el ${parte} % de lo recaudado en todo el reto.`}
-          </p>
-        </>
+        <div className="grid grid-cols-2 gap-3 mt-2">
+          <div>
+            <div className="text-[10px] font-bold text-gray-400 uppercase">Billetes hoy</div>
+            <div className="text-xl font-black text-pm-navy leading-none">{billetesHoy != null ? euros(billetesHoy / 100) : '—'}</div>
+            {acum && acum.billetes > 0 && <div className="text-[11px] text-gray-500 mt-1">Acumulado: {euros(acum.billetes / 100)}</div>}
+          </div>
+          <div>
+            <div className="text-[10px] font-bold text-gray-400 uppercase">Céntimos hoy</div>
+            <div className="text-xl font-black text-pm-navy leading-none">{kgHoy != null ? kilos(kgHoy) : '—'}</div>
+            {acum && acum.kg > 0 && <div className="text-[11px] text-gray-500 mt-1">Acumulado: {kilos(acum.kg)}</div>}
+          </div>
+        </div>
       ) : (
         <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">
-          Aún sin datos. La cifra se publica aquí cuando se cierra la jornada de esta provincia.
+          Aún sin datos. Se publica cuando se registra la jornada de esta provincia.
         </p>
       )}
     </div>
@@ -400,8 +413,8 @@ function RecaudacionProvincia({ etapa, totalReto }: { etapa: EtapaPublica; total
 }
 
 /** Cuerpo del detalle: datos + vídeo. Mismo contenido que antes, sin cambios de lógica. */
-function DetalleCuerpo({ etapa, totalReto, config, colaboradores }: {
-  etapa: EtapaPublica; totalReto: number | null; config: ConfigReto; colaboradores: ColaboradorLocal[]
+function DetalleCuerpo({ etapa, acum, config, colaboradores }: {
+  etapa: EtapaPublica; acum: { kg: number; billetes: number } | null; config: ConfigReto; colaboradores: ColaboradorLocal[]
 }) {
   const datos: [string, string][] = []
   if (etapa.hora) datos.push(['Hora', etapa.hora])
@@ -410,7 +423,7 @@ function DetalleCuerpo({ etapa, totalReto, config, colaboradores }: {
 
   return (
     <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
-      <RecaudacionProvincia etapa={etapa} totalReto={totalReto} />
+      <RecaudacionProvincia etapa={etapa} acum={acum} />
 
       <dl className="grid grid-cols-2 gap-x-6 gap-y-2">
         {datos.map(([k, v]) => (

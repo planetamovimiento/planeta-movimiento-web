@@ -2,7 +2,7 @@ import Reveal from '@/components/home/Reveal'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { SITE_URL, breadcrumbsJsonLd } from '@/lib/seo'
 import {
-  BROSJACA, CATEGORIAS_APOYO, RETO, TOTAL_PROVINCIAS, euros, fechaLarga, labelNivel, litros,
+  BROSJACA, CATEGORIAS_APOYO, RETO, TOTAL_PROVINCIAS, euros, fechaLarga, kilos, labelNivel, litros,
 } from '@/lib/reto50/constants'
 import type { CategoriaApoyo } from '@/lib/reto50/constants'
 import type { ColaboradorLocal, Patrocinador } from '@/lib/reto50/tipos'
@@ -18,6 +18,7 @@ import PanelProtagonista from './PanelProtagonista'
 import FondoRuta from './FondoRuta'
 import FondoHero from './FondoHero'
 import Gasolina from './Gasolina'
+import Recaudacion from './Recaudacion'
 import { BloqueCompartir } from './Compartir'
 
 export const dynamic = 'force-dynamic'
@@ -182,6 +183,8 @@ export default async function CincuentaDiasPage() {
 
   // Lo recaudado son dos vías que se suman: las paradas y lo donado por la web.
   const resumen = resumenReto(etapas, recaudadoOnlineDeConfig(config))
+  // Fecha más reciente de actualización de recaudación entre las etapas.
+  const recaudacionActualizada = etapas.map(e => e.recaudacionActualizado).filter(Boolean).sort().pop() ?? ''
   const gasolina = gasolinaDeConfig(config)
 
   /**
@@ -435,7 +438,17 @@ export default async function CincuentaDiasPage() {
           </div>
         </section>
 
-        {/* ── 7 · PATROCINADORES Y COLABORADORES ─────────────────────────── */}
+        {/* ── 7 · RECAUDACIÓN (billetes € · kilos de céntimos) ───────────── */}
+        <Recaudacion
+          totalConfirmado={resumen.recaudadoTotal}
+          billetes={resumen.recaudadoProvincias}
+          online={resumen.recaudadoOnline}
+          centimosKg={resumen.centimosKg}
+          etapasConDatos={resumen.etapasConDatos}
+          actualizado={recaudacionActualizada}
+        />
+
+        {/* ── 8 · PATROCINADORES Y COLABORADORES ─────────────────────────── */}
         <section className={`${CONTENEDOR} py-16 sm:py-20`}>
           <Reveal className="text-center max-w-2xl mx-auto mb-10">
             <p className={KICKER}>Quién lo hace posible</p>
@@ -503,7 +516,8 @@ export default async function CincuentaDiasPage() {
                       {e.resumen && <p className="text-gray-600 text-sm mt-3 leading-relaxed whitespace-pre-line">{e.resumen}</p>}
 
                       <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-3 text-xs text-gray-500">
-                        {e.recaudado != null && <span>Recaudado: <strong className="text-pm-navy font-black">{euros(e.recaudado)}</strong></span>}
+                        {e.recaudacionEstado !== 'pendiente' && e.billetesCents != null && <span>Billetes: <strong className="text-pm-navy font-black">{euros(e.billetesCents / 100)}</strong></span>}
+                        {e.recaudacionEstado !== 'pendiente' && e.centimosKg != null && <span>Céntimos: <strong className="text-pm-navy font-black">{kilos(e.centimosKg)}</strong></span>}
                         <span><strong className="text-pm-navy font-black">{e.burflips}</strong> burflips</span>
                       </div>
 

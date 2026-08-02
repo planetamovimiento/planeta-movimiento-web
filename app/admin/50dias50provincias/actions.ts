@@ -69,6 +69,11 @@ export type EtapaInput = {
   burflips?: number | string
   estado?: EstadoEtapa
   recaudado?: number | string | null
+  centimosKg?: number | string | null
+  billetesEur?: number | string | null   // euros en la UI; se guardan como céntimos
+  recaudacionEstado?: string
+  recaudacionActualizado?: string
+  recaudacionNotas?: string
   galeria?: string[]
   videoUrl?: string
   videoTitulo?: string
@@ -116,6 +121,22 @@ export async function guardarEtapa(input: EtapaInput): Promise<Res> {
     if (input.burflips !== undefined) patch.burflips = entONull(input.burflips)
     // Sin dato ⇒ null. Un 0 aquí sería un dato inventado.
     if (input.recaudado !== undefined) patch.recaudado = numONull(input.recaudado)
+    // Recaudación en dos magnitudes. Nunca negativas.
+    if (input.centimosKg !== undefined) {
+      const kg = numONull(input.centimosKg)
+      if (kg != null && kg < 0) return { ok: false, error: 'Los kilos no pueden ser negativos' }
+      patch.centimos_kg = kg
+    }
+    if (input.billetesEur !== undefined) {
+      const eur = numONull(input.billetesEur)
+      if (eur != null && eur < 0) return { ok: false, error: 'Los billetes no pueden ser negativos' }
+      patch.billetes_cents = eur == null ? null : Math.round(eur * 100)
+    }
+    if (input.recaudacionEstado !== undefined) {
+      patch.recaudacion_estado = ['pendiente', 'registrado', 'revisado', 'confirmado'].includes(input.recaudacionEstado) ? input.recaudacionEstado : 'registrado'
+    }
+    if (input.recaudacionActualizado !== undefined) patch.recaudacion_actualizado = input.recaudacionActualizado || null
+    if (input.recaudacionNotas !== undefined) patch.recaudacion_notas = txt(input.recaudacionNotas)
     if (input.galeria !== undefined) {
       patch.galeria = Array.isArray(input.galeria)
         ? input.galeria.map(u => String(u).trim()).filter(Boolean)

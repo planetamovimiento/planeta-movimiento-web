@@ -135,8 +135,8 @@ function FilaEtapa({ etapa, abierta, onToggle, onMarcarActual, pending, correr, 
           </div>
         </div>
 
-        {etapa.recaudado != null && (
-          <span className="text-xs font-bold text-emerald-600 hidden sm:block">{euros(etapa.recaudado)}</span>
+        {etapa.billetesCents != null && (
+          <span className="text-xs font-bold text-emerald-600 hidden sm:block">{euros(etapa.billetesCents / 100)}</span>
         )}
         <span className={`text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap ${badgeEstadoEtapa(etapa.estado)}`}>
           {esActual ? AQUI : labelEstadoEtapa(etapa.estado)}
@@ -171,7 +171,6 @@ function EditorEtapa({ etapa, pending, correr, editable, onCerrar }: {
   const [puntoEncuentro, setPuntoEncuentro] = useState(etapa.puntoEncuentro)
   const [burflips, setBurflips] = useState(String(etapa.burflips))
   const [estado, setEstado] = useState<EstadoEtapa>(etapa.estado)
-  const [recaudado, setRecaudado] = useState(s(etapa.recaudado))
   const [galeria, setGaleria] = useState<string[]>(etapa.galeria)
   const [videoUrl, setVideoUrl] = useState(etapa.videoUrl)
   const [videoTitulo, setVideoTitulo] = useState(etapa.videoTitulo)
@@ -191,7 +190,7 @@ function EditorEtapa({ etapa, pending, correr, editable, onCerrar }: {
       const r = await guardarEtapa({
         id: etapa.id,
         dia, fecha, provincia, ciudad, hora, puntoEncuentro,
-        burflips, estado, recaudado,
+        burflips, estado,
         galeria, videoUrl, videoTitulo, videoDescripcion, videoMiniatura, videoFecha,
         banderaUrl, banderaAlt, enlaceRedes, testimonios,
       })
@@ -262,14 +261,7 @@ function EditorEtapa({ etapa, pending, correr, editable, onCerrar }: {
         </div>
       </div>
 
-      {/* Resultados */}
-      <div>
-        <Titulo>Resultados de la etapa</Titulo>
-        <Campo label="Recaudado en esta provincia (€)" hint="Vacío = aún sin datos. No pongas 0: la web mostraría un dato falso.">
-          <input type="number" min="0" step="0.01" className={inputCls} value={recaudado} disabled={!editable}
-            placeholder="Aún sin datos" onChange={e => setRecaudado(e.target.value)} />
-        </Campo>
-      </div>
+      {/* La recaudación (kilos de céntimos y billetes) se gestiona en la pestaña «Recaudación». */}
 
       {/* Fotos y vídeo */}
       <div>

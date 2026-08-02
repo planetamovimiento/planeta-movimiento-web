@@ -54,6 +54,11 @@ function aEtapa(r: Row): Etapa {
     descripcion: str(r.descripcion),
     estado: (str(r.estado) || 'proximamente') as EstadoEtapa,
     recaudado: numONull(r.recaudado),
+    centimosKg: numONull(r.centimos_kg),
+    billetesCents: numONull(r.billetes_cents),
+    recaudacionEstado: str(r.recaudacion_estado) || 'registrado',
+    recaudacionActualizado: r.recaudacion_actualizado ? str(r.recaudacion_actualizado).slice(0, 10) : '',
+    recaudacionNotas: str(r.recaudacion_notas),
     resumen: str(r.resumen),
     galeria: Array.isArray(r.galeria) ? (r.galeria as unknown[]).map(str).filter(Boolean) : [],
     videoUrl: str(r.video_url),
@@ -92,6 +97,11 @@ function etapasDeSeed(): Etapa[] {
       descripcion: '',
       estado: 'proximamente' as EstadoEtapa,
       recaudado: null,
+      centimosKg: null,
+      billetesCents: null,
+      recaudacionEstado: 'registrado',
+      recaudacionActualizado: '',
+      recaudacionNotas: '',
       resumen: '',
       galeria: [],
       videoUrl: '',
@@ -145,27 +155,37 @@ export function etapaActual<T extends { estado: EstadoEtapa }>(etapas: T[]): T |
 }
 
 
+/** Un dato de recaudación cuenta en la web si está registrado (no pendiente). */
+export function recaudacionCuenta(e: { recaudacionEstado?: string }): boolean {
+  return (e.recaudacionEstado ?? 'registrado') !== 'pendiente'
+}
+
 /**
- * Totales del reto. Devuelve null en lo que todavía no tiene ningún dato.
- *
- * Lo recaudado son DOS vías que se suman: lo de cada provincia y lo que llega
- * por la web (la campaña arrancó el 1 de enero, antes de la ruta). El total es
- * null solo si no hay ni un dato en ninguna de las dos: un 0 € daría a entender
- * que no se ha recaudado nada.
+ * Totales del reto. Dos magnitudes que NO se mezclan:
+ *   · Euros confirmados = billetes de las etapas + donaciones online.
+ *   · Kilos de céntimos = peso acumulado (sin valor en euros todavía).
+ * Solo cuentan las etapas con la recaudación registrada (no «pendiente»).
  */
 export function resumenReto(
-  etapas: { estado: EstadoEtapa; recaudado: number | null }[],
+  etapas: { estado: EstadoEtapa; billetesCents: number | null; centimosKg: number | null; recaudacionEstado?: string }[],
   online: number | null = null,
 ): ResumenReto {
-  const conRecaudacion = etapas.filter(e => e.recaudado != null)
-  const provincias = conRecaudacion.length
-    ? conRecaudacion.reduce((s, e) => s + (e.recaudado ?? 0), 0)
-    : null
+  const validas = etapas.filter(recaudacionCuenta)
+
+  const conBilletes = validas.filter(e => e.billetesCents != null)
+  const billetesEur = conBilletes.length ? conBilletes.reduce((s, e) => s + (e.billetesCents ?? 0), 0) / 100 : null
+
+  const conKg = validas.filter(e => e.centimosKg != null)
+  const centimosKg = conKg.length ? conKg.reduce((s, e) => s + (e.centimosKg ?? 0), 0) : null
+
+  const etapasConDatos = validas.filter(e => e.billetesCents != null || e.centimosKg != null).length
 
   return {
-    recaudadoTotal: provincias == null && online == null ? null : (provincias ?? 0) + (online ?? 0),
-    recaudadoProvincias: provincias,
+    recaudadoTotal: billetesEur == null && online == null ? null : (billetesEur ?? 0) + (online ?? 0),
+    recaudadoProvincias: billetesEur,
     recaudadoOnline: online,
+    centimosKg,
+    etapasConDatos,
     provinciasCompletadas: etapas.filter(e => e.estado === 'finalizada').length,
     totalProvincias: TOTAL_PROVINCIAS,
   }

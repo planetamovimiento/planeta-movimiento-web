@@ -310,6 +310,28 @@ export function euros(v: number | null | undefined): string {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v)
 }
 
+/** Euros con dos decimales (billetes: 128,53 €). '' si no hay dato. */
+export function eurosDec(v: number | null | undefined): string {
+  if (v == null || !Number.isFinite(v)) return ''
+  return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v)
+}
+
+/** Kilos de céntimos: «6,5 kg». Hasta 3 decimales. '' si no hay dato. */
+export function kilos(v: number | null | undefined): string {
+  if (v == null || !Number.isFinite(v)) return ''
+  return `${new Intl.NumberFormat('es-ES', { maximumFractionDigits: 3 }).format(v)} kg`
+}
+
+/** Estados de un dato de recaudación de etapa. Solo != pendiente sale a la web. */
+export const ESTADOS_RECAUDACION = [
+  { id: 'pendiente', label: 'Pendiente de registrar' },
+  { id: 'registrado', label: 'Registrado' },
+  { id: 'revisado', label: 'Revisado' },
+  { id: 'confirmado', label: 'Confirmado' },
+] as const
+
+export const AVISO_CENTIMOS = 'El valor económico definitivo de las monedas se conocerá cuando se realice el recuento final.'
+
 /** Coordenadas aproximadas de la capital de cada provincia (para el mapa). */
 export const COORDS_PROVINCIA: Record<string, { lat: number; lng: number }> = {
   'Cuenca': { lat: 40.07, lng: -2.13 },
