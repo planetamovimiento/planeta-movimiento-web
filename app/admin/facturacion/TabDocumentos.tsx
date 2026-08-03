@@ -7,9 +7,9 @@
 
 import { useMemo, useState } from 'react'
 import { eur } from '@/lib/facturacion/dinero'
-import { estadoMeta, fechaCorta, ESTADOS_EMITIDOS } from '@/lib/facturacion/constants'
+import { estadoMeta, estadosDe, fechaCorta, ESTADOS_EMITIDOS } from '@/lib/facturacion/constants'
 import type { ClienteFactura, Documento, PerfilFacturacion, SerieFacturacion, TipoDocumento } from '@/lib/facturacion/tipos'
-import { convertirEnFactura, duplicarDocumento, eliminarBorrador } from './actions'
+import { cambiarEstadoDocumento, convertirEnFactura, duplicarDocumento, eliminarBorrador } from './actions'
 import DocumentoForm from './DocumentoForm'
 import type { Correr } from '../50dias50provincias/piezas'
 
@@ -97,7 +97,24 @@ export default function TabDocumentos({ tipo, documentos, perfiles, series, clie
                     <td className="py-2 pr-2 text-gray-600">{nombreCliente(d)}</td>
                     <td className="py-2 pr-2 text-gray-500 whitespace-nowrap">{fechaCorta(d.fecha)}</td>
                     <td className="py-2 pr-2 text-right font-bold text-pm-navy whitespace-nowrap">{eur(d.totalCents)}</td>
-                    <td className="py-2 pr-2"><span className={`inline-block text-xs font-bold px-2 py-0.5 rounded-full ${meta.badge}`}>{meta.label}</span></td>
+                    <td className="py-2 pr-2">
+                      {emitido && editable ? (
+                        // Cambio rápido de estado (pagada, anulada, vencida…). Un borrador
+                        // no aparece aquí: se edita desde el formulario.
+                        <select
+                          value={d.estado}
+                          onChange={ev => correr(() => cambiarEstadoDocumento(d.id, ev.target.value))}
+                          className={`text-xs font-bold rounded-full border-0 pl-2 pr-6 py-1 cursor-pointer focus:ring-2 focus:ring-pm-red/40 ${meta.badge}`}
+                          aria-label={`Cambiar estado de ${d.numero || 'documento'}`}
+                        >
+                          {estadosDe(tipo).filter(e => e.id !== 'borrador').map(e => (
+                            <option key={e.id} value={e.id}>{e.label}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span className={`inline-block text-xs font-bold px-2 py-0.5 rounded-full ${meta.badge}`}>{meta.label}</span>
+                      )}
+                    </td>
                     <td className="py-2">
                       <div className="flex items-center gap-1.5 justify-end flex-wrap">
                         <button type="button" onClick={() => setModo({ tipo: 'form', doc: d })} className="text-xs font-bold text-pm-navy border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-pm-red">

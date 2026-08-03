@@ -650,3 +650,44 @@ export async function eliminarBorrador(id: string): Promise<Res> {
     return { ok: true }
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'Error al eliminar' } }
 }
+
+/**
+ * Cambia el estado de un documento YA emitido con un clic (pagada, anulada,
+ * vencida…). No permite volver a «borrador»: una factura emitida no se
+ * re-edita, solo cambia de estado. Anular exige permiso de anulación.
+ */
+export async function cambiarEstadoDocumento(id: string, estado: string): Promise<Res> {
+  try {
+    const { admin, error } = await exigir()
+    if (!admin) return { ok: false, error }
+
+    const doc = await cargarDoc(id)
+    if (!doc) return { ok: false, error: 'Documento no encontrado' }
+    if (String(doc.estado) === 'borrador') return { ok: false, error: 'Un borrador se edita desde el formulario, no aquí.' }
+    if (estado === 'borrador') return { ok: false, error: 'Una factura emitida no puede volver a borrador.' }
+
+    const esProforma = String(doc.tipo) === 'proforma'
+    const validos = esProforma
+      ? ['enviada', 'aceptada', 'rechazada', 'caducada', 'convertida']
+      : ['emitida', 'enviada', 'parcial', 'pagada', 'vencida', 'rectificada', 'anulada']
+    if (!validos.includes(estado)) return { ok: false, error: 'Estado no válido' }
+
+    // Anular es sensible: solo el administrador principal.
+    if ((estado === 'anulada' || estado === 'rechazada') ? !can.facturaAnular(admin.role) : !can.facturaPago(admin.role)) {
+      return { ok: false, error: 'Sin permiso para este cambio de estado' }
+    }
+
+    const patch: Record<string, unknown> = { estado, updated_at: new Date().toISOString() }
+    // Marcar «pagada» salda el documento; volver a «emitida» lo deja sin cobros manuales.
+    if (estado === 'pagada') patch.pagado_cents = doc.total_cents
+    if (estado === 'emitida') patch.pagado_cents = 0
+
+    const db = createAdminClient()
+    const { error: e } = await db.from('billing_documents').update(patch).eq('id', id)
+    if (e) return { ok: false, error: e.message }
+
+    await auditar(admin.email, `estado → ${estado}`, { documentoId: id, detalle: { numero: doc.numero, estado } })
+    revalidar()
+    return { ok: true }
+  } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'Error al cambiar el estado' } }
+}
