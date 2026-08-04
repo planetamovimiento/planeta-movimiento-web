@@ -14,7 +14,7 @@ type ServicioData = {
   paquetes: { nombre: string; precio: number; incluye: string[]; destacado: boolean }[]
 }
 
-const SERVICIOS_DATA: Record<string, ServicioData> = {
+export const SERVICIOS_DATA: Record<string, ServicioData> = {
   cumpleanos: {
     nombre: 'Cumpleaños circense',
     icon: '🎂',
