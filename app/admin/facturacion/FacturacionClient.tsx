@@ -7,6 +7,8 @@ import type { Resultado } from '../50dias50provincias/piezas'
 import TabPerfiles from './TabPerfiles'
 import TabClientes from './TabClientes'
 import TabDocumentos from './TabDocumentos'
+import TabResumen from './TabResumen'
+import TabConfig from './TabConfig'
 
 type Props = {
   perfiles: PerfilFacturacion[]
@@ -30,19 +32,6 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'clientes', label: 'Clientes' },
   { id: 'config', label: 'Configuración' },
 ]
-
-// Paneles que aún no están en esta fase.
-function Proximamente({ que }: { que: string }) {
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
-      <div className="text-4xl mb-3">🧾</div>
-      <p className="font-black text-pm-navy">{que}</p>
-      <p className="text-gray-400 text-sm mt-1 max-w-md mx-auto leading-relaxed">
-        Se activa en la siguiente fase. La base (perfiles y clientes) ya está operativa.
-      </p>
-    </div>
-  )
-}
 
 export default function FacturacionClient({ perfiles, series, clientes, documentos, migrado, puedePerfiles, puedeClientes, puedeEditar, puedeEmitir }: Props) {
   const router = useRouter()
@@ -110,8 +99,11 @@ export default function FacturacionClient({ perfiles, series, clientes, document
         <TabDocumentos tipo="proforma" documentos={documentos} perfiles={perfiles} series={series} clientes={clientes}
           correr={correr} pending={pending} editable={migrado && puedeEditar} puedeEmitir={migrado && puedeEmitir} />
       )}
-      {tab === 'resumen' && <Proximamente que="Resumen de facturación" />}
-      {tab === 'config' && <Proximamente que="Configuración" />}
+      {tab === 'resumen' && <TabResumen documentos={documentos} />}
+      {tab === 'config' && (
+        <TabConfig perfiles={perfiles} series={series} clientes={clientes.length} pending={pending} correr={correr}
+          editable={migrado && puedePerfiles} irAPerfiles={() => setTab('perfiles')} />
+      )}
     </div>
   )
 }
