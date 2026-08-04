@@ -9,9 +9,9 @@
 
 import { useMemo, useState } from 'react'
 import { calcularDocumento, eur, inputACents, inputANumero, centsAInput, type LineaEntrada } from '@/lib/facturacion/dinero'
-import { FORMAS_PAGO, TIPOS_CLIENTE, numeroPreview, fechaCorta, TEXTO_PROFORMA, AVISO_PROFORMA } from '@/lib/facturacion/constants'
+import { FORMAS_PAGO, TIPOS_CLIENTE, numeroPreview, fechaCorta, TEXTO_PROFORMA, AVISO_PROFORMA, ESTADOS_EMITIDOS } from '@/lib/facturacion/constants'
 import type { ClienteFactura, Documento, PerfilFacturacion, SerieFacturacion, TipoDocumento } from '@/lib/facturacion/tipos'
-import { guardarBorrador, emitirDocumento, guardarClienteFactura, type DocumentoInput } from './actions'
+import { guardarBorrador, emitirDocumento, editarEmitido, guardarClienteFactura, type DocumentoInput } from './actions'
 import { Campo, inputCls, type Correr } from '../50dias50provincias/piezas'
 
 const IVA_OPCIONES = [
@@ -87,7 +87,12 @@ export default function DocumentoForm({ tipo, perfiles, series, clientes, doc, c
       : [lineaVacia(perfil?.irpfPct ? '21' : '21')],
   )
 
-  const editable = doc ? doc.estado === 'borrador' : true
+  // Borrador (o nuevo): edición normal. Emitido + permiso: modo corrección
+  // (mantiene número/estado, refresca el PDF, queda en auditoría). Anulada,
+  // convertida, etc.: solo lectura.
+  const esBorrador = !doc || doc.estado === 'borrador'
+  const esCorreccion = !!doc && puedeEmitir && ESTADOS_EMITIDOS.includes(doc.estado)
+  const editable = esBorrador || esCorreccion
 
   // ── Cálculo en vivo ──────────────────────────────────────────────────────
   const entradas: LineaEntrada[] = lineas.map(l => {
@@ -175,8 +180,30 @@ export default function DocumentoForm({ tipo, perfiles, series, clientes, doc, c
     })
   }
 
-  // Vista previa / PDF: guarda el borrador y abre la vista imprimible en otra pestaña.
+  // Guarda una corrección sobre un documento ya emitido (mantiene número/estado).
+  function guardarCorreccion() {
+    correr(async () => {
+      const rc = await resolverCliente()
+      if ('error' in rc) return { ok: false, error: rc.error }
+      const r = await editarEmitido(rc.input)
+      if (r.ok) onCerrar()
+      return r
+    })
+  }
+
+  // Vista previa / PDF: guarda (borrador o corrección) y abre la vista imprimible.
   function vistaPrevia() {
+    if (esCorreccion) {
+      correr(async () => {
+        const rc = await resolverCliente()
+        if ('error' in rc) return { ok: false, error: rc.error }
+        const r = await editarEmitido(rc.input)
+        if (!r.ok) return r
+        if (docId) window.open(`/admin/facturacion/${docId}/pdf`, '_blank')
+        return { ok: true }
+      })
+      return
+    }
     if (!editable) { if (docId) window.open(`/admin/facturacion/${docId}/pdf`, '_blank'); return }
     correr(async () => {
       const rc = await resolverCliente()
@@ -207,6 +234,13 @@ export default function DocumentoForm({ tipo, perfiles, series, clientes, doc, c
       {!editable && (
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-800">
           Documento <strong>{doc?.numero || 'emitido'}</strong>: ya no se puede editar. Duplícalo o regístralo/anúlalo desde el listado.
+        </div>
+      )}
+
+      {esCorreccion && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
+          <strong>Corrigiendo la factura {doc?.numero}.</strong> Se mantiene el número y el cambio queda registrado.
+          Fiscalmente, un cambio con validez debería hacerse con una <em>factura rectificativa</em>; usa esto solo para arreglar erratas.
         </div>
       )}
 
@@ -391,7 +425,7 @@ export default function DocumentoForm({ tipo, perfiles, series, clientes, doc, c
         </ul>
       )}
 
-      {editable && (
+      {editable && esBorrador && (
         <div className="flex flex-wrap gap-2 pt-1 border-t border-gray-100">
           <button type="button" onClick={() => guardar(false)} disabled={pending}
             className="bg-white border border-gray-200 hover:border-pm-navy text-pm-navy font-bold px-4 py-2 rounded-xl text-sm disabled:opacity-40">
@@ -407,6 +441,20 @@ export default function DocumentoForm({ tipo, perfiles, series, clientes, doc, c
               {tipo === 'proforma' ? 'Emitir proforma' : 'Emitir factura'}
             </button>
           )}
+          <button type="button" onClick={onCerrar} className="text-sm font-bold text-gray-400 hover:text-pm-navy px-3 py-2 ml-auto">Cancelar</button>
+        </div>
+      )}
+
+      {editable && esCorreccion && (
+        <div className="flex flex-wrap gap-2 pt-1 border-t border-gray-100">
+          <button type="button" onClick={guardarCorreccion} disabled={pending || errores.length > 0}
+            className="bg-pm-red hover:bg-pm-red-dark text-white font-bold px-5 py-2 rounded-xl text-sm disabled:opacity-40">
+            {pending ? 'Guardando…' : 'Guardar cambios'}
+          </button>
+          <button type="button" onClick={vistaPrevia} disabled={pending || errores.length > 0}
+            className="bg-white border border-gray-200 hover:border-pm-navy text-pm-navy font-bold px-4 py-2 rounded-xl text-sm disabled:opacity-40">
+            Vista previa / PDF
+          </button>
           <button type="button" onClick={onCerrar} className="text-sm font-bold text-gray-400 hover:text-pm-navy px-3 py-2 ml-auto">Cancelar</button>
         </div>
       )}

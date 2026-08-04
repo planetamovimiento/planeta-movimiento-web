@@ -567,6 +567,91 @@ export async function emitirDocumento(id: string): Promise<Res> {
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'Error al emitir' } }
 }
 
+/**
+ * Corrige un documento YA emitido (erratas: importes, conceptos, cliente, fecha,
+ * incluso el número). Mantiene número_int, serie y estado; NO renumera. Refresca
+ * los snapshots del emisor y receptor para que el PDF corregido sea coherente, y
+ * lo deja registrado en auditoría. Fiscalmente lo correcto para un cambio con
+ * validez es una rectificativa; esto es para arreglar equivocaciones internas.
+ */
+export async function editarEmitido(input: DocumentoInput): Promise<Res> {
+  try {
+    const { admin, error } = await exigir()
+    if (!admin) return { ok: false, error }
+    if (!can.facturaEmitir(admin.role)) return { ok: false, error: 'Sin permiso para corregir documentos emitidos' }
+    if (!input.id) return { ok: false, error: 'Falta el documento' }
+    if (!input.profileId) return { ok: false, error: 'Selecciona un emisor' }
+    if (!input.fecha) return { ok: false, error: 'La fecha de emisión es obligatoria' }
+
+    const actual = await cargarDoc(input.id)
+    if (!actual) return { ok: false, error: 'Documento no encontrado' }
+    if (!ESTADOS_EMITIDOS.includes(String(actual.estado))) {
+      return { ok: false, error: 'Solo se corrigen documentos emitidos. Un borrador se edita con «Guardar borrador».' }
+    }
+
+    const numero = txt(input.numero)
+    if (!numero) return { ok: false, error: 'El número no puede quedar vacío en un documento emitido.' }
+    if (input.vencimiento && input.vencimiento < input.fecha) return { ok: false, error: 'El vencimiento no puede ser anterior a la emisión.' }
+
+    const db = createAdminClient()
+    // Unicidad del número (misma comprobación que al emitir).
+    const { data: dup } = await db.from('billing_documents').select('id').eq('tipo', actual.tipo).eq('numero', numero).neq('id', input.id).limit(1)
+    if (dup && dup.length) return { ok: false, error: `Ya existe otro documento con el número ${numero}.` }
+
+    const entradas = aEntradas(input.lineas || [])
+    const calc = calcularDocumento(entradas, Math.round(Number(input.suplidosCents ?? actual.suplidos_cents) || 0))
+    if (calc.totalCents <= 0) return { ok: false, error: 'El total debe ser mayor que 0.' }
+
+    const emisor = await snapshotEmisor(input.profileId)
+    if (!emisor) return { ok: false, error: 'El emisor ya no existe.' }
+    const cliente = await snapshotCliente(input.clientId, input.clienteInline)
+    if (!cliente) return { ok: false, error: 'Selecciona o crea un cliente.' }
+
+    const patch: Record<string, unknown> = {
+      profile_id: input.profileId,
+      numero,
+      serie_id: input.serieId || null,
+      client_id: input.clientId || null,
+      fecha: input.fecha,
+      vencimiento: input.vencimiento || null,
+      referencia: txt(input.referencia),
+      num_pedido: txt(input.numPedido),
+      forma_pago: txt(input.formaPago),
+      condiciones_pago: txt(input.condicionesPago),
+      observaciones: txt(input.observaciones),
+      notas_internas: txt(input.notasInternas),
+      pie_legal: txt(input.pieLegal),
+      validez_dias: input.validezDias ?? null,
+      emisor_snapshot: emisor,
+      cliente_snapshot: cliente,
+      base_cents: calc.baseCents,
+      descuento_cents: calc.descuentoCents,
+      iva_cents: calc.ivaCents,
+      irpf_cents: calc.irpfCents,
+      suplidos_cents: calc.suplidosCents,
+      total_cents: calc.totalCents,
+      updated_at: new Date().toISOString(),
+    }
+    // Si estaba saldada, el pago sigue el nuevo total tras la corrección.
+    if (String(actual.estado) === 'pagada') patch.pagado_cents = calc.totalCents
+
+    const { error: e } = await db.from('billing_documents').update(patch).eq('id', input.id)
+    if (e) return { ok: false, error: e.message }
+
+    // Líneas: se reescriben enteras (lista corta).
+    await db.from('billing_document_lines').delete().eq('documento_id', input.id)
+    if ((input.lineas || []).length) {
+      const { filas } = filasLineas(input.id, input.lineas)
+      const { error: eL } = await db.from('billing_document_lines').insert(filas)
+      if (eL) return { ok: false, error: eL.message }
+    }
+
+    await auditar(admin.email, 'documento emitido corregido', { documentoId: input.id, detalle: { numero, total: calc.totalCents } })
+    revalidar()
+    return { ok: true }
+  } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'Error al corregir' } }
+}
+
 /** Duplica cualquier documento como un borrador nuevo (sin número). */
 export async function duplicarDocumento(id: string): Promise<ResId> {
   try {

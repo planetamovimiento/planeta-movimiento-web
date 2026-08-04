@@ -13,6 +13,8 @@ import { cambiarEstadoDocumento, convertirEnFactura, duplicarDocumento, eliminar
 import DocumentoForm from './DocumentoForm'
 import type { Correr } from '../50dias50provincias/piezas'
 
+type CampoOrden = 'numero' | 'cliente' | 'fecha' | 'total' | 'estado'
+
 export default function TabDocumentos({ tipo, documentos, perfiles, series, clientes, correr, pending, editable, puedeEmitir }: {
   tipo: TipoDocumento
   documentos: Documento[]
@@ -27,17 +29,38 @@ export default function TabDocumentos({ tipo, documentos, perfiles, series, clie
   const [modo, setModo] = useState<{ tipo: 'lista' } | { tipo: 'form'; doc: Documento | null }>({ tipo: 'lista' })
   const [busca, setBusca] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('')
+  const [orden, setOrden] = useState<{ campo: CampoOrden; dir: 'asc' | 'desc' }>({ campo: 'fecha', dir: 'desc' })
 
   const nombreCliente = (d: Documento) =>
     (d.clienteSnapshot?.nombre as string) || clientes.find(c => c.id === d.clientId)?.nombre || '—'
 
+  // Número: por correlativo real cuando existe; si es manual ("18/2026"), por su
+  // primer entero. Borradores (sin número) → -1, van al fondo en ascendente.
+  const claveNumero = (d: Documento) =>
+    d.numeroInt != null ? d.numeroInt : Number((d.numero.match(/\d+/) ?? ['-1'])[0])
+
+  const clicOrden = (campo: CampoOrden) =>
+    setOrden(o => o.campo === campo
+      ? { campo, dir: o.dir === 'asc' ? 'desc' : 'asc' }
+      : { campo, dir: campo === 'fecha' || campo === 'total' ? 'desc' : 'asc' })
+
   const lista = useMemo(() => {
     const q = busca.trim().toLowerCase()
-    return documentos
+    const filtrada = documentos
       .filter(d => d.tipo === tipo)
       .filter(d => !filtroEstado || d.estado === filtroEstado)
       .filter(d => !q || `${d.numero} ${nombreCliente(d)}`.toLowerCase().includes(q))
-  }, [documentos, tipo, busca, filtroEstado]) // eslint-disable-line react-hooks/exhaustive-deps
+    const dir = orden.dir === 'asc' ? 1 : -1
+    return filtrada.sort((a, b) => {
+      switch (orden.campo) {
+        case 'numero': return ((claveNumero(a) - claveNumero(b)) || a.fecha.localeCompare(b.fecha)) * dir
+        case 'cliente': return nombreCliente(a).localeCompare(nombreCliente(b), 'es') * dir
+        case 'total': return (a.totalCents - b.totalCents) * dir
+        case 'estado': return estadoMeta(tipo, a.estado).label.localeCompare(estadoMeta(tipo, b.estado).label, 'es') * dir
+        default: return a.fecha.localeCompare(b.fecha) * dir // fecha
+      }
+    })
+  }, [documentos, tipo, busca, filtroEstado, orden]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const etiqueta = tipo === 'proforma' ? 'proforma' : 'factura'
 
@@ -78,11 +101,14 @@ export default function TabDocumentos({ tipo, documentos, perfiles, series, clie
           <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="text-left text-xs font-bold text-gray-400 uppercase tracking-wide border-b border-gray-100">
-                <th className="py-2 pr-2">Número</th>
-                <th className="py-2 pr-2">Cliente</th>
-                <th className="py-2 pr-2">Fecha</th>
-                <th className="py-2 pr-2 text-right">Total</th>
-                <th className="py-2 pr-2">Estado</th>
+                {([['numero', 'Número', ''], ['cliente', 'Cliente', ''], ['fecha', 'Fecha', ''], ['total', 'Total', 'text-right'], ['estado', 'Estado', '']] as [CampoOrden, string, string][]).map(([campo, label, alin]) => (
+                  <th key={campo} className={`py-2 pr-2 ${alin}`}>
+                    <button type="button" onClick={() => clicOrden(campo)}
+                      className={`uppercase tracking-wide hover:text-pm-navy ${orden.campo === campo ? 'text-pm-navy' : ''}`}>
+                      {label}{orden.campo === campo ? (orden.dir === 'asc' ? ' ▲' : ' ▼') : ''}
+                    </button>
+                  </th>
+                ))}
                 <th className="py-2"></th>
               </tr>
             </thead>
@@ -118,7 +144,7 @@ export default function TabDocumentos({ tipo, documentos, perfiles, series, clie
                     <td className="py-2">
                       <div className="flex items-center gap-1.5 justify-end flex-wrap">
                         <button type="button" onClick={() => setModo({ tipo: 'form', doc: d })} className="text-xs font-bold text-pm-navy border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-pm-red">
-                          {esBorrador && editable ? 'Editar' : 'Ver'}
+                          {(esBorrador && editable) || (emitido && puedeEmitir) ? 'Editar' : 'Ver'}
                         </button>
                         <a href={`/admin/facturacion/${d.id}/pdf`} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-pm-navy border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-pm-red">PDF</a>
                         <button type="button" disabled={!editable} onClick={() => correr(() => duplicarDocumento(d.id))} className="text-xs font-bold text-pm-navy border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-pm-red disabled:opacity-30">Duplicar</button>
