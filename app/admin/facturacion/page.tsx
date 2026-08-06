@@ -30,6 +30,7 @@ export default async function FacturacionPage() {
           puedeClientes={can.facturaClientes(admin.role)}
           puedeEditar={can.facturaEditar(admin.role)}
           puedeEmitir={can.facturaEmitir(admin.role)}
+          puedeAnular={can.facturaAnular(admin.role)}
         />
       </div>
     </>

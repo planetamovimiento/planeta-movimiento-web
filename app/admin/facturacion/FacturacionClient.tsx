@@ -20,6 +20,7 @@ type Props = {
   puedeClientes: boolean
   puedeEditar: boolean
   puedeEmitir: boolean
+  puedeAnular: boolean
 }
 
 type TabId = 'resumen' | 'facturas' | 'proformas' | 'perfiles' | 'clientes' | 'config'
@@ -33,7 +34,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'config', label: 'Configuración' },
 ]
 
-export default function FacturacionClient({ perfiles, series, clientes, documentos, migrado, puedePerfiles, puedeClientes, puedeEditar, puedeEmitir }: Props) {
+export default function FacturacionClient({ perfiles, series, clientes, documentos, migrado, puedePerfiles, puedeClientes, puedeEditar, puedeEmitir, puedeAnular }: Props) {
   const router = useRouter()
   const [tab, setTab] = useState<TabId>(perfiles.length === 0 ? 'perfiles' : 'resumen')
   const [pending, startTransition] = useTransition()
@@ -93,11 +94,11 @@ export default function FacturacionClient({ perfiles, series, clientes, document
       )}
       {tab === 'facturas' && (
         <TabDocumentos tipo="factura" documentos={documentos} perfiles={perfiles} series={series} clientes={clientes}
-          correr={correr} pending={pending} editable={migrado && puedeEditar} puedeEmitir={migrado && puedeEmitir} />
+          correr={correr} pending={pending} editable={migrado && puedeEditar} puedeEmitir={migrado && puedeEmitir} puedeAnular={migrado && puedeAnular} />
       )}
       {tab === 'proformas' && (
         <TabDocumentos tipo="proforma" documentos={documentos} perfiles={perfiles} series={series} clientes={clientes}
-          correr={correr} pending={pending} editable={migrado && puedeEditar} puedeEmitir={migrado && puedeEmitir} />
+          correr={correr} pending={pending} editable={migrado && puedeEditar} puedeEmitir={migrado && puedeEmitir} puedeAnular={migrado && puedeAnular} />
       )}
       {tab === 'resumen' && <TabResumen documentos={documentos} />}
       {tab === 'config' && (

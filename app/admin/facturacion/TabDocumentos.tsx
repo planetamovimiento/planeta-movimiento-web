@@ -9,13 +9,13 @@ import { useMemo, useState } from 'react'
 import { eur } from '@/lib/facturacion/dinero'
 import { estadoMeta, estadosDe, fechaCorta, ESTADOS_EMITIDOS } from '@/lib/facturacion/constants'
 import type { ClienteFactura, Documento, PerfilFacturacion, SerieFacturacion, TipoDocumento } from '@/lib/facturacion/tipos'
-import { cambiarEstadoDocumento, convertirEnFactura, duplicarDocumento, eliminarBorrador } from './actions'
+import { cambiarEstadoDocumento, convertirEnFactura, duplicarDocumento, eliminarDocumento } from './actions'
 import DocumentoForm from './DocumentoForm'
 import type { Correr } from '../50dias50provincias/piezas'
 
 type CampoOrden = 'numero' | 'cliente' | 'fecha' | 'total' | 'estado'
 
-export default function TabDocumentos({ tipo, documentos, perfiles, series, clientes, correr, pending, editable, puedeEmitir }: {
+export default function TabDocumentos({ tipo, documentos, perfiles, series, clientes, correr, pending, editable, puedeEmitir, puedeAnular }: {
   tipo: TipoDocumento
   documentos: Documento[]
   perfiles: PerfilFacturacion[]
@@ -25,6 +25,7 @@ export default function TabDocumentos({ tipo, documentos, perfiles, series, clie
   pending: boolean
   editable: boolean
   puedeEmitir: boolean
+  puedeAnular: boolean
 }) {
   const [modo, setModo] = useState<{ tipo: 'lista' } | { tipo: 'form'; doc: Documento | null }>({ tipo: 'lista' })
   const [busca, setBusca] = useState('')
@@ -151,8 +152,10 @@ export default function TabDocumentos({ tipo, documentos, perfiles, series, clie
                         {tipo === 'proforma' && emitido && !d.convertidaDocumentoId && (
                           <button type="button" disabled={!editable} onClick={() => correr(() => convertirEnFactura(d.id))} className="text-xs font-bold text-pm-red border border-pm-red/30 rounded-lg px-2.5 py-1.5 hover:bg-pm-red/5 disabled:opacity-30">Convertir en factura</button>
                         )}
-                        {esBorrador && (
-                          <button type="button" disabled={!editable} onClick={() => { if (confirm('¿Borrar este borrador?')) correr(() => eliminarBorrador(d.id)) }} className="text-xs font-bold text-gray-400 border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-red-400 hover:text-red-500 disabled:opacity-30">✕</button>
+                        {esBorrador ? (
+                          <button type="button" disabled={!editable} onClick={() => { if (confirm('¿Borrar este borrador?')) correr(() => eliminarDocumento(d.id)) }} className="text-xs font-bold text-gray-400 border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-red-400 hover:text-red-500 disabled:opacity-30" title="Eliminar borrador">✕</button>
+                        ) : puedeAnular && (
+                          <button type="button" onClick={() => { if (confirm(`Eliminar ${etiqueta} ${d.numero || ''} de forma DEFINITIVA.\n\nRompe la numeración y deja un hueco; fiscalmente suele ser mejor anularla. No se puede deshacer.\n\n¿Continuar?`)) correr(() => eliminarDocumento(d.id)) }} className="text-xs font-bold text-gray-400 border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-red-400 hover:text-red-500" title={`Eliminar ${etiqueta} definitivamente`}>Eliminar</button>
                         )}
                       </div>
                     </td>

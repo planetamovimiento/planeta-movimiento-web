@@ -718,19 +718,32 @@ export async function convertirEnFactura(proformaId: string): Promise<ResId> {
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'Error al convertir' } }
 }
 
-/** Borra un BORRADOR (nunca un documento emitido). */
-export async function eliminarBorrador(id: string): Promise<Res> {
+/**
+ * Elimina un documento. Un borrador lo borra quien puede editar. Un documento
+ * ya emitido solo el administrador principal (permiso de anular): borrarlo es
+ * sensible porque rompe el correlativo y deja huecos; fiscalmente lo correcto
+ * suele ser anularlo. Líneas y pagos caen en cascada; la auditoría sobrevive
+ * (billing_audit no tiene FK), y el borrado se registra con el número.
+ */
+export async function eliminarDocumento(id: string): Promise<Res> {
   try {
     const { admin, error } = await exigir()
     if (!admin) return { ok: false, error }
-    if (!can.facturaEditar(admin.role)) return { ok: false, error: 'Sin permiso' }
     const doc = await cargarDoc(id)
     if (!doc) return { ok: false, error: 'No encontrado' }
-    if (ESTADOS_EMITIDOS.includes(String(doc.estado))) return { ok: false, error: 'No se puede borrar un documento emitido. Anúlalo o haz una rectificativa.' }
+
+    const emitido = ESTADOS_EMITIDOS.includes(String(doc.estado)) || String(doc.estado) === 'anulada'
+    if (emitido ? !can.facturaAnular(admin.role) : !can.facturaEditar(admin.role)) {
+      return { ok: false, error: emitido ? 'Solo el administrador principal puede eliminar documentos emitidos' : 'Sin permiso' }
+    }
+
     const db = createAdminClient()
     const { error: e } = await db.from('billing_documents').delete().eq('id', id)
     if (e) return { ok: false, error: e.message }
-    await auditar(admin.email, 'borrador eliminado', { documentoId: id })
+    // documentoId: null → el registro de auditoría no cae con el documento.
+    await auditar(admin.email, emitido ? 'documento eliminado' : 'borrador eliminado', {
+      documentoId: null, detalle: { id, numero: doc.numero ?? null, estado: doc.estado },
+    })
     revalidar()
     return { ok: true }
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'Error al eliminar' } }
