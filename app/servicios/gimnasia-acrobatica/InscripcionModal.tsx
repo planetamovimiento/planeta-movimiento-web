@@ -31,6 +31,7 @@ export function BotonApuntarme() {
           servicio="Gimnasia Acrobática"
           niveles={NIVELES}
           modalidades={MODALIDADES}
+          preguntarInicio
           onClose={() => setOpen(false)}
         />
       )}

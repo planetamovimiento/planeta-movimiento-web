@@ -28,6 +28,7 @@ export function BotonApuntarme() {
           servicio="Escuela infantil"
           niveles={NIVELES}
           modalidades={MODALIDADES}
+          preguntarInicio
           onClose={() => setOpen(false)}
         />
       )}

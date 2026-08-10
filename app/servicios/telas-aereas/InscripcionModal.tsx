@@ -31,6 +31,7 @@ export function BotonApuntarme() {
           servicio="Escuela de aéreos"
           niveles={NIVELES}
           modalidades={MODALIDADES}
+          preguntarInicio
           onClose={() => setOpen(false)}
         />
       )}

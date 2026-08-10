@@ -101,6 +101,8 @@ export type Alumno = {
   grupo: string
   estado_general: EstadoGeneral
   temporada: string
+  /** "Septiembre 2026" / "Octubre 2026" (lo elige la familia en la inscripción). '' si no aplica. */
+  periodoInicio: string
   pagos: Record<string, EstadoPago>
   observaciones: string
   // campos visibles para la familia (Portal de Familias)

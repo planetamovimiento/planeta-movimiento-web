@@ -42,6 +42,7 @@ export default function ClubInscripcionesClient({
   const [fGrupo, setFGrupo] = useState('')
   const [fTemporada, setFTemporada] = useState(temporadaActiva)
   const [fEstado, setFEstado] = useState('')
+  const [fInicio, setFInicio] = useState('')
   const [fMes, setFMes] = useState('')
   const [fPago, setFPago] = useState('')
 
@@ -77,6 +78,7 @@ export default function ClubInscripcionesClient({
     if (fGrupo && a.grupo !== fGrupo) return false
     if (fTemporada && a.temporada !== fTemporada) return false
     if (fEstado && a.estado_general !== fEstado) return false
+    if (fInicio && a.periodoInicio !== fInicio) return false
     if (fPago) {
       if (fMes) {
         const e: EstadoPago | '' = (a.pagos[fMes] as EstadoPago | undefined) ?? ''
@@ -88,7 +90,7 @@ export default function ClubInscripcionesClient({
       }
     }
     return true
-  }, [q, fActividad, fGrupo, fTemporada, fEstado, fMes, fPago])
+  }, [q, fActividad, fGrupo, fTemporada, fEstado, fInicio, fMes, fPago])
 
   const filtradas = useMemo(() => lista.filter(coincide), [lista, coincide])
 
@@ -127,8 +129,8 @@ export default function ClubInscripcionesClient({
     return { inscritos, activos, bajas, pendientes, espera, pendientesPago }
   }, [lista])
 
-  const hayFiltros = !!(q || fActividad || fGrupo || fTemporada || fEstado || fMes || fPago)
-  function limpiar() { setQ(''); setFActividad(''); setFGrupo(''); setFTemporada(''); setFEstado(''); setFMes(''); setFPago('') }
+  const hayFiltros = !!(q || fActividad || fGrupo || fTemporada || fEstado || fInicio || fMes || fPago)
+  function limpiar() { setQ(''); setFActividad(''); setFGrupo(''); setFTemporada(''); setFEstado(''); setFInicio(''); setFMes(''); setFPago('') }
 
   // ── Mutaciones (optimistas) ──────────────────────────────────────────────
   const patchLocal = useCallback((id: string, patch: Partial<Alumno>) => {
@@ -264,6 +266,12 @@ export default function ClubInscripcionesClient({
             {TEMPORADAS.map(t => <option key={t} value={t}>{temporadaDisplay(t)}</option>)}
             {fTemporada && !TEMPORADAS.includes(fTemporada) && <option value={fTemporada}>{temporadaDisplay(fTemporada)}</option>}
           </select>
+          <select value={fInicio} onChange={e => setFInicio(e.target.value)}
+            className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-pm-red">
+            <option value="">Empieza: cualquiera</option>
+            <option value="Septiembre 2026">Empieza en septiembre</option>
+            <option value="Octubre 2026">Empieza en octubre</option>
+          </select>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
           <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Pago</span>
@@ -354,7 +362,15 @@ export default function ClubInscripcionesClient({
                 {filtradas.map(a => (
                   <tr key={a.id} className="hover:bg-gray-50">
                     <td className="px-4 py-2.5 sticky left-0 bg-white z-10">
-                      <div className="font-semibold text-pm-navy whitespace-nowrap">{a.nombre} <span className="text-gray-500">{a.apellidos}</span></div>
+                      <div className="font-semibold text-pm-navy whitespace-nowrap">
+                        {a.nombre} <span className="text-gray-500">{a.apellidos}</span>
+                        {a.periodoInicio && (
+                          <span className={`ml-1.5 align-middle text-[10px] font-bold px-1.5 py-0.5 rounded-full ${a.periodoInicio.startsWith('Septiembre') ? 'bg-pm-red/10 text-pm-red' : 'bg-blue-50 text-blue-700'}`}
+                            title={`Empieza en ${a.periodoInicio}`}>
+                            {a.periodoInicio.startsWith('Septiembre') ? 'Sep' : 'Oct'}
+                          </span>
+                        )}
+                      </div>
                       <div className="text-xs text-gray-400 truncate max-w-[180px]">{a.email}</div>
                     </td>
                     <td className="px-3 py-2.5 whitespace-nowrap text-gray-600">{a.actividad || '—'}</td>
@@ -478,7 +494,7 @@ function FichaAlumno({ a, puedeEditar, gruposActividad, onClose, onGestion, onPa
         <div className="bg-pm-navy text-white px-5 py-4 flex items-center justify-between sticky top-0 z-10">
           <div>
             <div className="font-black text-lg">{a.nombre} {a.apellidos}</div>
-            <div className="text-white/60 text-xs">{a.actividad || 'Sin actividad'} · {temporadaDisplay(a.temporada)}</div>
+            <div className="text-white/60 text-xs">{a.actividad || 'Sin actividad'} · {temporadaDisplay(a.temporada)}{a.periodoInicio ? ` · Empieza: ${a.periodoInicio}` : ''}</div>
           </div>
           <button onClick={onClose} className="text-white/60 hover:text-white">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
@@ -509,6 +525,7 @@ function FichaAlumno({ a, puedeEditar, gruposActividad, onClose, onGestion, onPa
             <Dato k="Teléfono" v={a.telefono || '—'} />
             <Dato k="Email" v={a.email || '—'} />
             <Dato k="Inscrito el" v={fechaCorta(a.created_at)} />
+            <Dato k="Empieza" v={a.periodoInicio || '—'} />
             <Dato k="Fecha de alta" v={fechaCorta(a.fecha_alta)} />
             <Dato k="Fecha de baja" v={fechaCorta(a.fecha_baja)} />
           </div>

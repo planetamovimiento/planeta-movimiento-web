@@ -18,11 +18,18 @@ type Props = {
   niveles: string[]
   modalidades: Modalidad[]
   onClose: () => void
+  /** Muestra la pregunta obligatoria "¿Cuándo quieres comenzar?" (septiembre/octubre). */
+  preguntarInicio?: boolean
 }
+
+const INICIO_OPCIONES = [
+  { id: 'septiembre', label: 'Empiezo en septiembre', sublabel: 'Periodo especial de septiembre', valor: 'Septiembre 2026' },
+  { id: 'octubre', label: 'Empiezo en octubre', sublabel: 'Inicio normal de la temporada', valor: 'Octubre 2026' },
+]
 
 // ─── Modal ───────────────────────────────────────────────────────────────────
 
-export function ModalInscripcion({ servicio, niveles, modalidades, onClose }: Props) {
+export function ModalInscripcion({ servicio, niveles, modalidades, onClose, preguntarInicio = false }: Props) {
   const [enviado, setEnviado] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -37,6 +44,7 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose }: Pr
     tutorLegal: '',
     experiencia: '',
     modalidad: '',
+    inicio: '',
     nivel: '',
     diasSemana: [] as string[],
     notas: '',
@@ -77,6 +85,9 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose }: Pr
           modalidad: form.modalidad,
           nivel: form.nivel,
           disponibilidad: form.diasSemana.join(', '),
+          ...(preguntarInicio && form.inicio
+            ? { periodoInicio: INICIO_OPCIONES.find(o => o.id === form.inicio)?.valor ?? form.inicio }
+            : {}),
         },
         seguridad: { hp, renderedAt },
       })
@@ -175,6 +186,30 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose }: Pr
                 <p className="text-xs text-gray-400 mt-1.5">Selecciona una opción para continuar</p>
               )}
             </div>
+
+            {/* ── 1b. ¿Cuándo empiezas? (solo servicios con periodo de septiembre) ── */}
+            {preguntarInicio && (
+              <div>
+                <label className="block text-xs font-black text-pm-navy mb-2 uppercase tracking-wider">
+                  ¿Cuándo quieres comenzar? *
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {INICIO_OPCIONES.map(o => (
+                    <button
+                      key={o.id}
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, inicio: o.id }))}
+                      className={`text-left border-2 rounded-xl p-3 transition-all ${
+                        form.inicio === o.id ? 'border-pm-red bg-pm-red-light' : 'border-gray-200 hover:border-pm-red/40'
+                      }`}
+                    >
+                      <div className={`font-bold text-sm ${form.inicio === o.id ? 'text-pm-red' : 'text-pm-navy'}`}>{o.label}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">{o.sublabel}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* ── 2. Datos personales ── */}
             <p className="text-xs text-gray-400 -mb-1">Datos de la persona que se inscribe (el participante)</p>
@@ -346,7 +381,7 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose }: Pr
 
             <button
               type="submit"
-              disabled={loading || !form.modalidad}
+              disabled={loading || !form.modalidad || (preguntarInicio && !form.inicio)}
               className="w-full bg-pm-red hover:bg-pm-red-dark disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-sm tracking-widest uppercase py-4 rounded-xl transition-colors"
             >
               {loading ? 'Enviando...' : 'Enviar solicitud'}

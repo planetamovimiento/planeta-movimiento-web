@@ -65,6 +65,7 @@ export default async function ClubPage() {
       grupo: g?.grupo ?? str(d.nivel),
       estado_general: (g?.estado_general as EstadoGeneral) ?? 'pendiente',
       temporada: g?.temporada ?? temporadaActiva,
+      periodoInicio: str(d.periodoInicio),
       pagos: (g?.pagos as Record<string, EstadoPago>) ?? {},
       observaciones: g?.observaciones ?? '',
       observaciones_familia: g?.observaciones_familia ?? '',
