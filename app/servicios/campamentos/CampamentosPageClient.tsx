@@ -51,7 +51,7 @@ export default function CampamentosPageClient({ cfg, ocupacion }: { cfg: Campame
   const PANELS: { id: Panel; label: string; emoji: string; subtitulo: string }[] = [
     { id: 'navidad', label: 'Navidad', emoji: '⛄', subtitulo: `${rangoCorto(navDias)} · ${navDias.length} días` },
     { id: 'semanasanta', label: 'Semana Santa', emoji: '🌸', subtitulo: `${rangoCorto(ssDias)} · ${ssDias.length} días` },
-    { id: 'verano', label: 'Verano', emoji: '☀️', subtitulo: SEMANAS.length ? `${dcorta(SEMANAS[0].inicio)} – ${dcorta(SEMANAS[SEMANAS.length - 1].fin)} · ${SEMANAS.length} semanas` : '8 semanas' },
+    { id: 'verano', label: 'Verano', emoji: '☀️', subtitulo: SEMANAS.length ? `${dcorta(SEMANAS[0].inicio)} – ${dcorta(SEMANAS[SEMANAS.length - 1].fin)} · ${SEMANAS.length} semanas` : '9 semanas' },
   ]
 
   return (

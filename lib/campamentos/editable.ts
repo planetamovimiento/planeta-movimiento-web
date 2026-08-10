@@ -51,7 +51,7 @@ export const CAMPAMENTOS_DEFAULT: CampamentosConfig = {
   ssantaHorario: '9:00 – 14:00', ssantaEstado: 'abierto',
   ssantaDescripcion: 'El campamento de Semana Santa sigue el mismo formato de Escuela de Superhéroes: jornadas de movimiento, creatividad y juego en equipo con todas las disciplinas del club.',
   ssantaImagen: '/fotos/campamento-semana-santa/1.webp',
-  veranoDescripcion: 'Ocho semanas de Escuela de Superhéroes. Cada semana trabaja un elemento y un sentido a través de experiencias sensoriales, exploración, creatividad y juego.',
+  veranoDescripcion: 'Nueve semanas de Escuela de Superhéroes. Cada semana trabaja un elemento y un sentido a través de experiencias sensoriales, exploración, creatividad y juego.',
   veranoImagen: '/fotos/campamento-verano/1.webp',
   veranoSemanas: [
     { id: 1, elemento: 'Tierra', inicio: '2026-06-22', fin: '2026-06-26' },
@@ -62,6 +62,7 @@ export const CAMPAMENTOS_DEFAULT: CampamentosConfig = {
     { id: 6, elemento: 'Agua', inicio: '2026-07-27', fin: '2026-07-31' },
     { id: 7, elemento: 'Fuego', inicio: '2026-08-03', fin: '2026-08-07' },
     { id: 8, elemento: 'Aire', inicio: '2026-08-10', fin: '2026-08-14' },
+    { id: 9, elemento: 'Tierra', inicio: '2026-08-31', fin: '2026-09-04' },
   ],
   veranoHorario: '9:00 – 14:00', veranoEstado: 'abierto',
 }
