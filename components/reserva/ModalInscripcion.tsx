@@ -25,6 +25,9 @@ type Props = {
 export function ModalInscripcion({ servicio, niveles, modalidades, onClose }: Props) {
   const [enviado, setEnviado] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [hp, setHp] = useState('')                    // honeypot antibots
+  const [renderedAt] = useState(() => Date.now())     // tiempo mínimo antibots
   const [form, setForm] = useState({
     nombre: '',
     apellidos: '',
@@ -54,26 +57,36 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose }: Pr
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    await submitForm({
-      tipo: 'inscripcion_club',
-      nombre: `${form.nombre} ${form.apellidos}`.trim(),
-      email: form.email,
-      telefono: form.telefono,
-      asunto: `Inscripción Club · ${servicio}`,
-      mensaje: form.notas,
-      datos: {
-        actividad: servicio,
-        nombre: form.nombre,
-        apellidos: form.apellidos,
-        fechaNacimiento: form.fechaNacimiento,
-        tutorLegal: form.tutorLegal,
-        experienciaPrevia: form.experiencia,
-        modalidad: form.modalidad,
-        nivel: form.nivel,
-        disponibilidad: form.diasSemana.join(', '),
-      },
-    })
+    setError('')
+    let r: { ok: boolean; error?: string | null }
+    try {
+      r = await submitForm({
+        tipo: 'inscripcion_club',
+        nombre: `${form.nombre} ${form.apellidos}`.trim(),
+        email: form.email,
+        telefono: form.telefono,
+        asunto: `Inscripción Club · ${servicio}`,
+        mensaje: form.notas,
+        datos: {
+          actividad: servicio,
+          nombre: form.nombre,
+          apellidos: form.apellidos,
+          fechaNacimiento: form.fechaNacimiento,
+          tutorLegal: form.tutorLegal,
+          experienciaPrevia: form.experiencia,
+          modalidad: form.modalidad,
+          nivel: form.nivel,
+          disponibilidad: form.diasSemana.join(', '),
+        },
+        seguridad: { hp, renderedAt },
+      })
+    } catch {
+      r = { ok: false, error: 'No se pudo enviar. Revisa tu conexión e inténtalo de nuevo.' }
+    }
     setLoading(false)
+    // Solo se muestra éxito si el servidor confirmó el guardado: nunca un
+    // "enviado" falso que haga perder la inscripción.
+    if (!r?.ok) { setError(r?.error || 'No se pudo enviar. Inténtalo de nuevo en unos minutos.'); return }
     setEnviado(true)
   }
 
@@ -125,6 +138,11 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose }: Pr
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-6 space-y-5">
+
+            {/* Honeypot antibots: oculto para humanos, tentador para bots. */}
+            <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true"
+              value={hp} onChange={e => setHp(e.target.value)}
+              className="absolute -left-[9999px] w-px h-px opacity-0" />
 
             {/* ── 1. Modalidad ── */}
             <div>
@@ -321,6 +339,10 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose }: Pr
                 <a href="#" className="text-pm-red underline">política de privacidad</a> *
               </span>
             </label>
+
+            {error && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2" role="alert">{error}</p>
+            )}
 
             <button
               type="submit"
