@@ -79,6 +79,30 @@ export async function setPagoMes(submissionId: string, mes: string, estado: stri
   return { ok: true }
 }
 
+/**
+ * Crea la fila de gestión (sincroniza con el CRM) de inscripciones que llegaron
+ * pero no la tienen. Red de seguridad del punto 28: no se pierde ninguna. Usa la
+ * temporada indicada (la activa) y estado 'pendiente'. No pisa filas existentes.
+ */
+export async function sincronizarPendientes(submissionIds: string[], temporada: string) {
+  const admin = await getAdminUser()
+  if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
+  if (!Array.isArray(submissionIds) || submissionIds.length === 0) return { ok: true }
+
+  const db = createAdminClient()
+  const now = new Date().toISOString()
+  const filas = submissionIds.map(id => ({
+    submission_id: id, temporada: temporada || TEMPORADA_ACTUAL, estado_general: 'pendiente',
+    updated_at: now, updated_by: admin.email,
+  }))
+  const { error } = await db.from('club_gestion').upsert(filas, { onConflict: 'submission_id' })
+  if (error) return { ok: false, error: error.message }
+
+  await logActivity({ actorEmail: admin.email, accion: `Sincronizadas ${filas.length} inscripciones pendientes`, entidad: 'club' })
+  revalidatePath('/admin/club')
+  return { ok: true }
+}
+
 // ── Grupos ────────────────────────────────────────────────────────────────────
 
 export async function crearGrupo(nombre: string, actividad: string | null) {

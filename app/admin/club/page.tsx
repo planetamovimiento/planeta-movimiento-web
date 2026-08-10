@@ -74,6 +74,7 @@ export default async function ClubPage() {
       cuota_fecha_pago: g?.cuota_fecha_pago ? str(g.cuota_fecha_pago).slice(0, 10) : '',
       talla: str(g?.talla),
       numero_socio: str(g?.numero_socio),
+      pendienteSync: !g,
       pagos: (g?.pagos as Record<string, EstadoPago>) ?? {},
       observaciones: g?.observaciones ?? '',
       observaciones_familia: g?.observaciones_familia ?? '',

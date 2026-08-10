@@ -109,6 +109,8 @@ export type Alumno = {
   cuota_fecha_pago: string
   talla: string
   numero_socio: string
+  /** true si la inscripción llegó pero no tiene fila en club_gestion (sin sincronizar). */
+  pendienteSync: boolean
   pagos: Record<string, EstadoPago>
   observaciones: string
   // campos visibles para la familia (Portal de Familias)

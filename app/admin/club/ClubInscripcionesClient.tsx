@@ -10,7 +10,7 @@ import {
 } from '@/lib/club/constants'
 import { CUOTA_ESTADOS, TALLAS_EQUIPACION, eurosCuota, eurosACents } from '@/lib/club/cuota'
 import type { ClubConfig } from '@/lib/club/config'
-import { guardarGestion, setPagoMes, crearGrupo, renombrarGrupo, eliminarGrupo, fijarHorarioGrupo, fijarWhatsappGrupo } from './actions'
+import { guardarGestion, setPagoMes, crearGrupo, renombrarGrupo, eliminarGrupo, fijarHorarioGrupo, fijarWhatsappGrupo, sincronizarPendientes } from './actions'
 import { setTemporadaActiva, guardarConfigTemporada } from './temporada-actions'
 import ImportarModal from './ImportarModal'
 import { SubirImagen } from '@/components/admin/SubirImagen'
@@ -130,8 +130,32 @@ export default function ClubInscripcionesClient({
     const pendientesPago = lista.filter(a =>
       a.estado_general !== 'baja' && a.estado_general !== 'archivado' && (a.pagos[MES_ACTUAL] ?? '') !== 'pagado'
     ).length
-    return { inscritos, activos, bajas, pendientes, espera, pendientesPago }
-  }, [lista])
+    // Contadores de la temporada ACTIVA (punto 27).
+    const delAnio = lista.filter(a => a.temporada === tempActiva)
+    const septiembre = delAnio.filter(a => a.periodoInicio.startsWith('Septiembre')).length
+    const octubre = delAnio.filter(a => a.periodoInicio.startsWith('Octubre')).length
+    const cuotasPagadas = delAnio.filter(a => a.cuota_estado === 'pagada').length
+    const cuotasPendientes = delAnio.filter(a => a.cuota_estado === 'pendiente').length
+    return {
+      inscritos, activos, bajas, pendientes, espera, pendientesPago,
+      totalTemporada: delAnio.length, septiembre, octubre, cuotasPagadas, cuotasPendientes,
+    }
+  }, [lista, tempActiva])
+
+  // Red de seguridad (punto 28): inscripciones sin fila de gestión.
+  const pendientesSync = useMemo(() => lista.filter(a => a.pendienteSync), [lista])
+  const [syncing, setSyncing] = useState(false)
+  function sincronizar() {
+    if (!puedeEditar || pendientesSync.length === 0) return
+    const ids = pendientesSync.map(a => a.id)
+    setSyncing(true)
+    startTransition(async () => {
+      const r = await sincronizarPendientes(ids, tempActiva)
+      setSyncing(false)
+      if (!r.ok) setError(r.error || 'No se pudo registrar en el CRM')
+      else ids.forEach(id => patchLocal(id, { pendienteSync: false, temporada: tempActiva }))
+    })
+  }
 
   const hayFiltros = !!(q || fActividad || fGrupo || fTemporada || fEstado || fInicio || fMes || fPago)
   function limpiar() { setQ(''); setFActividad(''); setFGrupo(''); setFTemporada(''); setFEstado(''); setFInicio(''); setFMes(''); setFPago('') }
@@ -204,6 +228,23 @@ export default function ClubInscripcionesClient({
         </div>
       )}
 
+      {puedeEditar && pendientesSync.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-wrap items-center gap-3">
+          <div className="flex-1 min-w-[200px]">
+            <div className="font-black text-amber-800 text-sm">
+              {pendientesSync.length} {pendientesSync.length === 1 ? 'inscripción sin registrar' : 'inscripciones sin registrar'} en el CRM
+            </div>
+            <div className="text-xs text-amber-700 leading-relaxed">
+              Llegaron por formulario pero no tienen ficha de gestión. Regístralas en la temporada {temporadaDisplay(tempActiva)} para no perderlas.
+            </div>
+          </div>
+          <button onClick={sincronizar} disabled={syncing}
+            className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm px-4 py-2 rounded-xl disabled:opacity-50 whitespace-nowrap">
+            {syncing ? 'Registrando…' : 'Registrar en el CRM'}
+          </button>
+        </div>
+      )}
+
       {/* Temporada activa */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-wrap items-center gap-x-6 gap-y-3">
         <div>
@@ -247,6 +288,18 @@ export default function ClubInscripcionesClient({
         <Metric label="Lista de espera" valor={metricas.espera} tono="purple" />
         <Metric label="En baja" valor={metricas.bajas} tono="red" />
         <Metric label={`Pago pendiente · ${MESES_TEMPORADA.find(m => m.key === MES_ACTUAL)?.nombre ?? ''}`} valor={metricas.pendientesPago} tono="amber" />
+      </div>
+
+      {/* Contadores de la temporada activa (punto 27) */}
+      <div>
+        <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-2">Temporada {temporadaDisplay(tempActiva)}</div>
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          <Metric label="Total temporada" valor={metricas.totalTemporada} tono="navy" />
+          <Metric label="Empiezan en septiembre" valor={metricas.septiembre} tono="purple" />
+          <Metric label="Empiezan en octubre" valor={metricas.octubre} tono="navy" />
+          <Metric label="Cuotas pagadas" valor={metricas.cuotasPagadas} tono="green" />
+          <Metric label="Cuotas pendientes" valor={metricas.cuotasPendientes} tono="amber" />
+        </div>
       </div>
 
       {/* Filtros */}
