@@ -1,17 +1,23 @@
-import { CUOTA, eurosCuota } from '@/lib/club/cuota'
+import { CUOTA, eurosCuota, fechaLarga, diaSiguiente } from '@/lib/club/cuota'
+import { getClubConfig } from '@/lib/club/config'
+import { getTemporadaActiva } from '@/lib/config/store'
+import { temporadaDisplay } from '@/lib/club/constants'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Sección pública "Cuota de socio" del Club Deportivo Origen (temporada activa).
 // Dos precios según fecha de pago + qué incluye. Sin pago online: gestión manual.
-// Sin emojis. Ancla #cuota para enlazar desde los servicios.
+// Precios y fecha límite editables desde el admin (lib/club/config.ts). Sin emojis.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function CuotaSocio() {
+export async function CuotaSocio() {
+  const [{ cuota }, tempRaw] = await Promise.all([getClubConfig(), getTemporadaActiva()])
+  const temporada = temporadaDisplay(tempRaw)
+
   return (
     <section id="cuota" className="bg-pm-bg py-16 scroll-mt-20">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-10">
-          <div className="text-xs font-black text-pm-red uppercase tracking-widest mb-2">Temporada {CUOTA.temporada}</div>
+          <div className="text-xs font-black text-pm-red uppercase tracking-widest mb-2">Temporada {temporada}</div>
           <h2 className="text-3xl font-black text-pm-navy mb-3">Cuota de socio</h2>
           <p className="text-gray-500 text-sm max-w-xl mx-auto leading-relaxed">
             Información importante para formar parte del Club Deportivo Origen esta temporada.
@@ -23,12 +29,12 @@ export function CuotaSocio() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
           <div className="rounded-2xl border-2 border-pm-red bg-white p-6 text-center relative">
             <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-pm-red text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">Precio reducido</span>
-            <div className="text-sm text-gray-500 mb-1">Pago hasta el 27 de septiembre de 2026</div>
-            <div className="text-4xl font-black text-pm-navy">{eurosCuota(CUOTA.reducidaCents)}</div>
+            <div className="text-sm text-gray-500 mb-1">Pago hasta el {fechaLarga(cuota.fechaLimiteReducida)}</div>
+            <div className="text-4xl font-black text-pm-navy">{eurosCuota(cuota.reducidaCents)}</div>
           </div>
           <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center">
-            <div className="text-sm text-gray-500 mb-1">Pago a partir del 28 de septiembre de 2026</div>
-            <div className="text-4xl font-black text-pm-navy">{eurosCuota(CUOTA.normalCents)}</div>
+            <div className="text-sm text-gray-500 mb-1">Pago a partir del {fechaLarga(diaSiguiente(cuota.fechaLimiteReducida))}</div>
+            <div className="text-4xl font-black text-pm-navy">{eurosCuota(cuota.normalCents)}</div>
           </div>
         </div>
 
@@ -50,10 +56,10 @@ export function CuotaSocio() {
 }
 
 // ── Aviso discreto de cuota para las páginas de servicio (punto 20) ────────────
-export function AvisoCuotaClub() {
+export function AvisoCuotaClub({ temporada }: { temporada: string }) {
   return (
     <p className="text-xs text-gray-500 leading-relaxed mt-4">
-      Para la temporada {CUOTA.temporada} se aplica la cuota anual de socio del Club Deportivo Origen.{' '}
+      Para la temporada {temporada} se aplica la cuota anual de socio del Club Deportivo Origen.{' '}
       <a href="/club#cuota" className="text-pm-red font-semibold hover:underline whitespace-nowrap">Ver qué incluye la cuota</a>
     </p>
   )

@@ -41,7 +41,7 @@ export async function PreciosServicioClub({ servicioId }: { servicioId: string }
         <span>Inscripción por formulario · la mensualidad se abona al confirmar la plaza (sin pago online).</span>
       </p>
 
-      <AvisoCuotaClub />
+      <AvisoCuotaClub temporada={temporadaDisplay(temporada)} />
     </div>
   )
 }

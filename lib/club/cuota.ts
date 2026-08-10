@@ -51,3 +51,17 @@ export function eurosACents(v: string): number {
   const n = parseFloat(String(v).replace(/[^\d,.-]/g, '').replace(',', '.'))
   return Number.isFinite(n) ? Math.round(n * 100) : 0
 }
+
+/** ISO (yyyy-mm-dd) → "27 de septiembre de 2026". UTC para no depender del huso. */
+export function fechaLarga(iso: string): string {
+  const d = new Date(iso + 'T00:00:00Z')
+  return isNaN(d.getTime()) ? iso : d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
+}
+
+/** ISO → ISO del día siguiente (cálculo en UTC: no se desplaza por el huso). */
+export function diaSiguiente(iso: string): string {
+  const d = new Date(iso + 'T00:00:00Z')
+  if (isNaN(d.getTime())) return iso
+  d.setUTCDate(d.getUTCDate() + 1)
+  return d.toISOString().slice(0, 10)
+}

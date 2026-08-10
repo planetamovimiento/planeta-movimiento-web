@@ -8,9 +8,10 @@ import {
   labelEstadoGeneral, mesActualKey, edadDe, fechaCorta, temporadaDisplay,
   type Alumno, type Grupo, type EstadoPago, type EstadoGeneral,
 } from '@/lib/club/constants'
-import { CUOTA_ESTADOS, TALLAS_EQUIPACION, eurosCuota, eurosACents, importeCuotaSugeridoCents } from '@/lib/club/cuota'
+import { CUOTA_ESTADOS, TALLAS_EQUIPACION, eurosCuota, eurosACents } from '@/lib/club/cuota'
+import type { ClubConfig } from '@/lib/club/config'
 import { guardarGestion, setPagoMes, crearGrupo, renombrarGrupo, eliminarGrupo, fijarHorarioGrupo, fijarWhatsappGrupo } from './actions'
-import { setTemporadaActiva } from './temporada-actions'
+import { setTemporadaActiva, guardarConfigTemporada } from './temporada-actions'
 import ImportarModal from './ImportarModal'
 import { SubirImagen } from '@/components/admin/SubirImagen'
 
@@ -24,9 +25,10 @@ function mensajeWhatsApp(a: Alumno): string {
 }
 
 export default function ClubInscripcionesClient({
-  alumnos: alumnosIniciales, grupos: gruposIniciales, puedeEditar, gestionOk, temporadaActiva,
+  alumnos: alumnosIniciales, grupos: gruposIniciales, puedeEditar, gestionOk, temporadaActiva, clubConfig,
 }: {
   alumnos: Alumno[]; grupos: Grupo[]; puedeEditar: boolean; gestionOk: boolean; temporadaActiva: string
+  clubConfig: ClubConfig
 }) {
   const [lista, setLista] = useState<Alumno[]>(alumnosIniciales)
   const [grupos, setGrupos] = useState<Grupo[]>(gruposIniciales)
@@ -50,6 +52,7 @@ export default function ClubInscripcionesClient({
   const [detalleId, setDetalleId] = useState<string | null>(null)
   const [modalGrupos, setModalGrupos] = useState(false)
   const [modalImportar, setModalImportar] = useState(false)
+  const [modalConfig, setModalConfig] = useState(false)
 
   const detalle = lista.find(a => a.id === detalleId) ?? null
 
@@ -227,6 +230,12 @@ export default function ClubInscripcionesClient({
             </select>
             <span className="text-xs text-gray-400 max-w-sm">Las nuevas inscripciones del Club se registran automáticamente en esta temporada.</span>
           </div>
+        )}
+        {puedeEditar && (
+          <button onClick={() => setModalConfig(true)}
+            className="ml-auto text-sm font-semibold text-pm-navy border border-gray-200 hover:border-pm-navy rounded-xl px-3 py-2 transition-colors">
+            Configurar cuota y septiembre
+          </button>
         )}
       </div>
 
@@ -417,9 +426,24 @@ export default function ClubInscripcionesClient({
           a={detalle}
           puedeEditar={puedeEditar}
           gruposActividad={gruposParaActividad(detalle.actividad)}
+          cuotaCfg={clubConfig.cuota}
           onClose={() => setDetalleId(null)}
           onGestion={p => aplicarGestion(detalle.id, p)}
           onPago={mes => cicloPago(detalle, mes)}
+        />
+      )}
+
+      {/* Configuración de temporada (cuota + septiembre) */}
+      {modalConfig && (
+        <ModalConfigTemporada
+          cfg={clubConfig}
+          onClose={() => setModalConfig(false)}
+          onGuardar={cfg => new Promise(resolve => startTransition(async () => {
+            const r = await guardarConfigTemporada(cfg)
+            if (!r.ok) setError(r.error || 'No se pudo guardar la configuración')
+            else setModalConfig(false)
+            resolve()
+          }))}
         />
       )}
 
@@ -478,10 +502,14 @@ function CirculoMes({ alumno, mesKey, mesLabel, mesNombre, onClick, editable }: 
 }
 
 // ─── Ficha del alumno (panel lateral) ──────────────────────────────────────────
-function FichaAlumno({ a, puedeEditar, gruposActividad, onClose, onGestion, onPago }: {
-  a: Alumno; puedeEditar: boolean; gruposActividad: string[]
+function FichaAlumno({ a, puedeEditar, gruposActividad, cuotaCfg, onClose, onGestion, onPago }: {
+  a: Alumno; puedeEditar: boolean; gruposActividad: string[]; cuotaCfg: ClubConfig['cuota']
   onClose: () => void; onGestion: (p: Partial<Alumno>) => void; onPago: (mes: string) => void
 }) {
+  const sugerirImporteCents = () => {
+    const f = a.cuota_fecha_pago || new Date().toISOString().slice(0, 10)
+    return f <= cuotaCfg.fechaLimiteReducida ? cuotaCfg.reducidaCents : cuotaCfg.normalCents
+  }
   const [obs, setObs] = useState(a.observaciones)
   const [obsFam, setObsFam] = useState(a.observaciones_familia)
   const [horario, setHorario] = useState(a.horario)
@@ -577,7 +605,7 @@ function FichaAlumno({ a, puedeEditar, gruposActividad, onClose, onGestion, onPa
                     inputMode="decimal" className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-pm-red disabled:opacity-60" />
                   {puedeEditar && (
                     <button type="button" title="Sugerir según la fecha de pago"
-                      onClick={() => setImporte(eurosCuota(importeCuotaSugeridoCents(a.cuota_fecha_pago)).replace(' €', ''))}
+                      onClick={() => setImporte(eurosCuota(sugerirImporteCents()).replace(' €', ''))}
                       className="text-xs font-bold text-pm-navy border border-gray-200 rounded-lg px-2 py-2 whitespace-nowrap hover:border-pm-navy">Sugerir</button>
                   )}
                 </div>
@@ -808,6 +836,111 @@ function FilaGrupos({ titulo, items, onRenombrar, onEliminar, onHorario, onWhats
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Modal de configuración de temporada (cuota + periodo de septiembre) ───────
+function ModalConfigTemporada({ cfg, onClose, onGuardar }: {
+  cfg: ClubConfig; onClose: () => void; onGuardar: (cfg: ClubConfig) => Promise<void>
+}) {
+  const [c, setC] = useState<ClubConfig>(() => JSON.parse(JSON.stringify(cfg)) as ClubConfig)
+  const [reducida, setReducida] = useState(eurosCuota(cfg.cuota.reducidaCents).replace(' €', ''))
+  const [normal, setNormal] = useState(eurosCuota(cfg.cuota.normalCents).replace(' €', ''))
+  const [saving, setSaving] = useState(false)
+  const inp = 'w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-pm-red'
+  const lbl = 'block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1'
+
+  const setSep = <K extends keyof ClubConfig['septiembre']>(k: K, v: ClubConfig['septiembre'][K]) =>
+    setC(p => ({ ...p, septiembre: { ...p.septiembre, [k]: v } }))
+  const setSemana = (i: number, k: 'label' | 'fechas', v: string) =>
+    setC(p => ({ ...p, septiembre: { ...p.septiembre, semanas: p.septiembre.semanas.map((s, j) => j === i ? { ...s, [k]: v } : s) } }))
+  const setPrecio = (i: number, k: 'concepto' | 'precio', v: string) =>
+    setC(p => ({ ...p, septiembre: { ...p.septiembre, precios: p.septiembre.precios.map((s, j) => j === i ? { ...s, [k]: v } : s) } }))
+
+  async function guardar() {
+    setSaving(true)
+    await onGuardar({
+      cuota: { fechaLimiteReducida: c.cuota.fechaLimiteReducida, reducidaCents: eurosACents(reducida), normalCents: eurosACents(normal) },
+      septiembre: c.septiembre,
+    })
+    setSaving(false)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-center items-start overflow-y-auto p-4">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl my-8">
+        <div className="bg-pm-navy text-white px-5 py-4 flex items-center justify-between rounded-t-2xl">
+          <div className="font-black">Configuración de temporada</div>
+          <button onClick={onClose} className="text-white/60 hover:text-white">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <div className="p-5 space-y-6">
+          {/* Cuota */}
+          <div>
+            <div className="text-xs font-black text-pm-red uppercase tracking-widest mb-3">Cuota de socio</div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className={lbl}>Fecha límite reducida</label>
+                <input type="date" value={c.cuota.fechaLimiteReducida} className={inp}
+                  onChange={e => setC(p => ({ ...p, cuota: { ...p.cuota, fechaLimiteReducida: e.target.value } }))} />
+              </div>
+              <div>
+                <label className={lbl}>Precio reducido (€)</label>
+                <input value={reducida} inputMode="decimal" className={inp} onChange={e => setReducida(e.target.value)} />
+              </div>
+              <div>
+                <label className={lbl}>Precio normal (€)</label>
+                <input value={normal} inputMode="decimal" className={inp} onChange={e => setNormal(e.target.value)} />
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 mt-1.5">Reducida hasta esa fecha (incluida); normal a partir del día siguiente.</p>
+          </div>
+
+          {/* Septiembre */}
+          <div className="border-t border-gray-100 pt-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-xs font-black text-pm-red uppercase tracking-widest">Periodo de septiembre</div>
+              <label className="flex items-center gap-2 text-sm text-pm-navy">
+                <input type="checkbox" checked={c.septiembre.activo} onChange={e => setSep('activo', e.target.checked)} className="accent-pm-red w-4 h-4" />
+                Mostrar el panel
+              </label>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className={lbl}>Título</label>
+                <input value={c.septiembre.titulo} className={inp} onChange={e => setSep('titulo', e.target.value)} />
+              </div>
+              <div>
+                <label className={lbl}>Texto introductorio</label>
+                <textarea value={c.septiembre.intro} rows={2} className={`${inp} resize-none`} onChange={e => setSep('intro', e.target.value)} />
+              </div>
+              {c.septiembre.semanas.map((s, i) => (
+                <div key={i} className="grid grid-cols-2 gap-2">
+                  <div><label className={lbl}>Semana {i + 1} · etiqueta</label><input value={s.label} className={inp} onChange={e => setSemana(i, 'label', e.target.value)} /></div>
+                  <div><label className={lbl}>Fechas</label><input value={s.fechas} className={inp} onChange={e => setSemana(i, 'fechas', e.target.value)} /></div>
+                </div>
+              ))}
+              {c.septiembre.precios.map((p, i) => (
+                <div key={i} className="grid grid-cols-2 gap-2">
+                  <div><label className={lbl}>Precio {i + 1} · concepto</label><input value={p.concepto} className={inp} onChange={e => setPrecio(i, 'concepto', e.target.value)} /></div>
+                  <div><label className={lbl}>Importe (texto)</label><input value={p.precio} className={inp} onChange={e => setPrecio(i, 'precio', e.target.value)} /></div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-2 pt-1 border-t border-gray-100">
+            <button onClick={guardar} disabled={saving} className="bg-pm-red hover:bg-pm-red-dark disabled:opacity-50 text-white font-bold px-5 py-2 rounded-xl text-sm">
+              {saving ? 'Guardando…' : 'Guardar configuración'}
+            </button>
+            <button onClick={onClose} className="text-sm font-bold text-gray-400 hover:text-pm-navy px-3 py-2 ml-auto">Cancelar</button>
+          </div>
+        </div>
       </div>
     </div>
   )
