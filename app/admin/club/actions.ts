@@ -18,6 +18,12 @@ type GestionPatch = {
   whatsapp_url?: string | null
   fecha_alta?: string | null
   fecha_baja?: string | null
+  // Cuota de socio (requiere migration_club_cuota.sql).
+  cuota_estado?: string | null
+  cuota_importe_cents?: number | null
+  cuota_fecha_pago?: string | null
+  talla?: string | null
+  numero_socio?: string | null
 }
 
 /** Crea/actualiza la capa de gestión de una inscripción del club. */
@@ -26,6 +32,11 @@ export async function guardarGestion(submissionId: string, patch: GestionPatch) 
   if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
 
   const db = createAdminClient()
+
+  // Columnas date/opcionales: '' no es válido para una columna date → null.
+  if (patch.cuota_fecha_pago === '') patch.cuota_fecha_pago = null
+  if (patch.talla === '') patch.talla = null
+  if (patch.numero_socio === '') patch.numero_socio = null
 
   // Automatismos de fechas según el estado general
   const extra: GestionPatch = {}

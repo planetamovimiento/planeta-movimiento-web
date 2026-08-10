@@ -1,6 +1,7 @@
 import { getServicio } from '@/lib/servicios/store'
 import { getTemporadaActiva } from '@/lib/config/store'
 import { temporadaDisplay } from '@/lib/club/constants'
+import { AvisoCuotaClub } from '@/components/club/CuotaSocio'
 
 /**
  * Bloque de PRECIOS informativos de un servicio del Club Deportivo Origen.
@@ -39,6 +40,8 @@ export async function PreciosServicioClub({ servicioId }: { servicioId: string }
         <svg className="w-3.5 h-3.5 text-green-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>
         <span>Inscripción por formulario · la mensualidad se abona al confirmar la plaza (sin pago online).</span>
       </p>
+
+      <AvisoCuotaClub />
     </div>
   )
 }

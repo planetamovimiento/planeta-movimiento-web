@@ -8,6 +8,7 @@ import {
   labelEstadoGeneral, mesActualKey, edadDe, fechaCorta, temporadaDisplay,
   type Alumno, type Grupo, type EstadoPago, type EstadoGeneral,
 } from '@/lib/club/constants'
+import { CUOTA_ESTADOS, TALLAS_EQUIPACION, eurosCuota, eurosACents, importeCuotaSugeridoCents } from '@/lib/club/cuota'
 import { guardarGestion, setPagoMes, crearGrupo, renombrarGrupo, eliminarGrupo, fijarHorarioGrupo, fijarWhatsappGrupo } from './actions'
 import { setTemporadaActiva } from './temporada-actions'
 import ImportarModal from './ImportarModal'
@@ -485,6 +486,8 @@ function FichaAlumno({ a, puedeEditar, gruposActividad, onClose, onGestion, onPa
   const [obsFam, setObsFam] = useState(a.observaciones_familia)
   const [horario, setHorario] = useState(a.horario)
   const [whatsapp, setWhatsapp] = useState(a.whatsapp_url)
+  const [importe, setImporte] = useState(a.cuota_importe_cents ? eurosCuota(a.cuota_importe_cents).replace(' €', '') : '')
+  const [numSocio, setNumSocio] = useState(a.numero_socio)
   const edad = edadDe(a.fechaNacimiento)
 
   return (
@@ -549,6 +552,66 @@ function FichaAlumno({ a, puedeEditar, gruposActividad, onClose, onGestion, onPa
                 {!TEMPORADAS.includes(a.temporada) && <option value={a.temporada}>{temporadaDisplay(a.temporada)}</option>}
               </select>
             </div>
+          </div>
+
+          {/* Cuota de socio */}
+          <div className="border-t border-gray-100 pt-4">
+            <div className="text-xs font-black text-pm-navy uppercase tracking-wider mb-3">Cuota de socio</div>
+
+            {/* Estado */}
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {CUOTA_ESTADOS.map(e => (
+                <button key={e.id} disabled={!puedeEditar} onClick={() => onGestion({ cuota_estado: e.id })}
+                  className={`text-xs font-bold px-3 py-1.5 rounded-full border transition-colors ${a.cuota_estado === e.id ? `${e.badge} border-transparent ring-2 ring-offset-1 ring-pm-navy/20` : 'border-gray-200 text-gray-500 hover:border-pm-navy'}`}>
+                  {e.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Importe */}
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Importe (€)</label>
+                <div className="flex items-center gap-1.5">
+                  <input value={importe} disabled={!puedeEditar} onChange={e => setImporte(e.target.value)} placeholder="0"
+                    inputMode="decimal" className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-pm-red disabled:opacity-60" />
+                  {puedeEditar && (
+                    <button type="button" title="Sugerir según la fecha de pago"
+                      onClick={() => setImporte(eurosCuota(importeCuotaSugeridoCents(a.cuota_fecha_pago)).replace(' €', ''))}
+                      className="text-xs font-bold text-pm-navy border border-gray-200 rounded-lg px-2 py-2 whitespace-nowrap hover:border-pm-navy">Sugerir</button>
+                  )}
+                </div>
+                {puedeEditar && eurosACents(importe) !== a.cuota_importe_cents && (
+                  <button onClick={() => onGestion({ cuota_importe_cents: eurosACents(importe) })} className="mt-1.5 bg-pm-navy text-white text-xs font-bold px-3 py-1.5 rounded-lg">Guardar importe</button>
+                )}
+              </div>
+              {/* Fecha de pago */}
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Fecha de pago</label>
+                <input type="date" value={a.cuota_fecha_pago} disabled={!puedeEditar} onChange={e => onGestion({ cuota_fecha_pago: e.target.value })}
+                  className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:border-pm-red disabled:opacity-60" />
+              </div>
+              {/* Talla de equipación */}
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Talla de equipación</label>
+                <select value={a.talla} disabled={!puedeEditar} onChange={e => onGestion({ talla: e.target.value })}
+                  className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:border-pm-red disabled:opacity-60">
+                  <option value="">— Sin definir —</option>
+                  {TALLAS_EQUIPACION.map(t => <option key={t} value={t}>{t}</option>)}
+                  {a.talla && !TALLAS_EQUIPACION.includes(a.talla as never) && <option value={a.talla}>{a.talla}</option>}
+                </select>
+              </div>
+              {/* Número de socio */}
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Número de socio</label>
+                <input value={numSocio} disabled={!puedeEditar} onChange={e => setNumSocio(e.target.value)} placeholder="Ej. 001"
+                  className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-pm-red disabled:opacity-60" />
+                {puedeEditar && numSocio !== a.numero_socio && (
+                  <button onClick={() => onGestion({ numero_socio: numSocio })} className="mt-1.5 bg-pm-navy text-white text-xs font-bold px-3 py-1.5 rounded-lg">Guardar nº</button>
+                )}
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 mt-2">Cuota reducida 40 € hasta el 27/09/2026; 60 € desde el 28/09. El pago se registra a mano (sin cobro online).</p>
           </div>
 
           {/* Portal de Familias — datos visibles para la familia */}

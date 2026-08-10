@@ -48,6 +48,7 @@ function construir(s: Row, g: Row | undefined, grupos: Row[]): AlumnoFamilia {
     observaciones_familia: str(g?.observaciones_familia),
     foto_url: str(g?.foto_url),
     whatsapp_url: str(g?.whatsapp_url) || valorDeGrupo(grupos, grupo, actividad, 'whatsapp_url'),
+    numero_socio: str(g?.numero_socio),
   }
 }
 

@@ -39,4 +39,5 @@ export type AlumnoFamilia = {
   observaciones_familia: string
   foto_url: string
   whatsapp_url: string
+  numero_socio: string
 }

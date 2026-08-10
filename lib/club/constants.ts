@@ -103,6 +103,12 @@ export type Alumno = {
   temporada: string
   /** "Septiembre 2026" / "Octubre 2026" (lo elige la familia en la inscripción). '' si no aplica. */
   periodoInicio: string
+  // Cuota de socio (temporada 2026/27+). Snake_case = columnas de club_gestion.
+  cuota_estado: string
+  cuota_importe_cents: number
+  cuota_fecha_pago: string
+  talla: string
+  numero_socio: string
   pagos: Record<string, EstadoPago>
   observaciones: string
   // campos visibles para la familia (Portal de Familias)

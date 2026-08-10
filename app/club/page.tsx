@@ -5,6 +5,7 @@ import { JsonLd } from '@/components/seo/JsonLd'
 import { breadcrumbsJsonLd } from '@/lib/seo'
 import { getTemporadaActiva } from '@/lib/config/store'
 import { temporadaDisplay } from '@/lib/club/constants'
+import { CuotaSocio } from '@/components/club/CuotaSocio'
 
 export const metadata = {
   title: 'Club Deportivo Origen — Acrobacia, Circo y Deporte en Cuenca | Planeta Movimiento',
@@ -222,6 +223,9 @@ export default async function ClubPage() {
           </div>
         </div>
       </section>
+
+      {/* ── CUOTA DE SOCIO ── */}
+      <CuotaSocio />
 
       {/* ── CTA INSCRIPCIÓN ── */}
       <section className="bg-pm-red py-16 text-white text-center" id="inscripcion">

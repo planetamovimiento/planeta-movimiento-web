@@ -45,6 +45,7 @@ export default function PanelesHijos({ alumnos }: { alumnos: AlumnoFamilia[] }) 
                   <Dato label="Grupo" valor={a.grupo || '—'} />
                   <Dato label="Horario" valor={a.horario || '—'} />
                   <Dato label="Temporada" valor={a.temporada || '—'} />
+                  {a.numero_socio && <Dato label="Nº de socio" valor={a.numero_socio} />}
                 </div>
 
                 {a.whatsapp_url && (

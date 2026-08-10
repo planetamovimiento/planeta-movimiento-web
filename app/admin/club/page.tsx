@@ -13,6 +13,8 @@ type GestionRow = {
   submission_id: string; grupo: string | null; estado_general: string | null; temporada: string | null
   pagos: Record<string, string> | null; observaciones: string | null; fecha_alta: string | null; fecha_baja: string | null
   observaciones_familia: string | null; foto_url: string | null; horario: string | null; whatsapp_url: string | null
+  cuota_estado: string | null; cuota_importe_cents: number | null; cuota_fecha_pago: string | null
+  talla: string | null; numero_socio: string | null
 }
 
 async function safe<T>(fn: () => Promise<{ data: T[] | null; error: unknown }>): Promise<{ rows: T[]; ok: boolean }> {
@@ -66,6 +68,11 @@ export default async function ClubPage() {
       estado_general: (g?.estado_general as EstadoGeneral) ?? 'pendiente',
       temporada: g?.temporada ?? temporadaActiva,
       periodoInicio: str(d.periodoInicio),
+      cuota_estado: str(g?.cuota_estado),
+      cuota_importe_cents: Number(g?.cuota_importe_cents ?? 0) || 0,
+      cuota_fecha_pago: g?.cuota_fecha_pago ? str(g.cuota_fecha_pago).slice(0, 10) : '',
+      talla: str(g?.talla),
+      numero_socio: str(g?.numero_socio),
       pagos: (g?.pagos as Record<string, EstadoPago>) ?? {},
       observaciones: g?.observaciones ?? '',
       observaciones_familia: g?.observaciones_familia ?? '',
