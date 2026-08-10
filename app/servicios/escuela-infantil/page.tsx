@@ -4,6 +4,7 @@ import { fotoPrincipal, fotosDe } from '@/lib/fotos'
 import { waNegocio } from '@/lib/whatsapp'
 import { BotonApuntarme } from './InscripcionModal'
 import { PreciosServicioClub } from '@/components/club/PreciosServicioClub'
+import { PanelSeptiembre } from '@/components/club/PanelSeptiembre'
 import TabsDescripcion from './TabsDescripcion'
 
 export const metadata = {
@@ -133,6 +134,11 @@ export default function EscuelaInfantilPage() {
             {/* Precios informativos (Temporada activa) */}
             <div className="mt-6">
               <PreciosServicioClub servicioId="escuela-infantil" />
+            </div>
+
+            {/* Periodo especial de septiembre */}
+            <div className="mt-6">
+              <PanelSeptiembre />
             </div>
 
             {/* Grupos disponibles */}

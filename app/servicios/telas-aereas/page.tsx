@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { waNegocio } from '@/lib/whatsapp'
 import { BotonApuntarme } from './InscripcionModal'
 import { PreciosServicioClub } from '@/components/club/PreciosServicioClub'
+import { PanelSeptiembre } from '@/components/club/PanelSeptiembre'
 import TabsDescripcion from './TabsDescripcion'
 import { Galeria } from '@/components/ui/Galeria'
 import { fotoPrincipal, fotosDe } from '@/lib/fotos'
@@ -121,6 +122,11 @@ export default function TelasAereasPage() {
             {/* Precios informativos (Temporada activa) */}
             <div className="mt-6">
               <PreciosServicioClub servicioId="telas-aereas" />
+            </div>
+
+            {/* Periodo especial de septiembre */}
+            <div className="mt-6">
+              <PanelSeptiembre />
             </div>
 
             {/* Modalidades rápidas */}
