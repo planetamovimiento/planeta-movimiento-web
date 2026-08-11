@@ -41,4 +41,7 @@ export type AlumnoFamilia = {
   foto_url: string
   whatsapp_url: string
   numero_socio: string
+  talla: string
+  cuota_estado: string
+  cuota_fecha_pago: string
 }
