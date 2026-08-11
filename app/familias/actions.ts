@@ -9,6 +9,15 @@ import { crearSesionFamilia } from '@/lib/familias/sesion'
 import { normalizarNumeroSocio } from '@/lib/familias/socio'
 import { getClientIp } from '@/lib/seguridad/ip'
 import { enviarEmail } from '@/lib/emails/enviar'
+import { TALLAS_EQUIPACION } from '@/lib/club/cuota'
+
+/** MIME REAL por los bytes mágicos (evita ejecutables disfrazados de imagen). */
+function mimeReal(buf: Buffer): string | null {
+  if (buf.length > 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'image/jpeg'
+  if (buf.length > 8 && buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) return 'image/png'
+  if (buf.length > 12 && buf.toString('ascii', 0, 4) === 'RIFF' && buf.toString('ascii', 8, 12) === 'WEBP') return 'image/webp'
+  return null
+}
 
 const ERR_LOGIN = 'No se han podido validar los datos de acceso.'
 const VENTANA_MS = 10 * 60 * 1000
@@ -104,16 +113,18 @@ export async function guardarFotoHijo(submissionId: string, formData: FormData) 
 
   const file = formData.get('file') as File | null
   if (!file || file.size === 0) return { ok: false, error: 'No se ha seleccionado ninguna imagen' }
-  if (file.size > 10 * 1024 * 1024) return { ok: false, error: 'La imagen supera los 10 MB' }
-  if (!['image/jpeg', 'image/png', 'image/webp', 'image/avif'].includes(file.type)) {
-    return { ok: false, error: 'Formato no válido (usa JPG, PNG o WebP)' }
-  }
+  if (file.size > 8 * 1024 * 1024) return { ok: false, error: 'La imagen supera los 8 MB' }
+
+  const buffer = Buffer.from(await file.arrayBuffer())
+  // Se comprueba el tipo REAL por los bytes mágicos, no solo la extensión/MIME
+  // declarado: un archivo ejecutable renombrado a .jpg se rechaza aquí.
+  const real = mimeReal(buffer)
+  if (!real) return { ok: false, error: 'La imagen no es válida. Usa una foto JPG, PNG o WebP.' }
 
   const db = createAdminClient()
-  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+  const ext = real === 'image/png' ? 'png' : real === 'image/webp' ? 'webp' : 'jpg'
   const path = `club-alumnos/${submissionId}-${Date.now()}.${ext}`
-  const buffer = Buffer.from(await file.arrayBuffer())
-  const up = await db.storage.from('fotos').upload(path, buffer, { contentType: file.type, upsert: true })
+  const up = await db.storage.from('fotos').upload(path, buffer, { contentType: real, upsert: true })
   if (up.error) return { ok: false, error: up.error.message }
 
   const { data } = db.storage.from('fotos').getPublicUrl(path)
@@ -137,6 +148,28 @@ export async function quitarFotoHijo(submissionId: string) {
   const db = createAdminClient()
   const { error } = await db.from('club_gestion').upsert(
     { submission_id: submissionId, foto_url: null, updated_at: new Date().toISOString(), updated_by: email },
+    { onConflict: 'submission_id' }
+  )
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath('/familias')
+  return { ok: true }
+}
+
+/**
+ * La familia edita la talla de equipación de su hijo (uno de los pocos datos que
+ * puede cambiar). Se valida contra el selector estándar y se sincroniza con el
+ * CRM (club_gestion.talla). updated_by = correo de la familia (quién lo cambió).
+ */
+export async function guardarTallaHijo(submissionId: string, talla: string) {
+  const email = await autorizar(submissionId)
+  if (!email) return { ok: false, error: 'Sin permisos' }
+  const t = (talla || '').trim()
+  if (t && !(TALLAS_EQUIPACION as readonly string[]).includes(t)) return { ok: false, error: 'Talla no válida' }
+
+  const db = createAdminClient()
+  const { error } = await db.from('club_gestion').upsert(
+    { submission_id: submissionId, talla: t || null, updated_at: new Date().toISOString(), updated_by: email },
     { onConflict: 'submission_id' }
   )
   if (error) return { ok: false, error: error.message }
