@@ -129,6 +129,8 @@ function CardFamilia({ familia, vinculados, disponibles, abierta, onToggle, pend
         ) : (
           <span className={`text-xs font-semibold border rounded-full px-2.5 py-1 ${estadoMeta?.color ?? ''}`}>{estadoMeta?.label ?? familia.estado}</span>
         )}
+        <a href={`/admin/familias/${familia.id}/vista`} target="_blank" rel="noopener noreferrer"
+          className="text-xs font-bold text-pm-red border border-pm-red/30 rounded-lg px-3 py-1.5 hover:bg-pm-red/5 whitespace-nowrap">Ver como familia</a>
         <button onClick={onToggle} className="text-xs font-bold text-pm-navy border border-gray-200 rounded-lg px-3 py-1.5 hover:border-pm-red">{abierta ? 'Cerrar' : 'Gestionar'}</button>
       </div>
 

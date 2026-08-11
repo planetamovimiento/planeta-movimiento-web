@@ -4,6 +4,7 @@ import { getTemporadaActiva } from '@/lib/config/store'
 import { temporadaDisplay } from '@/lib/club/constants'
 import { getAvisosActivos } from '@/lib/familias/avisos'
 import { AvisosClub } from '@/components/familias/AvisosClub'
+import { CabeceraFamilia } from '@/components/familias/CabeceraFamilia'
 import PanelesHijos from './PanelesHijos'
 
 export const dynamic = 'force-dynamic'
@@ -17,20 +18,7 @@ export default async function FamiliasDashboard() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 sm:py-8">
-      {/* Cabecera de bienvenida */}
-      <div className="rounded-3xl bg-gradient-to-br from-pm-navy to-pm-navy-md text-white p-6 sm:p-7 mb-6">
-        <div className="text-xs font-black uppercase tracking-widest text-white/50 mb-1">Portal de Familias</div>
-        <h1 className="text-2xl sm:text-3xl font-black leading-tight">Hola{saludo ? `, ${saludo}` : ''}</h1>
-        <div className="flex flex-wrap gap-2 mt-4">
-          {familia.numero_socio && (
-            <span className="bg-white/10 border border-white/15 rounded-full px-3 py-1 text-xs font-bold">Socio {familia.numero_socio}</span>
-          )}
-          <span className="bg-white/10 border border-white/15 rounded-full px-3 py-1 text-xs font-bold">Temporada {temporadaDisplay(tempRaw)}</span>
-          <span className="bg-white/10 border border-white/15 rounded-full px-3 py-1 text-xs font-bold">
-            {alumnos.length} {alumnos.length === 1 ? 'participante' : 'participantes'}
-          </span>
-        </div>
-      </div>
+      <CabeceraFamilia saludo={saludo} numeroSocio={familia.numero_socio} temporada={temporadaDisplay(tempRaw)} nParticipantes={alumnos.length} />
 
       <AvisosClub avisos={avisos} />
 
