@@ -945,6 +945,7 @@ function ModalConfigTemporada({ cfg, onClose, onGuardar }: {
         beneficios: beneficiosTxt.split('\n').map(s => s.trim()).filter(Boolean),
       },
       septiembre: c.septiembre,
+      socioPrefijo: c.socioPrefijo,
     })
     setSaving(false)
   }

@@ -30,6 +30,8 @@ export type ClubConfig = {
     semanas: { label: string; fechas: string }[]
     precios: { concepto: string; precio: string }[]
   }
+  /** Prefijo del número de socio autogenerado (ej. "CDO-" → CDO-00231). */
+  socioPrefijo: string
 }
 
 export const CLUB_CONFIG_DEFAULT: ClubConfig = {
@@ -55,6 +57,7 @@ export const CLUB_CONFIG_DEFAULT: ClubConfig = {
     semanas: SEPTIEMBRE.semanas.map(s => ({ ...s })),
     precios: SEPTIEMBRE.precios.map(p => ({ ...p })),
   },
+  socioPrefijo: 'CDO-',
 }
 
 /** Config de temporada (guardada o, si falta/no válida, la de por defecto). */
@@ -75,6 +78,7 @@ export async function getClubConfig(): Promise<ClubConfig> {
         semanas: p.septiembre?.semanas?.length ? p.septiembre.semanas : CLUB_CONFIG_DEFAULT.septiembre.semanas,
         precios: p.septiembre?.precios?.length ? p.septiembre.precios : CLUB_CONFIG_DEFAULT.septiembre.precios,
       },
+      socioPrefijo: p.socioPrefijo || CLUB_CONFIG_DEFAULT.socioPrefijo,
     }
   } catch {
     return CLUB_CONFIG_DEFAULT

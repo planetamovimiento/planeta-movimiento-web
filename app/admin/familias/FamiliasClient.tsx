@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { generarFamiliasDesdeCRM, guardarFamilia, cambiarEstadoFamilia, vincularAlumno, desvincularAlumno, eliminarFamilia } from './actions'
+import { generarFamiliasDesdeCRM, guardarFamilia, cambiarEstadoFamilia, vincularAlumno, desvincularAlumno, eliminarFamilia, generarNumeroSocioFamilia, guardarNumeroSocio } from './actions'
 import { ESTADOS_FAMILIA, type Familia, type EstadoFamilia } from '@/lib/familias/tipos'
 
 export type AlumnoLite = { id: string; nombre: string; actividad: string; email: string }
@@ -102,6 +102,7 @@ function CardFamilia({ familia, vinculados, disponibles, abierta, onToggle, pend
   const [nombre, setNombre] = useState(familia.nombre ?? '')
   const [telefono, setTelefono] = useState(familia.telefono ?? '')
   const [email, setEmail] = useState(familia.email)
+  const [numSocio, setNumSocio] = useState(familia.numero_socio ?? '')
   const [addId, setAddId] = useState('')
   const estadoMeta = ESTADOS_FAMILIA.find(e => e.valor === familia.estado)
   const cambiado = nombre !== (familia.nombre ?? '') || telefono !== (familia.telefono ?? '') || email !== familia.email
@@ -117,6 +118,9 @@ function CardFamilia({ familia, vinculados, disponibles, abierta, onToggle, pend
         </div>
         <span className="text-xs text-gray-400 hidden lg:block">Últ. acceso: {fechaHora(familia.ultimo_acceso)}</span>
         <span className="text-xs font-semibold bg-pm-bg border border-gray-200 rounded-full px-2 py-0.5 whitespace-nowrap">{vinculados.length} alumno(s)</span>
+        {familia.numero_socio
+          ? <span className="text-xs font-bold bg-pm-navy/5 text-pm-navy border border-pm-navy/15 rounded-full px-2 py-0.5 whitespace-nowrap">{familia.numero_socio}</span>
+          : <span className="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5 whitespace-nowrap">Sin nº socio</span>}
         {puedeEditar ? (
           <select value={familia.estado} disabled={pending} onChange={e => correr(() => cambiarEstadoFamilia(familia.id, e.target.value as EstadoFamilia))}
             className={`text-xs font-semibold border rounded-lg px-2 py-1.5 ${estadoMeta?.color ?? ''}`}>
@@ -141,6 +145,21 @@ function CardFamilia({ familia, vinculados, disponibles, abierta, onToggle, pend
               <button onClick={() => correr(() => guardarFamilia({ id: familia.id, nombre, telefono, email }))} disabled={pending}
                 className="mt-2 bg-pm-navy text-white text-xs font-bold px-4 py-2 rounded-lg">Guardar datos</button>
             )}
+          </div>
+
+          {/* Número de socio · credencial de acceso al Portal de Familias */}
+          <div className="border-t border-gray-100 pt-4">
+            <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-2">Número de socio · acceso al portal</div>
+            <div className="flex flex-wrap items-center gap-2">
+              <input className={`${input} max-w-[180px]`} placeholder="CDO-00231" value={numSocio} disabled={!puedeEditar} onChange={e => setNumSocio(e.target.value)} />
+              {puedeEditar && numSocio.trim().toUpperCase() !== (familia.numero_socio ?? '') && (
+                <button onClick={() => correr(() => guardarNumeroSocio(familia.id, numSocio))} disabled={pending} className="bg-pm-navy text-white text-xs font-bold px-3 py-2 rounded-lg">Guardar nº</button>
+              )}
+              {puedeEditar && !familia.numero_socio && (
+                <button onClick={() => correr(() => generarNumeroSocioFamilia(familia.id))} disabled={pending} className="bg-pm-red text-white text-xs font-bold px-3 py-2 rounded-lg">Activar socio (generar nº)</button>
+              )}
+            </div>
+            <p className="text-xs text-gray-400 mt-1.5">La familia entra al portal con su correo + este número. Genera uno automático (CDO-…) o escríbelo a mano.</p>
           </div>
 
           <div>

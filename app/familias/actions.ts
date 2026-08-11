@@ -1,9 +1,89 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { headers } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getFamiliaUser } from '@/lib/familias/auth'
 import { idsDeFamilia } from '@/lib/familias/data'
+import { crearSesionFamilia } from '@/lib/familias/sesion'
+import { normalizarNumeroSocio } from '@/lib/familias/socio'
+import { getClientIp } from '@/lib/seguridad/ip'
+import { enviarEmail } from '@/lib/emails/enviar'
+
+const ERR_LOGIN = 'No se han podido validar los datos de acceso.'
+const VENTANA_MS = 10 * 60 * 1000
+const MAX_INTENTOS = 10
+const MIN_TIEMPO_MS = 1500
+
+/**
+ * Acceso al Portal de Familias con correo + número de socio. Validación en el
+ * servidor: rate-limit por IP, registro de intentos, mensaje genérico (no
+ * revela si un correo existe). Solo entra una familia con estado activo y su
+ * número de socio correcto.
+ */
+export async function loginFamilia(input: {
+  email?: string; numeroSocio?: string; seguridad?: { hp?: string; renderedAt?: number }
+}): Promise<{ ok: boolean; error?: string }> {
+  // Antibots básicos.
+  if (input.seguridad?.hp && input.seguridad.hp.trim() !== '') return { ok: false, error: ERR_LOGIN }
+  if (typeof input.seguridad?.renderedAt === 'number' && input.seguridad.renderedAt > 0 && Date.now() - input.seguridad.renderedAt < MIN_TIEMPO_MS) {
+    return { ok: false, error: ERR_LOGIN }
+  }
+
+  const ip = await getClientIp()
+  const db = createAdminClient()
+
+  // Rate-limit por IP.
+  try {
+    const desde = new Date(Date.now() - VENTANA_MS).toISOString()
+    const { count } = await db.from('club_login_intentos').select('id', { count: 'exact', head: true }).eq('ip', ip).gte('created_at', desde)
+    if ((count ?? 0) >= MAX_INTENTOS) return { ok: false, error: 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.' }
+  } catch { /* si falta la tabla, no bloqueamos por ello */ }
+
+  const email = (input.email || '').trim().toLowerCase()
+  const numero = normalizarNumeroSocio(input.numeroSocio || '')
+  const registrar = (ok: boolean) => { try { return db.from('club_login_intentos').insert({ ip, email: email || null, ok }) } catch { return Promise.resolve() } }
+
+  if (!email || !numero) { await registrar(false); return { ok: false, error: ERR_LOGIN } }
+
+  const { data } = await db.from('club_familias').select('id, estado, numero_socio').eq('email', email).maybeSingle()
+  const fam = data as { id: string; estado: string; numero_socio: string | null } | null
+  const numeroOk = !!fam?.numero_socio && normalizarNumeroSocio(fam.numero_socio) === numero
+
+  if (!fam || !numeroOk || fam.estado !== 'activo') {
+    await registrar(false)
+    return { ok: false, error: ERR_LOGIN }
+  }
+
+  await registrar(true)
+  const ua = (await headers()).get('user-agent') || ''
+  await crearSesionFamilia(fam.id, ua)
+  return { ok: true }
+}
+
+/**
+ * "¿No recuerdas tu número de socio?" — si el correo es un socio activo, le
+ * envía su número por email. Respuesta SIEMPRE igual (no revela si existe).
+ */
+export async function recuperarNumeroSocio(email?: string): Promise<{ ok: boolean }> {
+  const e = (email || '').trim().toLowerCase()
+  if (e) {
+    try {
+      const db = createAdminClient()
+      const { data } = await db.from('club_familias').select('numero_socio, estado, nombre').eq('email', e).maybeSingle()
+      const fam = data as { numero_socio: string | null; estado: string; nombre: string | null } | null
+      if (fam?.numero_socio && fam.estado === 'activo') {
+        await enviarEmail({
+          to: e,
+          subject: 'Tu acceso al Portal de Familias · Club Deportivo Origen',
+          html: `<div style="font-family:sans-serif"><p>Hola${fam.nombre ? ' ' + fam.nombre : ''},</p><p>Tu número de socio para acceder al Portal de Familias es:</p><p style="font-size:20px;font-weight:bold;color:#0F1A3D">${fam.numero_socio}</p><p>Accede en <a href="https://planetamovimiento.com/familias/login">planetamovimiento.com/familias</a> con tu correo y este número.</p></div>`,
+          tipo: 'portal-familias',
+        })
+      }
+    } catch { /* nunca revelamos el resultado */ }
+  }
+  return { ok: true }
+}
 
 /** Comprueba que el alumno pertenece a la familia autenticada. Devuelve el email o null. */
 async function autorizar(submissionId: string): Promise<string | null> {

@@ -27,7 +27,8 @@ export default async function FamiliasPage() {
 
   const familias: Familia[] = famsRes.rows.map(f => ({
     id: str(f.id), email: str(f.email), nombre: (f.nombre as string) ?? null, telefono: (f.telefono as string) ?? null,
-    estado: (str(f.estado) || 'activo') as Familia['estado'], created_at: str(f.created_at), ultimo_acceso: (f.ultimo_acceso as string) ?? null,
+    estado: (str(f.estado) || 'activo') as Familia['estado'], numero_socio: (f.numero_socio as string) ?? null,
+    created_at: str(f.created_at), ultimo_acceso: (f.ultimo_acceso as string) ?? null,
   }))
 
   const links = linksRes.rows.map(l => ({ familia_id: str(l.familia_id), submission_id: str(l.submission_id) }))

@@ -10,6 +10,7 @@ export type Familia = {
   nombre: string | null
   telefono: string | null
   estado: EstadoFamilia
+  numero_socio?: string | null
   created_at?: string
   ultimo_acceso?: string | null
 }
