@@ -107,8 +107,14 @@ export type Alumno = {
   cuota_estado: string
   cuota_importe_cents: number
   cuota_fecha_pago: string
+  cuota_forma_pago: string
   talla: string
   numero_socio: string
+  /** Alta realizada desde el formulario "Hazte socio". */
+  esSocio: boolean
+  /** Datos del tutor capturados en el alta de socio (solo lectura). */
+  dniTutor: string
+  direccionTutor: string
   /** true si la inscripción llegó pero no tiene fila en club_gestion (sin sincronizar). */
   pendienteSync: boolean
   pagos: Record<string, EstadoPago>

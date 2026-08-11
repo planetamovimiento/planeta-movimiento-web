@@ -46,6 +46,7 @@ export default function ClubInscripcionesClient({
   const [fTemporada, setFTemporada] = useState(temporadaActiva)
   const [fEstado, setFEstado] = useState('')
   const [fInicio, setFInicio] = useState('')
+  const [fSocio, setFSocio] = useState(false)
   const [fMes, setFMes] = useState('')
   const [fPago, setFPago] = useState('')
 
@@ -83,6 +84,7 @@ export default function ClubInscripcionesClient({
     if (fTemporada && a.temporada !== fTemporada) return false
     if (fEstado && a.estado_general !== fEstado) return false
     if (fInicio && a.periodoInicio !== fInicio) return false
+    if (fSocio && !a.esSocio) return false
     if (fPago) {
       if (fMes) {
         const e: EstadoPago | '' = (a.pagos[fMes] as EstadoPago | undefined) ?? ''
@@ -94,7 +96,7 @@ export default function ClubInscripcionesClient({
       }
     }
     return true
-  }, [q, fActividad, fGrupo, fTemporada, fEstado, fInicio, fMes, fPago])
+  }, [q, fActividad, fGrupo, fTemporada, fEstado, fInicio, fSocio, fMes, fPago])
 
   const filtradas = useMemo(() => lista.filter(coincide), [lista, coincide])
 
@@ -136,9 +138,10 @@ export default function ClubInscripcionesClient({
     const octubre = delAnio.filter(a => a.periodoInicio.startsWith('Octubre')).length
     const cuotasPagadas = delAnio.filter(a => a.cuota_estado === 'pagada').length
     const cuotasPendientes = delAnio.filter(a => a.cuota_estado === 'pendiente').length
+    const socios = delAnio.filter(a => a.esSocio).length
     return {
       inscritos, activos, bajas, pendientes, espera, pendientesPago,
-      totalTemporada: delAnio.length, septiembre, octubre, cuotasPagadas, cuotasPendientes,
+      totalTemporada: delAnio.length, septiembre, octubre, cuotasPagadas, cuotasPendientes, socios,
     }
   }, [lista, tempActiva])
 
@@ -157,8 +160,8 @@ export default function ClubInscripcionesClient({
     })
   }
 
-  const hayFiltros = !!(q || fActividad || fGrupo || fTemporada || fEstado || fInicio || fMes || fPago)
-  function limpiar() { setQ(''); setFActividad(''); setFGrupo(''); setFTemporada(''); setFEstado(''); setFInicio(''); setFMes(''); setFPago('') }
+  const hayFiltros = !!(q || fActividad || fGrupo || fTemporada || fEstado || fInicio || fSocio || fMes || fPago)
+  function limpiar() { setQ(''); setFActividad(''); setFGrupo(''); setFTemporada(''); setFEstado(''); setFInicio(''); setFSocio(false); setFMes(''); setFPago('') }
 
   // ── Mutaciones (optimistas) ──────────────────────────────────────────────
   const patchLocal = useCallback((id: string, patch: Partial<Alumno>) => {
@@ -293,8 +296,9 @@ export default function ClubInscripcionesClient({
       {/* Contadores de la temporada activa (punto 27) */}
       <div>
         <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-2">Temporada {temporadaDisplay(tempActiva)}</div>
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
           <Metric label="Total temporada" valor={metricas.totalTemporada} tono="navy" />
+          <Metric label="Socios" valor={metricas.socios} tono="navy" />
           <Metric label="Empiezan en septiembre" valor={metricas.septiembre} tono="purple" />
           <Metric label="Empiezan en octubre" valor={metricas.octubre} tono="navy" />
           <Metric label="Cuotas pagadas" valor={metricas.cuotasPagadas} tono="green" />
@@ -351,6 +355,10 @@ export default function ClubInscripcionesClient({
             <option value="baja">Baja</option>
             <option value="sin">Sin definir</option>
           </select>
+          <label className="flex items-center gap-1.5 text-sm text-pm-navy cursor-pointer">
+            <input type="checkbox" checked={fSocio} onChange={e => setFSocio(e.target.checked)} className="accent-pm-red w-4 h-4" />
+            Solo socios
+          </label>
           {hayFiltros && <button onClick={limpiar} className="text-xs font-semibold text-pm-red hover:underline px-2 py-1">Limpiar filtros</button>}
 
           <div className="ml-auto flex items-center gap-2">
@@ -578,7 +586,7 @@ function FichaAlumno({ a, puedeEditar, gruposActividad, cuotaCfg, onClose, onGes
         <div className="bg-pm-navy text-white px-5 py-4 flex items-center justify-between sticky top-0 z-10">
           <div>
             <div className="font-black text-lg">{a.nombre} {a.apellidos}</div>
-            <div className="text-white/60 text-xs">{a.actividad || 'Sin actividad'} · {temporadaDisplay(a.temporada)}{a.periodoInicio ? ` · Empieza: ${a.periodoInicio}` : ''}</div>
+            <div className="text-white/60 text-xs">{a.actividad || 'Sin actividad'} · {temporadaDisplay(a.temporada)}{a.periodoInicio ? ` · Empieza: ${a.periodoInicio}` : ''}{a.esSocio ? ' · Socio' : ''}</div>
           </div>
           <button onClick={onClose} className="text-white/60 hover:text-white">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
@@ -606,6 +614,8 @@ function FichaAlumno({ a, puedeEditar, gruposActividad, cuotaCfg, onClose, onGes
             <Dato k="Fecha nacimiento" v={a.fechaNacimiento ? `${fechaCorta(a.fechaNacimiento)}${edad != null ? ` · ${edad} años` : ''}` : '—'} />
             <Dato k="Nivel solicitado" v={a.nivel || '—'} />
             <Dato k="Tutor legal" v={a.tutorLegal || '—'} />
+            {a.dniTutor && <Dato k="DNI/NIE tutor" v={a.dniTutor} />}
+            {a.direccionTutor && <Dato k="Dirección tutor" v={a.direccionTutor} />}
             <Dato k="Teléfono" v={a.telefono || '—'} />
             <Dato k="Email" v={a.email || '—'} />
             <Dato k="Inscrito el" v={fechaCorta(a.created_at)} />
@@ -671,6 +681,16 @@ function FichaAlumno({ a, puedeEditar, gruposActividad, cuotaCfg, onClose, onGes
                 <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Fecha de pago</label>
                 <input type="date" value={a.cuota_fecha_pago} disabled={!puedeEditar} onChange={e => onGestion({ cuota_fecha_pago: e.target.value })}
                   className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:border-pm-red disabled:opacity-60" />
+              </div>
+              {/* Forma de pago */}
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Forma de pago</label>
+                <select value={a.cuota_forma_pago} disabled={!puedeEditar} onChange={e => onGestion({ cuota_forma_pago: e.target.value })}
+                  className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:border-pm-red disabled:opacity-60">
+                  <option value="">— Sin definir —</option>
+                  <option value="efectivo">Efectivo</option>
+                  <option value="transferencia">Transferencia</option>
+                </select>
               </div>
               {/* Talla de equipación */}
               <div>

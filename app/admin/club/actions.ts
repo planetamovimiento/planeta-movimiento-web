@@ -22,6 +22,7 @@ type GestionPatch = {
   cuota_estado?: string | null
   cuota_importe_cents?: number | null
   cuota_fecha_pago?: string | null
+  cuota_forma_pago?: string | null
   talla?: string | null
   numero_socio?: string | null
 }
@@ -35,6 +36,7 @@ export async function guardarGestion(submissionId: string, patch: GestionPatch) 
 
   // Columnas date/opcionales: '' no es válido para una columna date → null.
   if (patch.cuota_fecha_pago === '') patch.cuota_fecha_pago = null
+  if (patch.cuota_forma_pago === '') patch.cuota_forma_pago = null
   if (patch.talla === '') patch.talla = null
   if (patch.numero_socio === '') patch.numero_socio = null
 
