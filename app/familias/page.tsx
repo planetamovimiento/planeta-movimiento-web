@@ -2,13 +2,17 @@ import { requireFamilia } from '@/lib/familias/auth'
 import { getAlumnosDeFamilia } from '@/lib/familias/data'
 import { getTemporadaActiva } from '@/lib/config/store'
 import { temporadaDisplay } from '@/lib/club/constants'
+import { getAvisosActivos } from '@/lib/familias/avisos'
+import { AvisosClub } from '@/components/familias/AvisosClub'
 import PanelesHijos from './PanelesHijos'
 
 export const dynamic = 'force-dynamic'
 
 export default async function FamiliasDashboard() {
   const familia = await requireFamilia()
-  const [alumnos, tempRaw] = await Promise.all([getAlumnosDeFamilia(familia.id), getTemporadaActiva()])
+  const [alumnos, tempRaw, avisos] = await Promise.all([
+    getAlumnosDeFamilia(familia.id), getTemporadaActiva(), getAvisosActivos(),
+  ])
   const saludo = familia.nombre ? familia.nombre.split(' ')[0] : ''
 
   return (
@@ -27,6 +31,8 @@ export default async function FamiliasDashboard() {
           </span>
         </div>
       </div>
+
+      <AvisosClub avisos={avisos} />
 
       {alumnos.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-gray-400 text-sm">

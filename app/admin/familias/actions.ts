@@ -7,6 +7,7 @@ import { puedeVerSeccion } from '@/lib/admin/secciones'
 import type { EstadoFamilia } from '@/lib/familias/tipos'
 import { sincronizarFamilias } from '@/lib/familias/sync'
 import { siguienteNumeroSocio } from '@/lib/familias/socio'
+import { saveAvisos, type Aviso } from '@/lib/familias/avisos'
 
 const txt = (v?: string | null) => (typeof v === 'string' && v.trim() ? v.trim() : null)
 const revalidar = () => revalidatePath('/admin/familias')
@@ -29,6 +30,26 @@ export async function generarFamiliasDesdeCRM() {
   }
   revalidar()
   return { ok: true, nuevasFamilias, nuevosVinculos }
+}
+
+/** Publica/actualiza los avisos del club visibles para las familias. */
+export async function guardarAvisosClub(avisos: Aviso[]) {
+  const { admin, error } = await exigir()
+  if (!admin) return { ok: false, error }
+  const limpios: Aviso[] = (avisos || [])
+    .filter(a => (a.titulo?.trim() || a.cuerpo?.trim()))
+    .map(a => ({
+      id: a.id || crypto.randomUUID(),
+      titulo: (a.titulo || '').trim().slice(0, 120),
+      cuerpo: (a.cuerpo || '').trim().slice(0, 1000),
+      activo: a.activo !== false,
+    }))
+  const ok = await saveAvisos(limpios, admin.email)
+  if (!ok) return { ok: false, error: 'No se pudo guardar. ¿Has ejecutado migration_global_config.sql?' }
+  await logActivity({ actorEmail: admin.email, accion: `Avisos del club (${limpios.length})`, entidad: 'club_familia' })
+  revalidatePath('/familias')
+  revalidar()
+  return { ok: true }
 }
 
 export async function guardarFamilia(input: { id: string; nombre?: string; telefono?: string; email?: string }) {

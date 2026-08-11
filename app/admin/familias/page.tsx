@@ -4,6 +4,8 @@ import { AdminHeader } from '@/components/admin/ui'
 import type { Familia } from '@/lib/familias/tipos'
 import { sincronizarFamilias } from '@/lib/familias/sync'
 import FamiliasClient, { type AlumnoLite } from './FamiliasClient'
+import AvisosManager from './AvisosManager'
+import { getAvisos } from '@/lib/familias/avisos'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,6 +48,7 @@ export default async function FamiliasPage() {
         subtitulo="Cuentas de familias, alumnos vinculados y acceso al portal privado"
       />
       <div className="p-4 lg:p-8">
+        <AvisosManager avisos={await getAvisos()} puedeEditar={can.edit(admin.role)} />
         <FamiliasClient familias={familias} links={links} alumnos={alumnos} migrado={famsRes.ok && linksRes.ok} puedeEditar={can.edit(admin.role)} />
       </div>
     </>
