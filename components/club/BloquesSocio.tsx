@@ -54,6 +54,9 @@ export async function HeroHazteSocio() {
               <p className="text-xs text-gray-400 mb-5">Ventaja por darte de alta antes del 28 de septiembre.</p>
 
               <BotonHazteSocio info={info} variant="principal" />
+              <p className="text-xs text-gray-500 mt-3">
+                ¿Ya eres socio? <a href="/familias" className="text-pm-red font-semibold hover:underline">Acceder al Portal de Familias</a>
+              </p>
             </div>
 
             {/* Derecha: qué incluye */}

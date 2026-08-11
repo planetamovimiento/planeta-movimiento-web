@@ -26,6 +26,7 @@ const NAV_ITEMS: NavItem[] = [
       { label: 'Escuela de bienestar', href: '/servicios/escuela-bienestar', desc: 'Actividad física para adultos' },
       { label: 'Circo inclusivo', href: '/servicios/circo-inclusivo', desc: 'Circo adaptado para todos' },
       { label: 'Talleres Intensivos', href: '/club/talleres-intensivos', desc: 'Formación específica de fin de semana' },
+      { label: 'Portal de Familias', href: '/familias', desc: 'Acceso privado para familias socias' },
     ],
   },
   {
