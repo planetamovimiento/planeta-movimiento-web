@@ -5,7 +5,7 @@ import { JsonLd } from '@/components/seo/JsonLd'
 import { breadcrumbsJsonLd } from '@/lib/seo'
 import { getTemporadaActiva } from '@/lib/config/store'
 import { temporadaDisplay } from '@/lib/club/constants'
-import { CuotaSocio } from '@/components/club/CuotaSocio'
+import { HeroHazteSocio } from '@/components/club/BloquesSocio'
 
 export const metadata = {
   title: 'Club Deportivo Origen — Acrobacia, Circo y Deporte en Cuenca | Planeta Movimiento',
@@ -148,6 +148,9 @@ export default async function ClubPage() {
         </div>
       </section>
 
+      {/* ── HAZTE SOCIO (destacado, arriba) ── */}
+      <HeroHazteSocio />
+
       {/* ── QUÉ ES EL CLUB ── */}
       <section className="bg-white py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -223,9 +226,6 @@ export default async function ClubPage() {
           </div>
         </div>
       </section>
-
-      {/* ── CUOTA DE SOCIO ── */}
-      <CuotaSocio />
 
       {/* ── CTA INSCRIPCIÓN ── */}
       <section className="bg-pm-red py-16 text-white text-center" id="inscripcion">

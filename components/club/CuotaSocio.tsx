@@ -1,4 +1,4 @@
-import { CUOTA, eurosCuota, fechaLarga, diaSiguiente } from '@/lib/club/cuota'
+import { eurosCuota, fechaLarga, diaSiguiente } from '@/lib/club/cuota'
 import { getClubConfig } from '@/lib/club/config'
 import { getTemporadaActiva } from '@/lib/config/store'
 import { temporadaDisplay } from '@/lib/club/constants'
@@ -42,7 +42,7 @@ export async function CuotaSocio() {
         <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-6">
           <div className="text-xs font-black text-pm-navy uppercase tracking-widest mb-4">Qué incluye la cuota</div>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {CUOTA.incluye.map(item => (
+            {cuota.beneficios.map(item => (
               <li key={item} className="flex items-start gap-2.5 text-sm text-gray-700">
                 <svg className="w-4 h-4 text-pm-red shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>
                 <span>{item}</span>

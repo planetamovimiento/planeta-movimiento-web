@@ -3,6 +3,7 @@ import { waNegocio } from '@/lib/whatsapp'
 import { BotonApuntarme } from './InscripcionModal'
 import { PreciosServicioClub } from '@/components/club/PreciosServicioClub'
 import { PanelSeptiembre } from '@/components/club/PanelSeptiembre'
+import { AvisoServicioSocio } from '@/components/club/BloquesSocio'
 import TabsDescripcion from './TabsDescripcion'
 import { Galeria } from '@/components/ui/Galeria'
 import { fotoPrincipal, fotosDe } from '@/lib/fotos'
@@ -110,6 +111,9 @@ export default function TelasAereasPage() {
 
             {/* Botón APUNTARME */}
             <BotonApuntarme />
+
+            {/* Hazte socio del Club */}
+            <AvisoServicioSocio />
 
             {/* Info pago */}
             <p className="mt-4 text-xs text-gray-400 flex items-center gap-1.5">

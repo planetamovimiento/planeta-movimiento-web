@@ -901,6 +901,9 @@ function ModalConfigTemporada({ cfg, onClose, onGuardar }: {
   const [c, setC] = useState<ClubConfig>(() => JSON.parse(JSON.stringify(cfg)) as ClubConfig)
   const [reducida, setReducida] = useState(eurosCuota(cfg.cuota.reducidaCents).replace(' €', ''))
   const [normal, setNormal] = useState(eurosCuota(cfg.cuota.normalCents).replace(' €', ''))
+  const [iban, setIban] = useState(cfg.cuota.iban)
+  const [concepto, setConcepto] = useState(cfg.cuota.conceptoTransferencia)
+  const [beneficiosTxt, setBeneficiosTxt] = useState(cfg.cuota.beneficios.join('\n'))
   const [saving, setSaving] = useState(false)
   const inp = 'w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-pm-red'
   const lbl = 'block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1'
@@ -915,7 +918,12 @@ function ModalConfigTemporada({ cfg, onClose, onGuardar }: {
   async function guardar() {
     setSaving(true)
     await onGuardar({
-      cuota: { fechaLimiteReducida: c.cuota.fechaLimiteReducida, reducidaCents: eurosACents(reducida), normalCents: eurosACents(normal) },
+      cuota: {
+        ...c.cuota,
+        reducidaCents: eurosACents(reducida), normalCents: eurosACents(normal),
+        iban: iban.trim(), conceptoTransferencia: concepto.trim(),
+        beneficios: beneficiosTxt.split('\n').map(s => s.trim()).filter(Boolean),
+      },
       septiembre: c.septiembre,
     })
     setSaving(false)
@@ -952,6 +960,23 @@ function ModalConfigTemporada({ cfg, onClose, onGuardar }: {
               </div>
             </div>
             <p className="text-xs text-gray-400 mt-1.5">Reducida hasta esa fecha (incluida); normal a partir del día siguiente.</p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+              <div>
+                <label className={lbl}>Nº de cuenta (IBAN)</label>
+                <input value={iban} className={inp} placeholder="ES00 0000 0000 0000 0000 0000" onChange={e => setIban(e.target.value)} />
+              </div>
+              <div>
+                <label className={lbl}>Concepto de transferencia</label>
+                <input value={concepto} className={inp} onChange={e => setConcepto(e.target.value)} />
+              </div>
+            </div>
+            <p className="text-xs text-gray-400 mt-1.5">Deja el IBAN vacío para ocultar la opción de transferencia en la web.</p>
+
+            <div className="mt-3">
+              <label className={lbl}>Beneficios de ser socio (uno por línea)</label>
+              <textarea value={beneficiosTxt} rows={6} className={`${inp} resize-none`} onChange={e => setBeneficiosTxt(e.target.value)} />
+            </div>
           </div>
 
           {/* Septiembre */}

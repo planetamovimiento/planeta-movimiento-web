@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getTemporadaActiva } from '@/lib/config/store'
+import { importeCuotaSugeridoCents } from '@/lib/club/cuota'
 import { enviarEmail, NOTIF_TO } from '@/lib/emails/enviar'
 import { enviarConfirmacionReserva } from '@/lib/emails/confirmacion'
 import { comprobarEnvioForm } from '@/lib/seguridad/guard'
@@ -116,6 +117,117 @@ export async function submitForm(input: {
     })
     return { ok: true }
   } catch (e) {
+    return { ok: false, error: 'No se pudo enviar. Inténtalo de nuevo.' }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ALTA DE SOCIO (Club Deportivo Origen) — un tutor + 1..N participantes.
+// Crea/actualiza una inscripción por hijo (tipo inscripcion_club, esSocio:true)
+// → aparecen en el CRM y en el Portal de Familias (por el email del tutor).
+// Dedup por email + nombre del participante. NUNCA reescribe una cuota ya
+// registrada (respeta pagos existentes). Pago siempre manual (sin cobro online).
+// ═══════════════════════════════════════════════════════════════════════════
+export async function submitSocio(input: {
+  tutor: { nombre?: string; apellidos?: string; dni?: string; telefono?: string; email?: string; direccion?: string; observaciones?: string }
+  participantes: { nombre?: string; apellidos?: string; fechaNacimiento?: string; actividades?: string; talla?: string; observaciones?: string }[]
+  seguridad?: Seguridad
+}) {
+  const g = await comprobarEnvioForm({
+    formTipo: 'alta_socio',
+    honeypot: input.seguridad?.hp,
+    renderedAt: input.seguridad?.renderedAt,
+    turnstileToken: input.seguridad?.turnstileToken,
+    email: input.tutor?.email,
+    contenido: input.tutor?.observaciones,
+  })
+  if (!g.ok) return { ok: false, error: g.error }
+
+  try {
+    const db = createAdminClient()
+    const t = input.tutor || {}
+    const nombreT = limpiarCabecera(t.nombre)
+    const apellidosT = limpiarCabecera(t.apellidos)
+    const email = limpiarCabecera(t.email).toLowerCase()
+    const telefono = limpiarCabecera(t.telefono)
+    const dni = limpiarCabecera(t.dni)
+    const direccion = limpiarCabecera(t.direccion)
+    const obsT = limpiarTexto(t.observaciones)
+    const tutorNombre = `${nombreT} ${apellidosT}`.trim()
+
+    if (!tutorNombre) return { ok: false, error: 'Escribe el nombre y apellidos del tutor.' }
+    if (!email) return { ok: false, error: 'El correo del tutor es obligatorio.' }
+    if (!telefono) return { ok: false, error: 'El teléfono del tutor es obligatorio.' }
+    const parts = (input.participantes || []).filter(p => (p.nombre || '').trim())
+    if (parts.length === 0) return { ok: false, error: 'Añade al menos un participante.' }
+
+    await upsertCustomer(db, { nombre: tutorNombre, email, telefono })
+
+    const temporada = await getTemporadaActiva()
+    const importeSugerido = importeCuotaSugeridoCents()
+    const now = new Date().toISOString()
+    const creados: string[] = []
+
+    for (const p of parts) {
+      const nombreP = limpiarCabecera(p.nombre)
+      const apellidosP = limpiarCabecera(p.apellidos)
+      const full = `${nombreP} ${apellidosP}`.trim()
+      const talla = limpiarCabecera(p.talla)
+      const datos: Record<string, unknown> = {
+        actividad: limpiarCabecera(p.actividades),
+        nombre: nombreP, apellidos: apellidosP,
+        fechaNacimiento: (p.fechaNacimiento || '').slice(0, 10),
+        tutorLegal: tutorNombre, talla, esSocio: true,
+      }
+      if (dni) datos.dniTutor = dni
+      if (direccion) datos.direccionTutor = direccion
+
+      // Dedup: misma familia (email) + mismo nombre de participante.
+      const { data: prev } = await db.from('form_submissions').select('id')
+        .eq('tipo', 'inscripcion_club').eq('email', email).ilike('nombre', full).limit(1)
+      let subId = (prev?.[0] as { id?: string } | undefined)?.id
+
+      if (subId) {
+        await db.from('form_submissions').update({
+          nombre: full, telefono: telefono || null, datos, asunto: `Alta socio · ${full}`,
+        }).eq('id', subId)
+      } else {
+        const { data: ins, error } = await db.from('form_submissions').insert({
+          tipo: 'inscripcion_club', nombre: full, email: email || null, telefono: telefono || null,
+          asunto: `Alta socio · ${full}`, mensaje: limpiarTexto(p.observaciones) || null, datos, estado: 'nueva',
+        }).select('id').single()
+        if (error) return { ok: false, error: error.message }
+        subId = (ins as { id?: string } | null)?.id
+      }
+      if (!subId) continue
+
+      // Gestión/cuota: si ya existe fila, solo actualiza la talla (no toca una
+      // cuota ya registrada). Si es nueva, crea la cuota pendiente sugerida.
+      const { data: gexist } = await db.from('club_gestion').select('submission_id').eq('submission_id', subId).maybeSingle()
+      if (gexist) {
+        await db.from('club_gestion').update({ talla: talla || null, updated_at: now }).eq('submission_id', subId)
+      } else {
+        await db.from('club_gestion').insert({
+          submission_id: subId, temporada, estado_general: 'pendiente',
+          cuota_estado: 'pendiente', cuota_importe_cents: importeSugerido, talla: talla || null, updated_at: now,
+        })
+      }
+      creados.push(full)
+    }
+
+    await avisarNegocio(`Nueva alta de socio · ${tutorNombre}`, [
+      { label: 'Tutor', valor: tutorNombre },
+      { label: 'Email', valor: email },
+      { label: 'Teléfono', valor: telefono },
+      { label: 'DNI/NIE', valor: dni },
+      { label: 'Dirección', valor: direccion },
+      { label: 'Participantes', valor: creados.join(', ') },
+      { label: 'Temporada', valor: temporada },
+      { label: 'Observaciones', valor: obsT },
+    ])
+    await enviarConfirmacionReserva({ servicio: 'Alta de socio · Club Deportivo Origen', clienteNombre: tutorNombre, clienteEmail: email })
+    return { ok: true }
+  } catch {
     return { ok: false, error: 'No se pudo enviar. Inténtalo de nuevo.' }
   }
 }
