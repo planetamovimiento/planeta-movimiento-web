@@ -30,7 +30,9 @@ export default function TabDocumentos({ tipo, documentos, perfiles, series, clie
   const [modo, setModo] = useState<{ tipo: 'lista' } | { tipo: 'form'; doc: Documento | null }>({ tipo: 'lista' })
   const [busca, setBusca] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('')
-  const [filtroEmisor, setFiltroEmisor] = useState('')
+  // Con varios perfiles, cada emisor tiene su apartado (por defecto el primero);
+  // '' = ver todas juntas (opción secundaria).
+  const [filtroEmisor, setFiltroEmisor] = useState(() => (perfiles.length > 1 ? perfiles[0].id : ''))
   const [orden, setOrden] = useState<{ campo: CampoOrden; dir: 'asc' | 'desc' }>({ campo: 'fecha', dir: 'desc' })
 
   const nombreCliente = (d: Documento) =>
@@ -84,6 +86,20 @@ export default function TabDocumentos({ tipo, documentos, perfiles, series, clie
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+      {perfiles.length > 1 && (
+        <div className="flex flex-wrap gap-1 bg-pm-bg rounded-xl p-1">
+          {perfiles.map(p => (
+            <button key={p.id} type="button" onClick={() => setFiltroEmisor(p.id)}
+              className={`text-sm font-bold px-3.5 py-2 rounded-lg transition-colors ${filtroEmisor === p.id ? 'bg-white text-pm-navy shadow-sm' : 'text-gray-500 hover:text-pm-navy'}`}>
+              {p.nombreComercial}
+            </button>
+          ))}
+          <button type="button" onClick={() => setFiltroEmisor('')}
+            className={`text-sm font-bold px-3.5 py-2 rounded-lg transition-colors ${filtroEmisor === '' ? 'bg-white text-pm-navy shadow-sm' : 'text-gray-400 hover:text-pm-navy'}`}>
+            Todas
+          </button>
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-3">
         <input className="border border-gray-200 rounded-lg px-2.5 py-2 text-sm flex-1 min-w-[180px]" placeholder="Buscar por número o cliente…" value={busca} onChange={e => setBusca(e.target.value)} />
         <select className="border border-gray-200 rounded-lg px-2.5 py-2 text-sm" value={filtroEstado} onChange={e => setFiltroEstado(e.target.value)}>
@@ -93,12 +109,6 @@ export default function TabDocumentos({ tipo, documentos, perfiles, series, clie
             : ['borrador', 'emitida', 'enviada', 'parcial', 'pagada', 'vencida', 'anulada']
           ).map(s => <option key={s} value={s}>{estadoMeta(tipo, s).label}</option>)}
         </select>
-        {perfiles.length > 1 && (
-          <select className="border border-gray-200 rounded-lg px-2.5 py-2 text-sm" value={filtroEmisor} onChange={e => setFiltroEmisor(e.target.value)}>
-            <option value="">Todos los emisores</option>
-            {perfiles.map(p => <option key={p.id} value={p.id}>{p.nombreComercial}</option>)}
-          </select>
-        )}
         <button type="button" disabled={!editable || sinPerfil} onClick={() => setModo({ tipo: 'form', doc: null })}
           className="bg-pm-red hover:bg-pm-red-dark text-white font-bold px-4 py-2 rounded-xl text-sm disabled:opacity-40">
           + Nueva {etiqueta}
@@ -133,7 +143,7 @@ export default function TabDocumentos({ tipo, documentos, perfiles, series, clie
                   <tr key={d.id} className="border-b border-gray-50 last:border-0 align-middle">
                     <td className="py-2 pr-2 whitespace-nowrap">
                       <div className="font-bold text-pm-navy">{d.numero || <span className="text-gray-400 italic">Borrador</span>}</div>
-                      {perfiles.length > 1 && <div className="text-[11px] text-gray-400 font-normal">{nombreEmisor(d)}</div>}
+                      {perfiles.length > 1 && !filtroEmisor && <div className="text-[11px] text-gray-400 font-normal">{nombreEmisor(d)}</div>}
                     </td>
                     <td className="py-2 pr-2 text-gray-600">{nombreCliente(d)}</td>
                     <td className="py-2 pr-2 text-gray-500 whitespace-nowrap">{fechaCorta(d.fecha)}</td>
