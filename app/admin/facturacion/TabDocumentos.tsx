@@ -30,10 +30,14 @@ export default function TabDocumentos({ tipo, documentos, perfiles, series, clie
   const [modo, setModo] = useState<{ tipo: 'lista' } | { tipo: 'form'; doc: Documento | null }>({ tipo: 'lista' })
   const [busca, setBusca] = useState('')
   const [filtroEstado, setFiltroEstado] = useState('')
+  const [filtroEmisor, setFiltroEmisor] = useState('')
   const [orden, setOrden] = useState<{ campo: CampoOrden; dir: 'asc' | 'desc' }>({ campo: 'fecha', dir: 'desc' })
 
   const nombreCliente = (d: Documento) =>
     (d.clienteSnapshot?.nombre as string) || clientes.find(c => c.id === d.clientId)?.nombre || '—'
+
+  const nombreEmisor = (d: Documento) =>
+    (d.emisorSnapshot?.nombre_comercial as string) || perfiles.find(p => p.id === d.profileId)?.nombreComercial || '—'
 
   // Número: por correlativo real cuando existe; si es manual ("18/2026"), por su
   // primer entero. Borradores (sin número) → -1, van al fondo en ascendente.
@@ -49,6 +53,7 @@ export default function TabDocumentos({ tipo, documentos, perfiles, series, clie
     const q = busca.trim().toLowerCase()
     const filtrada = documentos
       .filter(d => d.tipo === tipo)
+      .filter(d => !filtroEmisor || d.profileId === filtroEmisor)
       .filter(d => !filtroEstado || d.estado === filtroEstado)
       .filter(d => !q || `${d.numero} ${nombreCliente(d)}`.toLowerCase().includes(q))
     const dir = orden.dir === 'asc' ? 1 : -1
@@ -61,7 +66,7 @@ export default function TabDocumentos({ tipo, documentos, perfiles, series, clie
         default: return a.fecha.localeCompare(b.fecha) * dir // fecha
       }
     })
-  }, [documentos, tipo, busca, filtroEstado, orden]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [documentos, tipo, busca, filtroEstado, filtroEmisor, orden]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const etiqueta = tipo === 'proforma' ? 'proforma' : 'factura'
 
@@ -88,6 +93,12 @@ export default function TabDocumentos({ tipo, documentos, perfiles, series, clie
             : ['borrador', 'emitida', 'enviada', 'parcial', 'pagada', 'vencida', 'anulada']
           ).map(s => <option key={s} value={s}>{estadoMeta(tipo, s).label}</option>)}
         </select>
+        {perfiles.length > 1 && (
+          <select className="border border-gray-200 rounded-lg px-2.5 py-2 text-sm" value={filtroEmisor} onChange={e => setFiltroEmisor(e.target.value)}>
+            <option value="">Todos los emisores</option>
+            {perfiles.map(p => <option key={p.id} value={p.id}>{p.nombreComercial}</option>)}
+          </select>
+        )}
         <button type="button" disabled={!editable || sinPerfil} onClick={() => setModo({ tipo: 'form', doc: null })}
           className="bg-pm-red hover:bg-pm-red-dark text-white font-bold px-4 py-2 rounded-xl text-sm disabled:opacity-40">
           + Nueva {etiqueta}
@@ -120,7 +131,10 @@ export default function TabDocumentos({ tipo, documentos, perfiles, series, clie
                 const emitido = ESTADOS_EMITIDOS.includes(d.estado)
                 return (
                   <tr key={d.id} className="border-b border-gray-50 last:border-0 align-middle">
-                    <td className="py-2 pr-2 font-bold text-pm-navy whitespace-nowrap">{d.numero || <span className="text-gray-400 italic">Borrador</span>}</td>
+                    <td className="py-2 pr-2 whitespace-nowrap">
+                      <div className="font-bold text-pm-navy">{d.numero || <span className="text-gray-400 italic">Borrador</span>}</div>
+                      {perfiles.length > 1 && <div className="text-[11px] text-gray-400 font-normal">{nombreEmisor(d)}</div>}
+                    </td>
                     <td className="py-2 pr-2 text-gray-600">{nombreCliente(d)}</td>
                     <td className="py-2 pr-2 text-gray-500 whitespace-nowrap">{fechaCorta(d.fecha)}</td>
                     <td className="py-2 pr-2 text-right font-bold text-pm-navy whitespace-nowrap">{eur(d.totalCents)}</td>
