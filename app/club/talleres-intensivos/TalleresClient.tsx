@@ -283,7 +283,7 @@ function BotonEstado({ estado, onAbrir }: { estado: Estado; onAbrir: (t: 'aviso'
 }
 
 // ─── Tarjeta de taller ────────────────────────────────────────────────────────
-function TarjetaTaller({ taller }: { taller: Taller }) {
+export function TarjetaTaller({ taller }: { taller: Taller }) {
   const [modal, setModal] = useState<'aviso' | 'inscripcion' | 'espera' | null>(null)
   const [verCartel, setVerCartel] = useState(false)
   const estado = ESTADO_CONFIG[taller.estado]
@@ -294,10 +294,11 @@ function TarjetaTaller({ taller }: { taller: Taller }) {
   if (conCartel) {
     return (
       <>
-        <div className="bg-white border-2 border-gray-100 rounded-3xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col">
+        <div id={taller.slug} className={`scroll-mt-24 bg-white border-2 rounded-3xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col ${taller.destacado ? 'md:col-span-2 border-pm-red' : 'border-gray-100'}`}>
           <button type="button" onClick={() => setVerCartel(true)} className="relative block w-full bg-pm-navy group">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={taller.imagen} alt={`Cartel del ${taller.nombre}`} className="w-full h-auto block" />
+            <img src={taller.imagen} alt={taller.imagenAlt || `Cartel del ${taller.nombre}`} className="w-full h-auto block" />
+            {taller.destacado && <span className="absolute top-3 left-3 bg-pm-red text-white text-xs font-black px-3 py-1 rounded-full shadow">Destacado</span>}
             <span className={`absolute top-3 right-3 flex items-center gap-1.5 border text-xs font-bold px-3 py-1 rounded-full shadow ${estado.color}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${estado.dot}`}/>{estado.label}
             </span>
@@ -309,6 +310,7 @@ function TarjetaTaller({ taller }: { taller: Taller }) {
               {taller.subtitulo && <p className="text-gray-500 text-sm">{taller.subtitulo}</p>}
             </div>
             <BotonEstado estado={taller.estado} onAbrir={setModal} />
+            <a href={`/club/talleres-intensivos/${taller.slug}`} className="text-center text-sm font-bold text-pm-navy hover:text-pm-red">Ver detalles</a>
           </div>
         </div>
 
@@ -335,7 +337,7 @@ function TarjetaTaller({ taller }: { taller: Taller }) {
 
   return (
     <>
-      <div className="bg-white border-2 border-gray-100 rounded-3xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col">
+      <div id={taller.slug} className={`scroll-mt-24 bg-white border-2 rounded-3xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col ${taller.destacado ? 'md:col-span-2 border-pm-red' : 'border-gray-100'}`}>
 
         {/* Cabecera visual */}
         <div className={`relative bg-gradient-to-br ${taller.grad} p-8 text-white`}>
@@ -426,8 +428,9 @@ function TarjetaTaller({ taller }: { taller: Taller }) {
           )}
 
           {/* Botón según estado */}
-          <div className="mt-auto">
+          <div className="mt-auto space-y-2">
             <BotonEstado estado={taller.estado} onAbrir={setModal} />
+            <a href={`/club/talleres-intensivos/${taller.slug}`} className="block text-center text-sm font-bold text-pm-navy hover:text-pm-red">Ver detalles</a>
           </div>
         </div>
       </div>

@@ -54,6 +54,7 @@ export type Taller = {
   profesor: string
   icon: string
   imagen?: string         // Cartel del intensivo (si existe, se muestra como imagen principal)
+  imagenAlt?: string      // Texto alternativo del cartel (accesibilidad/SEO)
   grad: string            // Tailwind gradient
   colorLight: string
   colorText: string

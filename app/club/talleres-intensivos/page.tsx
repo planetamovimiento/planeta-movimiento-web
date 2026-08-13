@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { waNegocio } from '@/lib/whatsapp'
 import { getTalleres } from '@/lib/talleres/store'
+import { estadoTallerMeta } from './config'
 import TalleresClient from './TalleresClient'
 
 export const metadata = {
@@ -12,9 +13,14 @@ export const metadata = {
 export const dynamic = 'force-dynamic'
 
 export default async function TalleresIntensivosPage() {
-  const TALLERES = await getTalleres()
-  const abiertos = TALLERES.filter(t => t.estado === 'abierto' || t.estado === 'ultimas').length
-  const proximamente = TALLERES.filter(t => t.estado === 'proximamente').length
+  const todos = (await getTalleres()).filter(t => estadoTallerMeta(t.estado).seccion !== 'oculto')
+  const abiertas = todos.filter(t => estadoTallerMeta(t.estado).seccion === 'abiertas')
+  const proximas = todos.filter(t => estadoTallerMeta(t.estado).seccion === 'proximamente')
+  const historico = todos.filter(t => estadoTallerMeta(t.estado).seccion === 'historico')
+  const abiertos = abiertas.length
+  const proximamente = proximas.length
+  // Vitrina del hero: primero abiertas, luego próximas (máx. 4). Nunca borradores.
+  const vitrina = [...abiertas, ...proximas].slice(0, 4)
   return (
     <main className="bg-pm-bg min-h-screen">
 
@@ -64,15 +70,17 @@ export default async function TalleresIntensivosPage() {
               </a>
             </div>
 
-            {/* 4 disciplinas en grid */}
-            <div className="grid grid-cols-2 gap-3">
-              {TALLERES.map(t => (
-                <div key={t.id} className={`bg-gradient-to-br ${t.grad} rounded-2xl p-5 text-white relative overflow-hidden`}>
-                  <div className="font-black text-sm leading-tight">{t.nombre}</div>
-                  <div className="text-white/60 text-xs mt-1">{t.subtitulo}</div>
-                </div>
-              ))}
-            </div>
+            {/* Vitrina: talleres abiertos / próximos (nunca borradores) */}
+            {vitrina.length > 0 && (
+              <div className="grid grid-cols-2 gap-3">
+                {vitrina.map(t => (
+                  <a key={t.id} href={`/club/talleres-intensivos/${t.slug}`} className={`bg-gradient-to-br ${t.grad} rounded-2xl p-5 text-white relative overflow-hidden`}>
+                    <div className="font-black text-sm leading-tight">{t.nombre}</div>
+                    <div className="text-white/60 text-xs mt-1">{t.subtitulo}</div>
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -121,7 +129,36 @@ export default async function TalleresIntensivosPage() {
             </div>
           </div>
 
-          <TalleresClient talleres={TALLERES} />
+          {/* Inscripciones abiertas (protagonistas) */}
+          {abiertas.length > 0 ? (
+            <TalleresClient talleres={abiertas} />
+          ) : (
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center text-gray-500 text-sm">
+              Ahora mismo no hay talleres con inscripción abierta. Mira los que están en preparación.
+            </div>
+          )}
+
+          {/* Próximamente (segundo nivel) */}
+          {proximas.length > 0 && (
+            <div className="mt-12">
+              <h3 className="text-xl font-black text-pm-navy mb-1">Próximamente</h3>
+              <p className="text-gray-500 text-sm mb-6">En preparación. Activa el aviso para enterarte cuando se abran.</p>
+              <TalleresClient talleres={proximas} />
+            </div>
+          )}
+
+          {/* Histórico (oculto por defecto) */}
+          {historico.length > 0 && (
+            <details className="mt-12 group">
+              <summary className="cursor-pointer list-none inline-flex items-center gap-2 text-sm font-bold text-pm-navy hover:text-pm-red">
+                <span>Ver intensivos anteriores ({historico.length})</span>
+                <svg className="w-4 h-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" /></svg>
+              </summary>
+              <div className="mt-6 opacity-80">
+                <TalleresClient talleres={historico} />
+              </div>
+            </details>
+          )}
 
           {/* Nota de escalabilidad */}
           <div className="mt-10 bg-white border border-gray-200 rounded-2xl p-5 text-center shadow-sm">
