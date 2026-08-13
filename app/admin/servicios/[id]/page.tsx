@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { getServicio } from '@/lib/servicios/store'
 import { AdminHeader, EstadoBadge } from '@/components/admin/ui'
 import EditorServicio from './EditorServicio'
@@ -9,7 +9,6 @@ import EditorMananaMagica from '@/app/admin/manana-magica/EditorMananaMagica'
 import EditorEventoCentro from './EditorEventoCentro'
 import { EVENTOS_CENTRO_IDS, type EventoCentroId } from '@/lib/eventos/centro'
 import { CATALOGO_MAP } from '@/lib/servicios/catalogo'
-import { getTalleres } from '@/lib/talleres/store'
 import { getCampamentosConfig } from '@/lib/campamentos/store'
 import EditorCampamentos from './EditorCampamentos'
 
@@ -64,42 +63,9 @@ export default async function EditarServicioPage({ params }: { params: Promise<{
     )
   }
 
-  // Talleres Intensivos: lista de talleres (cada uno editable), integrada en Servicios.
+  // Talleres Intensivos: gestión dinámica propia (crear/duplicar/archivar…).
   if (id === 'talleres-intensivos') {
-    const talleres = await getTalleres()
-    return (
-      <>
-        <AdminHeader
-          titulo={<span className="flex items-center gap-2"><span>🎯</span> Talleres Intensivos</span>}
-          subtitulo="Club Deportivo Origen · Edita fechas, precios, plazas y abre inscripciones"
-        />
-        <div className="p-6 lg:p-8 space-y-6">
-          <div className="flex items-center gap-3 text-sm">
-            <Link href="/admin/servicios" className="text-gray-500 hover:text-pm-red">← Servicios</Link>
-            <span className="text-gray-300">/</span>
-            <span className="text-pm-navy font-semibold">Talleres Intensivos</span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {talleres.map(t => (
-              <Link key={t.id} href={`/admin/talleres-intensivos/${t.id}`}
-                className="group bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md hover:border-pm-red/30 transition-all">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <div className="font-black text-pm-navy text-sm group-hover:text-pm-red transition-colors">{t.nombre}</div>
-                    <div className="text-xs text-gray-400">{t.fecha || 'Sin fecha'} · {t.precio}</div>
-                  </div>
-                  <EstadoBadge estado={t.estado === 'abierto' ? 'activo' : t.estado === 'proximamente' ? 'proximamente' : t.estado === 'completo' ? 'completo' : t.estado === 'finalizado' ? 'finalizado' : 'ultimas'} />
-                </div>
-                <div className="flex items-center justify-between text-xs text-gray-400">
-                  <span>Plazas: {t.plazasLibres}/{t.plazasTotal}</span>
-                  <span className="font-bold text-pm-red">Editar →</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </>
-    )
+    redirect('/admin/talleres-intensivos')
   }
 
   // Campamentos: editor completo (precios, fechas, semanas) integrado en Servicios.

@@ -7,10 +7,12 @@ import { type Taller, type Estado } from './config'
 
 // ─── Badge de estado ─────────────────────────────────────────────────────────
 const ESTADO_CONFIG: Record<Estado, { label: string; color: string; dot: string }> = {
+  borrador:     { label: 'Borrador',              color: 'bg-gray-100 text-gray-500 border-gray-300',     dot: 'bg-gray-400' },
   abierto:      { label: 'Inscripción abierta',  color: 'bg-green-100 text-green-700 border-green-300',  dot: 'bg-green-500' },
   ultimas:      { label: 'Últimas plazas',        color: 'bg-amber-100 text-amber-700 border-amber-300',  dot: 'bg-amber-500 animate-pulse' },
   completo:     { label: 'Completo',              color: 'bg-gray-100 text-gray-500 border-gray-300',     dot: 'bg-gray-400' },
   proximamente: { label: 'Próximamente',           color: 'bg-blue-100 text-blue-700 border-blue-300',    dot: 'bg-blue-400' },
+  cerrado:      { label: 'Cerrado',               color: 'bg-gray-100 text-gray-500 border-gray-300',     dot: 'bg-gray-400' },
   finalizado:   { label: 'Finalizado',             color: 'bg-gray-100 text-gray-500 border-gray-300',    dot: 'bg-gray-400' },
 }
 

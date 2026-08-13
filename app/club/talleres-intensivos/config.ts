@@ -3,7 +3,25 @@
 // Actualiza este archivo para cada nueva edición sin tocar el diseño.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type Estado = 'abierto' | 'ultimas' | 'completo' | 'proximamente' | 'finalizado'
+export type Estado = 'borrador' | 'proximamente' | 'abierto' | 'ultimas' | 'completo' | 'cerrado' | 'finalizado'
+
+/** Estados del intensivo: etiqueta, color y a qué sección pública pertenece. */
+export const ESTADOS_TALLER: {
+  id: Estado; label: string; badge: string
+  seccion: 'abiertas' | 'proximamente' | 'historico' | 'oculto'; inscribible: boolean
+}[] = [
+  { id: 'borrador',     label: 'Borrador',               badge: 'bg-gray-100 text-gray-600',  seccion: 'oculto',       inscribible: false },
+  { id: 'proximamente', label: 'Próximamente',           badge: 'bg-blue-50 text-blue-700',   seccion: 'proximamente', inscribible: false },
+  { id: 'abierto',      label: 'Inscripciones abiertas', badge: 'bg-green-50 text-green-700',  seccion: 'abiertas',     inscribible: true  },
+  { id: 'ultimas',      label: 'Últimas plazas',         badge: 'bg-amber-50 text-amber-700',  seccion: 'abiertas',     inscribible: true  },
+  { id: 'completo',     label: 'Completo',               badge: 'bg-red-50 text-red-700',      seccion: 'abiertas',     inscribible: false },
+  { id: 'cerrado',      label: 'Cerrado',                badge: 'bg-gray-100 text-gray-500',   seccion: 'historico',    inscribible: false },
+  { id: 'finalizado',   label: 'Finalizado',             badge: 'bg-gray-100 text-gray-500',   seccion: 'historico',    inscribible: false },
+]
+
+export function estadoTallerMeta(id: string) {
+  return ESTADOS_TALLER.find(e => e.id === id) ?? ESTADOS_TALLER[0]
+}
 
 // ── Modo multi-fecha (intensivos con varias semanas y sesiones) ───────────────
 export type SesionDia = {
@@ -18,6 +36,16 @@ export type SemanaIntensivo = {
 
 export type Taller = {
   id: string
+  // ── Dinámico (BD; opcionales para no romper los registros del config) ────────
+  slug?: string
+  disciplina?: string
+  prioridad?: number       // 100 alta · 50 normal · 10 baja
+  orden?: number           // orden manual (desempate)
+  destacado?: boolean
+  archivado?: boolean
+  publicadoAt?: string | null
+  updatedAt?: string | null
+  updatedBy?: string | null
   nombre: string
   subtitulo: string
   descripcion: string
