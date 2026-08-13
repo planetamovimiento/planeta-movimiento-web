@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { getTaller } from '@/lib/talleres/store'
+import { getTaller, getInscripcionesTaller } from '@/lib/talleres/store'
 import { AdminHeader } from '@/components/admin/ui'
 import EditorTaller from './EditorTaller'
+import InscritosTaller from './InscritosTaller'
 import { requireSeccion } from '@/lib/admin/auth'
 
 export const dynamic = 'force-dynamic'
@@ -10,7 +11,7 @@ export const dynamic = 'force-dynamic'
 export default async function EditarTallerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   await requireSeccion('servicios')
-  const taller = await getTaller(id)
+  const [taller, inscritos] = await Promise.all([getTaller(id), getInscripcionesTaller(id)])
   if (!taller) notFound()
 
   return (
@@ -22,6 +23,9 @@ export default async function EditarTallerPage({ params }: { params: Promise<{ i
           {taller.updatedAt && <span className="ml-auto text-xs text-gray-400">Última edición: {new Date(taller.updatedAt).toLocaleString('es-ES')}{taller.updatedBy ? ` · ${taller.updatedBy}` : ''}</span>}
         </div>
         <EditorTaller taller={taller} />
+        <div className="mt-6 max-w-3xl">
+          <InscritosTaller inscritos={inscritos} />
+        </div>
       </div>
     </>
   )

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { submitForm } from '@/lib/forms/actions'
+import { submitInscripcionTaller } from './actions'
 import { PagoClub } from '@/components/club/PagoClub'
 import { type Taller, type Estado } from './config'
 
@@ -69,9 +70,12 @@ function ModalAviso({ taller, tipo, onClose }: {
   // Por defecto, la primera modalidad que no obligue a elegir día concreto.
   const modPorDefecto = (modalidades.find(m => m.value !== 'dia') ?? modalidades[0])?.value ?? ''
 
-  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', nivel: '', modalidad: modPorDefecto, sesion: '' })
+  const [form, setForm] = useState({ nombre: '', apellidos: '', edad: '', tutor: '', email: '', telefono: '', nivel: '', modalidad: modPorDefecto, sesion: '', observaciones: '' })
   const [enviado, setEnviado] = useState(false)
   const [enviando, setEnviando] = useState(false)
+  const [error, setError] = useState('')
+  const [hp, setHp] = useState('')
+  const [renderedAt] = useState(() => Date.now())
 
   const modSel = modalidades.find(m => m.value === form.modalidad)
   const precioSel = modSel?.precio
@@ -89,30 +93,32 @@ function ModalAviso({ taller, tipo, onClose }: {
   }
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault(); setEnviando(true)
-    const extra =
-      tipo === 'inscripcion' && multi
-        ? {
-            modalidad: modSel?.label ?? '',
-            precio: precioSel != null ? `${precioSel} €` : '',
-            ...(necesitaSesion && form.sesion ? { dia: form.sesion } : {}),
-            pago: 'Transferencia al Club Deportivo Origen o pago en la instalación',
-          }
-        : {}
-    await submitForm({
-      tipo: 'inscripcion',
-      nombre: form.nombre,
-      email: form.email,
-      telefono: form.telefono,
-      asunto: `Taller intensivo · ${taller.nombre} (${tipo})`,
-      datos: {
-        taller: taller.nombre,
-        solicitud: tipo === 'aviso' ? 'Avisar cuando abra' : tipo === 'espera' ? 'Lista de espera' : 'Inscripción',
-        nivel: form.nivel,
-        ...extra,
-      },
-    })
-    setEnviando(false); setEnviado(true)
+    e.preventDefault(); setEnviando(true); setError('')
+    let r: { ok: boolean; error?: string | null }
+    try {
+      if (tipo === 'aviso') {
+        // "Avísame" es solo una notificación, va al buzón de formularios.
+        r = await submitForm({
+          tipo: 'inscripcion', nombre: form.nombre, email: form.email, telefono: form.telefono,
+          asunto: `Taller intensivo · ${taller.nombre} (aviso)`,
+          datos: { taller: taller.nombre, solicitud: 'Avisar cuando abra', nivel: form.nivel },
+          seguridad: { hp, renderedAt },
+        })
+      } else {
+        // Inscripción o lista de espera → tabla del taller (gestión + pago manual).
+        r = await submitInscripcionTaller({
+          tallerId: taller.id, tallerNombre: taller.nombre,
+          nombre: form.nombre, apellidos: form.apellidos, edad: form.edad, tutor: form.tutor,
+          telefono: form.telefono, email: form.email, experiencia: form.nivel,
+          modalidad: modSel?.label ?? form.modalidad, fechas: form.sesion || taller.fecha,
+          observaciones: form.observaciones, estado: tipo === 'espera' ? 'espera' : 'nueva',
+          seguridad: { hp, renderedAt },
+        })
+      }
+    } catch { r = { ok: false, error: 'No se pudo enviar. Inténtalo de nuevo.' } }
+    setEnviando(false)
+    if (!r?.ok) { setError(r?.error || 'No se pudo enviar. Inténtalo de nuevo.'); return }
+    setEnviado(true)
   }
 
   return (
@@ -202,15 +208,34 @@ function ModalAviso({ taller, tipo, onClose }: {
               </div>
             )}
 
-            <input required type="text" placeholder="Nombre y apellidos *"
-              value={form.nombre} onChange={e => setForm(f => ({...f, nombre: e.target.value}))}
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"/>
+            {/* honeypot antibots */}
+            <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" value={hp} onChange={e => setHp(e.target.value)} className="absolute -left-[9999px] w-px h-px opacity-0" />
+
+            <div className="grid grid-cols-2 gap-2">
+              <input required type="text" placeholder="Nombre *"
+                value={form.nombre} onChange={e => setForm(f => ({...f, nombre: e.target.value}))}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"/>
+              <input type="text" placeholder="Apellidos"
+                value={form.apellidos} onChange={e => setForm(f => ({...f, apellidos: e.target.value}))}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"/>
+            </div>
             <input required type="email" placeholder="Email *"
               value={form.email} onChange={e => setForm(f => ({...f, email: e.target.value}))}
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"/>
             <input type="tel" placeholder="Teléfono"
               value={form.telefono} onChange={e => setForm(f => ({...f, telefono: e.target.value}))}
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"/>
+
+            {tipo !== 'aviso' && (
+              <div className="grid grid-cols-2 gap-2">
+                <input type="text" placeholder="Edad"
+                  value={form.edad} onChange={e => setForm(f => ({...f, edad: e.target.value}))}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"/>
+                <input type="text" placeholder="Tutor (si es menor)"
+                  value={form.tutor} onChange={e => setForm(f => ({...f, tutor: e.target.value}))}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red"/>
+              </div>
+            )}
 
             {tipo === 'inscripcion' && (
               <select value={form.nivel} onChange={e => setForm(f => ({...f, nivel: e.target.value}))}
@@ -223,6 +248,12 @@ function ModalAviso({ taller, tipo, onClose }: {
               </select>
             )}
 
+            {tipo !== 'aviso' && (
+              <textarea placeholder="Observaciones (opcional)" rows={2}
+                value={form.observaciones} onChange={e => setForm(f => ({...f, observaciones: e.target.value}))}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red resize-none"/>
+            )}
+
             {/* Información de pago del Club (solo inscripción multi) */}
             {tipo === 'inscripcion' && multi && (
               <div>
@@ -230,6 +261,8 @@ function ModalAviso({ taller, tipo, onClose }: {
                 {taller.pagoNota && <p className="text-xs text-gray-500 mt-2 leading-relaxed">{taller.pagoNota}</p>}
               </div>
             )}
+
+            {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2" role="alert">{error}</p>}
 
             <button type="submit" disabled={!form.nombre || !form.email || enviando}
               className="w-full bg-pm-red hover:bg-pm-red-dark disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">

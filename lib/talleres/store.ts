@@ -108,3 +108,26 @@ export async function getTaller(id: string): Promise<Taller | null> {
 export async function getTallerBySlug(slug: string): Promise<Taller | null> {
   return (await getTalleresAdmin()).find(t => t.slug === slug) ?? null
 }
+
+// ── Inscripciones por taller (admin) ────────────────────────────────────────
+export type InscripcionTaller = {
+  id: string; nombre: string; apellidos: string; edad: string; tutor: string
+  telefono: string; email: string; experiencia: string; modalidad: string; fechas: string; observaciones: string
+  estado: string; pagoEstado: string; pagoImporteCents: number; pagoFecha: string; pagoObs: string; createdAt: string
+}
+
+export async function getInscripcionesTaller(tallerId: string): Promise<InscripcionTaller[]> {
+  try {
+    const db = createAdminClient()
+    const { data } = await db.from('taller_inscripciones').select('*').eq('taller_id', tallerId).order('created_at', { ascending: false })
+    return ((data ?? []) as Row[]).map(r => ({
+      id: str(r.id), nombre: str(r.nombre), apellidos: str(r.apellidos), edad: str(r.edad), tutor: str(r.tutor),
+      telefono: str(r.telefono), email: str(r.email), experiencia: str(r.experiencia), modalidad: str(r.modalidad),
+      fechas: str(r.fechas), observaciones: str(r.observaciones),
+      estado: str(r.estado) || 'nueva', pagoEstado: str(r.pago_estado) || 'pendiente',
+      pagoImporteCents: Number(r.pago_importe_cents ?? 0) || 0,
+      pagoFecha: r.pago_fecha ? str(r.pago_fecha).slice(0, 10) : '', pagoObs: str(r.pago_obs),
+      createdAt: str(r.created_at),
+    }))
+  } catch { return [] }
+}

@@ -143,6 +143,39 @@ export async function eliminarTaller(id: string): Promise<Res> {
   } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'Error al eliminar' } }
 }
 
+/** Edita una inscripción de un taller (estado y pago manual). */
+export async function guardarInscripcionTaller(id: string, patch: {
+  estado?: string; pago_estado?: string; pago_importe_cents?: number; pago_fecha?: string | null; pago_obs?: string | null
+}): Promise<Res> {
+  try {
+    const { admin, error } = await exigir()
+    if (!admin) return { ok: false, error }
+    const db = createAdminClient()
+    const limpio: Record<string, unknown> = {}
+    if (patch.estado !== undefined) limpio.estado = patch.estado
+    if (patch.pago_estado !== undefined) limpio.pago_estado = patch.pago_estado
+    if (patch.pago_importe_cents !== undefined) limpio.pago_importe_cents = patch.pago_importe_cents
+    if (patch.pago_fecha !== undefined) limpio.pago_fecha = patch.pago_fecha || null
+    if (patch.pago_obs !== undefined) limpio.pago_obs = patch.pago_obs || null
+    const { error: e } = await db.from('taller_inscripciones').update(limpio).eq('id', id)
+    if (e) return { ok: false, error: e.message }
+    revalidar()
+    return { ok: true }
+  } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'Error' } }
+}
+
+export async function eliminarInscripcionTaller(id: string): Promise<Res> {
+  try {
+    const { admin, error } = await exigir()
+    if (!admin) return { ok: false, error }
+    const db = createAdminClient()
+    const { error: e } = await db.from('taller_inscripciones').delete().eq('id', id)
+    if (e) return { ok: false, error: e.message }
+    revalidar()
+    return { ok: true }
+  } catch (e) { return { ok: false, error: e instanceof Error ? e.message : 'Error' } }
+}
+
 /** Importa los 4 intensivos del config a la BD como registros dinámicos. Idempotente. */
 export async function sembrarTalleresIniciales(): Promise<Res & { creados?: number }> {
   try {
