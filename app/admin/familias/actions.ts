@@ -151,6 +151,24 @@ export async function desvincularAlumno(familiaId: string, submissionId: string)
   return { ok: true }
 }
 
+/**
+ * Enlace del grupo de WhatsApp de un alumno concreto (club_gestion.whatsapp_url).
+ * Es el mismo campo que ve la familia en la ficha del hijo (botón "Unirme al
+ * grupo"). Vacío = usa el enlace por defecto del grupo del alumno.
+ */
+export async function guardarWhatsappAlumno(submissionId: string, url: string) {
+  const { admin, error } = await exigir()
+  if (!admin) return { ok: false, error }
+  const db = createAdminClient()
+  const { error: e } = await db.from('club_gestion').upsert(
+    { submission_id: submissionId, whatsapp_url: url.trim() || null, updated_at: new Date().toISOString(), updated_by: admin.email },
+    { onConflict: 'submission_id' },
+  )
+  if (e) return { ok: false, error: e.message }
+  revalidar()
+  return { ok: true }
+}
+
 export async function eliminarFamilia(id: string) {
   const { admin, error } = await exigir()
   if (!admin) return { ok: false, error }

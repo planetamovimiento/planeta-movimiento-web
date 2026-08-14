@@ -21,11 +21,13 @@ export default async function FamiliasPage() {
   if (can.edit(admin.role)) await sincronizarFamilias()
   const db = createAdminClient()
 
-  const [famsRes, linksRes, subsRes] = await Promise.all([
+  const [famsRes, linksRes, subsRes, gestRes] = await Promise.all([
     safe<Row>(() => db.from('club_familias').select('*').order('created_at', { ascending: false }) as never),
     safe<Row>(() => db.from('club_familia_alumnos').select('familia_id, submission_id') as never),
     safe<Row>(() => db.from('form_submissions').select('id, nombre, email, datos').eq('tipo', 'inscripcion_club').order('created_at', { ascending: false }).limit(2000) as never),
+    safe<Row>(() => db.from('club_gestion').select('submission_id, grupo, whatsapp_url') as never),
   ])
+  const gestMap = new Map(gestRes.rows.map(g => [str(g.submission_id), g]))
 
   const familias: Familia[] = famsRes.rows.map(f => ({
     id: str(f.id), email: str(f.email), nombre: (f.nombre as string) ?? null, telefono: (f.telefono as string) ?? null,
@@ -37,8 +39,12 @@ export default async function FamiliasPage() {
 
   const alumnos: AlumnoLite[] = subsRes.rows.map(s => {
     const d = (s.datos ?? {}) as Record<string, unknown>
+    const g = gestMap.get(str(s.id))
     const completo = str(s.nombre) || `${str(d.nombre)} ${str(d.apellidos)}`.trim()
-    return { id: str(s.id), nombre: completo || '(sin nombre)', actividad: str(d.actividad), email: str(s.email).toLowerCase() }
+    return {
+      id: str(s.id), nombre: completo || '(sin nombre)', actividad: str(d.actividad), email: str(s.email).toLowerCase(),
+      grupo: str(g?.grupo), whatsapp_url: str(g?.whatsapp_url),
+    }
   })
 
   return (

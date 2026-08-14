@@ -2,10 +2,10 @@
 
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { generarFamiliasDesdeCRM, guardarFamilia, cambiarEstadoFamilia, vincularAlumno, desvincularAlumno, eliminarFamilia, generarNumeroSocioFamilia, guardarNumeroSocio } from './actions'
+import { generarFamiliasDesdeCRM, guardarFamilia, cambiarEstadoFamilia, vincularAlumno, desvincularAlumno, eliminarFamilia, generarNumeroSocioFamilia, guardarNumeroSocio, guardarWhatsappAlumno } from './actions'
 import { ESTADOS_FAMILIA, type Familia, type EstadoFamilia } from '@/lib/familias/tipos'
 
-export type AlumnoLite = { id: string; nombre: string; actividad: string; email: string }
+export type AlumnoLite = { id: string; nombre: string; actividad: string; email: string; grupo?: string; whatsapp_url?: string }
 type Link = { familia_id: string; submission_id: string }
 type Props = { familias: Familia[]; links: Link[]; alumnos: AlumnoLite[]; migrado: boolean; puedeEditar: boolean }
 
@@ -169,13 +169,9 @@ function CardFamilia({ familia, vinculados, disponibles, abierta, onToggle, pend
             {vinculados.length === 0 ? (
               <p className="text-xs text-gray-400">Sin alumnos vinculados.</p>
             ) : (
-              <div className="flex flex-wrap gap-2">
+              <div className="space-y-2">
                 {vinculados.map(a => (
-                  <span key={a.id} className="inline-flex items-center gap-1.5 bg-pm-bg border border-gray-200 rounded-full pl-3 pr-1.5 py-1 text-xs">
-                    <span className="font-semibold text-pm-navy">{a.nombre}</span>
-                    {a.actividad && <span className="text-gray-400">· {a.actividad}</span>}
-                    {puedeEditar && <button onClick={() => correr(() => desvincularAlumno(familia.id, a.id))} disabled={pending} className="text-gray-300 hover:text-red-500 ml-0.5">✕</button>}
-                  </span>
+                  <AlumnoVinculado key={a.id} familiaId={familia.id} alumno={a} puedeEditar={puedeEditar} correr={correr} pending={pending} />
                 ))}
               </div>
             )}
@@ -197,6 +193,43 @@ function CardFamilia({ familia, vinculados, disponibles, abierta, onToggle, pend
                 disabled={pending} className="text-xs font-semibold text-gray-400 hover:text-pm-red">Eliminar cuenta familiar</button>
             </div>
           )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Alumno vinculado: datos + enlace del grupo de WhatsApp (por alumno) ─────────
+function AlumnoVinculado({ familiaId, alumno, puedeEditar, correr, pending }: {
+  familiaId: string; alumno: AlumnoLite; puedeEditar: boolean
+  correr: (fn: () => Promise<Resultado>) => void; pending: boolean
+}) {
+  const [url, setUrl] = useState(alumno.whatsapp_url ?? '')
+  const cambiado = url.trim() !== (alumno.whatsapp_url ?? '').trim()
+  const inp = 'w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-pm-red'
+
+  return (
+    <div className="border border-gray-100 rounded-xl p-2.5">
+      <div className="flex items-center gap-2">
+        <span className="font-semibold text-pm-navy text-sm">{alumno.nombre}</span>
+        {alumno.actividad && <span className="text-xs text-gray-400">· {alumno.actividad}</span>}
+        {alumno.grupo && <span className="text-xs text-gray-400">· {alumno.grupo}</span>}
+        {puedeEditar && (
+          <button onClick={() => { if (confirm(`¿Quitar a ${alumno.nombre} de esta familia?`)) correr(() => desvincularAlumno(familiaId, alumno.id)) }}
+            disabled={pending} className="ml-auto text-xs text-gray-300 hover:text-red-500 font-semibold">Quitar ✕</button>
+        )}
+      </div>
+      {puedeEditar && (
+        <div className="mt-1.5">
+          <label className="block text-[11px] font-bold text-gray-400 mb-1">Enlace al grupo de WhatsApp de este alumno</label>
+          <div className="flex gap-2">
+            <input value={url} onChange={e => setUrl(e.target.value)} placeholder="https://chat.whatsapp.com/…" className={`${inp} flex-1`} />
+            {cambiado && (
+              <button onClick={() => correr(() => guardarWhatsappAlumno(alumno.id, url))} disabled={pending}
+                className="bg-pm-navy text-white text-xs font-bold px-3 py-2 rounded-lg whitespace-nowrap">Guardar</button>
+            )}
+          </div>
+          <p className="text-[11px] text-gray-400 mt-1">La familia verá un botón «Unirme al grupo de WhatsApp» en la ficha de este hijo. Vacío = usa el enlace por defecto del grupo.</p>
         </div>
       )}
     </div>
