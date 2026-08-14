@@ -35,6 +35,31 @@ export const CUOTA = {
   ],
 } as const
 
+// ── Cuotas mensuales por actividad (punto 22) ──────────────────────────────────
+// Fuente ÚNICA: la usa el default de la config del club (sugerencia en el CRM) y
+// los formularios públicos de inscripción (precio por modalidad). Céntimos.
+export type CuotaMensualActividad = { actividad: string; opciones: { label: string; cents: number }[] }
+
+export const CUOTAS_MENSUALES: CuotaMensualActividad[] = [
+  { actividad: 'Gimnasia Acrobática', opciones: [{ label: '1 hora', cents: 4500 }, { label: '2 horas', cents: 7000 }, { label: '3 horas', cents: 10000 }] },
+  { actividad: 'Escuela de aéreos', opciones: [{ label: '1 hora', cents: 4500 }, { label: '2 horas', cents: 7000 }, { label: '3 horas', cents: 10000 }] },
+  { actividad: 'Escuela infantil', opciones: [{ label: '1 día', cents: 4000 }, { label: '2 días', cents: 6500 }, { label: '3 días', cents: 9000 }] },
+  { actividad: 'Jiu-Jitsu Brasileño', opciones: [{ label: 'Cuota', cents: 6000 }] },
+  { actividad: 'Escuela de Bienestar', opciones: [{ label: '1 hora', cents: 3000 }, { label: '2 horas', cents: 4000 }] },
+]
+
+/** Céntimos de la cuota mensual de una actividad para el nivel N (1,2,3…). null si no hay tarifa. */
+export function cuotaMensualCents(actividad: string, tier: number): number | null {
+  const a = CUOTAS_MENSUALES.find(c => c.actividad.trim().toLowerCase() === actividad.trim().toLowerCase())
+  return a?.opciones[tier - 1]?.cents ?? null
+}
+
+/** Texto de precio mensual para la modalidad N ("45 € / mes") o "Consultar precio" si no hay tarifa. */
+export function cuotaMensualTexto(actividad: string, tier: number): string {
+  const c = cuotaMensualCents(actividad, tier)
+  return c != null ? `${eurosCuota(c)} / mes` : 'Consultar precio'
+}
+
 /** Importe SUGERIDO según la fecha de pago (o hoy). El admin confirma el real. */
 export function importeCuotaSugeridoCents(fechaISO?: string): number {
   const f = (fechaISO && fechaISO.slice(0, 10)) || new Date().toISOString().slice(0, 10)

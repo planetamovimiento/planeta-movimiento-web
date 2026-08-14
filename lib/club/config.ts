@@ -6,7 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { getConfig, setConfig } from '@/lib/config/store'
-import { CUOTA } from './cuota'
+import { CUOTA, CUOTAS_MENSUALES } from './cuota'
 import { SEPTIEMBRE } from './septiembre'
 
 const CLAVE = 'club_temporada_config'
@@ -60,13 +60,7 @@ export const CLUB_CONFIG_DEFAULT: ClubConfig = {
     precios: SEPTIEMBRE.precios.map(p => ({ ...p })),
   },
   socioPrefijo: 'CDO-',
-  cuotasMensuales: [
-    { actividad: 'Gimnasia Acrobática', opciones: [{ label: '1 hora', cents: 4500 }, { label: '2 horas', cents: 7000 }, { label: '3 horas', cents: 10000 }] },
-    { actividad: 'Escuela de aéreos', opciones: [{ label: '1 hora', cents: 4500 }, { label: '2 horas', cents: 7000 }, { label: '3 horas', cents: 10000 }] },
-    { actividad: 'Escuela infantil', opciones: [{ label: '1 día', cents: 4000 }, { label: '2 días', cents: 6500 }, { label: '3 días', cents: 9000 }] },
-    { actividad: 'Jiu-Jitsu Brasileño', opciones: [{ label: 'Cuota', cents: 6000 }] },
-    { actividad: 'Escuela de Bienestar', opciones: [{ label: '1 hora', cents: 3000 }, { label: '2 horas', cents: 4000 }] },
-  ],
+  cuotasMensuales: CUOTAS_MENSUALES,
 }
 
 /** Config de temporada (guardada o, si falta/no válida, la de por defecto). */

@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import { ModalInscripcion, type Modalidad } from '@/components/reserva/ModalInscripcion'
+import { cuotaMensualTexto } from '@/lib/club/cuota'
 
 const NIVELES = ['Sin experiencia previa', 'Principiante (< 1 año)', 'Intermedio (1-3 años)', 'Avanzado (> 3 años)']
 
 const MODALIDADES: Modalidad[] = [
-  { id: 'mensual', label: 'Mensualidad', sublabel: 'Todos los sábados del mes', precio: '60 € / mes' },
+  { id: 'mensual', label: 'Mensualidad', sublabel: 'Todos los sábados del mes', precio: cuotaMensualTexto('Jiu-Jitsu Brasileño', 1) },
 ]
 
 export function BotonApuntarme() {
