@@ -106,7 +106,7 @@ export default function TabDocumentos({ tipo, documentos, perfiles, series, clie
           <option value="">Todos los estados</option>
           {(tipo === 'proforma'
             ? ['borrador', 'enviada', 'aceptada', 'rechazada', 'caducada', 'convertida']
-            : ['borrador', 'emitida', 'enviada', 'parcial', 'pagada', 'vencida', 'anulada']
+            : ['borrador', 'emitida', 'enviada', 'parcial', 'pagada', 'compensada', 'vencida', 'anulada']
           ).map(s => <option key={s} value={s}>{estadoMeta(tipo, s).label}</option>)}
         </select>
         <button type="button" disabled={!editable || sinPerfil} onClick={() => setModo({ tipo: 'form', doc: null })}

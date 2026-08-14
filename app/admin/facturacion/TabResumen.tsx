@@ -3,13 +3,14 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Resumen de facturación: indicadores calculados en el cliente a partir de los
 // documentos ya cargados (sin nuevas consultas ni migración). Solo cuentan como
-// «facturado» las facturas en estado emitido (ESTADOS_EMITIDOS): ni borradores
-// ni anuladas. El pendiente de cobro es facturado − cobrado.
+// «facturado» las facturas cuyo importe cuenta (ESTADOS_FACTURADOS): ni borradores,
+// ni anuladas, ni «Compensada» (saldada por colaboración, no suma dinero).
+// El pendiente de cobro es facturado − cobrado.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useMemo, useState } from 'react'
 import { eur } from '@/lib/facturacion/dinero'
-import { ESTADOS_EMITIDOS, estadoMeta } from '@/lib/facturacion/constants'
+import { ESTADOS_FACTURADOS, estadoMeta } from '@/lib/facturacion/constants'
 import type { Documento, PerfilFacturacion } from '@/lib/facturacion/tipos'
 
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
@@ -47,7 +48,7 @@ export default function TabResumen({ documentos, perfiles }: { documentos: Docum
 
   const r = useMemo(() => {
     const delAño = año === 'todos' ? facturas : facturas.filter(f => f.fecha.slice(0, 4) === año)
-    const contadas = delAño.filter(f => ESTADOS_EMITIDOS.includes(f.estado))
+    const contadas = delAño.filter(f => ESTADOS_FACTURADOS.includes(f.estado))
     const suma = (sel: (d: Documento) => number) => contadas.reduce((a, d) => a + sel(d), 0)
     const facturado = suma(d => d.totalCents)
     const cobrado = suma(d => d.pagadoCents)

@@ -39,6 +39,7 @@ export const ESTADOS_FACTURA = [
   { id: 'enviada', label: 'Enviada', dot: 'bg-indigo-400', badge: 'bg-indigo-50 text-indigo-700' },
   { id: 'parcial', label: 'Parcialmente pagada', dot: 'bg-amber-400', badge: 'bg-amber-50 text-amber-700' },
   { id: 'pagada', label: 'Pagada', dot: 'bg-emerald-500', badge: 'bg-emerald-50 text-emerald-700' },
+  { id: 'compensada', label: 'Compensada', dot: 'bg-teal-500', badge: 'bg-teal-50 text-teal-700' },
   { id: 'vencida', label: 'Vencida', dot: 'bg-red-500', badge: 'bg-red-50 text-red-700' },
   { id: 'rectificada', label: 'Rectificada', dot: 'bg-purple-400', badge: 'bg-purple-50 text-purple-700' },
   { id: 'anulada', label: 'Anulada', dot: 'bg-gray-400', badge: 'bg-gray-100 text-gray-500 line-through' },
@@ -54,7 +55,14 @@ export const ESTADOS_PROFORMA = [
 ] as const
 
 /** Estados que YA no son borrador: no se borran físicamente ni se renumeran. */
-export const ESTADOS_EMITIDOS = ['emitida', 'enviada', 'parcial', 'pagada', 'vencida', 'rectificada']
+export const ESTADOS_EMITIDOS = ['emitida', 'enviada', 'parcial', 'pagada', 'compensada', 'vencida', 'rectificada']
+
+/**
+ * Estados cuyo importe SÍ cuenta como facturado/cobrado en el Resumen.
+ * «Compensada» = emitida y saldada por una colaboración: queda registrada
+ * pero NO suma dinero.
+ */
+export const ESTADOS_FACTURADOS = ESTADOS_EMITIDOS.filter(e => e !== 'compensada')
 
 export function estadosDe(tipo: TipoDocumento) {
   return tipo === 'proforma' ? ESTADOS_PROFORMA : ESTADOS_FACTURA
