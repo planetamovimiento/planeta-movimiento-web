@@ -4,13 +4,13 @@ import { useState, useMemo, useTransition, useCallback } from 'react'
 import { Metric, EmptyState } from '@/components/admin/ui'
 import { waCliente } from '@/lib/whatsapp'
 import {
-  MESES_TEMPORADA, ESTADO_PAGO_META, CICLO_PAGO, ESTADOS_GENERAL, GRUPOS_BASE, GRUPOS_EXTRA, TEMPORADAS, ACTIVIDADES_CLUB,
+  MESES_TEMPORADA, ESTADO_PAGO_META, ESTADOS_GENERAL, GRUPOS_BASE, GRUPOS_EXTRA, TEMPORADAS, ACTIVIDADES_CLUB,
   labelEstadoGeneral, mesActualKey, edadDe, fechaCorta, temporadaDisplay,
   type Alumno, type Grupo, type EstadoPago, type EstadoGeneral,
 } from '@/lib/club/constants'
 import { CUOTA_ESTADOS, TALLAS_EQUIPACION, eurosCuota, eurosACents } from '@/lib/club/cuota'
 import type { ClubConfig } from '@/lib/club/config'
-import { guardarGestion, setPagoMes, crearGrupo, renombrarGrupo, eliminarGrupo, fijarHorarioGrupo, fijarWhatsappGrupo, sincronizarPendientes } from './actions'
+import { guardarGestion, guardarMesDetalle, crearGrupo, renombrarGrupo, eliminarGrupo, fijarHorarioGrupo, fijarWhatsappGrupo, sincronizarPendientes } from './actions'
 import { setTemporadaActiva, guardarConfigTemporada } from './temporada-actions'
 import ImportarModal from './ImportarModal'
 import { SubirImagen } from '@/components/admin/SubirImagen'
@@ -51,6 +51,7 @@ export default function ClubInscripcionesClient({
   const [fPago, setFPago] = useState('')
 
   const [detalleId, setDetalleId] = useState<string | null>(null)
+  const [mesEditando, setMesEditando] = useState<{ id: string; mes: string } | null>(null)
   const [modalGrupos, setModalGrupos] = useState(false)
   const [modalImportar, setModalImportar] = useState(false)
   const [modalConfig, setModalConfig] = useState(false)
@@ -178,18 +179,24 @@ export default function ClubInscripcionesClient({
     })
   }
 
-  function cicloPago(a: Alumno, mes: string) {
+  /** Guarda estado + importe + fecha + obs de un mes (optimista). */
+  function guardarMes(id: string, mes: string, patch: { estado?: string; importe_cents?: number | null; fecha?: string | null; obs?: string | null }) {
     if (!puedeEditar) return
-    const actual = (a.pagos[mes] ?? '') as EstadoPago | ''
-    const idx = CICLO_PAGO.indexOf(actual)
-    const siguiente = CICLO_PAGO[(idx + 1) % CICLO_PAGO.length]
-    const nuevos = { ...a.pagos }
-    if (siguiente) nuevos[mes] = siguiente as EstadoPago
-    else delete nuevos[mes]
-    patchLocal(a.id, { pagos: nuevos })
+    const a = lista.find(x => x.id === id)
+    if (!a) return
+    const pagos = { ...a.pagos }
+    if (patch.estado !== undefined) { if (patch.estado) pagos[mes] = patch.estado as EstadoPago; else delete pagos[mes] }
+    const meta = { ...a.pagos_meta }
+    const m = { ...(meta[mes] ?? {}) }
+    if (patch.importe_cents !== undefined) { if (patch.importe_cents != null) m.importe_cents = patch.importe_cents; else delete m.importe_cents }
+    if (patch.fecha !== undefined) { if (patch.fecha) m.fecha = patch.fecha; else delete m.fecha }
+    if (patch.obs !== undefined) { if (patch.obs) m.obs = patch.obs; else delete m.obs }
+    if (Object.keys(m).length) meta[mes] = m; else delete meta[mes]
+    patchLocal(id, { pagos, pagos_meta: meta })
     startTransition(async () => {
-      const r = await setPagoMes(a.id, mes, siguiente)
-      if (!r.ok) setError(r.error || 'No se pudo guardar el pago')
+      const r = await guardarMesDetalle(id, mes, patch)
+      if (!r.ok) setError(r.error || 'No se pudo guardar el mes')
+      else if (r.metaGuardado === false) setError('Estado guardado, pero el importe no se guardó: falta ejecutar migration_club_pagos_meta.sql en Supabase.')
     })
   }
 
@@ -471,7 +478,7 @@ export default function ClubInscripcionesClient({
                     </td>
                     <td className="px-3 py-2.5">
                       <div className="flex items-center justify-center gap-1">
-                        {MESES_TEMPORADA.map(m => <CirculoMes key={m.key} alumno={a} mesKey={m.key} mesLabel={m.label} mesNombre={m.nombre} onClick={() => setDetalleId(a.id)} editable />)}
+                        {MESES_TEMPORADA.map(m => <CirculoMes key={m.key} alumno={a} mesKey={m.key} mesLabel={m.label} mesNombre={m.nombre} onClick={() => setMesEditando({ id: a.id, mes: m.key })} editable={puedeEditar} />)}
                       </div>
                     </td>
                     <td className="px-4 py-2.5 text-right">
@@ -494,9 +501,20 @@ export default function ClubInscripcionesClient({
           cuotaCfg={clubConfig.cuota}
           onClose={() => setDetalleId(null)}
           onGestion={p => aplicarGestion(detalle.id, p)}
-          onPago={mes => cicloPago(detalle, mes)}
+          onEditMes={mes => setMesEditando({ id: detalle.id, mes })}
         />
       )}
+
+      {/* Editor de un mes (estado + importe + fecha + obs) */}
+      {mesEditando && (() => {
+        const a = lista.find(x => x.id === mesEditando.id)
+        if (!a) return null
+        return (
+          <MesModal alumno={a} mes={mesEditando.mes} puedeEditar={puedeEditar}
+            onClose={() => setMesEditando(null)}
+            onGuardar={patch => guardarMes(a.id, mesEditando.mes, patch)} />
+        )
+      })()}
 
       {/* Configuración de temporada (cuota + septiembre) */}
       {modalConfig && (
@@ -564,25 +582,132 @@ export default function ClubInscripcionesClient({
   )
 }
 
-// ─── Círculo de estado mensual ─────────────────────────────────────────────────
+// ─── Indicador de estado mensual (píldora con importe si lo hay) ────────────────
 function CirculoMes({ alumno, mesKey, mesLabel, mesNombre, onClick, editable }: {
   alumno: Alumno; mesKey: string; mesLabel: string; mesNombre: string; onClick: () => void; editable: boolean
 }) {
   const estado = (alumno.pagos[mesKey] ?? '') as EstadoPago | ''
   const meta = estado ? ESTADO_PAGO_META[estado] : null
+  const cents = alumno.pagos_meta[mesKey]?.importe_cents
+  const tieneImporte = typeof cents === 'number' && cents > 0
+  const titulo = `${mesNombre}: ${meta?.label ?? 'sin definir'}${tieneImporte ? ` · ${eurosCuota(cents!)}` : ''}${editable ? ' · clic para editar' : ''}`
   return (
     <div className="flex flex-col items-center gap-0.5">
-      <button onClick={onClick} disabled={!editable} title={`${mesNombre}: ${meta?.label ?? 'sin definir'} · abrir ficha para editar`}
-        className={`w-5 h-5 rounded-full border transition-transform ${editable ? 'hover:scale-125 cursor-pointer' : 'cursor-default'} ${meta ? `${meta.dot} border-transparent` : 'bg-white border-gray-300'}`} />
+      {tieneImporte ? (
+        <button onClick={onClick} disabled={!editable} title={titulo}
+          className={`h-5 px-1.5 rounded-full text-[10px] font-black leading-none whitespace-nowrap transition-transform ${editable ? 'hover:scale-110 cursor-pointer' : 'cursor-default'} ${meta ? `${meta.dot} text-white` : 'bg-gray-400 text-white'}`}>
+          {eurosCuota(cents!).replace(' €', '€')}
+        </button>
+      ) : (
+        <button onClick={onClick} disabled={!editable} title={titulo}
+          className={`w-5 h-5 rounded-full border transition-transform ${editable ? 'hover:scale-125 cursor-pointer' : 'cursor-default'} ${meta ? `${meta.dot} border-transparent` : 'bg-white border-gray-300'}`} />
+      )}
       <span className="text-[9px] text-gray-400 leading-none">{mesLabel}</span>
     </div>
   )
 }
 
+// ─── Resumen económico del alumno (temporada) ──────────────────────────────────
+function resumenAlumno(a: Alumno) {
+  let pagadoCents = 0, pendienteCents = 0, pagados = 0, pendientes = 0, bajas = 0
+  for (const m of MESES_TEMPORADA) {
+    const estado = a.pagos[m.key] ?? ''
+    const cents = a.pagos_meta[m.key]?.importe_cents ?? 0
+    if (estado === 'pagado') { pagados++; pagadoCents += cents }
+    else if (estado === 'pendiente') { pendientes++; pendienteCents += cents }
+    else if (estado === 'baja') { bajas++ }
+  }
+  return { pagadoCents, pendienteCents, pagados, pendientes, bajas }
+}
+
+// ─── Editor de un mes (estado + importe + fecha de pago + observación) ──────────
+function MesModal({ alumno, mes, puedeEditar, onClose, onGuardar }: {
+  alumno: Alumno; mes: string; puedeEditar: boolean
+  onClose: () => void; onGuardar: (patch: { estado?: string; importe_cents?: number | null; fecha?: string | null; obs?: string | null }) => void
+}) {
+  const info = MESES_TEMPORADA.find(m => m.key === mes)
+  const detalle = alumno.pagos_meta[mes] ?? {}
+  const [estado, setEstado] = useState<string>(alumno.pagos[mes] ?? '')
+  const [importe, setImporte] = useState(detalle.importe_cents ? eurosCuota(detalle.importe_cents).replace(' €', '') : '')
+  const [fecha, setFecha] = useState(detalle.fecha ?? '')
+  const [obs, setObs] = useState(detalle.obs ?? '')
+
+  const OPCIONES: { id: string; label: string; badge: string }[] = [
+    { id: '', label: 'Sin definir', badge: 'bg-gray-100 text-gray-500' },
+    { id: 'pagado', label: 'Pagado', badge: 'bg-green-100 text-green-700' },
+    { id: 'pendiente', label: 'Pendiente', badge: 'bg-amber-100 text-amber-700' },
+    { id: 'baja', label: 'Baja', badge: 'bg-red-100 text-red-700' },
+  ]
+
+  function guardar() {
+    onGuardar({
+      estado,
+      importe_cents: importe.trim() === '' ? null : eurosACents(importe),
+      fecha: fecha || null,
+      obs: obs.trim() || null,
+    })
+    onClose()
+  }
+
+  const inp = 'w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:border-pm-red disabled:opacity-60'
+  const lbl = 'block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1'
+
+  return (
+    <div className="fixed inset-0 z-[60] flex justify-center items-start overflow-y-auto p-4">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl my-8">
+        <div className="bg-pm-navy text-white px-5 py-4 flex items-center justify-between rounded-t-2xl">
+          <div>
+            <div className="font-black">{info?.nombre ?? mes}</div>
+            <div className="text-white/60 text-xs">{alumno.nombre} {alumno.apellidos}</div>
+          </div>
+          <button onClick={onClose} className="text-white/60 hover:text-white">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          <div>
+            <label className={lbl}>Estado</label>
+            <div className="flex flex-wrap gap-1.5">
+              {OPCIONES.map(o => (
+                <button key={o.id} disabled={!puedeEditar} onClick={() => setEstado(o.id)}
+                  className={`text-xs font-bold px-3 py-1.5 rounded-full border transition-colors ${estado === o.id ? `${o.badge} border-transparent ring-2 ring-offset-1 ring-pm-navy/20` : 'border-gray-200 text-gray-500 hover:border-pm-navy'}`}>
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={lbl}>Importe (€)</label>
+              <input value={importe} disabled={!puedeEditar} onChange={e => setImporte(e.target.value)} placeholder="0" inputMode="decimal" className={inp} />
+            </div>
+            <div>
+              <label className={lbl}>Fecha de pago</label>
+              <input type="date" value={fecha} disabled={!puedeEditar} onChange={e => setFecha(e.target.value)} className={inp} />
+            </div>
+          </div>
+          <div>
+            <label className={lbl}>Observación <span className="text-gray-300 normal-case font-medium">(opcional)</span></label>
+            <textarea value={obs} disabled={!puedeEditar} onChange={e => setObs(e.target.value)} rows={2} className={`${inp} resize-none`} placeholder="Nota de este mes" />
+          </div>
+          {puedeEditar && (
+            <div className="flex gap-2 pt-1 border-t border-gray-100">
+              <button onClick={guardar} className="bg-pm-red hover:bg-pm-red-dark text-white font-bold px-5 py-2 rounded-xl text-sm">Guardar mes</button>
+              <button onClick={onClose} className="text-sm font-bold text-gray-400 hover:text-pm-navy px-3 py-2 ml-auto">Cancelar</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Ficha del alumno (panel lateral) ──────────────────────────────────────────
-function FichaAlumno({ a, puedeEditar, gruposActividad, cuotaCfg, onClose, onGestion, onPago }: {
+function FichaAlumno({ a, puedeEditar, gruposActividad, cuotaCfg, onClose, onGestion, onEditMes }: {
   a: Alumno; puedeEditar: boolean; gruposActividad: string[]; cuotaCfg: ClubConfig['cuota']
-  onClose: () => void; onGestion: (p: Partial<Alumno>) => void; onPago: (mes: string) => void
+  onClose: () => void; onGestion: (p: Partial<Alumno>) => void; onEditMes: (mes: string) => void
 }) {
   const sugerirImporteCents = () => {
     const f = a.cuota_fecha_pago || new Date().toISOString().slice(0, 10)
@@ -779,23 +904,39 @@ function FichaAlumno({ a, puedeEditar, gruposActividad, cuotaCfg, onClose, onGes
             </div>
           </div>
 
-          {/* Historial de pagos */}
+          {/* Estado + importe mensual */}
           <div>
-            <div className="text-xs font-black text-pm-navy uppercase tracking-wider mb-2">Estado mensual de pago</div>
+            <div className="text-xs font-black text-pm-navy uppercase tracking-wider mb-2">Estado e importe mensual</div>
             <div className="grid grid-cols-5 gap-2">
               {MESES_TEMPORADA.map(m => {
                 const estado = (a.pagos[m.key] ?? '') as EstadoPago | ''
                 const meta = estado ? ESTADO_PAGO_META[estado] : null
+                const cents = a.pagos_meta[m.key]?.importe_cents
                 return (
-                  <button key={m.key} disabled={!puedeEditar} onClick={() => onPago(m.key)} title="Clic para cambiar"
-                    className={`flex flex-col items-center gap-1 rounded-xl border py-2 transition-colors ${meta ? 'border-transparent' : 'border-gray-200'} ${editableBg(estado)}`}>
+                  <button key={m.key} disabled={!puedeEditar} onClick={() => onEditMes(m.key)} title="Clic para editar estado e importe"
+                    className={`flex flex-col items-center gap-0.5 rounded-xl border py-2 transition-colors ${meta ? 'border-transparent' : 'border-gray-200'} ${editableBg(estado)}`}>
                     <span className="text-[11px] font-bold text-gray-600">{m.label}</span>
                     <span className={`w-3.5 h-3.5 rounded-full ${meta ? meta.dot : 'bg-white border border-gray-300'}`} />
+                    <span className="text-[10px] font-bold text-gray-500 leading-none h-3">{typeof cents === 'number' && cents > 0 ? eurosCuota(cents).replace(' €', '€') : ''}</span>
                   </button>
                 )
               })}
             </div>
-            <p className="text-xs text-gray-400 mt-2">Clic en cada mes para alternar: sin definir → pagado → pendiente → baja.</p>
+            <p className="text-xs text-gray-400 mt-2">Clic en cada mes para editar estado, importe, fecha y observación.</p>
+
+            {/* Totales de la temporada (punto 24) */}
+            {(() => {
+              const r = resumenAlumno(a)
+              return (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
+                  <ResumenDato label="Pagado" valor={eurosCuota(r.pagadoCents)} tono="text-green-700" />
+                  <ResumenDato label="Pendiente" valor={eurosCuota(r.pendienteCents)} tono="text-amber-700" />
+                  <ResumenDato label="Meses pagados" valor={String(r.pagados)} />
+                  <ResumenDato label="Meses pendientes" valor={String(r.pendientes)} />
+                  <ResumenDato label="Meses de baja" valor={String(r.bajas)} />
+                </div>
+              )
+            })()}
           </div>
 
           {/* Observaciones */}
@@ -838,6 +979,15 @@ function Dato({ k, v }: { k: string; v: string }) {
     <div>
       <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">{k}</div>
       <div className="text-pm-navy font-semibold break-words">{v}</div>
+    </div>
+  )
+}
+
+function ResumenDato({ label, valor, tono }: { label: string; valor: string; tono?: string }) {
+  return (
+    <div className="bg-pm-bg rounded-xl border border-gray-100 p-2.5 text-center">
+      <div className="text-[10px] text-gray-400 uppercase tracking-wider">{label}</div>
+      <div className={`font-black text-sm ${tono ?? 'text-pm-navy'}`}>{valor}</div>
     </div>
   )
 }

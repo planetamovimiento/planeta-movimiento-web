@@ -5,6 +5,18 @@ import type { AlumnoFamilia } from './tipos'
 type Row = Record<string, unknown>
 const str = (v: unknown): string => (typeof v === 'string' ? v : '')
 
+/** Expone solo el importe de cada mes (nunca la observación interna). */
+function soloImportes(v: unknown): Record<string, { importe_cents?: number }> {
+  const out: Record<string, { importe_cents?: number }> = {}
+  if (v && typeof v === 'object') {
+    for (const [mes, det] of Object.entries(v as Record<string, unknown>)) {
+      const c = (det as { importe_cents?: unknown })?.importe_cents
+      if (typeof c === 'number' && c > 0) out[mes] = { importe_cents: c }
+    }
+  }
+  return out
+}
+
 /** submission_id de los alumnos vinculados a una familia. */
 export async function idsDeFamilia(familiaId: string): Promise<string[]> {
   const db = createAdminClient()
@@ -45,6 +57,7 @@ function construir(s: Row, g: Row | undefined, grupos: Row[]): AlumnoFamilia {
     temporada: str(g?.temporada) || TEMPORADA_ACTUAL,
     estado_general: str(g?.estado_general) || 'pendiente',
     pagos: (g?.pagos as Record<string, string>) ?? {},
+    pagos_meta: soloImportes(g?.pagos_meta),
     observaciones_familia: str(g?.observaciones_familia),
     foto_url: str(g?.foto_url),
     whatsapp_url: str(g?.whatsapp_url) || valorDeGrupo(grupos, grupo, actividad, 'whatsapp_url'),

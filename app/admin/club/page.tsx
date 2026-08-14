@@ -1,7 +1,7 @@
 import { requireSeccion, can } from '@/lib/admin/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { AdminHeader } from '@/components/admin/ui'
-import { type Alumno, type Grupo, type EstadoGeneral, type EstadoPago } from '@/lib/club/constants'
+import { type Alumno, type Grupo, type EstadoGeneral, type EstadoPago, type PagoMes } from '@/lib/club/constants'
 import { getTemporadaActiva } from '@/lib/config/store'
 import { getClubConfig } from '@/lib/club/config'
 import ClubInscripcionesClient from './ClubInscripcionesClient'
@@ -12,7 +12,7 @@ type SubRow = {
 }
 type GestionRow = {
   submission_id: string; grupo: string | null; estado_general: string | null; temporada: string | null
-  pagos: Record<string, string> | null; observaciones: string | null; fecha_alta: string | null; fecha_baja: string | null
+  pagos: Record<string, string> | null; pagos_meta: Record<string, PagoMes> | null; observaciones: string | null; fecha_alta: string | null; fecha_baja: string | null
   observaciones_familia: string | null; foto_url: string | null; horario: string | null; whatsapp_url: string | null
   cuota_estado: string | null; cuota_importe_cents: number | null; cuota_fecha_pago: string | null
   cuota_forma_pago: string | null; talla: string | null; numero_socio: string | null
@@ -80,6 +80,7 @@ export default async function ClubPage() {
       direccionTutor: str(d.direccionTutor),
       pendienteSync: !g,
       pagos: (g?.pagos as Record<string, EstadoPago>) ?? {},
+      pagos_meta: (g?.pagos_meta as Record<string, PagoMes>) ?? {},
       observaciones: g?.observaciones ?? '',
       observaciones_familia: g?.observaciones_familia ?? '',
       foto_url: g?.foto_url ?? '',

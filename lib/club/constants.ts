@@ -35,6 +35,9 @@ export type MesKey = (typeof MESES_TEMPORADA)[number]['key']
 
 export type EstadoPago = 'pagado' | 'pendiente' | 'baja'
 
+/** Detalle económico de un mes (junto al estado de color que va en `pagos`). */
+export type PagoMes = { importe_cents?: number; fecha?: string; obs?: string }
+
 export const ESTADO_PAGO_META: Record<EstadoPago, { label: string; dot: string; anillo: string; texto: string }> = {
   pagado:    { label: 'Pagado',    dot: 'bg-green-500', anillo: 'ring-green-500', texto: 'text-green-700' },
   pendiente: { label: 'Pendiente', dot: 'bg-amber-500', anillo: 'ring-amber-500', texto: 'text-amber-700' },
@@ -118,6 +121,8 @@ export type Alumno = {
   /** true si la inscripción llegó pero no tiene fila en club_gestion (sin sincronizar). */
   pendienteSync: boolean
   pagos: Record<string, EstadoPago>
+  /** Importe/fecha/obs por mes (requiere migration_club_pagos_meta.sql). */
+  pagos_meta: Record<string, PagoMes>
   observaciones: string
   // campos visibles para la familia (Portal de Familias)
   observaciones_familia: string

@@ -60,27 +60,6 @@ export async function guardarGestion(submissionId: string, patch: GestionPatch) 
   return { ok: true }
 }
 
-/** Marca el estado de pago de un mes concreto (o lo borra si estado = ''). */
-export async function setPagoMes(submissionId: string, mes: string, estado: string) {
-  const admin = await getAdminUser()
-  if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
-
-  const db = createAdminClient()
-  const { data } = await db.from('club_gestion').select('pagos').eq('submission_id', submissionId).maybeSingle()
-  const pagos: Record<string, string> = (data?.pagos as Record<string, string>) ?? {}
-  if (estado) pagos[mes] = estado
-  else delete pagos[mes]
-
-  const { error } = await db.from('club_gestion').upsert(
-    { submission_id: submissionId, pagos, updated_at: new Date().toISOString(), updated_by: admin.email },
-    { onConflict: 'submission_id' }
-  )
-  if (error) return { ok: false, error: error.message }
-
-  revalidatePath('/admin/club')
-  return { ok: true }
-}
-
 /**
  * Crea la fila de gestión (sincroniza con el CRM) de inscripciones que llegaron
  * pero no la tienen. Red de seguridad del punto 28: no se pierde ninguna. Usa la
@@ -103,6 +82,67 @@ export async function sincronizarPendientes(submissionIds: string[], temporada: 
   await logActivity({ actorEmail: admin.email, accion: `Sincronizadas ${filas.length} inscripciones pendientes`, entidad: 'club' })
   revalidatePath('/admin/club')
   return { ok: true }
+}
+
+type MesPatch = { estado?: string; importe_cents?: number | null; fecha?: string | null; obs?: string | null }
+
+/**
+ * Guarda el detalle económico de un mes: estado (color) + importe + fecha + obs.
+ * El estado sigue en `pagos`; el importe/fecha/obs en `pagos_meta[mes]`. Registra
+ * el historial de cambios (punto 29). Si aún no existe la columna pagos_meta
+ * (migración sin ejecutar), guarda al menos el estado y avisa (metaGuardado=false).
+ */
+export async function guardarMesDetalle(submissionId: string, mes: string, patch: MesPatch) {
+  const admin = await getAdminUser()
+  if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
+
+  const db = createAdminClient()
+  const { data } = await db.from('club_gestion').select('pagos, pagos_meta').eq('submission_id', submissionId).maybeSingle()
+  const pagos: Record<string, string> = (data?.pagos as Record<string, string>) ?? {}
+  const meta: Record<string, { importe_cents?: number; fecha?: string; obs?: string }> =
+    (data?.pagos_meta as Record<string, { importe_cents?: number; fecha?: string; obs?: string }>) ?? {}
+
+  const estadoAnt = pagos[mes] ?? ''
+  const importeAnt = meta[mes]?.importe_cents ?? null
+
+  // Estado (color)
+  if (patch.estado !== undefined) {
+    if (patch.estado) pagos[mes] = patch.estado
+    else delete pagos[mes]
+  }
+  // Detalle económico del mes
+  const m = { ...(meta[mes] ?? {}) }
+  if (patch.importe_cents !== undefined) { if (patch.importe_cents != null) m.importe_cents = patch.importe_cents; else delete m.importe_cents }
+  if (patch.fecha !== undefined) { if (patch.fecha) m.fecha = patch.fecha; else delete m.fecha }
+  if (patch.obs !== undefined) { if (patch.obs) m.obs = patch.obs; else delete m.obs }
+  if (Object.keys(m).length) meta[mes] = m
+  else delete meta[mes]
+
+  const base = { submission_id: submissionId, updated_at: new Date().toISOString(), updated_by: admin.email }
+  let metaGuardado = true
+  const { error } = await db.from('club_gestion').upsert({ ...base, pagos, pagos_meta: meta }, { onConflict: 'submission_id' })
+  if (error) {
+    // Probablemente falta la columna pagos_meta: guarda al menos el estado.
+    metaGuardado = false
+    const r2 = await db.from('club_gestion').upsert({ ...base, pagos }, { onConflict: 'submission_id' })
+    if (r2.error) return { ok: false, error: r2.error.message }
+  }
+
+  const importeNew = meta[mes]?.importe_cents ?? null
+  const estadoNew = pagos[mes] ?? ''
+  if (metaGuardado && (estadoAnt !== estadoNew || importeAnt !== importeNew)) {
+    try {
+      await db.from('club_pagos_historial').insert({
+        submission_id: submissionId, mes,
+        estado_ant: estadoAnt || null, estado_new: estadoNew || null,
+        importe_ant_cents: importeAnt, importe_new_cents: importeNew,
+        usuario: admin.email,
+      })
+    } catch { /* la tabla de historial es opcional */ }
+  }
+
+  revalidatePath('/admin/club')
+  return { ok: true, metaGuardado }
 }
 
 // ── Grupos ────────────────────────────────────────────────────────────────────

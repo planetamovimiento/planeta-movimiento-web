@@ -59,7 +59,7 @@ export function FichaParticipante({ alumno: a, slotFoto, slotTalla }: {
       {/* Estado mensual de cuotas */}
       <div>
         <div className="font-black text-pm-navy text-sm mb-2">Cuotas de la temporada (Sep → Jun)</div>
-        <EstadoMensual pagos={a.pagos} />
+        <EstadoMensual pagos={a.pagos} meta={a.pagos_meta} />
         {a.cuota_fecha_pago && <p className="text-xs text-gray-400 mt-2">Último pago registrado: {a.cuota_fecha_pago}</p>}
       </div>
 

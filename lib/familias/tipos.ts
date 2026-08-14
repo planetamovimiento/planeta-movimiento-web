@@ -37,6 +37,8 @@ export type AlumnoFamilia = {
   temporada: string
   estado_general: string
   pagos: Record<string, string>
+  /** Solo el importe por mes (la obs interna NO se expone a la familia). */
+  pagos_meta: Record<string, { importe_cents?: number }>
   observaciones_familia: string
   foto_url: string
   whatsapp_url: string
