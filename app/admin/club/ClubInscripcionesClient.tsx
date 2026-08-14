@@ -5,7 +5,7 @@ import { Metric, EmptyState } from '@/components/admin/ui'
 import { waCliente } from '@/lib/whatsapp'
 import {
   MESES_TEMPORADA, ESTADO_PAGO_META, ESTADOS_GENERAL, GRUPOS_BASE, GRUPOS_EXTRA, TEMPORADAS, ACTIVIDADES_CLUB,
-  labelEstadoGeneral, mesActualKey, edadDe, fechaCorta, temporadaDisplay,
+  labelEstadoGeneral, mesActualKey, edadDe, fechaCorta, temporadaDisplay, gruposDeActividad,
   type Alumno, type Grupo, type EstadoPago, type EstadoGeneral,
 } from '@/lib/club/constants'
 import { CUOTA_ESTADOS, TALLAS_EQUIPACION, eurosCuota, eurosACents } from '@/lib/club/cuota'
@@ -72,7 +72,7 @@ export default function ClubInscripcionesClient({
     const cfg = grupos.filter(g => !g.actividad || g.actividad === actividad).map(g => g.nombre)
     const base = cfg.length > 0 ? cfg : [...GRUPOS_BASE]
     const usados = lista.filter(a => !actividad || a.actividad === actividad).map(a => a.grupo).filter(Boolean)
-    return Array.from(new Set([...base, ...usados, ...GRUPOS_EXTRA]))
+    return Array.from(new Set([...base, ...gruposDeActividad(actividad), ...usados, ...GRUPOS_EXTRA]))
   }, [grupos, lista])
 
   const gruposFiltro = useMemo(() => gruposParaActividad(fActividad), [gruposParaActividad, fActividad])
