@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { waNegocio } from '@/lib/whatsapp'
 import Hero from '@/components/home/Hero'
+import { PromosDestacadas } from '@/components/home/PromosDestacadas'
 import Reveal from '@/components/home/Reveal'
 import CountUp from '@/components/home/CountUp'
 import { Foto } from '@/components/ui/Foto'
@@ -106,22 +107,8 @@ export default function HomePage() {
         </Link>
       </section>
 
-      {/* ════ COLABORADORES / CONFIANZA ════ */}
-      <section className="bg-white border-b border-gray-100 py-10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-xs font-bold text-gray-400 uppercase tracking-widest mb-6">
-            Colaboramos con entidades de confianza
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
-            {COLABORADORES.map(c => (
-              <div key={c.nombre} className="flex flex-col items-center text-center">
-                <span className="font-black text-pm-navy text-base">{c.nombre}</span>
-                <span className="text-xs text-gray-400">{c.tipo}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ════ PROMOCIONES DESTACADAS (editables desde el admin) ════ */}
+      <PromosDestacadas />
 
       {/* ════ SERVICIOS DESTACADOS ════ */}
       <section className="bg-white py-16">
@@ -144,6 +131,23 @@ export default function HomePage() {
                   </span>
                 </Link>
               </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════ COLABORADORES / CONFIANZA ════ */}
+      <section className="bg-white border-b border-gray-100 py-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <p className="text-center text-xs font-bold text-gray-400 uppercase tracking-widest mb-6">
+            Colaboramos con entidades de confianza
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
+            {COLABORADORES.map(c => (
+              <div key={c.nombre} className="flex flex-col items-center text-center">
+                <span className="font-black text-pm-navy text-base">{c.nombre}</span>
+                <span className="text-xs text-gray-400">{c.tipo}</span>
+              </div>
             ))}
           </div>
         </div>

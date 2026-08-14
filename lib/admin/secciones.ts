@@ -19,6 +19,7 @@ export type SeccionId =
   | 'calendario'
   | '50dias50provincias'
   | 'servicios'
+  | 'promociones'
   | 'clientes'
   | 'balance'
   | 'monitores'
@@ -53,6 +54,7 @@ export const SECCIONES: SeccionMeta[] = [
   { id: 'monitores',       label: 'Monitores',           icon: '🧑‍🏫', href: '/admin/monitores',        grupo: 'Equipo' },
   { id: 'circo-inclusivo', label: 'Circo Inclusivo',     icon: '🤸', href: '/admin/circo-inclusivo',  grupo: 'Equipo' },
   { id: 'servicios',       label: 'Servicios',           icon: '🎪', href: '/admin/servicios',        grupo: 'General' },
+  { id: 'promociones',     label: 'Promociones (inicio)',icon: '📣', href: '/admin/promociones',      grupo: 'General' },
   { id: 'clientes',        label: 'Clientes',            icon: '👥', href: '/admin/clientes',         grupo: 'General' },
   { id: 'correos',         label: 'Correos',             icon: '📧', href: '/admin/correos',          grupo: 'General' },
   { id: 'seguridad',       label: 'Seguridad',           icon: '🛡️', href: '/admin/seguridad',        grupo: 'General' },
