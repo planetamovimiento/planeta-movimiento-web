@@ -767,7 +767,7 @@ export async function cambiarEstadoDocumento(id: string, estado: string): Promis
     const esProforma = String(doc.tipo) === 'proforma'
     const validos = esProforma
       ? ['enviada', 'aceptada', 'rechazada', 'caducada', 'convertida']
-      : ['emitida', 'enviada', 'parcial', 'pagada', 'vencida', 'rectificada', 'anulada']
+      : ['emitida', 'enviada', 'parcial', 'pagada', 'compensada', 'vencida', 'rectificada', 'anulada']
     if (!validos.includes(estado)) return { ok: false, error: 'Estado no válido' }
 
     // Anular es sensible: solo el administrador principal.
@@ -777,7 +777,8 @@ export async function cambiarEstadoDocumento(id: string, estado: string): Promis
 
     const patch: Record<string, unknown> = { estado, updated_at: new Date().toISOString() }
     // Marcar «pagada» salda el documento; volver a «emitida» lo deja sin cobros manuales.
-    if (estado === 'pagada') patch.pagado_cents = doc.total_cents
+    // «Compensada» también salda (0 pendiente), aunque su importe NO suma en el Resumen.
+    if (estado === 'pagada' || estado === 'compensada') patch.pagado_cents = doc.total_cents
     if (estado === 'emitida') patch.pagado_cents = 0
 
     const db = createAdminClient()
