@@ -32,6 +32,8 @@ export type ClubConfig = {
   }
   /** Prefijo del número de socio autogenerado (ej. "CDO-" → CDO-00231). */
   socioPrefijo: string
+  /** Cuota MENSUAL sugerida por actividad (punto 22). Importes en céntimos. */
+  cuotasMensuales: { actividad: string; opciones: { label: string; cents: number }[] }[]
 }
 
 export const CLUB_CONFIG_DEFAULT: ClubConfig = {
@@ -58,6 +60,13 @@ export const CLUB_CONFIG_DEFAULT: ClubConfig = {
     precios: SEPTIEMBRE.precios.map(p => ({ ...p })),
   },
   socioPrefijo: 'CDO-',
+  cuotasMensuales: [
+    { actividad: 'Gimnasia Acrobática', opciones: [{ label: '1 hora', cents: 4500 }, { label: '2 horas', cents: 7000 }, { label: '3 horas', cents: 10000 }] },
+    { actividad: 'Escuela de aéreos', opciones: [{ label: '1 hora', cents: 4500 }, { label: '2 horas', cents: 7000 }, { label: '3 horas', cents: 10000 }] },
+    { actividad: 'Escuela infantil', opciones: [{ label: '1 día', cents: 4000 }, { label: '2 días', cents: 6500 }, { label: '3 días', cents: 9000 }] },
+    { actividad: 'Jiu-Jitsu Brasileño', opciones: [{ label: 'Cuota', cents: 6000 }] },
+    { actividad: 'Escuela de Bienestar', opciones: [{ label: '1 hora', cents: 3000 }, { label: '2 horas', cents: 4000 }] },
+  ],
 }
 
 /** Config de temporada (guardada o, si falta/no válida, la de por defecto). */
@@ -79,6 +88,7 @@ export async function getClubConfig(): Promise<ClubConfig> {
         precios: p.septiembre?.precios?.length ? p.septiembre.precios : CLUB_CONFIG_DEFAULT.septiembre.precios,
       },
       socioPrefijo: p.socioPrefijo || CLUB_CONFIG_DEFAULT.socioPrefijo,
+      cuotasMensuales: p.cuotasMensuales?.length ? p.cuotasMensuales : CLUB_CONFIG_DEFAULT.cuotasMensuales,
     }
   } catch {
     return CLUB_CONFIG_DEFAULT

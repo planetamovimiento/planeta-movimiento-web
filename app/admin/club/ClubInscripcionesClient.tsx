@@ -555,6 +555,7 @@ export default function ClubInscripcionesClient({
         if (!a) return null
         return (
           <MesModal alumno={a} mes={mesEditando.mes} puedeEditar={puedeEditar}
+            sugerencias={clubConfig.cuotasMensuales.find(c => c.actividad === a.actividad)?.opciones ?? []}
             onClose={() => setMesEditando(null)}
             onGuardar={patch => guardarMes(a.id, mesEditando.mes, patch)} />
         )
@@ -665,8 +666,8 @@ function resumenAlumno(a: Alumno) {
 }
 
 // ─── Editor de un mes (estado + importe + fecha de pago + observación) ──────────
-function MesModal({ alumno, mes, puedeEditar, onClose, onGuardar }: {
-  alumno: Alumno; mes: string; puedeEditar: boolean
+function MesModal({ alumno, mes, puedeEditar, sugerencias, onClose, onGuardar }: {
+  alumno: Alumno; mes: string; puedeEditar: boolean; sugerencias: { label: string; cents: number }[]
   onClose: () => void; onGuardar: (patch: { estado?: string; importe_cents?: number | null; fecha?: string | null; obs?: string | null }) => void
 }) {
   const info = MESES_TEMPORADA.find(m => m.key === mes)
@@ -732,6 +733,19 @@ function MesModal({ alumno, mes, puedeEditar, onClose, onGuardar }: {
               <input type="date" value={fecha} disabled={!puedeEditar} onChange={e => setFecha(e.target.value)} className={inp} />
             </div>
           </div>
+          {puedeEditar && sugerencias.length > 0 && (
+            <div>
+              <label className={lbl}>Sugerir importe <span className="text-gray-300 normal-case font-medium">· {alumno.actividad}</span></label>
+              <div className="flex flex-wrap gap-1.5">
+                {sugerencias.map(s => (
+                  <button key={s.label} type="button" onClick={() => setImporte(eurosCuota(s.cents).replace(' €', ''))}
+                    className="text-xs font-bold px-2.5 py-1.5 rounded-lg border border-gray-200 text-pm-navy hover:border-pm-red">
+                    {s.label} · {eurosCuota(s.cents)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <div>
             <label className={lbl}>Observación <span className="text-gray-300 normal-case font-medium">(opcional)</span></label>
             <textarea value={obs} disabled={!puedeEditar} onChange={e => setObs(e.target.value)} rows={2} className={`${inp} resize-none`} placeholder="Nota de este mes" />
@@ -1388,6 +1402,7 @@ function ModalConfigTemporada({ cfg, onClose, onGuardar }: {
       },
       septiembre: c.septiembre,
       socioPrefijo: c.socioPrefijo,
+      cuotasMensuales: c.cuotasMensuales,
     })
     setSaving(false)
   }
