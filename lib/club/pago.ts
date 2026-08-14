@@ -14,7 +14,13 @@ export function conceptoPago(actividad?: string): string {
   return `${base} + nombre y apellidos del participante`
 }
 
+/** Concepto de la transferencia al hacerse socio: «Socio + nombre y apellidos del cliente». */
+export function conceptoPagoSocio(): string {
+  return 'Socio + nombre y apellidos del cliente'
+}
+
 /** Texto plano (para emails o notas) con las instrucciones de pago del Club. */
-export function instruccionesPagoClub(actividad?: string): string {
-  return `El pago de las actividades del Club Deportivo Origen se realiza en efectivo en las instalaciones o por transferencia bancaria (${CLUB_BANCO} · ${CLUB_IBAN}, titular ${CLUB_TITULAR}). Concepto: «${conceptoPago(actividad)}».`
+export function instruccionesPagoClub(actividad?: string, socio = false): string {
+  const concepto = socio ? conceptoPagoSocio() : conceptoPago(actividad)
+  return `El pago de las actividades del Club Deportivo Origen se realiza en efectivo en las instalaciones o por transferencia bancaria (${CLUB_BANCO} · ${CLUB_IBAN}, titular ${CLUB_TITULAR}). Concepto: «${concepto}».`
 }

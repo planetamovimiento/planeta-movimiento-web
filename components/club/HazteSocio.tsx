@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { submitSocio } from '@/lib/forms/actions'
 import { TALLAS_EQUIPACION, eurosCuota, importeCuotaSugeridoCents } from '@/lib/club/cuota'
 import { edadDe } from '@/lib/club/constants'
+import { CLUB_IBAN, CLUB_TITULAR, conceptoPagoSocio } from '@/lib/club/pago'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // "Hazte socio": botón + formulario de alta para el padre/madre/tutor. Permite
@@ -182,12 +183,11 @@ function FormularioSocio({ info, onClose }: { info: SocioInfo; onClose: () => vo
               <p className="text-xs text-gray-600">
                 {eurosCuota(info.reducidaCents)} hasta el 27/09/2026 · {eurosCuota(info.normalCents)} a partir del 28/09. El importe se confirma al registrar el pago.
               </p>
-              <div className="text-xs text-gray-600 border-t border-pm-red/15 pt-2">
+              <div className="text-xs text-gray-600 border-t border-pm-red/15 pt-2 space-y-0.5">
                 <div className="font-bold text-pm-navy mb-0.5">Formas de pago (sin cobro online):</div>
-                <div>· En efectivo en la instalación.</div>
-                {info.iban
-                  ? <div>· Por transferencia a <span className="font-mono font-semibold text-pm-navy">{info.iban}</span>{info.conceptoTransferencia ? ` · Concepto: «${info.conceptoTransferencia}»` : ''}.</div>
-                  : <div>· Por transferencia bancaria al Club (te facilitamos el número de cuenta).</div>}
+                <div>· En efectivo en las instalaciones.</div>
+                <div>· Por transferencia a <span className="font-mono font-semibold text-pm-navy">{info.iban || CLUB_IBAN}</span> <span className="text-gray-400">(titular {CLUB_TITULAR})</span>.</div>
+                <div>· Concepto de la transferencia: «<span className="font-semibold text-pm-navy">{conceptoPagoSocio()}</span>».</div>
               </div>
             </section>
 
