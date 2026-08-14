@@ -145,6 +145,28 @@ export async function guardarMesDetalle(submissionId: string, mes: string, patch
   return { ok: true, metaGuardado }
 }
 
+export type HistorialMes = {
+  mes: string; estado_ant: string | null; estado_new: string | null
+  importe_ant_cents: number | null; importe_new_cents: number | null
+  usuario: string | null; created_at: string
+}
+
+/** Historial de cambios económicos de un alumno (punto 29). */
+export async function getHistorialAlumno(submissionId: string): Promise<{ ok: boolean; filas: HistorialMes[] }> {
+  const admin = await getAdminUser()
+  if (!admin || !can.edit(admin.role)) return { ok: false, filas: [] }
+  const db = createAdminClient()
+  try {
+    const { data, error } = await db.from('club_pagos_historial')
+      .select('mes, estado_ant, estado_new, importe_ant_cents, importe_new_cents, usuario, created_at')
+      .eq('submission_id', submissionId).order('created_at', { ascending: false }).limit(100)
+    if (error) return { ok: false, filas: [] }
+    return { ok: true, filas: (data ?? []) as HistorialMes[] }
+  } catch {
+    return { ok: false, filas: [] }
+  }
+}
+
 // ── Grupos ────────────────────────────────────────────────────────────────────
 
 export async function crearGrupo(nombre: string, actividad: string | null) {

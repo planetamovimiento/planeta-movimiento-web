@@ -10,7 +10,7 @@ import {
 } from '@/lib/club/constants'
 import { CUOTA_ESTADOS, TALLAS_EQUIPACION, eurosCuota, eurosACents } from '@/lib/club/cuota'
 import type { ClubConfig } from '@/lib/club/config'
-import { guardarGestion, guardarMesDetalle, crearGrupo, renombrarGrupo, eliminarGrupo, fijarHorarioGrupo, fijarWhatsappGrupo, sincronizarPendientes } from './actions'
+import { guardarGestion, guardarMesDetalle, getHistorialAlumno, crearGrupo, renombrarGrupo, eliminarGrupo, fijarHorarioGrupo, fijarWhatsappGrupo, sincronizarPendientes, type HistorialMes } from './actions'
 import { setTemporadaActiva, guardarConfigTemporada } from './temporada-actions'
 import ImportarModal from './ImportarModal'
 import { SubirImagen } from '@/components/admin/SubirImagen'
@@ -49,6 +49,8 @@ export default function ClubInscripcionesClient({
   const [fSocio, setFSocio] = useState(false)
   const [fMes, setFMes] = useState('')
   const [fPago, setFPago] = useState('')
+  const [fImpMin, setFImpMin] = useState('')
+  const [fImpMax, setFImpMax] = useState('')
 
   const [detalleId, setDetalleId] = useState<string | null>(null)
   const [mesEditando, setMesEditando] = useState<{ id: string; mes: string } | null>(null)
@@ -97,8 +99,13 @@ export default function ClubInscripcionesClient({
         if (fPago === 'sin' ? !valores.some(v => v === '') : !valores.includes(fPago as EstadoPago)) return false
       }
     }
+    if (fImpMin || fImpMax) {
+      const total = resumenAlumno(a).pagadoCents
+      if (fImpMin && total < eurosACents(fImpMin)) return false
+      if (fImpMax && total > eurosACents(fImpMax)) return false
+    }
     return true
-  }, [q, fActividad, fGrupo, fTemporada, fEstado, fInicio, fSocio, fMes, fPago])
+  }, [q, fActividad, fGrupo, fTemporada, fEstado, fInicio, fSocio, fMes, fPago, fImpMin, fImpMax])
 
   const filtradas = useMemo(() => lista.filter(coincide), [lista, coincide])
 
@@ -162,8 +169,21 @@ export default function ClubInscripcionesClient({
     })
   }
 
-  const hayFiltros = !!(q || fActividad || fGrupo || fTemporada || fEstado || fInicio || fSocio || fMes || fPago)
-  function limpiar() { setQ(''); setFActividad(''); setFGrupo(''); setFTemporada(''); setFEstado(''); setFInicio(''); setFSocio(false); setFMes(''); setFPago('') }
+  const hayFiltros = !!(q || fActividad || fGrupo || fTemporada || fEstado || fInicio || fSocio || fMes || fPago || fImpMin || fImpMax)
+  function limpiar() { setQ(''); setFActividad(''); setFGrupo(''); setFTemporada(''); setFEstado(''); setFInicio(''); setFSocio(false); setFMes(''); setFPago(''); setFImpMin(''); setFImpMax('') }
+
+  // Totales económicos del grupo filtrado (punto 25).
+  const totalesGrupo = useMemo(() => {
+    if (!fGrupo) return null
+    let ingresos = 0, pendiente = 0, bajas = 0
+    for (const a of filtradas) {
+      const r = resumenAlumno(a)
+      ingresos += r.pagadoCents
+      pendiente += r.pendienteCents
+      if (a.estado_general === 'baja') bajas++
+    }
+    return { alumnos: filtradas.length, ingresos, pendiente, bajas }
+  }, [filtradas, fGrupo])
 
   // ── Mutaciones (optimistas) ──────────────────────────────────────────────
   const patchLocal = useCallback((id: string, patch: Partial<Alumno>) => {
@@ -204,15 +224,24 @@ export default function ClubInscripcionesClient({
     const cols = [
       'Nombre', 'Apellidos', 'Actividad', 'Grupo', 'Fecha nacimiento', 'Edad', 'Tutor legal',
       'Teléfono', 'Email', 'Inscrito', 'Estado general', 'Temporada',
-      ...MESES_TEMPORADA.map(m => m.nombre), 'Observaciones', 'Fecha alta', 'Fecha baja',
+      ...MESES_TEMPORADA.map(m => m.nombre),
+      ...MESES_TEMPORADA.map(m => `${m.nombre} €`),
+      'Total pagado €', 'Total pendiente €',
+      'Observaciones', 'Fecha alta', 'Fecha baja',
     ]
     const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`
-    const lineas = filtradas.map(a => [
-      a.nombre, a.apellidos, a.actividad, a.grupo, a.fechaNacimiento, edadDe(a.fechaNacimiento) ?? '',
-      a.tutorLegal, a.telefono, a.email, fechaCorta(a.created_at), labelEstadoGeneral(a.estado_general), a.temporada,
-      ...MESES_TEMPORADA.map(m => ESTADO_PAGO_META[a.pagos[m.key] as EstadoPago]?.label ?? ''),
-      a.observaciones, fechaCorta(a.fecha_alta), fechaCorta(a.fecha_baja),
-    ].map(esc).join(';'))
+    const eur = (cents: number | undefined) => (typeof cents === 'number' && cents > 0 ? (cents / 100).toFixed(2).replace('.', ',') : '')
+    const lineas = filtradas.map(a => {
+      const r = resumenAlumno(a)
+      return [
+        a.nombre, a.apellidos, a.actividad, a.grupo, a.fechaNacimiento, edadDe(a.fechaNacimiento) ?? '',
+        a.tutorLegal, a.telefono, a.email, fechaCorta(a.created_at), labelEstadoGeneral(a.estado_general), a.temporada,
+        ...MESES_TEMPORADA.map(m => ESTADO_PAGO_META[a.pagos[m.key] as EstadoPago]?.label ?? ''),
+        ...MESES_TEMPORADA.map(m => eur(a.pagos_meta[m.key]?.importe_cents)),
+        eur(r.pagadoCents), eur(r.pendienteCents),
+        a.observaciones, fechaCorta(a.fecha_alta), fechaCorta(a.fecha_baja),
+      ].map(esc).join(';')
+    })
     const csv = '﻿' + [cols.map(esc).join(';'), ...lineas].join('\r\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
@@ -363,6 +392,11 @@ export default function ClubInscripcionesClient({
             <option value="baja">Baja</option>
             <option value="sin">Sin definir</option>
           </select>
+          <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Pagado €</span>
+          <input value={fImpMin} onChange={e => setFImpMin(e.target.value)} placeholder="mín" inputMode="decimal"
+            className="border border-gray-200 rounded-xl px-2.5 py-2 text-sm w-20 focus:outline-none focus:border-pm-red" />
+          <input value={fImpMax} onChange={e => setFImpMax(e.target.value)} placeholder="máx" inputMode="decimal"
+            className="border border-gray-200 rounded-xl px-2.5 py-2 text-sm w-20 focus:outline-none focus:border-pm-red" />
           <label className="flex items-center gap-1.5 text-sm text-pm-navy cursor-pointer">
             <input type="checkbox" checked={fSocio} onChange={e => setFSocio(e.target.checked)} className="accent-pm-red w-4 h-4" />
             Solo socios
@@ -405,6 +439,16 @@ export default function ClubInscripcionesClient({
               </button>
             )
           })}
+        </div>
+      )}
+
+      {/* Totales económicos del grupo filtrado (punto 25) */}
+      {totalesGrupo && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <ResumenDato label="Alumnos" valor={String(totalesGrupo.alumnos)} />
+          <ResumenDato label="Ingresos registrados" valor={eurosCuota(totalesGrupo.ingresos)} tono="text-green-700" />
+          <ResumenDato label="Pendiente" valor={eurosCuota(totalesGrupo.pendiente)} tono="text-amber-700" />
+          <ResumenDato label="Bajas" valor={String(totalesGrupo.bajas)} tono="text-red-700" />
         </div>
       )}
 
@@ -939,6 +983,9 @@ function FichaAlumno({ a, puedeEditar, gruposActividad, cuotaCfg, onClose, onGes
             })()}
           </div>
 
+          {/* Historial de cambios económicos */}
+          <HistorialAlumno submissionId={a.id} />
+
           {/* Observaciones */}
           <div>
             <label className="block text-xs font-black text-pm-navy uppercase tracking-wider mb-1.5">Observaciones internas</label>
@@ -988,6 +1035,60 @@ function ResumenDato({ label, valor, tono }: { label: string; valor: string; ton
     <div className="bg-pm-bg rounded-xl border border-gray-100 p-2.5 text-center">
       <div className="text-[10px] text-gray-400 uppercase tracking-wider">{label}</div>
       <div className={`font-black text-sm ${tono ?? 'text-pm-navy'}`}>{valor}</div>
+    </div>
+  )
+}
+
+// ─── Historial de cambios económicos (carga al desplegar) ──────────────────────
+function HistorialAlumno({ submissionId }: { submissionId: string }) {
+  const [abierto, setAbierto] = useState(false)
+  const [filas, setFilas] = useState<HistorialMes[] | null>(null)
+  const [cargando, setCargando] = useState(false)
+
+  function alternar() {
+    const nuevo = !abierto
+    setAbierto(nuevo)
+    if (nuevo && filas === null) {
+      setCargando(true)
+      getHistorialAlumno(submissionId).then(r => { setFilas(r.filas); setCargando(false) })
+    }
+  }
+
+  const nombreMes = (k: string) => MESES_TEMPORADA.find(m => m.key === k)?.nombre ?? k
+  const est = (v: string | null) => (v ? (ESTADO_PAGO_META[v as EstadoPago]?.label ?? v) : '—')
+  const imp = (c: number | null) => (typeof c === 'number' && c > 0 ? eurosCuota(c) : '—')
+
+  return (
+    <div className="border-t border-gray-100 pt-4">
+      <button onClick={alternar} className="flex items-center gap-1.5 text-xs font-black text-pm-navy uppercase tracking-wider">
+        <svg className={`w-4 h-4 transition-transform ${abierto ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
+        Historial de cambios
+      </button>
+      {abierto && (
+        <div className="mt-2">
+          {cargando ? (
+            <p className="text-xs text-gray-400">Cargando…</p>
+          ) : !filas || filas.length === 0 ? (
+            <p className="text-xs text-gray-400">Sin cambios registrados.</p>
+          ) : (
+            <div className="space-y-1.5 max-h-56 overflow-y-auto">
+              {filas.map((f, i) => (
+                <div key={i} className="text-xs bg-pm-bg rounded-lg px-2.5 py-1.5">
+                  <div className="flex justify-between text-gray-400">
+                    <span className="font-bold text-pm-navy">{nombreMes(f.mes)}</span>
+                    <span>{fechaCorta(f.created_at)}</span>
+                  </div>
+                  <div className="text-gray-600">
+                    {est(f.estado_ant)} → <span className="font-semibold">{est(f.estado_new)}</span>
+                    {(f.importe_ant_cents || f.importe_new_cents) && <> · {imp(f.importe_ant_cents)} → <span className="font-semibold">{imp(f.importe_new_cents)}</span></>}
+                  </div>
+                  {f.usuario && <div className="text-gray-400">{f.usuario}</div>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
