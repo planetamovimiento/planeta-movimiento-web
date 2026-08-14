@@ -10,7 +10,7 @@
 import { useMemo, useState } from 'react'
 import { eur } from '@/lib/facturacion/dinero'
 import { ESTADOS_EMITIDOS, estadoMeta } from '@/lib/facturacion/constants'
-import type { Documento } from '@/lib/facturacion/tipos'
+import type { Documento, PerfilFacturacion } from '@/lib/facturacion/tipos'
 
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
@@ -24,15 +24,24 @@ function Tarjeta({ label, valor, tono = 'navy' }: { label: string; valor: string
   )
 }
 
-export default function TabResumen({ documentos }: { documentos: Documento[] }) {
-  const facturas = useMemo(() => documentos.filter(d => d.tipo === 'factura'), [documentos])
+export default function TabResumen({ documentos, perfiles }: { documentos: Documento[]; perfiles: PerfilFacturacion[] }) {
+  const todasFacturas = useMemo(() => documentos.filter(d => d.tipo === 'factura'), [documentos])
+
+  // Sub-pestañas por emisor (empresa vs Club): un emisor = un perfil de facturación.
+  const emisores = useMemo(() => perfiles.filter(p => todasFacturas.some(f => f.profileId === p.id) || (!p.archivado && p.activo)), [perfiles, todasFacturas])
+  const [emisor, setEmisor] = useState<string>(emisores.length > 1 ? emisores[0].id : '')
+
+  const facturas = useMemo(
+    () => (emisor ? todasFacturas.filter(f => f.profileId === emisor) : todasFacturas),
+    [todasFacturas, emisor],
+  )
 
   const años = useMemo(() => {
     const set = new Set<string>()
-    for (const f of facturas) if (f.fecha) set.add(f.fecha.slice(0, 4))
+    for (const f of todasFacturas) if (f.fecha) set.add(f.fecha.slice(0, 4))
     set.add(String(new Date().getFullYear()))
     return [...set].sort((a, b) => b.localeCompare(a))
-  }, [facturas])
+  }, [todasFacturas])
 
   const [año, setAño] = useState<string>(años[0] ?? String(new Date().getFullYear()))
 
@@ -71,6 +80,21 @@ export default function TabResumen({ documentos }: { documentos: Documento[] }) 
 
   return (
     <div className="space-y-5">
+      {emisores.length > 1 && (
+        <div className="bg-pm-bg rounded-xl p-1 inline-flex gap-1 flex-wrap">
+          <button type="button" onClick={() => setEmisor('')}
+            className={`text-sm font-bold px-3.5 py-2 rounded-lg transition-colors ${emisor === '' ? 'bg-white text-pm-navy shadow-sm' : 'text-gray-400 hover:text-pm-navy'}`}>
+            Todos
+          </button>
+          {emisores.map(p => (
+            <button key={p.id} type="button" onClick={() => setEmisor(p.id)}
+              className={`text-sm font-bold px-3.5 py-2 rounded-lg transition-colors ${emisor === p.id ? 'bg-white text-pm-navy shadow-sm' : 'text-gray-500 hover:text-pm-navy'}`}>
+              {p.nombreComercial}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-wrap items-center gap-3">
         <span className="text-sm font-bold text-pm-navy">Ejercicio</span>
         <select className="border border-gray-200 rounded-lg px-2.5 py-2 text-sm" value={año} onChange={e => setAño(e.target.value)}>

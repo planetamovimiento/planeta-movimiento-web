@@ -100,7 +100,7 @@ export default function FacturacionClient({ perfiles, series, clientes, document
         <TabDocumentos tipo="proforma" documentos={documentos} perfiles={perfiles} series={series} clientes={clientes}
           correr={correr} pending={pending} editable={migrado && puedeEditar} puedeEmitir={migrado && puedeEmitir} puedeAnular={migrado && puedeAnular} />
       )}
-      {tab === 'resumen' && <TabResumen documentos={documentos} />}
+      {tab === 'resumen' && <TabResumen documentos={documentos} perfiles={perfiles} />}
       {tab === 'config' && (
         <TabConfig perfiles={perfiles} series={series} clientes={clientes.length} pending={pending} correr={correr}
           editable={migrado && puedePerfiles} irAPerfiles={() => setTab('perfiles')} />
