@@ -45,7 +45,7 @@ export const CUOTAS_MENSUALES: CuotaMensualActividad[] = [
   { actividad: 'Escuela de aéreos', opciones: [{ label: '1 hora', cents: 4500 }, { label: '2 horas', cents: 7000 }, { label: '3 horas', cents: 10000 }] },
   { actividad: 'Escuela infantil', opciones: [{ label: '1 día', cents: 4000 }, { label: '2 días', cents: 6500 }, { label: '3 días', cents: 9000 }] },
   { actividad: 'Jiu-Jitsu Brasileño', opciones: [{ label: 'Cuota', cents: 6000 }] },
-  { actividad: 'Escuela de Bienestar', opciones: [{ label: '1 hora', cents: 3000 }, { label: '2 horas', cents: 4000 }] },
+  { actividad: 'Escuela de Bienestar', opciones: [{ label: '1 hora', cents: 2500 }, { label: '2 horas', cents: 3500 }, { label: '3 horas', cents: 4500 }] },
 ]
 
 /** Céntimos de la cuota mensual de una actividad para el nivel N (1,2,3…). null si no hay tarifa. */
