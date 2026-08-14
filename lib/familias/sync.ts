@@ -12,14 +12,17 @@ const ilikeExacto = (s: string) => s.replace(/([%_\\])/g, '\\$1')
  */
 export async function sincronizarFamilias(): Promise<{ nuevasFamilias: number; nuevosVinculos: number }> {
   const db = createAdminClient()
-  const [subsRes, famsRes, linksRes] = await Promise.all([
+  const [subsRes, famsRes, linksRes, exclRes] = await Promise.all([
     db.from('form_submissions').select('id, email, telefono, datos').eq('tipo', 'inscripcion_club'),
     db.from('club_familias').select('id, email'),
     db.from('club_familia_alumnos').select('familia_id, submission_id'),
+    db.from('club_familia_excluidos').select('familia_id, submission_id'),
   ])
   const subs = ((subsRes.data ?? []) as Row[]).filter(s => str(s.email).trim())
   const famByEmail = new Map<string, string>(((famsRes.data ?? []) as Row[]).map(f => [str(f.email).toLowerCase(), str(f.id)]))
   const linkSet = new Set(((linksRes.data ?? []) as Row[]).map(l => `${str(l.familia_id)}|${str(l.submission_id)}`))
+  // Vínculos que el admin quitó a mano: no se vuelven a crear.
+  const exclSet = new Set(((exclRes.data ?? []) as Row[]).map(l => `${str(l.familia_id)}|${str(l.submission_id)}`))
 
   const infoEmail = new Map<string, { nombre: string | null; telefono: string | null }>()
   for (const s of subs) {
@@ -43,6 +46,7 @@ export async function sincronizarFamilias(): Promise<{ nuevasFamilias: number; n
     const famId = famByEmail.get(str(s.email).trim().toLowerCase())
     if (!famId) continue
     const key = `${famId}|${str(s.id)}`
+    if (exclSet.has(key)) continue // desvinculado a mano: no re-crear
     if (!linkSet.has(key)) { linkSet.add(key); nuevosLinks.push({ familia_id: famId, submission_id: str(s.id) }) }
   }
   let nuevosVinculos = 0
@@ -87,7 +91,10 @@ export async function provisionarFamilia(email: string): Promise<Row | null> {
   }
   if (!row) return null
 
-  const linkRows = subs.map(s => ({ familia_id: str(row!.id), submission_id: str(s.id) }))
+  // Respeta las desvinculaciones manuales (no re-vincular lo que el admin quitó).
+  const { data: exclData } = await db.from('club_familia_excluidos').select('submission_id').eq('familia_id', str(row.id))
+  const excl = new Set(((exclData ?? []) as Row[]).map(x => str(x.submission_id)))
+  const linkRows = subs.map(s => ({ familia_id: str(row!.id), submission_id: str(s.id) })).filter(l => !excl.has(l.submission_id))
   if (linkRows.length) await db.from('club_familia_alumnos').upsert(linkRows, { onConflict: 'familia_id,submission_id' })
   return row
 }

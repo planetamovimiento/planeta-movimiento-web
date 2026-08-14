@@ -128,6 +128,8 @@ export async function vincularAlumno(familiaId: string, submissionId: string) {
   const db = createAdminClient()
   const { error: e } = await db.from('club_familia_alumnos').upsert({ familia_id: familiaId, submission_id: submissionId }, { onConflict: 'familia_id,submission_id' })
   if (e) return { ok: false, error: e.message }
+  // Se vuelve a vincular a mano → deja de estar excluido.
+  try { await db.from('club_familia_excluidos').delete().eq('familia_id', familiaId).eq('submission_id', submissionId) } catch { /* tabla sin migrar */ }
   revalidar()
   return { ok: true }
 }
@@ -138,6 +140,13 @@ export async function desvincularAlumno(familiaId: string, submissionId: string)
   const db = createAdminClient()
   const { error: e } = await db.from('club_familia_alumnos').delete().eq('familia_id', familiaId).eq('submission_id', submissionId)
   if (e) return { ok: false, error: e.message }
+  // Registra la exclusión para que la sincronización automática no lo re-añada.
+  try {
+    await db.from('club_familia_excluidos').upsert({ familia_id: familiaId, submission_id: submissionId }, { onConflict: 'familia_id,submission_id' })
+  } catch (ex) {
+    return { ok: false, error: 'Se quitó, pero falta ejecutar migration_familia_excluidos.sql para que no vuelva a añadirse.' }
+  }
+  await logActivity({ actorEmail: admin.email, accion: 'Desvinculó alumno de familia', entidad: 'club_familia', entidadId: familiaId })
   revalidar()
   return { ok: true }
 }
