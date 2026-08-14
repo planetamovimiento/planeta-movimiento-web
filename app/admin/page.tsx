@@ -1,9 +1,21 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getAdminUser } from '@/lib/admin/auth'
-import { getDashboard } from '@/lib/admin/data'
+import { getDashboard, type Novedad } from '@/lib/admin/data'
 import { puedeVerSeccion, type SeccionId } from '@/lib/admin/secciones'
-import { AdminHeader, Metric, EstadoBadge, EmptyState, SetupNotice } from '@/components/admin/ui'
+import { AdminHeader, Metric, SetupNotice } from '@/components/admin/ui'
+
+/** Tiempo relativo corto en español. */
+function hace(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime()
+  const min = Math.floor(diff / 60000)
+  if (min < 1) return 'ahora'
+  if (min < 60) return `hace ${min} min`
+  const h = Math.floor(min / 60)
+  if (h < 24) return `hace ${h} h`
+  const d = Math.floor(h / 24)
+  return d === 1 ? 'ayer' : `hace ${d} días`
+}
 
 export default async function DashboardPage() {
   const admin = await getAdminUser()
@@ -11,17 +23,16 @@ export default async function DashboardPage() {
   if (admin?.role === 'monitor') redirect('/admin/monitores')
   const d = await getDashboard()
   const hoy = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())
-
   const eur = (n: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n)
 
-  // ── Visibilidad por permisos ───────────────────────────────────────────────
-  // Cada bloque del panel se muestra solo si el usuario tiene acceso a esa sección.
-  // Sin acceso a Balance ni Pagos → ningún dato económico.
   const ver = (id: SeccionId) => !!admin && puedeVerSeccion(admin.role, admin.secciones, id)
   const verReservas = ver('reservas')
   const verFormularios = ver('formularios')
   const verClub = ver('club')
   const verFinanzas = ver('balance') || ver('pagos')
+
+  // Novedades filtradas por permiso (reservas ↔ reservas, club ↔ club).
+  const novedades = d.novedades.filter(n => (n.clase === 'reserva' ? verReservas : verClub))
 
   const metricasEmpresa = [
     verReservas && <Metric key="rh" label="Reservas hoy" valor={d.reservasHoy} tono="navy" />,
@@ -30,20 +41,31 @@ export default async function DashboardPage() {
     verFormularios && <Metric key="se" label="Solicitudes empresa" valor={d.formsNuevos} tono="red" />,
   ].filter(Boolean)
 
+  // Alertas accionables (cada chip enlaza a donde se resuelve).
   const alertas = [
-    verReservas && d.pendientes > 0 && <div key="p" className="text-sm text-amber-700 bg-amber-50 rounded-lg px-3 py-2">⏳ {d.pendientes} reserva(s) pendiente(s) de confirmar</div>,
-    verReservas && d.enEspera > 0 && <div key="e" className="text-sm text-purple-700 bg-purple-50 rounded-lg px-3 py-2">📋 {d.enEspera} en lista de espera</div>,
-    verFormularios && d.formsNuevos > 0 && <div key="f" className="text-sm text-pm-red bg-pm-red-light rounded-lg px-3 py-2">✉️ {d.formsNuevos} solicitud(es) de empresa sin leer</div>,
-    verClub && d.clubNuevos > 0 && <div key="c" className="text-sm text-pm-navy bg-blue-50 rounded-lg px-3 py-2">🏅 {d.clubNuevos} solicitud(es) de inscripción al club</div>,
-  ].filter(Boolean)
+    verReservas && d.pendientes > 0 && { href: '/admin/reservas', tono: 'amber', icon: '⏳', txt: `${d.pendientes} reserva(s) pendiente(s) de confirmar` },
+    verReservas && d.enEspera > 0 && { href: '/admin/reservas', tono: 'purple', icon: '📋', txt: `${d.enEspera} en lista de espera` },
+    verFormularios && d.formsNuevos > 0 && { href: '/admin/formularios', tono: 'red', icon: '✉️', txt: `${d.formsNuevos} solicitud(es) de empresa sin leer` },
+    verClub && d.clubNuevos > 0 && { href: '/admin/club', tono: 'blue', icon: '🏅', txt: `${d.clubNuevos} inscripción(es) al club sin gestionar` },
+    verClub && d.clubConPagoPendiente > 0 && { href: '/admin/club', tono: 'amber', icon: '💶', txt: `${d.clubConPagoPendiente} alumno(s) con cuota pendiente` },
+  ].filter(Boolean) as { href: string; tono: string; icon: string; txt: string }[]
+
+  const tonoChip: Record<string, string> = {
+    amber: 'bg-amber-50 text-amber-800 hover:bg-amber-100 border-amber-200',
+    purple: 'bg-purple-50 text-purple-800 hover:bg-purple-100 border-purple-200',
+    red: 'bg-pm-red-light text-pm-red hover:bg-pm-red/10 border-pm-red/20',
+    blue: 'bg-blue-50 text-pm-navy hover:bg-blue-100 border-blue-200',
+  }
 
   const accesos = ([
-    { href: '/admin/club', icon: '🏅', label: 'Club · Solicitudes', id: 'club' },
+    { href: '/admin/club', icon: '🏅', label: 'Inscripciones Club', id: 'club' },
+    { href: '/admin/familias', icon: '👨‍👩‍👧', label: 'Portal de Familias', id: 'familias' },
+    { href: '/admin/calendario-club', icon: '🗓️', label: 'Calendario Club', id: 'calendario-club' },
     { href: '/admin/reservas', icon: '📋', label: 'Reservas', id: 'reservas' },
     { href: '/admin/formularios', icon: '✉️', label: 'Solicitudes', id: 'formularios' },
-    { href: '/admin/calendario', icon: '🗓️', label: 'Calendario', id: 'calendario' },
-    { href: '/admin/clientes', icon: '👥', label: 'Clientes', id: 'clientes' },
-    { href: '/admin/productos', icon: '🛒', label: 'Productos', id: 'productos' },
+    { href: '/admin/balance', icon: '💰', label: 'Balance', id: 'balance' },
+    { href: '/admin/facturacion', icon: '🧾', label: 'Facturación', id: 'facturacion' },
+    { href: '/admin/calendario', icon: '📅', label: 'Calendario', id: 'calendario' },
   ] as const).filter(a => ver(a.id))
 
   return (
@@ -51,13 +73,29 @@ export default async function DashboardPage() {
       <AdminHeader
         titulo={`Hola, ${admin?.nombre?.split(' ')[0] || 'admin'} 👋`}
         subtitulo={hoy.charAt(0).toUpperCase() + hoy.slice(1)}
-        accion={verReservas ? <Link href="/admin/reservas" className="bg-pm-red hover:bg-pm-red-dark text-white font-bold px-5 py-2.5 rounded-xl transition-colors text-sm hidden sm:inline-block">Ver reservas</Link> : null}
+        accion={verClub ? <Link href="/admin/club" className="bg-pm-red hover:bg-pm-red-dark text-white font-bold px-5 py-2.5 rounded-xl transition-colors text-sm hidden sm:inline-block">Inscripciones Club</Link> : null}
       />
 
       <div className="p-6 lg:p-8 space-y-8">
         {!d.ok && <SetupNotice />}
 
-        {/* Métricas Empresa */}
+        {/* ── Alertas accionables ── */}
+        <div>
+          <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">Alertas</div>
+          {alertas.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              {alertas.map((a, i) => (
+                <Link key={i} href={a.href} className={`flex items-center gap-2 text-sm font-semibold border rounded-xl px-3 py-2.5 transition-colors ${tonoChip[a.tono]}`}>
+                  <span>{a.icon}</span><span className="flex-1">{a.txt}</span><span aria-hidden>→</span>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-xl px-3 py-2.5">✓ Todo al día, sin nada pendiente.</div>
+          )}
+        </div>
+
+        {/* ── Métricas Empresa ── */}
         {metricasEmpresa.length > 0 && (
           <div>
             <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">Empresa</div>
@@ -65,61 +103,35 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {/* Métricas Club Deportivo */}
+        {/* ── Métricas Club Deportivo Origen ── */}
         {verClub && (
           <div>
-            <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">Club Deportivo Origen</div>
+            <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">Club Deportivo Origen · temporada {d.tempActiva.replace('/', '-')}</div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <Metric label="Solicitudes nuevas" valor={d.clubNuevos} sub="Inscripciones por gestionar" tono="red" />
-              <Metric label="Total solicitudes club" valor={d.clubTotal} tono="navy" />
+              <Metric label="Inscripciones nuevas" valor={d.clubNuevos} sub="Sin gestionar" tono="red" />
+              <Metric label="Alumnos activos" valor={d.clubActivos} tono="navy" />
+              {verFinanzas && <Metric label="Cuotas cobradas" valor={eur(d.clubIngresosTemporada)} sub="Temporada" tono="green" />}
+              <Metric label="Con pago pendiente" valor={d.clubConPagoPendiente} tono="amber" />
             </div>
           </div>
         )}
 
-        {/* Alertas (adaptadas a los permisos) */}
-        <div>
-          <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">Alertas</div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-            {alertas.length > 0 ? alertas : <div className="text-sm text-green-700 bg-green-50 rounded-lg px-3 py-2">✓ Todo al día</div>}
-          </div>
-        </div>
-
-        {/* Reservas recientes + Más reservados (solo con acceso a Reservas) */}
-        {verReservas && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                <h2 className="font-black text-pm-navy">Reservas recientes</h2>
-                <Link href="/admin/reservas" className="text-sm text-pm-red font-semibold hover:underline">Ver todas →</Link>
-              </div>
-              {d.recientes.length === 0 ? (
-                <EmptyState titulo="Aún no hay reservas" desc="Las reservas que se realicen en la web aparecerán aquí." />
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-gray-50 text-left text-xs text-gray-500 uppercase tracking-wider">
-                        <th className="px-5 py-3 font-semibold">Cliente</th>
-                        <th className="px-5 py-3 font-semibold">Servicio</th>
-                        <th className="px-5 py-3 font-semibold">Fecha</th>
-                        <th className="px-5 py-3 font-semibold">Estado</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
-                      {d.recientes.map(b => (
-                        <tr key={b.id} className="hover:bg-gray-50">
-                          <td className="px-5 py-3 font-semibold text-pm-navy">{b.cliente_nombre || '—'}</td>
-                          <td className="px-5 py-3 text-gray-600">{b.servicio || '—'}</td>
-                          <td className="px-5 py-3 text-gray-600">{b.fecha || '—'}</td>
-                          <td className="px-5 py-3"><EstadoBadge estado={b.estado_reserva} /></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
+        {/* ── Novedades (últimos 7 días) + Más reservados ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100">
+              <h2 className="font-black text-pm-navy">Novedades <span className="text-gray-400 font-medium text-sm">· últimos 7 días</span></h2>
             </div>
+            {novedades.length === 0 ? (
+              <p className="text-sm text-gray-400 px-6 py-10 text-center">Sin novedades esta semana. Las reservas e inscripciones nuevas aparecerán aquí.</p>
+            ) : (
+              <ul className="divide-y divide-gray-50">
+                {novedades.map(n => <FilaNovedad key={n.id} n={n} />)}
+              </ul>
+            )}
+          </div>
 
+          {verReservas && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
               <h2 className="font-black text-pm-navy mb-4">Más reservados</h2>
               {d.topServicios.length === 0 ? (
@@ -143,12 +155,12 @@ export default async function DashboardPage() {
                 </div>
               )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* Accesos rápidos (solo a las secciones permitidas) */}
+        {/* ── Accesos rápidos ── */}
         {accesos.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
             {accesos.map(a => (
               <Link key={a.href} href={a.href} className="bg-white border border-gray-100 rounded-2xl p-4 text-center hover:shadow-md hover:border-pm-red/20 transition-all">
                 <div className="text-2xl mb-1">{a.icon}</div>
@@ -159,5 +171,24 @@ export default async function DashboardPage() {
         )}
       </div>
     </>
+  )
+}
+
+function FilaNovedad({ n }: { n: Novedad }) {
+  const href = n.clase === 'reserva' ? '/admin/reservas' : '/admin/club'
+  const icon = n.clase === 'reserva' ? '📋' : '🏅'
+  const esNueva = n.estado === 'pendiente' || n.estado === 'nueva'
+  return (
+    <li>
+      <Link href={href} className="flex items-center gap-3 px-6 py-3 hover:bg-gray-50 transition-colors">
+        <span className="text-xl shrink-0">{icon}</span>
+        <div className="min-w-0 flex-1">
+          <div className="font-semibold text-pm-navy truncate">{n.nombre}</div>
+          <div className="text-xs text-gray-500 truncate">{n.clase === 'reserva' ? 'Reserva' : 'Club'} · {n.detalle}</div>
+        </div>
+        {esNueva && <span className="text-[10px] font-black uppercase tracking-wide bg-pm-red-light text-pm-red rounded-full px-2 py-0.5 shrink-0">Nueva</span>}
+        <span className="text-xs text-gray-400 whitespace-nowrap shrink-0">{hace(n.cuando)}</span>
+      </Link>
+    </li>
   )
 }
