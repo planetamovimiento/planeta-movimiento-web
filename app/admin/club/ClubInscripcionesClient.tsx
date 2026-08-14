@@ -54,6 +54,7 @@ export default function ClubInscripcionesClient({
   const [modalGrupos, setModalGrupos] = useState(false)
   const [modalImportar, setModalImportar] = useState(false)
   const [modalConfig, setModalConfig] = useState(false)
+  const [modalAsistencia, setModalAsistencia] = useState(false)
 
   const detalle = lista.find(a => a.id === detalleId) ?? null
 
@@ -372,6 +373,9 @@ export default function ClubInscripcionesClient({
                 </button>
               </>
             )}
+            <button onClick={() => setModalAsistencia(true)} className="text-sm font-semibold text-pm-navy border border-gray-200 hover:border-pm-navy rounded-xl px-3 py-2 transition-colors">
+              🗓️ Lista de asistencia
+            </button>
             <button onClick={exportarCSV} className="text-sm font-bold text-white bg-pm-navy hover:bg-pm-navy-md rounded-xl px-3 py-2 transition-colors">
               ⬇ Exportar CSV/Excel
             </button>
@@ -510,6 +514,19 @@ export default function ClubInscripcionesClient({
 
       {/* Importar CSV / Excel */}
       {modalImportar && <ImportarModal onClose={() => setModalImportar(false)} />}
+
+      {/* Lista de asistencia */}
+      {modalAsistencia && (
+        <ModalAsistencia
+          actividadInicial={fActividad}
+          grupoInicial={fGrupo}
+          temporada={fTemporada || tempActiva}
+          actividades={actividades}
+          grupos={grupos}
+          gruposParaActividad={gruposParaActividad}
+          onClose={() => setModalAsistencia(false)}
+        />
+      )}
 
       {/* Gestión de grupos */}
       {modalGrupos && (
@@ -909,6 +926,180 @@ function FilaGrupos({ titulo, items, onRenombrar, onEliminar, onHorario, onWhats
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Modal "Descargar lista de asistencia" ─────────────────────────────────────
+const DIAS_ASIS = [
+  { n: 1, corto: 'L', label: 'Lun' }, { n: 2, corto: 'M', label: 'Mar' }, { n: 3, corto: 'X', label: 'Mié' },
+  { n: 4, corto: 'J', label: 'Jue' }, { n: 5, corto: 'V', label: 'Vie' }, { n: 6, corto: 'S', label: 'Sáb' }, { n: 7, corto: 'D', label: 'Dom' },
+]
+const pad2 = (n: number) => String(n).padStart(2, '0')
+const ultimoDiaMes = (y: number, m: number) => new Date(y, m, 0).getDate()
+
+/** Deduce los días de la semana a partir del texto libre del horario del grupo. */
+function diasDeHorario(txt: string): number[] {
+  const t = txt.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+  const set = new Set<number>()
+  const palabras: [number, string][] = [[1, 'lunes'], [2, 'martes'], [3, 'miercoles'], [4, 'jueves'], [5, 'viernes'], [6, 'sabado'], [7, 'domingo']]
+  palabras.forEach(([n, w]) => { if (t.includes(w)) set.add(n) })
+  const letra: Record<string, number> = { l: 1, m: 2, x: 3, j: 4, v: 5, s: 6, d: 7 }
+  t.split(/[^a-z]+/).forEach(tok => { if (tok.length === 1 && letra[tok] != null) set.add(letra[tok]) })
+  return [...set].sort((a, b) => a - b)
+}
+
+/** Horario (texto libre) por defecto de un grupo: el de su actividad o el global. */
+function horarioDeGrupo(grupos: Grupo[], grupo: string, actividad: string): string {
+  return grupos.find(g => g.nombre === grupo && (g.actividad === actividad || !g.actividad))?.horario ||
+    grupos.find(g => g.nombre === grupo)?.horario || ''
+}
+
+function ModalAsistencia({ actividadInicial, grupoInicial, temporada, actividades, grupos, gruposParaActividad, onClose }: {
+  actividadInicial: string; grupoInicial: string; temporada: string
+  actividades: string[]; grupos: Grupo[]; gruposParaActividad: (a: string) => string[]; onClose: () => void
+}) {
+  const [actividad, setActividad] = useState(actividadInicial)
+  const [grupo, setGrupo] = useState(grupoInicial)
+  const [modo, setModo] = useState<'mes' | 'rango-meses' | 'temporada' | 'fechas'>('mes')
+  const [mesUnico, setMesUnico] = useState<string>(MES_ACTUAL)
+  const [mesDesde, setMesDesde] = useState<string>('sep')
+  const [mesHasta, setMesHasta] = useState<string>('dic')
+  const [fDesde, setFDesde] = useState('')
+  const [fHasta, setFHasta] = useState('')
+  // Días prefijados leyendo el horario del grupo elegido (editables por el usuario).
+  const [dias, setDias] = useState<number[]>(() => diasDeHorario(horarioDeGrupo(grupos, grupoInicial, actividadInicial)))
+  const [monitor, setMonitor] = useState('')
+  const [error, setError] = useState('')
+
+  const gruposDisponibles = gruposParaActividad(actividad)
+  const startYear = parseInt(temporada.slice(0, 4), 10) || new Date().getFullYear()
+  const anioDeMes = (mes: number) => (mes >= 9 ? startYear : startYear + 1)
+  const horarioGrupo = horarioDeGrupo(grupos, grupo, actividad)
+
+  function rango(): { desde: string; hasta: string; label: string } {
+    if (modo === 'temporada') return { desde: `${startYear}-09-01`, hasta: `${startYear + 1}-06-30`, label: `Temporada ${temporadaDisplay(temporada)}` }
+    if (modo === 'fechas') return { desde: fDesde, hasta: fHasta, label: `${fDesde} – ${fHasta}` }
+    if (modo === 'mes') {
+      const m = MESES_TEMPORADA.find(x => x.key === mesUnico) ?? MESES_TEMPORADA[0]
+      const y = anioDeMes(m.mes)
+      return { desde: `${y}-${pad2(m.mes)}-01`, hasta: `${y}-${pad2(m.mes)}-${pad2(ultimoDiaMes(y, m.mes))}`, label: `${m.nombre} ${y}` }
+    }
+    // rango-meses (ordena por posición en la temporada)
+    const iA = MESES_TEMPORADA.findIndex(x => x.key === mesDesde)
+    const iB = MESES_TEMPORADA.findIndex(x => x.key === mesHasta)
+    const [a, b] = iA <= iB ? [MESES_TEMPORADA[iA], MESES_TEMPORADA[iB]] : [MESES_TEMPORADA[iB], MESES_TEMPORADA[iA]]
+    const ya = anioDeMes(a.mes), yb = anioDeMes(b.mes)
+    return { desde: `${ya}-${pad2(a.mes)}-01`, hasta: `${yb}-${pad2(b.mes)}-${pad2(ultimoDiaMes(yb, b.mes))}`, label: `${a.nombre}–${b.nombre} ${temporadaDisplay(temporada)}` }
+  }
+
+  function generar() {
+    if (!grupo) { setError('Elige un grupo.'); return }
+    if (dias.length === 0) { setError('Marca al menos un día de la semana.'); return }
+    const { desde, hasta, label } = rango()
+    if (!desde || !hasta || desde > hasta) { setError('Revisa las fechas del periodo.'); return }
+    const params = new URLSearchParams({ actividad, grupo, desde, hasta, temporada, dias: dias.join(','), monitor, periodo: label })
+    window.open(`/admin/club/asistencia?${params.toString()}`, '_blank')
+    onClose()
+  }
+
+  const inp = 'w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:border-pm-red'
+  const lbl = 'block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1'
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-center items-start overflow-y-auto p-4">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl my-8">
+        <div className="bg-pm-navy text-white px-5 py-4 flex items-center justify-between rounded-t-2xl">
+          <div className="font-black">Descargar lista de asistencia</div>
+          <button onClick={onClose} className="text-white/60 hover:text-white">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <div className="p-5 space-y-5">
+          {error && <div className="bg-red-50 border border-red-200 rounded-lg p-2.5 text-sm text-red-700">{error}</div>}
+
+          {/* Actividad + grupo */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className={lbl}>Actividad</label>
+              <select value={actividad} onChange={e => { setActividad(e.target.value); setGrupo(''); setDias([]) }} className={inp}>
+                <option value="">Todas</option>
+                {actividades.map(a => <option key={a} value={a}>{a}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={lbl}>Grupo</label>
+              <select value={grupo} onChange={e => { const v = e.target.value; setGrupo(v); setDias(diasDeHorario(horarioDeGrupo(grupos, v, actividad))) }} className={inp}>
+                <option value="">— Elige grupo —</option>
+                {gruposDisponibles.map(g => <option key={g} value={g}>{g}</option>)}
+                {grupo && !gruposDisponibles.includes(grupo) && <option value={grupo}>{grupo}</option>}
+              </select>
+            </div>
+          </div>
+
+          {/* Periodo */}
+          <div>
+            <label className={lbl}>Periodo</label>
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {([['mes', 'Un mes'], ['rango-meses', 'Rango de meses'], ['temporada', 'Temporada completa'], ['fechas', 'Fechas']] as const).map(([id, txt]) => (
+                <button key={id} onClick={() => setModo(id)}
+                  className={`text-xs font-bold px-3 py-1.5 rounded-full border transition-colors ${modo === id ? 'bg-pm-navy text-white border-transparent' : 'border-gray-200 text-gray-500 hover:border-pm-navy'}`}>{txt}</button>
+              ))}
+            </div>
+            {modo === 'mes' && (
+              <select value={mesUnico} onChange={e => setMesUnico(e.target.value)} className={inp}>
+                {MESES_TEMPORADA.map(m => <option key={m.key} value={m.key}>{m.nombre} {anioDeMes(m.mes)}</option>)}
+              </select>
+            )}
+            {modo === 'rango-meses' && (
+              <div className="grid grid-cols-2 gap-2">
+                <select value={mesDesde} onChange={e => setMesDesde(e.target.value)} className={inp}>
+                  {MESES_TEMPORADA.map(m => <option key={m.key} value={m.key}>{m.nombre}</option>)}
+                </select>
+                <select value={mesHasta} onChange={e => setMesHasta(e.target.value)} className={inp}>
+                  {MESES_TEMPORADA.map(m => <option key={m.key} value={m.key}>{m.nombre}</option>)}
+                </select>
+              </div>
+            )}
+            {modo === 'temporada' && <p className="text-xs text-gray-400">Septiembre {startYear} → junio {startYear + 1}.</p>}
+            {modo === 'fechas' && (
+              <div className="grid grid-cols-2 gap-2">
+                <input type="date" value={fDesde} onChange={e => setFDesde(e.target.value)} className={inp} />
+                <input type="date" value={fHasta} onChange={e => setFHasta(e.target.value)} className={inp} />
+              </div>
+            )}
+          </div>
+
+          {/* Días de la semana */}
+          <div>
+            <label className={lbl}>Días de clase{horarioGrupo && <span className="text-gray-300 normal-case font-medium"> · detectados del horario «{horarioGrupo}»</span>}</label>
+            <div className="flex flex-wrap gap-1.5">
+              {DIAS_ASIS.map(d => {
+                const on = dias.includes(d.n)
+                return (
+                  <button key={d.n} onClick={() => setDias(prev => on ? prev.filter(x => x !== d.n) : [...prev, d.n].sort((a, b) => a - b))}
+                    className={`w-11 py-2 rounded-lg border text-sm font-bold transition-colors ${on ? 'bg-pm-red text-white border-transparent' : 'border-gray-200 text-gray-500 hover:border-pm-red'}`}
+                    title={d.label}>{d.corto}</button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Monitor */}
+          <div>
+            <label className={lbl}>Monitor/a <span className="text-gray-300 normal-case font-medium">(opcional)</span></label>
+            <input value={monitor} onChange={e => setMonitor(e.target.value)} placeholder="Nombre del monitor/a" className={inp} />
+          </div>
+
+          <div className="flex gap-2 pt-1 border-t border-gray-100">
+            <button onClick={generar} className="bg-pm-red hover:bg-pm-red-dark text-white font-bold px-5 py-2 rounded-xl text-sm">Generar hoja</button>
+            <button onClick={onClose} className="text-sm font-bold text-gray-400 hover:text-pm-navy px-3 py-2 ml-auto">Cancelar</button>
+          </div>
+          <p className="text-xs text-gray-400">Se abre en una pestaña nueva lista para imprimir o guardar como PDF. No incluye datos económicos.</p>
+        </div>
       </div>
     </div>
   )
