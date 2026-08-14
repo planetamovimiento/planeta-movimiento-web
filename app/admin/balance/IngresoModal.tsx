@@ -8,13 +8,15 @@ const hoy = () => new Date().toISOString().slice(0, 10)
 const input = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red'
 const label = 'block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5'
 
-export default function IngresoModal({ ingreso, onClose, onSaved }: {
+export default function IngresoModal({ ingreso, ambito, onClose, onSaved }: {
   ingreso: IngresoMov | null   // manual a editar, o null para crear
+  ambito: string               // ámbito a asignar (empresa | club)
   onClose: () => void
   onSaved: () => void
 }) {
   const editId = ingreso && ingreso.tipo === 'manual' ? ingreso.id.replace(/^manual:/, '') : null
   const [f, setF] = useState<IngresoManualInput>({
+    ambito: ingreso?.ambito || ambito,
     fecha: ingreso?.fecha || hoy(),
     concepto: ingreso?.servicio || '',
     servicio: ingreso?.servicio || '',

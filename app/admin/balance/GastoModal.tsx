@@ -9,13 +9,15 @@ const hoy = () => new Date().toISOString().slice(0, 10)
 const input = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red'
 const label = 'block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5'
 
-export default function GastoModal({ gasto, categorias, onClose, onSaved }: {
+export default function GastoModal({ gasto, categorias, ambito, onClose, onSaved }: {
   gasto: GastoMov | null
   categorias: Categoria[]
+  ambito: string               // ámbito a asignar (empresa | club)
   onClose: () => void
   onSaved: () => void
 }) {
   const [f, setF] = useState<GastoInput>({
+    ambito: gasto?.ambito || ambito,
     fecha: gasto?.fecha || hoy(),
     concepto: gasto?.concepto || '',
     categoria: gasto?.categoria || (categorias[0]?.nombre ?? 'Otros gastos'),

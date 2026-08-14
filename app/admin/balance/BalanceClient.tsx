@@ -79,13 +79,18 @@ export default function BalanceClient({ ingresos, gastos, categorias, setupOk, r
   const [tab, setTab] = useState<Tab>('resumen')
   const añoActual = new Date().getFullYear()
 
+  // ── Ámbito: empresa vs Club Deportivo Origen ──
+  const [ambito, setAmbito] = useState<'empresa' | 'club'>('empresa')
+  const ingA = useMemo(() => ingresos.filter(i => (i.ambito || 'empresa') === ambito), [ingresos, ambito])
+  const gasA = useMemo(() => gastos.filter(g => (g.ambito || 'empresa') === ambito), [gastos, ambito])
+
   // ── Años disponibles ──
   const años = useMemo(() => {
     const s = new Set<number>()
-    ;[...ingresos, ...gastos].forEach(m => { const y = ymd(m.fecha)?.y; if (y) s.add(y) })
+    ;[...ingA, ...gasA].forEach(m => { const y = ymd(m.fecha)?.y; if (y) s.add(y) })
     s.add(añoActual)
     return Array.from(s).sort((a, b) => b - a)
-  }, [ingresos, gastos, añoActual])
+  }, [ingA, gasA, añoActual])
 
   // ── Filtros ──
   const [fAnio, setFAnio] = useState<number | typeof TODO>(años.includes(añoActual) ? añoActual : (años[0] ?? TODO))
@@ -110,7 +115,7 @@ export default function BalanceClient({ ingresos, gastos, categorias, setupOk, r
     return true
   }
 
-  const ingresosF = useMemo(() => ingresos.filter(i => {
+  const ingresosF = useMemo(() => ingA.filter(i => {
     if (!pasaFecha(i.fecha)) return false
     if (fCat !== TODO && i.categoria !== fCat) return false
     if (fServicio !== TODO && i.servicio !== fServicio) return false
@@ -118,16 +123,16 @@ export default function BalanceClient({ ingresos, gastos, categorias, setupOk, r
     if (fMetodo !== TODO && i.metodo !== fMetodo) return false
     if (q && ![i.cliente, i.servicio, i.referencia].some(x => x.toLowerCase().includes(q.toLowerCase()))) return false
     return true
-  }), [ingresos, fAnio, fMes, fDesde, fHasta, fCat, fServicio, fEstado, fMetodo, q]) // eslint-disable-line
+  }), [ingA, fAnio, fMes, fDesde, fHasta, fCat, fServicio, fEstado, fMetodo, q]) // eslint-disable-line
 
-  const gastosF = useMemo(() => gastos.filter(g => {
+  const gastosF = useMemo(() => gasA.filter(g => {
     if (!pasaFecha(g.fecha)) return false
     if (fCat !== TODO && g.categoria !== fCat) return false
     if (fEstado !== TODO && g.estado !== fEstado) return false
     if (fMetodo !== TODO && g.metodo !== fMetodo) return false
     if (q && ![g.concepto, g.proveedor, g.categoria, g.subcategoria].some(x => (x || '').toLowerCase().includes(q.toLowerCase()))) return false
     return true
-  }), [gastos, fAnio, fMes, fDesde, fHasta, fCat, fEstado, fMetodo, q]) // eslint-disable-line
+  }), [gasA, fAnio, fMes, fDesde, fHasta, fCat, fEstado, fMetodo, q]) // eslint-disable-line
 
   // ── Totales ──
   const T = useMemo(() => {
@@ -145,19 +150,19 @@ export default function BalanceClient({ ingresos, gastos, categorias, setupOk, r
   // ── Serie mensual del año elegido ──
   const serieMensual = useMemo(() => {
     const arr = MESES.map(() => ({ ingresos: 0, gastos: 0, beneficio: 0 }))
-    ingresos.filter(i => INGRESO_CUENTA.includes(i.estado)).forEach(i => { const ym = ymd(i.fecha); if (ym && ym.y === añoGrafico) arr[ym.m].ingresos += i.total })
-    gastos.filter(g => GASTO_CUENTA.includes(g.estado)).forEach(g => { const ym = ymd(g.fecha); if (ym && ym.y === añoGrafico) arr[ym.m].gastos += g.total })
+    ingA.filter(i => INGRESO_CUENTA.includes(i.estado)).forEach(i => { const ym = ymd(i.fecha); if (ym && ym.y === añoGrafico) arr[ym.m].ingresos += i.total })
+    gasA.filter(g => GASTO_CUENTA.includes(g.estado)).forEach(g => { const ym = ymd(g.fecha); if (ym && ym.y === añoGrafico) arr[ym.m].gastos += g.total })
     arr.forEach(a => a.beneficio = a.ingresos - a.gastos)
     return arr
-  }, [ingresos, gastos, añoGrafico])
+  }, [ingA, gasA, añoGrafico])
 
   // ── Serie anual ──
   const serieAnual = useMemo(() => {
     const map = new Map<number, { ingresos: number; gastos: number }>()
-    ingresos.filter(i => INGRESO_CUENTA.includes(i.estado)).forEach(i => { const y = ymd(i.fecha)?.y; if (y) { const o = map.get(y) || { ingresos: 0, gastos: 0 }; o.ingresos += i.total; map.set(y, o) } })
-    gastos.filter(g => GASTO_CUENTA.includes(g.estado)).forEach(g => { const y = ymd(g.fecha)?.y; if (y) { const o = map.get(y) || { ingresos: 0, gastos: 0 }; o.gastos += g.total; map.set(y, o) } })
+    ingA.filter(i => INGRESO_CUENTA.includes(i.estado)).forEach(i => { const y = ymd(i.fecha)?.y; if (y) { const o = map.get(y) || { ingresos: 0, gastos: 0 }; o.ingresos += i.total; map.set(y, o) } })
+    gasA.filter(g => GASTO_CUENTA.includes(g.estado)).forEach(g => { const y = ymd(g.fecha)?.y; if (y) { const o = map.get(y) || { ingresos: 0, gastos: 0 }; o.gastos += g.total; map.set(y, o) } })
     return Array.from(map.entries()).map(([y, v]) => ({ y, ...v, beneficio: v.ingresos - v.gastos })).sort((a, b) => b.y - a.y)
-  }, [ingresos, gastos])
+  }, [ingA, gasA])
 
   // ── Por categoría (gasto) y por servicio (ingreso) ──
   const porCategoria = useMemo(() => {
@@ -172,7 +177,7 @@ export default function BalanceClient({ ingresos, gastos, categorias, setupOk, r
     return Array.from(map.entries()).map(([label, valor]) => ({ label, valor, color: '#22c55e' })).sort((a, b) => b.valor - a.valor)
   }, [ingresosF])
 
-  const servicios = useMemo(() => Array.from(new Set(ingresos.map(i => i.servicio))).sort(), [ingresos])
+  const servicios = useMemo(() => Array.from(new Set(ingA.map(i => i.servicio))).sort(), [ingA])
 
   // ── Modales / acciones ──
   const [modalGasto, setModalGasto] = useState<GastoMov | null | 'nuevo'>(null)
@@ -222,6 +227,19 @@ export default function BalanceClient({ ingresos, gastos, categorias, setupOk, r
           </p>
         </div>
       )}
+
+      {/* ── ÁMBITO: Empresa vs Club ── */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="bg-pm-bg rounded-xl p-1 inline-flex gap-1">
+          {([['empresa', '🏢 Empresa'], ['club', '🤸 Club Origen']] as const).map(([id, label]) => (
+            <button key={id} onClick={() => setAmbito(id)}
+              className={`text-sm font-bold px-4 py-2 rounded-lg transition-colors ${ambito === id ? 'bg-white text-pm-navy shadow-sm' : 'text-gray-500 hover:text-pm-navy'}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+        {ambito === 'club' && <span className="text-xs text-gray-400">Ingresos = cuotas cobradas del CRM + ingresos manuales del Club. Los gastos, a mano.</span>}
+      </div>
 
       {/* ── PESTAÑAS ── */}
       <div className="flex gap-1 bg-white rounded-2xl border border-gray-100 shadow-sm p-1.5 overflow-x-auto">
@@ -340,7 +358,7 @@ export default function BalanceClient({ ingresos, gastos, categorias, setupOk, r
                     <td className="px-3 py-2 whitespace-nowrap text-green-600 font-semibold">{eur(i.pagado)}</td>
                     <td className="px-3 py-2 whitespace-nowrap text-amber-600">{i.pendiente > 0 ? eur(i.pendiente) : '—'}</td>
                     <td className="px-3 py-2 whitespace-nowrap"><span className={`text-xs font-bold px-2 py-0.5 rounded-full ${badgeEstadoIngreso(i.estado)}`}>{labelEstadoIngreso(i.estado)}</span></td>
-                    <td className="px-3 py-2 whitespace-nowrap"><span className="text-xs text-gray-400">{i.tipo === 'manual' ? '✍️ Manual' : i.origen === 'order' ? '🛒 Pedido' : '📋 Reserva'}</span></td>
+                    <td className="px-3 py-2 whitespace-nowrap"><span className="text-xs text-gray-400">{i.tipo === 'manual' ? '✍️ Manual' : i.origen === 'cuota' ? '🤸 Cuota' : i.origen === 'order' ? '🛒 Pedido' : '📋 Reserva'}</span></td>
                     <td className="px-3 py-2 whitespace-nowrap text-right">
                       {i.tipo === 'manual' && puedeEditar && <button onClick={() => setModalIngreso(i)} className="text-xs text-pm-navy hover:text-pm-red font-bold mr-2">Editar</button>}
                       {i.tipo === 'manual' && puedeGestionar && <button onClick={() => borrarIngreso(i)} className="text-xs text-gray-300 hover:text-red-500">✕</button>}
@@ -478,10 +496,12 @@ export default function BalanceClient({ ingresos, gastos, categorias, setupOk, r
       {/* ── MODALES ── */}
       {modalGasto !== null && (
         <GastoModal gasto={modalGasto === 'nuevo' ? null : modalGasto} categorias={categorias}
+          ambito={modalGasto === 'nuevo' ? ambito : (modalGasto.ambito || ambito)}
           onClose={() => setModalGasto(null)} onSaved={() => { setModalGasto(null); refrescar() }} />
       )}
       {modalIngreso !== null && (
         <IngresoModal ingreso={modalIngreso === 'nuevo' ? null : modalIngreso}
+          ambito={modalIngreso === 'nuevo' ? ambito : (modalIngreso.ambito || ambito)}
           onClose={() => setModalIngreso(null)} onSaved={() => { setModalIngreso(null); refrescar() }} />
       )}
       {modalImport && <ImportarGastosModal categorias={categorias} onClose={() => setModalImport(false)} />}

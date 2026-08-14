@@ -8,6 +8,7 @@ import { eur } from '@/lib/balance/constants'
 function rev() { revalidatePath('/admin/balance'); revalidatePath('/admin') }
 
 export type GastoInput = {
+  ambito?: string
   fecha: string
   concepto: string
   categoria: string
@@ -23,6 +24,7 @@ export type GastoInput = {
 }
 
 export type IngresoManualInput = {
+  ambito?: string
   fecha: string
   concepto: string
   servicio?: string
@@ -38,6 +40,7 @@ export type IngresoManualInput = {
 
 function limpiarGasto(p: GastoInput) {
   return {
+    ambito: p.ambito === 'club' ? 'club' : 'empresa',
     fecha: p.fecha,
     concepto: (p.concepto || '').trim(),
     categoria: (p.categoria || '').trim() || 'Otros gastos',
@@ -126,6 +129,7 @@ export async function importarGastos(rows: GastoInput[]) {
 // ─── INGRESOS MANUALES ───────────────────────────────────────────────────────
 function limpiarIngreso(p: IngresoManualInput) {
   return {
+    ambito: p.ambito === 'club' ? 'club' : 'empresa',
     fecha: p.fecha,
     concepto: (p.concepto || '').trim(),
     servicio: (p.servicio || '').trim() || null,

@@ -86,10 +86,13 @@ export const colorCat = (c: string) => COLOR_CAT[c] ?? COLOR_CAT.gray
 export const COLORES_DISPONIBLES = Object.keys(COLOR_CAT)
 
 // ── Movimientos (normalizados para la app) ───────────────────────────────────
+export type Ambito = 'empresa' | 'club'
+
 export type IngresoMov = {
   id: string
   tipo: 'auto' | 'manual'
-  origen: string           // booking | order | form | manual
+  origen: string           // booking | order | form | manual | cuota
+  ambito: string           // empresa | club
   fecha: string            // YYYY-MM-DD
   cliente: string
   servicio: string
@@ -104,6 +107,7 @@ export type IngresoMov = {
 
 export type GastoMov = {
   id: string
+  ambito: string           // empresa | club
   fecha: string            // YYYY-MM-DD
   concepto: string
   categoria: string
