@@ -17,6 +17,9 @@ import { SubirImagen } from '@/components/admin/SubirImagen'
 
 const MES_ACTUAL = mesActualKey() ?? 'jun'
 
+/** Normaliza el nombre de una actividad (sin acentos, minúsculas) para contar por actividad. */
+const normActividad = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+
 function mensajeWhatsApp(a: Alumno): string {
   const nombre = a.nombre || ''
   const saludo = nombre ? `Hola ${nombre} 👋` : 'Hola 👋'
@@ -130,29 +133,28 @@ export default function ClubInscripcionesClient({
       x.actividad.localeCompare(y.actividad, 'es') || x.grupo.localeCompare(y.grupo, 'es'))
   }, [lista, q, fActividad, fTemporada, fEstado])
 
-  // Métricas globales
+  // Métricas de la temporada SELECCIONADA en el filtro (vacío = todas las temporadas).
   const metricas = useMemo(() => {
-    const activos = lista.filter(a => a.estado_general === 'activo').length
-    const bajas = lista.filter(a => a.estado_general === 'baja').length
-    const pendientes = lista.filter(a => a.estado_general === 'pendiente').length
-    const espera = lista.filter(a => a.estado_general === 'espera').length
-    // Inscritos = ya validados (Activo en adelante). Espera y pendiente NO cuentan.
-    const inscritos = lista.filter(a => a.estado_general !== 'pendiente' && a.estado_general !== 'espera').length
-    const pendientesPago = lista.filter(a =>
-      a.estado_general !== 'baja' && a.estado_general !== 'archivado' && (a.pagos[MES_ACTUAL] ?? '') !== 'pagado'
-    ).length
-    // Contadores de la temporada ACTIVA (punto 27).
-    const delAnio = lista.filter(a => a.temporada === tempActiva)
-    const septiembre = delAnio.filter(a => a.periodoInicio.startsWith('Septiembre')).length
-    const octubre = delAnio.filter(a => a.periodoInicio.startsWith('Octubre')).length
-    const cuotasPagadas = delAnio.filter(a => a.cuota_estado === 'pagada').length
-    const cuotasPendientes = delAnio.filter(a => a.cuota_estado === 'pendiente').length
-    const socios = delAnio.filter(a => a.esSocio).length
+    const base = fTemporada ? lista.filter(a => a.temporada === fTemporada) : lista
+    const cuenta = (fn: (a: Alumno) => boolean) => base.filter(fn).length
+    const act = (fn: (actividad: string) => boolean) => base.filter(a => fn(normActividad(a.actividad))).length
     return {
-      inscritos, activos, bajas, pendientes, espera, pendientesPago,
-      totalTemporada: delAnio.length, septiembre, octubre, cuotasPagadas, cuotasPendientes, socios,
+      total: base.length,
+      // Inscritos = ya validados (Activo en adelante). Espera y pendiente NO cuentan.
+      inscritos: cuenta(a => a.estado_general !== 'pendiente' && a.estado_general !== 'espera'),
+      activos: cuenta(a => a.estado_general === 'activo'),
+      pendientes: cuenta(a => a.estado_general === 'pendiente'),
+      espera: cuenta(a => a.estado_general === 'espera'),
+      bajas: cuenta(a => a.estado_general === 'baja'),
+      socios: cuenta(a => a.esSocio),
+      acrobacia: act(n => n.includes('acrob')),
+      telas: act(n => n.includes('aereo') || n.includes('telas')),
+      infantil: act(n => n.includes('infantil')),
+      jjb: act(n => n.includes('jiu')),
+      bienestar: act(n => n.includes('bienestar')),
+      ritmica: act(n => n.includes('ritmic')),
     }
-  }, [lista, tempActiva])
+  }, [lista, fTemporada])
 
   // Red de seguridad (punto 28): inscripciones sin fila de gestión.
   const pendientesSync = useMemo(() => lista.filter(a => a.pendienteSync), [lista])
@@ -320,26 +322,24 @@ export default function ClubInscripcionesClient({
         )}
       </div>
 
-      {/* Métricas */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-        <Metric label="Alumnos inscritos" valor={metricas.inscritos} tono="navy" />
-        <Metric label="Activos" valor={metricas.activos} tono="green" />
-        <Metric label="Pendientes de confirmar" valor={metricas.pendientes} tono="amber" />
-        <Metric label="Lista de espera" valor={metricas.espera} tono="purple" />
-        <Metric label="En baja" valor={metricas.bajas} tono="red" />
-        <Metric label={`Pago pendiente · ${MESES_TEMPORADA.find(m => m.key === MES_ACTUAL)?.nombre ?? ''}`} valor={metricas.pendientesPago} tono="amber" />
-      </div>
-
-      {/* Contadores de la temporada activa (punto 27) */}
+      {/* Panel de la temporada SELECCIONADA en el filtro */}
       <div>
-        <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-2">Temporada {temporadaDisplay(tempActiva)}</div>
-        <div className="grid grid-cols-2 lg:grid-cols-6 gap-3">
-          <Metric label="Total temporada" valor={metricas.totalTemporada} tono="navy" />
+        <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-2">
+          {fTemporada ? `Temporada ${temporadaDisplay(fTemporada)}` : 'Todas las temporadas'} · {metricas.total} {metricas.total === 1 ? 'alumno' : 'alumnos'}
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <Metric label="Alumnos inscritos" valor={metricas.inscritos} tono="navy" />
+          <Metric label="Activos" valor={metricas.activos} tono="green" />
+          <Metric label="Pendientes de confirmar" valor={metricas.pendientes} tono="amber" />
+          <Metric label="Lista de espera" valor={metricas.espera} tono="purple" />
+          <Metric label="En baja" valor={metricas.bajas} tono="red" />
           <Metric label="Socios" valor={metricas.socios} tono="navy" />
-          <Metric label="Empiezan en septiembre" valor={metricas.septiembre} tono="purple" />
-          <Metric label="Empiezan en octubre" valor={metricas.octubre} tono="navy" />
-          <Metric label="Cuotas pagadas" valor={metricas.cuotasPagadas} tono="green" />
-          <Metric label="Cuotas pendientes" valor={metricas.cuotasPendientes} tono="amber" />
+          <Metric label="Acrobacia" valor={metricas.acrobacia} tono="navy" />
+          <Metric label="Telas aéreas" valor={metricas.telas} tono="navy" />
+          <Metric label="Infantil" valor={metricas.infantil} tono="navy" />
+          <Metric label="Jiu-Jitsu (JJB)" valor={metricas.jjb} tono="navy" />
+          <Metric label="Bienestar" valor={metricas.bienestar} tono="navy" />
+          <Metric label="Rítmica" valor={metricas.ritmica} tono="navy" />
         </div>
       </div>
 
