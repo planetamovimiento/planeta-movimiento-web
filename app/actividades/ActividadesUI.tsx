@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { waNegocio } from '@/lib/whatsapp'
+import { optImg } from '@/lib/img/opt'
 
 // ─── Catálogo de servicios existentes ────────────────────────────────────────
 // Solo editamos aquí — las tarjetas se generan automáticamente
@@ -317,7 +318,7 @@ function TarjetaServicio({ s, cat }: { s: Servicio; cat: typeof CATEGORIAS[0] })
         {foto && !imgError ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={foto} alt={s.nombre} onError={() => setImgError(true)}
+            <img src={optImg(foto, 640)} alt={s.nombre} onError={() => setImgError(true)}
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
           </>

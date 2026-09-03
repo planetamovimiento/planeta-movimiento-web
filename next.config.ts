@@ -1,6 +1,19 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // sharp se usa en server actions (compresión de imágenes al subir).
+  serverExternalPackages: ['sharp'],
+
+  // Optimización de imágenes: las fotos remotas (Supabase Storage) se sirven a
+  // través del optimizador de Vercel (webp + tamaño justo, cacheado en su CDN),
+  // así Supabase deja de servirlas en cada visita y baja el egress del Storage.
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: '*.supabase.co' },
+    ],
+    qualities: [75],
+  },
+
   experimental: {
     // Al subir una imagen (que pesa varios MB) había DOS topes de body que la
     // cortaban antes de que subirImagen la procesara, y eso rompía la página:

@@ -2,6 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAdminUser, can } from '@/lib/admin/auth'
+import { comprimirImagen } from '@/lib/img/procesar'
 
 /**
  * Sube una imagen (jpg/png/webp) al bucket "fotos" de Supabase Storage
@@ -19,13 +20,16 @@ export async function subirImagen(formData: FormData) {
     return { ok: false, error: 'Formato no válido (usa JPG, PNG o WebP)' }
   }
 
-  const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+  const original = Buffer.from(await file.arrayBuffer())
+  const comp = await comprimirImagen(original)
+  const buffer = comp?.buffer ?? original
+  const contentType = comp?.contentType ?? file.type
+  const ext = comp?.ext ?? (file.name.split('.').pop()?.toLowerCase() || 'jpg')
   const nombre = file.name.replace(/\.[^.]+$/, '').toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40)
   const path = `${carpeta}/${nombre || 'img'}-${Date.now()}.${ext}`
 
   const db = createAdminClient()
-  const buffer = Buffer.from(await file.arrayBuffer())
-  const { error } = await db.storage.from('fotos').upload(path, buffer, { contentType: file.type, upsert: true })
+  const { error } = await db.storage.from('fotos').upload(path, buffer, { contentType, upsert: true, cacheControl: '2592000' })
   if (error) return { ok: false, error: error.message }
 
   const { data } = db.storage.from('fotos').getPublicUrl(path)

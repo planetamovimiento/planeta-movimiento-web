@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import { submitForm } from '@/lib/forms/actions'
 import { submitInscripcionTaller } from './actions'
 import { PagoClub } from '@/components/club/PagoClub'
+import { optImg } from '@/lib/img/opt'
 import { type Taller, type Estado } from './config'
 
 // ─── Badge de estado ─────────────────────────────────────────────────────────
@@ -50,7 +51,7 @@ function CartelLightbox({ src, alt, onClose }: { src: string; alt: string; onClo
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/85" onClick={onClose}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={alt} className="max-h-[92vh] max-w-full w-auto rounded-lg shadow-2xl" onClick={e => e.stopPropagation()} />
+      <img src={optImg(src, 1200)} alt={alt} className="max-h-[92vh] max-w-full w-auto rounded-lg shadow-2xl" onClick={e => e.stopPropagation()} />
       <button onClick={onClose} className="absolute top-4 right-4 bg-white/15 hover:bg-white/25 text-white rounded-full w-10 h-10 flex items-center justify-center">
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
@@ -330,7 +331,7 @@ export function TarjetaTaller({ taller }: { taller: Taller }) {
         <div id={taller.slug} className={`scroll-mt-24 bg-white border-2 rounded-3xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col ${taller.destacado ? 'md:col-span-2 border-pm-red' : 'border-gray-100'}`}>
           <button type="button" onClick={() => setVerCartel(true)} className="relative block w-full bg-pm-navy group">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={taller.imagen} alt={taller.imagenAlt || `Cartel del ${taller.nombre}`} className="w-full h-auto block" />
+            <img src={optImg(taller.imagen, 1080)} alt={taller.imagenAlt || `Cartel del ${taller.nombre}`} className="w-full h-auto block" />
             {taller.destacado && <span className="absolute top-3 left-3 bg-pm-red text-white text-xs font-black px-3 py-1 rounded-full shadow">Destacado</span>}
             <span className={`absolute top-3 right-3 flex items-center gap-1.5 border text-xs font-bold px-3 py-1 rounded-full shadow ${estado.color}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${estado.dot}`}/>{estado.label}

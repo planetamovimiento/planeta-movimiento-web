@@ -1,6 +1,7 @@
 'use client'
 
 import { MESES_TEMPORADA, ESTADO_PAGO_META, ESTADOS_GENERAL, type EstadoPago } from '@/lib/club/constants'
+import { optImg } from '@/lib/img/opt'
 
 const DIMS: Record<string, string> = {
   md: 'w-12 h-12 text-lg',
@@ -12,7 +13,7 @@ export function Avatar({ foto, nombre, size = 'lg' }: { foto?: string; nombre: s
   const cls = `${DIMS[size]} rounded-2xl shrink-0`
   if (foto) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={foto} alt={nombre} className={`${cls} object-cover border-2 border-white/40`} />
+    return <img src={optImg(foto, 256)} alt={nombre} className={`${cls} object-cover border-2 border-white/40`} />
   }
   return (
     <div className={`${cls} bg-gradient-to-br from-pm-red to-pm-red-dark flex items-center justify-center font-black text-white`}>

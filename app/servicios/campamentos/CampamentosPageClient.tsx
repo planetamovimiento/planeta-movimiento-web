@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Galeria } from '@/components/ui/Galeria'
+import { optImg } from '@/lib/img/opt'
 import ReservaBloque from './ReservaBloque'
 import ReservaVerano from './ReservaVerano'
 import { semanasResueltas, parseFechasLista, type CampamentosConfig } from '@/lib/campamentos/editable'
@@ -128,7 +129,7 @@ export default function CampamentosPageClient({ cfg, ocupacion }: { cfg: Campame
               </div>
               {cfg.navidadImagen && (
                 <div className="rounded-2xl overflow-hidden shadow-sm border border-gray-100 relative aspect-[16/9]">
-                  <img src={cfg.navidadImagen} alt="Campamento de Navidad" className="absolute inset-0 w-full h-full object-cover" />
+                  <img src={optImg(cfg.navidadImagen, 1080)} alt="Campamento de Navidad" className="absolute inset-0 w-full h-full object-cover" />
                 </div>
               )}
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
@@ -180,7 +181,7 @@ export default function CampamentosPageClient({ cfg, ocupacion }: { cfg: Campame
               </div>
               {cfg.ssantaImagen && (
                 <div className="rounded-2xl overflow-hidden shadow-sm border border-gray-100 relative aspect-[16/9]">
-                  <img src={cfg.ssantaImagen} alt="Campamento de Semana Santa" className="absolute inset-0 w-full h-full object-cover" />
+                  <img src={optImg(cfg.ssantaImagen, 1080)} alt="Campamento de Semana Santa" className="absolute inset-0 w-full h-full object-cover" />
                 </div>
               )}
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
@@ -253,7 +254,7 @@ export default function CampamentosPageClient({ cfg, ocupacion }: { cfg: Campame
 
               {cfg.veranoImagen && (
                 <div className="rounded-2xl overflow-hidden shadow-sm border border-gray-100 relative aspect-[16/9]">
-                  <img src={cfg.veranoImagen} alt="Campamento de Verano" className="absolute inset-0 w-full h-full object-cover" />
+                  <img src={optImg(cfg.veranoImagen, 1080)} alt="Campamento de Verano" className="absolute inset-0 w-full h-full object-cover" />
                 </div>
               )}
               {cfg.veranoDescripcion && (

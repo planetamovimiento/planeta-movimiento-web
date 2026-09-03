@@ -9,6 +9,7 @@ import { crearSesionFamilia } from '@/lib/familias/sesion'
 import { normalizarNumeroSocio } from '@/lib/familias/socio'
 import { getClientIp } from '@/lib/seguridad/ip'
 import { enviarEmail } from '@/lib/emails/enviar'
+import { comprimirImagen } from '@/lib/img/procesar'
 import { TALLAS_EQUIPACION } from '@/lib/club/cuota'
 
 /** MIME REAL por los bytes mágicos (evita ejecutables disfrazados de imagen). */
@@ -122,9 +123,12 @@ export async function guardarFotoHijo(submissionId: string, formData: FormData) 
   if (!real) return { ok: false, error: 'La imagen no es válida. Usa una foto JPG, PNG o WebP.' }
 
   const db = createAdminClient()
-  const ext = real === 'image/png' ? 'png' : real === 'image/webp' ? 'webp' : 'jpg'
+  const comp = await comprimirImagen(buffer)
+  const finalBuf = comp?.buffer ?? buffer
+  const contentType = comp?.contentType ?? real
+  const ext = comp?.ext ?? (real === 'image/png' ? 'png' : real === 'image/webp' ? 'webp' : 'jpg')
   const path = `club-alumnos/${submissionId}-${Date.now()}.${ext}`
-  const up = await db.storage.from('fotos').upload(path, buffer, { contentType: real, upsert: true })
+  const up = await db.storage.from('fotos').upload(path, finalBuf, { contentType, upsert: true, cacheControl: '2592000' })
   if (up.error) return { ok: false, error: up.error.message }
 
   const { data } = db.storage.from('fotos').getPublicUrl(path)
