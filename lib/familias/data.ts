@@ -68,7 +68,54 @@ function construir(s: Row, g: Row | undefined, grupos: Row[]): AlumnoFamilia {
   }
 }
 
-/** Todos los alumnos vinculados a la familia (datos seguros). */
+// ── Fusión de perfiles duplicados ────────────────────────────────────────────
+// Un mismo niño puede tener DOS inscripciones (p. ej. el formulario del servicio
+// y el de socio), y la familia veía su ficha repetida. Aquí se fusionan para la
+// vista: se queda el perfil más completo y se rellenan los huecos con el otro.
+// No borra nada en la base de datos.
+
+const normTxt = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase().replace(/\s+/g, ' ')
+
+/** Clave de identidad. Con fecha de nacimiento + nombre no fusiona a gemelos. */
+function claveAlumno(a: AlumnoFamilia, fechaNac: string): string {
+  return fechaNac ? `${fechaNac}|${normTxt(a.nombre)}` : normTxt(`${a.nombre} ${a.apellidos}`)
+}
+
+function fusionar(x: AlumnoFamilia, y: AlumnoFamilia): AlumnoFamilia {
+  // Base = el que tiene grupo asignado (trae horario y es el más útil para la familia).
+  const base = x.grupo ? x : y.grupo ? y : x
+  const otro = base === x ? y : x
+  const pick = (a: string, b: string) => a || b
+  return {
+    ...base,
+    actividad: pick(base.actividad, otro.actividad),
+    grupo: pick(base.grupo, otro.grupo),
+    horario: pick(base.horario, otro.horario),
+    foto_url: pick(base.foto_url, otro.foto_url),
+    talla: pick(base.talla, otro.talla),
+    whatsapp_url: pick(base.whatsapp_url, otro.whatsapp_url),
+    numero_socio: pick(base.numero_socio, otro.numero_socio),
+    observaciones_familia: pick(base.observaciones_familia, otro.observaciones_familia),
+    // Estados: gana lo "mejor" de los dos.
+    estado_general: base.estado_general === 'activo' || otro.estado_general === 'activo' ? 'activo' : pick(base.estado_general, otro.estado_general),
+    cuota_estado: base.cuota_estado === 'pagada' || otro.cuota_estado === 'pagada' ? 'pagada' : pick(base.cuota_estado, otro.cuota_estado),
+    cuota_fecha_pago: pick(base.cuota_fecha_pago, otro.cuota_fecha_pago),
+    pagos: Object.keys(base.pagos).length ? base.pagos : otro.pagos,
+    pagos_meta: Object.keys(base.pagos_meta).length ? base.pagos_meta : otro.pagos_meta,
+  }
+}
+
+function fusionarDuplicados(items: { a: AlumnoFamilia; fechaNac: string }[]): AlumnoFamilia[] {
+  const mapa = new Map<string, AlumnoFamilia>()
+  for (const { a, fechaNac } of items) {
+    const k = claveAlumno(a, fechaNac)
+    const ex = mapa.get(k)
+    mapa.set(k, ex ? fusionar(ex, a) : a)
+  }
+  return [...mapa.values()]
+}
+
+/** Todos los alumnos vinculados a la familia (datos seguros, sin duplicados). */
 export async function getAlumnosDeFamilia(familiaId: string): Promise<AlumnoFamilia[]> {
   const ids = await idsDeFamilia(familiaId)
   if (ids.length === 0) return []
@@ -81,8 +128,11 @@ export async function getAlumnosDeFamilia(familiaId: string): Promise<AlumnoFami
     ])
     const gMap = new Map((gest.data ?? []).map(g => [String((g as Row).submission_id), g as Row]))
     const grupos = (grup.data ?? []) as Row[]
-    return ((subs.data ?? []) as Row[])
-      .map(s => construir(s, gMap.get(String(s.id)), grupos))
+    const construidos = ((subs.data ?? []) as Row[]).map(s => ({
+      a: construir(s, gMap.get(String(s.id)), grupos),
+      fechaNac: str((s.datos as Record<string, unknown> | null)?.fechaNacimiento).slice(0, 10),
+    }))
+    return fusionarDuplicados(construidos)
       .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
   } catch {
     return []
