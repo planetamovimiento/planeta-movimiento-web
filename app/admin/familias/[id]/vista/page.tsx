@@ -6,9 +6,12 @@ import { getAlumnosDeFamilia } from '@/lib/familias/data'
 import { getAvisosActivos } from '@/lib/familias/avisos'
 import { getTemporadaActiva } from '@/lib/config/store'
 import { temporadaDisplay } from '@/lib/club/constants'
+import { getEventos, getExcepciones, getTipos } from '@/lib/calendario-club/data'
+import { expandirOcurrencias } from '@/lib/calendario-club/expand'
 import { CabeceraFamilia } from '@/components/familias/CabeceraFamilia'
 import { AvisosClub } from '@/components/familias/AvisosClub'
 import { FichaParticipante } from '@/components/familias/FichaParticipante'
+import { CalendarioClub } from '@/components/familias/CalendarioClub'
 
 export const dynamic = 'force-dynamic'
 
@@ -23,10 +26,14 @@ export default async function VistaComoFamiliaPage({ params }: { params: Promise
   const { data: fam } = await db.from('club_familias').select('id, nombre, email, numero_socio').eq('id', id).maybeSingle()
   if (!fam) notFound()
 
-  const [alumnos, avisos, tempRaw] = await Promise.all([
+  const [alumnos, avisos, tempRaw, eventos, excepciones, tipos] = await Promise.all([
     getAlumnosDeFamilia(id), getAvisosActivos(), getTemporadaActiva(),
+    getEventos(), getExcepciones(), getTipos(),
   ])
   const saludo = (fam.nombre as string | null)?.split(' ')[0] || ''
+  const startYear = parseInt(tempRaw.slice(0, 4), 10) || new Date().getFullYear()
+  const calDesde = `${startYear}-09-01`, calHasta = `${startYear + 1}-08-31`
+  const ocurrencias = expandirOcurrencias(eventos, excepciones, calDesde, calHasta).filter(o => o.publico && !o.cancelado)
 
   return (
     <div className="min-h-screen bg-pm-bg">
@@ -36,7 +43,7 @@ export default async function VistaComoFamiliaPage({ params }: { params: Promise
         <Link href="/admin/familias" className="underline ml-3 font-semibold">Volver al admin</Link>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 py-6 sm:py-8">
+      <div className="max-w-3xl mx-auto px-4 py-6 sm:py-8 space-y-6">
         <CabeceraFamilia saludo={saludo} numeroSocio={fam.numero_socio as string | null} temporada={temporadaDisplay(tempRaw)} nParticipantes={alumnos.length} />
         <AvisosClub avisos={avisos} />
 
@@ -52,6 +59,10 @@ export default async function VistaComoFamiliaPage({ params }: { params: Promise
               </div>
             ))}
           </div>
+        )}
+
+        {ocurrencias.length > 0 && (
+          <CalendarioClub ocurrencias={ocurrencias} tipos={tipos} desde={calDesde} hasta={calHasta} />
         )}
       </div>
     </div>
