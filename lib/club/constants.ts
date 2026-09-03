@@ -69,6 +69,8 @@ export const GRUPOS_EXTRA = ['Rítmica 1', 'Isaac Albéniz', 'Bienestar 1', 'JJB
 /** Grupos por defecto propios de una actividad concreta (clave normalizada a minúsculas). */
 export const GRUPOS_POR_ACTIVIDAD: Record<string, string[]> = {
   'escuela infantil': ['Infantil 1', 'Infantil 2', 'Infantil 3', 'Infantil 4', 'Infantil 5', 'Infantil 6'],
+  // Telas Aéreas · temporada 2026/27 (sin Iniciación 3 esta temporada).
+  'escuela de aéreos': ['Iniciación 1', 'Iniciación 2', 'Medio 1', 'Medio 2', 'Medio 3', 'Avanzado 1', 'Adultos / P. libre'],
 }
 
 /** Grupos propios de la actividad (independiente de mayúsculas/espacios). */

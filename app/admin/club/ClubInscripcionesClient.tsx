@@ -72,10 +72,16 @@ export default function ClubInscripcionesClient({
 
   /** Grupos disponibles para una actividad: globales + de esa actividad + los ya usados. */
   const gruposParaActividad = useCallback((actividad: string): string[] => {
+    const usados = lista.filter(a => !actividad || a.actividad === actividad).map(a => a.grupo).filter(Boolean)
+    const propios = gruposDeActividad(actividad)
+    if (propios.length > 0) {
+      // Actividad con set propio (ej. Telas, Infantil): solo su set + grupos de esa actividad en BD + los ya usados.
+      const deLaActividad = grupos.filter(g => g.actividad === actividad).map(g => g.nombre)
+      return Array.from(new Set([...propios, ...deLaActividad, ...usados]))
+    }
     const cfg = grupos.filter(g => !g.actividad || g.actividad === actividad).map(g => g.nombre)
     const base = cfg.length > 0 ? cfg : [...GRUPOS_BASE]
-    const usados = lista.filter(a => !actividad || a.actividad === actividad).map(a => a.grupo).filter(Boolean)
-    return Array.from(new Set([...base, ...gruposDeActividad(actividad), ...usados, ...GRUPOS_EXTRA]))
+    return Array.from(new Set([...base, ...usados, ...GRUPOS_EXTRA]))
   }, [grupos, lista])
 
   const gruposFiltro = useMemo(() => gruposParaActividad(fActividad), [gruposParaActividad, fActividad])

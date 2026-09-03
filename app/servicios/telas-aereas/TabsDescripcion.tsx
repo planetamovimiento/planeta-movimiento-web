@@ -2,30 +2,31 @@
 
 import { useState } from 'react'
 
-// Colores en tono morado/violeta, igual que en la web original
+// Colores en tono morado/violeta, igual que en la web original.
+// Horario temporada 2026-2027 (Iniciación 400 · Medio 600 · Avanzado/Adultos 800).
 const horarios = [
   {
     franja: '16:00 – 17:00',
     lunes:    { texto: 'Iniciación 1', color: 'bg-purple-400 text-white' },
-    martes:   { texto: 'Iniciación 2', color: 'bg-purple-400 text-white' },
+    martes:   { texto: 'Medio 2', color: 'bg-purple-600 text-white' },
     miercoles:{ texto: 'Iniciación 1', color: 'bg-purple-400 text-white' },
-    jueves:   { texto: 'Iniciación 2', color: 'bg-purple-400 text-white' },
-    viernes:  { texto: 'Iniciación 3', color: 'bg-purple-400 text-white' },
+    jueves:   { texto: 'Medio 2', color: 'bg-purple-600 text-white' },
+    viernes:  { texto: 'Iniciación 2', color: 'bg-purple-400 text-white' },
   },
   {
     franja: '17:00 – 18:00',
     lunes:    { texto: 'Medio 1', color: 'bg-purple-600 text-white' },
-    martes:   { texto: 'Medio 2', color: 'bg-purple-600 text-white' },
+    martes:   { texto: 'Avanzado 1', color: 'bg-purple-800 text-white' },
     miercoles:{ texto: 'Medio 1', color: 'bg-purple-600 text-white' },
-    jueves:   { texto: 'Medio 2', color: 'bg-purple-600 text-white' },
+    jueves:   { texto: 'Avanzado 1', color: 'bg-purple-800 text-white' },
     viernes:  { texto: 'Medio 3', color: 'bg-purple-600 text-white' },
   },
   {
     franja: '20:00 – 21:30',
-    lunes:    { texto: 'Avanzado 1\nAdultos', color: 'bg-purple-800 text-white' },
-    martes:   { texto: 'Avanzado 2\nAdultos', color: 'bg-purple-800 text-white' },
-    miercoles:{ texto: 'Avanzado 1\nAdultos', color: 'bg-purple-800 text-white' },
-    jueves:   { texto: 'Avanzado 2\nAdultos', color: 'bg-purple-800 text-white' },
+    lunes:    { texto: 'Adultos / P. libre', color: 'bg-purple-800 text-white' },
+    martes:   { texto: 'Adultos / P. libre', color: 'bg-purple-800 text-white' },
+    miercoles:{ texto: 'Adultos / P. libre', color: 'bg-purple-800 text-white' },
+    jueves:   { texto: 'Adultos / P. libre', color: 'bg-purple-800 text-white' },
     viernes:  { texto: '', color: '' },
   },
 ]

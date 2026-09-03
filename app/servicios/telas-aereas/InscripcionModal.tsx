@@ -4,10 +4,11 @@ import { useState } from 'react'
 import { ModalInscripcion, type Modalidad } from '@/components/reserva/ModalInscripcion'
 import { cuotaMensualTexto } from '@/lib/club/cuota'
 
+// Grupos de Telas Aéreas · temporada 2026/27 (sin Iniciación 3 esta temporada).
 const NIVELES = [
-  'Iniciación 1', 'Iniciación 2', 'Iniciación 3',
+  'Iniciación 1', 'Iniciación 2',
   'Medio 1', 'Medio 2', 'Medio 3',
-  'Avanzado 1', 'Avanzado 2', 'Adultos',
+  'Avanzado 1', 'Adultos / P. libre',
 ]
 
 const MODALIDADES: Modalidad[] = [
