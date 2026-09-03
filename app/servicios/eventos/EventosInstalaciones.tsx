@@ -73,10 +73,13 @@ export function ReservaDiasSinCole({ cfg, onClose = () => {}, ocupacion = {}, on
   const aforo = cfg?.aforo ?? 0
   const libresDe = (f: string) => (aforo > 0 ? Math.max(0, aforo - (ocupacion[f] ?? 0)) : Infinity)
   const libresSel = fecha ? libresDe(fecha) : Infinity
-  useEffect(() => { setNinos(n => Math.max(1, Math.min(n, libresSel))) }, [fecha]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setNinos(n => Math.max(1, Math.min(n, libresSel))) }, [fecha]) // eslint-disable-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
+  // Descuento por hermanos: el 2º niño en adelante paga un 20% menos (igual que Mañanas Mágicas).
+  const DESC_HERMANOS = 20
+  const ninosEfectivos = ninos > 0 ? 1 + Math.max(0, ninos - 1) * (1 - DESC_HERMANOS / 100) : 0
   const precioConIva = (cfg && cfg.ivaIncluido)
-    ? Math.round(precioBase * ninos * 100) / 100
-    : Math.round(precioBase * (1 + IVA) * ninos * 100) / 100
+    ? Math.round(precioBase * ninosEfectivos * 100) / 100
+    : Math.round(precioBase * (1 + IVA) * ninosEfectivos * 100) / 100
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault(); setError('')
@@ -146,7 +149,7 @@ export function ReservaDiasSinCole({ cfg, onClose = () => {}, ocupacion = {}, on
       {fecha && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm">
           <div className="flex justify-between text-amber-800">
-            <span>{ninos} niño{ninos > 1 ? 's' : ''} × {precioBase} €{cfg?.ivaIncluido ? '' : ' + IVA'}</span>
+            <span>{ninos} niño{ninos > 1 ? 's' : ''} × {precioBase} €{cfg?.ivaIncluido ? '' : ' + IVA'}{ninos > 1 ? ` (hermanos −${DESC_HERMANOS}%)` : ''}</span>
             <strong>{precioConIva} €</strong>
           </div>
         </div>

@@ -219,7 +219,7 @@ function PanelDiasSinCole({ cfg, ocupacion }: { cfg: EventoCentroCfg; ocupacion:
               En los festivos escolares abrimos nuestras instalaciones para que los niños vivan una mañana épica de la Escuela de Superhéroes mientras las familias concilian.
             </p>
             <div className="flex flex-wrap gap-2">
-              {[cfg.horario, precioLabel(cfg), cfg.edad, 'Festivos escolares'].filter(Boolean).map(b => (
+              {[cfg.horario, precioLabel(cfg), cfg.edad, 'Hermanos −20%', 'Festivos escolares'].filter(Boolean).map(b => (
                 <span key={b} className="bg-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-full">{b}</span>
               ))}
             </div>
