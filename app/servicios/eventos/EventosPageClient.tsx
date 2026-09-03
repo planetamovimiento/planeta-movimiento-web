@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { Galeria } from '@/components/ui/Galeria'
-import { useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import CalculadoraEventos from './CalculadoraEventos'
 import { ReservaDiasSinCole, ReservaDomingos, ReservaHalloween, ReservaMananaMagica } from './EventosInstalaciones'
 import type { MananaMagica } from '@/lib/eventos/manana-magica'
@@ -43,6 +43,32 @@ const TABS_CENTRO = [
   { id: 'manana'    as TabCentro, label: 'Mañanas Mágicas',     emoji: '✨', sub: 'Jornada temática · personaje del mes' },
   { id: 'halloween' as TabCentro, label: 'Noche de Halloween',  emoji: '🧟', sub: '31 oct · 22:00 – 09:00' },
 ]
+
+// ─── Deep-links por hash (#): cada servicio tiene su propia URL compartible ─────
+// /servicios/eventos#animacion · #dias-sin-cole · #domingos-en-familia ·
+// #mananas-magicas · #halloween
+const CENTRO_SLUG: Record<TabCentro, string> = {
+  diassinc: 'dias-sin-cole', domingos: 'domingos-en-familia', manana: 'mananas-magicas', halloween: 'halloween',
+}
+const HASH_A_TAB: Record<string, { p: TabPrincipal; c?: TabCentro }> = {
+  animacion: { p: 'externo' },
+  centro: { p: 'centro', c: 'diassinc' },
+  'dias-sin-cole': { p: 'centro', c: 'diassinc' },
+  'domingos-en-familia': { p: 'centro', c: 'domingos' },
+  'mananas-magicas': { p: 'centro', c: 'manana' },
+  halloween: { p: 'centro', c: 'halloween' },
+}
+const subscribeHash = (cb: () => void) => {
+  window.addEventListener('hashchange', cb)
+  return () => window.removeEventListener('hashchange', cb)
+}
+const leerHash = () => (typeof window !== 'undefined' ? decodeURIComponent(window.location.hash.slice(1)) : '')
+/** Cambia el hash sin recargar ni saltar de scroll y avisa a los suscriptores. */
+function irAHash(slug: string) {
+  if (typeof window === 'undefined') return
+  window.history.replaceState(null, '', slug ? `#${slug}` : window.location.pathname + window.location.search)
+  window.dispatchEvent(new Event('hashchange'))
+}
 
 // ─── Panel Externo ────────────────────────────────────────────────────────────
 function PanelExterno({ senal }: { senal: number }) {
@@ -410,8 +436,12 @@ export default function EventosPageClient({ mananaMagica, diasSinCole, domingos,
   ocupacionDSC: Record<string, number>; ocupacionDomingos: Record<string, number>; ocupacionMM: Record<string, number>
   senalEventos: number
 }) {
-  const [tabPrincipal, setTabPrincipal] = useState<TabPrincipal>('externo')
-  const [tabCentro, setTabCentro]       = useState<TabCentro>('diassinc')
+  // La vista se deriva del hash de la URL (fuente única): así cada servicio tiene
+  // su propia URL y al abrir /servicios/eventos#<servicio> se muestra el correcto.
+  const hash = useSyncExternalStore(subscribeHash, leerHash, () => '')
+  const destino = HASH_A_TAB[hash] ?? { p: 'externo' as TabPrincipal }
+  const tabPrincipal: TabPrincipal = destino.p
+  const tabCentro: TabCentro = destino.c ?? 'diassinc'
 
   return (
     <main className="bg-pm-bg min-h-screen">
@@ -446,7 +476,7 @@ export default function EventosPageClient({ mananaMagica, diasSinCole, domingos,
       <div className="sticky top-16 z-30 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex">
-            <button onClick={() => setTabPrincipal('externo')}
+            <button onClick={() => irAHash('animacion')}
               className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-3 px-4 border-b-2 font-bold text-sm transition-all ${
                 tabPrincipal === 'externo'
                   ? 'border-pm-red text-pm-red bg-pm-red-light'
@@ -458,7 +488,7 @@ export default function EventosPageClient({ mananaMagica, diasSinCole, domingos,
                 <div className="text-xs font-normal opacity-60 hidden sm:block">Bodas · Comuniones · Bautizos · Fiestas</div>
               </div>
             </button>
-            <button onClick={() => setTabPrincipal('centro')}
+            <button onClick={() => irAHash(CENTRO_SLUG[tabCentro])}
               className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-3 px-4 border-b-2 font-bold text-sm transition-all ${
                 tabPrincipal === 'centro'
                   ? 'border-pm-red text-pm-red bg-pm-red-light'
@@ -485,7 +515,7 @@ export default function EventosPageClient({ mananaMagica, diasSinCole, domingos,
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="flex gap-1 overflow-x-auto">
                 {TABS_CENTRO.map(t => (
-                  <button key={t.id} onClick={() => setTabCentro(t.id)}
+                  <button key={t.id} onClick={() => irAHash(CENTRO_SLUG[t.id])}
                     className={`flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 whitespace-nowrap transition-all ${
                       tabCentro === t.id
                         ? 'border-pm-red text-pm-red'
