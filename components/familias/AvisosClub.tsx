@@ -13,6 +13,12 @@ export function AvisosClub({ avisos }: { avisos: Aviso[] }) {
           <li key={a.id} className="border-l-2 border-pm-red pl-3">
             {a.titulo && <div className="font-bold text-pm-navy text-sm">{a.titulo}</div>}
             {a.cuerpo && <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">{a.cuerpo}</p>}
+            {a.enlace && (
+              <a href={a.enlace} target={a.enlace.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 mt-1.5 text-xs font-bold text-pm-red border border-pm-red/30 rounded-lg px-3 py-1.5 hover:bg-pm-red/5 transition-colors">
+                {a.enlaceTexto || 'Ver más →'}
+              </a>
+            )}
           </li>
         ))}
       </ul>

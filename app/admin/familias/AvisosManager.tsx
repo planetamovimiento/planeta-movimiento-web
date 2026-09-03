@@ -4,6 +4,16 @@ import { useState, useTransition } from 'react'
 import { guardarAvisosClub } from './actions'
 import type { Aviso } from '@/lib/familias/avisos'
 
+// Accesos rápidos: rellenan el enlace (y el título si está vacío) al pulsarlos.
+const ENLACES_RAPIDOS = [
+  { label: '🎃 Halloween',      titulo: 'Noche de Halloween',   texto: 'Ver y reservar →',        url: '/servicios/eventos#halloween' },
+  { label: '⚡ Días Sin Cole',  titulo: 'Días Sin Cole',        texto: 'Ver fechas y reservar →', url: '/servicios/eventos#dias-sin-cole' },
+  { label: '✨ Mañanas Mágicas', titulo: 'Mañanas Mágicas',     texto: 'Ver y reservar →',        url: '/servicios/eventos#mananas-magicas' },
+  { label: '👨‍👩‍👧 Domingos',    titulo: 'Domingos en Familia',  texto: 'Más información →',        url: '/servicios/eventos#domingos-en-familia' },
+  { label: '🎪 Talleres',       titulo: 'Talleres intensivos',  texto: 'Ver talleres →',          url: '/club/talleres-intensivos' },
+  { label: '🏕 Campamentos',    titulo: 'Campamentos',          texto: 'Ver campamentos →',       url: '/servicios/campamentos' },
+]
+
 export default function AvisosManager({ avisos: inicial, puedeEditar }: { avisos: Aviso[]; puedeEditar: boolean }) {
   const [avisos, setAvisos] = useState<Aviso[]>(inicial)
   const [pending, startTransition] = useTransition()
@@ -45,6 +55,20 @@ export default function AvisosManager({ avisos: inicial, puedeEditar }: { avisos
               {puedeEditar && <button onClick={() => quitar(i)} className="text-gray-300 hover:text-red-500 text-lg px-1" title="Quitar">✕</button>}
             </div>
             <textarea className={`${inp} min-h-[52px]`} placeholder="Texto del aviso" value={a.cuerpo} disabled={!puedeEditar} onChange={e => set(i, { cuerpo: e.target.value })} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input className={inp} placeholder="Enlace (opcional): /servicios/… o https://…" value={a.enlace ?? ''} disabled={!puedeEditar} onChange={e => set(i, { enlace: e.target.value })} />
+              <input className={inp} placeholder="Texto del botón (ej. Ver y reservar →)" value={a.enlaceTexto ?? ''} disabled={!puedeEditar} onChange={e => set(i, { enlaceTexto: e.target.value })} />
+            </div>
+            {puedeEditar && (
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Enlazar servicio:</span>
+                {ENLACES_RAPIDOS.map(l => (
+                  <button key={l.url} type="button"
+                    onClick={() => set(i, { enlace: l.url, enlaceTexto: l.texto, titulo: a.titulo?.trim() ? a.titulo : l.titulo })}
+                    className="text-xs font-bold text-pm-navy border border-gray-200 hover:border-pm-red rounded-lg px-2.5 py-1 transition-colors">{l.label}</button>
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>

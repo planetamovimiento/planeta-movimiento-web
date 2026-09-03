@@ -8,6 +8,7 @@ import { getTemporadaActiva } from '@/lib/config/store'
 import { temporadaDisplay } from '@/lib/club/constants'
 import { getEventos, getExcepciones, getTipos } from '@/lib/calendario-club/data'
 import { expandirOcurrencias } from '@/lib/calendario-club/expand'
+import { ocurrenciasDeFamilia } from '@/lib/familias/calendario'
 import { CabeceraFamilia } from '@/components/familias/CabeceraFamilia'
 import { AvisosClub } from '@/components/familias/AvisosClub'
 import { FichaParticipante } from '@/components/familias/FichaParticipante'
@@ -33,7 +34,7 @@ export default async function VistaComoFamiliaPage({ params }: { params: Promise
   const saludo = (fam.nombre as string | null)?.split(' ')[0] || ''
   const startYear = parseInt(tempRaw.slice(0, 4), 10) || new Date().getFullYear()
   const calDesde = `${startYear}-09-01`, calHasta = `${startYear + 1}-08-31`
-  const ocurrencias = expandirOcurrencias(eventos, excepciones, calDesde, calHasta).filter(o => o.publico && !o.cancelado)
+  const ocurrencias = ocurrenciasDeFamilia(expandirOcurrencias(eventos, excepciones, calDesde, calHasta), alumnos)
 
   return (
     <div className="min-h-screen bg-pm-bg">

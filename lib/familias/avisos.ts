@@ -6,7 +6,7 @@ import { getConfig, setConfig } from '@/lib/config/store'
 // sin tabla nueva. Los publica el admin; el portal muestra solo los activos.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type Aviso = { id: string; titulo: string; cuerpo: string; activo: boolean }
+export type Aviso = { id: string; titulo: string; cuerpo: string; activo: boolean; enlace?: string; enlaceTexto?: string }
 
 const CLAVE = 'club_avisos'
 

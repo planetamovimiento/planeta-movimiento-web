@@ -5,6 +5,7 @@ import { Avatar, BadgeEstadoGeneral } from '@/app/familias/ui'
 import { EstadoMensual } from './EstadoMensual'
 import { cuotaEstadoMeta } from '@/lib/club/cuota'
 import { temporadaDisplay } from '@/lib/club/constants'
+import { horarioTexto } from '@/lib/club/horarios'
 import type { AlumnoFamilia } from '@/lib/familias/tipos'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -36,7 +37,7 @@ export function FichaParticipante({ alumno: a, slotFoto, slotTalla }: {
       {/* Datos del participante */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <Dato label="Grupo" valor={a.grupo || '—'} />
-        <Dato label="Horario" valor={a.horario || '—'} />
+        <Dato label="Horario" valor={a.horario || horarioTexto(a.actividad, a.grupo) || '—'} />
         <Dato label="Temporada" valor={a.temporada ? temporadaDisplay(a.temporada) : '—'} />
         {slotTalla ?? <Dato label="Talla equipación" valor={a.talla || '—'} />}
         {cuota && (
