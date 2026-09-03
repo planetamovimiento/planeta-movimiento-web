@@ -128,6 +128,33 @@ export async function submitForm(input: {
 // Dedup por email + nombre del participante. NUNCA reescribe una cuota ya
 // registrada (respeta pagos existentes). Pago siempre manual (sin cobro online).
 // ═══════════════════════════════════════════════════════════════════════════
+// ── Identificar al mismo participante entre inscripciones ────────────────────
+// Se usa para que el alta de socio se enganche a la inscripción que ya existe en
+// vez de duplicarla. Tolera acentos, mayúsculas y palabras de más en el nombre.
+const normPart = (s: unknown) => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase().replace(/\s+/g, ' ')
+
+function mismoParticipante(
+  prev: { nombre: string | null; datos: Record<string, unknown> | null },
+  nuevo: { nombreP: string; apellidosP: string; fechaNac: string },
+): boolean {
+  const d = (prev.datos ?? {}) as Record<string, unknown>
+  const pNombre = normPart(d.nombre) || normPart(prev.nombre).split(' ')[0] || ''
+  const pApellidos = normPart(d.apellidos) || normPart(prev.nombre).split(' ').slice(1).join(' ')
+  const pFecha = String(d.fechaNacimiento ?? '').slice(0, 10)
+
+  // 1) Misma fecha de nacimiento (lo más fiable).
+  if (nuevo.fechaNac && pFecha && nuevo.fechaNac === pFecha) return true
+  // 2) Mismo nombre completo normalizado.
+  const full = normPart(`${nuevo.nombreP} ${nuevo.apellidosP}`)
+  if (full && `${pNombre} ${pApellidos}`.trim() === full) return true
+  // 3) Mismo nombre + mismo primer apellido (p. ej. "Martina Semprun culebras").
+  const n = normPart(nuevo.nombreP).split(' ')[0]
+  const ap = normPart(nuevo.apellidosP).split(' ')[0]
+  const pn = pNombre.split(' ')[0]
+  const pap = pApellidos.split(' ')[0]
+  return !!(n && ap && pn && pap && n === pn && ap === pap)
+}
+
 export async function submitSocio(input: {
   tutor: { nombre?: string; apellidos?: string; dni?: string; telefono?: string; email?: string; direccion?: string; observaciones?: string }
   participantes: { nombre?: string; apellidos?: string; fechaNacimiento?: string; actividades?: string; talla?: string; observaciones?: string }[]
@@ -168,47 +195,56 @@ export async function submitSocio(input: {
     const now = new Date().toISOString()
     const creados: string[] = []
 
+    // LA INSCRIPCIÓN MANDA: se cargan una vez todas las inscripciones del club de
+    // esta familia. Si el niño ya está inscrito, el alta de socio NO crea otro
+    // registro: marca esa inscripción como socio (sin pisar su nombre ni su
+    // actividad). Solo se crea una nueva si el niño no estaba inscrito.
+    const { data: previasRaw } = await db.from('form_submissions')
+      .select('id, nombre, datos').eq('tipo', 'inscripcion_club').eq('email', email).limit(100)
+    const previas = (previasRaw ?? []) as { id: string; nombre: string | null; datos: Record<string, unknown> | null }[]
+    const usadas = new Set<string>()
+
     for (const p of parts) {
       const nombreP = limpiarCabecera(p.nombre)
       const apellidosP = limpiarCabecera(p.apellidos)
       const full = `${nombreP} ${apellidosP}`.trim()
       const fechaNac = (p.fechaNacimiento || '').slice(0, 10)
       const talla = limpiarCabecera(p.talla)
-      const datos: Record<string, unknown> = {
-        actividad: limpiarCabecera(p.actividades),
-        nombre: nombreP, apellidos: apellidosP,
-        fechaNacimiento: fechaNac,
-        tutorLegal: tutorNombre, talla, esSocio: true,
-      }
-      if (dni) datos.dniTutor = dni
-      if (direccion) datos.direccionTutor = direccion
 
-      // Dedup para NO duplicar cuando el mismo niño ya se inscribió por otro
-      // formulario. Primero por email + FECHA DE NACIMIENTO (fiable aunque el
-      // nombre esté escrito distinto); si no, por email + nombre.
-      let subId: string | undefined
-      if (fechaNac) {
-        const { data } = await db.from('form_submissions').select('id')
-          .eq('tipo', 'inscripcion_club').eq('email', email).eq('datos->>fechaNacimiento', fechaNac).limit(1)
-        subId = (data?.[0] as { id?: string } | undefined)?.id
-      }
-      if (!subId) {
-        const { data: prev } = await db.from('form_submissions').select('id')
-          .eq('tipo', 'inscripcion_club').eq('email', email).ilike('nombre', full).limit(1)
-        subId = (prev?.[0] as { id?: string } | undefined)?.id
-      }
+      // Busca la inscripción de ESTE niño: por fecha de nacimiento, por nombre
+      // completo, o por nombre + primer apellido (tolera acentos y palabras de más).
+      const prev = previas.find(x => !usadas.has(x.id) && mismoParticipante(x, { nombreP, apellidosP, fechaNac }))
+      let subId = prev?.id
 
-      if (subId) {
+      if (prev && subId) {
+        usadas.add(subId)
+        // Se AÑADEN los datos de socio a la inscripción existente; no se pisan
+        // nombre, apellidos, actividad ni fecha de nacimiento originales.
+        const datosPrev = (prev.datos ?? {}) as Record<string, unknown>
+        const datosMerge: Record<string, unknown> = { ...datosPrev, esSocio: true, tutorLegal: tutorNombre }
+        if (talla) datosMerge.talla = talla
+        if (dni) datosMerge.dniTutor = dni
+        if (direccion) datosMerge.direccionTutor = direccion
+        if (!datosPrev.fechaNacimiento && fechaNac) datosMerge.fechaNacimiento = fechaNac
         await db.from('form_submissions').update({
-          nombre: full, telefono: telefono || null, datos, asunto: `Alta socio · ${full}`,
+          telefono: telefono || null, datos: datosMerge,
         }).eq('id', subId)
       } else {
+        const datos: Record<string, unknown> = {
+          actividad: limpiarCabecera(p.actividades),
+          nombre: nombreP, apellidos: apellidosP,
+          fechaNacimiento: fechaNac,
+          tutorLegal: tutorNombre, talla, esSocio: true,
+        }
+        if (dni) datos.dniTutor = dni
+        if (direccion) datos.direccionTutor = direccion
         const { data: ins, error } = await db.from('form_submissions').insert({
           tipo: 'inscripcion_club', nombre: full, email: email || null, telefono: telefono || null,
           asunto: `Alta socio · ${full}`, mensaje: limpiarTexto(p.observaciones) || null, datos, estado: 'nueva',
         }).select('id').single()
         if (error) return { ok: false, error: error.message }
         subId = (ins as { id?: string } | null)?.id
+        if (subId) usadas.add(subId)
       }
       if (!subId) continue
 
