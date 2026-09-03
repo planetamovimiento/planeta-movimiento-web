@@ -25,7 +25,7 @@ export default async function FamiliasPage() {
     safe<Row>(() => db.from('club_familias').select('*').order('created_at', { ascending: false }) as never),
     safe<Row>(() => db.from('club_familia_alumnos').select('familia_id, submission_id') as never),
     safe<Row>(() => db.from('form_submissions').select('id, nombre, email, datos').eq('tipo', 'inscripcion_club').order('created_at', { ascending: false }).limit(2000) as never),
-    safe<Row>(() => db.from('club_gestion').select('submission_id, grupo, whatsapp_url') as never),
+    safe<Row>(() => db.from('club_gestion').select('submission_id, grupo, whatsapp_url, cuota_estado') as never),
   ])
   const gestMap = new Map(gestRes.rows.map(g => [str(g.submission_id), g]))
 
@@ -44,6 +44,7 @@ export default async function FamiliasPage() {
     return {
       id: str(s.id), nombre: completo || '(sin nombre)', actividad: str(d.actividad), email: str(s.email).toLowerCase(),
       grupo: str(g?.grupo), whatsapp_url: str(g?.whatsapp_url),
+      esSocio: d.esSocio === true, cuotaEstado: str(g?.cuota_estado),
     }
   })
 

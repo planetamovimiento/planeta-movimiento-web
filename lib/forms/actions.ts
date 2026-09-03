@@ -172,20 +172,31 @@ export async function submitSocio(input: {
       const nombreP = limpiarCabecera(p.nombre)
       const apellidosP = limpiarCabecera(p.apellidos)
       const full = `${nombreP} ${apellidosP}`.trim()
+      const fechaNac = (p.fechaNacimiento || '').slice(0, 10)
       const talla = limpiarCabecera(p.talla)
       const datos: Record<string, unknown> = {
         actividad: limpiarCabecera(p.actividades),
         nombre: nombreP, apellidos: apellidosP,
-        fechaNacimiento: (p.fechaNacimiento || '').slice(0, 10),
+        fechaNacimiento: fechaNac,
         tutorLegal: tutorNombre, talla, esSocio: true,
       }
       if (dni) datos.dniTutor = dni
       if (direccion) datos.direccionTutor = direccion
 
-      // Dedup: misma familia (email) + mismo nombre de participante.
-      const { data: prev } = await db.from('form_submissions').select('id')
-        .eq('tipo', 'inscripcion_club').eq('email', email).ilike('nombre', full).limit(1)
-      let subId = (prev?.[0] as { id?: string } | undefined)?.id
+      // Dedup para NO duplicar cuando el mismo niño ya se inscribió por otro
+      // formulario. Primero por email + FECHA DE NACIMIENTO (fiable aunque el
+      // nombre esté escrito distinto); si no, por email + nombre.
+      let subId: string | undefined
+      if (fechaNac) {
+        const { data } = await db.from('form_submissions').select('id')
+          .eq('tipo', 'inscripcion_club').eq('email', email).eq('datos->>fechaNacimiento', fechaNac).limit(1)
+        subId = (data?.[0] as { id?: string } | undefined)?.id
+      }
+      if (!subId) {
+        const { data: prev } = await db.from('form_submissions').select('id')
+          .eq('tipo', 'inscripcion_club').eq('email', email).ilike('nombre', full).limit(1)
+        subId = (prev?.[0] as { id?: string } | undefined)?.id
+      }
 
       if (subId) {
         await db.from('form_submissions').update({
