@@ -28,6 +28,7 @@ async function asegurarAccesoMonitor(db: ReturnType<typeof createAdminClient>, e
 export async function crearMonitor(p: {
   email: string; nombre: string; apellidos?: string; telefono?: string; fecha_alta?: string | null
   especialidades?: string[]; estado?: string; observaciones?: string
+  fecha_nacimiento?: string | null; num_seguridad_social?: string; dni_numero?: string
 }): Promise<Res> {
   const admin = await getAdminUser()
   if (!admin || !can.manageUsers(admin.role)) return { ok: false, error: 'Solo el administrador principal puede dar de alta monitores' }
@@ -35,12 +36,22 @@ export async function crearMonitor(p: {
   if (!email) return { ok: false, error: 'El correo es obligatorio' }
 
   const db = createAdminClient()
-  const { error } = await db.from('monitores').insert({
+  const { data: creado, error } = await db.from('monitores').insert({
     email, nombre: p.nombre.trim(), apellidos: (p.apellidos || '').trim(), telefono: (p.telefono || '').trim() || null,
     fecha_alta: p.fecha_alta || null, especialidades: p.especialidades ?? [], estado: p.estado || 'activo',
     observaciones: (p.observaciones || '').trim() || null,
-  })
+    fecha_nacimiento: p.fecha_nacimiento || null,
+    num_seguridad_social: (p.num_seguridad_social || '').trim() || null,
+    dni_numero: (p.dni_numero || '').trim() || null,
+  }).select('id').maybeSingle()
   if (error) return { ok: false, error: error.message.includes('duplicate') ? 'Ya existe un monitor con ese correo.' : error.message }
+
+  // El alta inicial queda también en el historial de altas y bajas.
+  if (creado?.id && p.fecha_alta) {
+    await db.from('monitor_movimientos').insert({
+      monitor_id: creado.id, tipo: 'alta', fecha: p.fecha_alta, motivo: 'Alta inicial', registrado_por: admin.email,
+    })
+  }
 
   // Acceso al portal: queda con rol monitor (aunque el correo ya existiera como lectura).
   await asegurarAccesoMonitor(db, email, p.nombre.trim(), admin.email)
@@ -69,6 +80,126 @@ export async function eliminarMonitor(id: string, email: string): Promise<Res> {
   await db.from('monitores').delete().eq('id', id)            // cascade: actividades + fichajes
   await db.from('admin_users').delete().eq('email', email.trim().toLowerCase()).eq('role', 'monitor')
   await logActivity({ actorEmail: admin.email, accion: 'Eliminó monitor', entidad: 'monitor', entidadId: email })
+  revalidatePath('/admin/monitores')
+  return { ok: true }
+}
+
+// ── Historial de altas y bajas ─────────────────────────────────────────────────
+
+/**
+ * Registra un alta o una baja del monitor. Guarda la fila del historial y deja
+ * la ficha al día: fecha_alta/fecha_baja y el estado (activo tras un alta,
+ * inactivo tras una baja).
+ */
+export async function registrarMovimiento(p: {
+  monitor_id: string; tipo: 'alta' | 'baja'; fecha: string; motivo?: string
+}): Promise<Res> {
+  const admin = await getAdminUser()
+  if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
+  if (!p.monitor_id || !p.fecha) return { ok: false, error: 'Faltan el monitor y la fecha' }
+  if (p.tipo !== 'alta' && p.tipo !== 'baja') return { ok: false, error: 'Tipo no válido' }
+
+  const db = createAdminClient()
+  const { error } = await db.from('monitor_movimientos').insert({
+    monitor_id: p.monitor_id, tipo: p.tipo, fecha: p.fecha,
+    motivo: (p.motivo || '').trim() || null, registrado_por: admin.email,
+  })
+  if (error) return { ok: false, error: error.message }
+
+  await db.from('monitores').update(
+    p.tipo === 'alta'
+      ? { fecha_alta: p.fecha, estado: 'activo', updated_at: new Date().toISOString() }
+      : { fecha_baja: p.fecha, estado: 'inactivo', updated_at: new Date().toISOString() },
+  ).eq('id', p.monitor_id)
+
+  await logActivity({
+    actorEmail: admin.email,
+    accion: p.tipo === 'alta' ? 'Registró alta de monitor' : 'Registró baja de monitor',
+    entidad: 'monitor', entidadId: p.monitor_id,
+  })
+  revalidatePath('/admin/monitores')
+  return { ok: true }
+}
+
+/** Borra una línea del historial (solo para corregir errores de registro). */
+export async function eliminarMovimiento(id: string): Promise<Res> {
+  const admin = await getAdminUser()
+  if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
+  const db = createAdminClient()
+  const { error } = await db.from('monitor_movimientos').delete().eq('id', id)
+  if (error) return { ok: false, error: error.message }
+  revalidatePath('/admin/monitores')
+  return { ok: true }
+}
+
+// ── Documentación del monitor (DNI) · bucket PRIVADO "monitores-docs" ──────────
+// Nunca se guarda una URL pública: en la BD va la ruta del archivo y se ve o se
+// descarga con un enlace firmado de 60 segundos que genera el servidor.
+const BUCKET_DOCS = 'monitores-docs'
+const CARAS_DNI = { frente: 'dni_frente_path', reverso: 'dni_reverso_path' } as const
+export type CaraDni = keyof typeof CARAS_DNI
+
+export async function subirDniMonitor(formData: FormData): Promise<{ ok: true; path: string } | { ok: false; error: string }> {
+  const admin = await getAdminUser()
+  if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
+  const monitorId = String(formData.get('monitorId') || '')
+  const cara = String(formData.get('cara') || '') as CaraDni
+  const file = formData.get('file') as File | null
+  if (!monitorId) return { ok: false, error: 'Monitor no válido' }
+  if (!CARAS_DNI[cara]) return { ok: false, error: 'Cara del DNI no válida' }
+  if (!file || file.size === 0) return { ok: false, error: 'No se ha seleccionado ningún archivo' }
+  if (file.size > 15 * 1024 * 1024) return { ok: false, error: 'El archivo supera los 15 MB' }
+  if (!['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(file.type)) {
+    return { ok: false, error: 'Formato no válido (usa JPG, PNG, WebP o PDF)' }
+  }
+
+  const db = createAdminClient()
+  const ext = file.type === 'application/pdf' ? 'pdf' : (file.type.split('/')[1] || 'jpg')
+  const path = `${monitorId}/dni-${cara}-${Date.now()}.${ext}`
+  const buffer = Buffer.from(await file.arrayBuffer())
+  const { error: upErr } = await db.storage.from(BUCKET_DOCS).upload(path, buffer, { contentType: file.type, upsert: true })
+  if (upErr) return { ok: false, error: `No se pudo subir: ${upErr.message}` }
+
+  // Se borra el archivo anterior de esa cara para no acumular copias del DNI.
+  const { data: prev } = await db.from('monitores').select(CARAS_DNI[cara]).eq('id', monitorId).maybeSingle()
+  const anterior = (prev as Record<string, unknown> | null)?.[CARAS_DNI[cara]]
+  if (typeof anterior === 'string' && anterior && anterior !== path) {
+    await db.storage.from(BUCKET_DOCS).remove([anterior])
+  }
+
+  const { error } = await db.from('monitores').update({ [CARAS_DNI[cara]]: path, updated_at: new Date().toISOString() }).eq('id', monitorId)
+  if (error) return { ok: false, error: error.message }
+  await logActivity({ actorEmail: admin.email, accion: `Subió el DNI (${cara}) de un monitor`, entidad: 'monitor', entidadId: monitorId })
+  revalidatePath('/admin/monitores')
+  return { ok: true, path }
+}
+
+/** Enlace firmado (60 s) para ver o descargar el DNI guardado. */
+export async function urlDniMonitor(monitorId: string, cara: CaraDni, descargar = false): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  const admin = await getAdminUser()
+  if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
+  if (!CARAS_DNI[cara]) return { ok: false, error: 'Cara del DNI no válida' }
+  const db = createAdminClient()
+  const { data } = await db.from('monitores').select(CARAS_DNI[cara]).eq('id', monitorId).maybeSingle()
+  const path = (data as Record<string, unknown> | null)?.[CARAS_DNI[cara]]
+  if (typeof path !== 'string' || !path) return { ok: false, error: 'Este monitor no tiene guardada esa cara del DNI' }
+  const { data: firmada, error } = await db.storage.from(BUCKET_DOCS)
+    .createSignedUrl(path, 60, descargar ? { download: `dni-${cara}.${path.split('.').pop()}` } : undefined)
+  if (error || !firmada?.signedUrl) return { ok: false, error: error?.message || 'No se pudo generar el enlace' }
+  return { ok: true, url: firmada.signedUrl }
+}
+
+export async function eliminarDniMonitor(monitorId: string, cara: CaraDni): Promise<Res> {
+  const admin = await getAdminUser()
+  if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
+  if (!CARAS_DNI[cara]) return { ok: false, error: 'Cara del DNI no válida' }
+  const db = createAdminClient()
+  const { data } = await db.from('monitores').select(CARAS_DNI[cara]).eq('id', monitorId).maybeSingle()
+  const path = (data as Record<string, unknown> | null)?.[CARAS_DNI[cara]]
+  if (typeof path === 'string' && path) await db.storage.from(BUCKET_DOCS).remove([path])
+  const { error } = await db.from('monitores').update({ [CARAS_DNI[cara]]: null, updated_at: new Date().toISOString() }).eq('id', monitorId)
+  if (error) return { ok: false, error: error.message }
+  await logActivity({ actorEmail: admin.email, accion: `Eliminó el DNI (${cara}) de un monitor`, entidad: 'monitor', entidadId: monitorId })
   revalidatePath('/admin/monitores')
   return { ok: true }
 }

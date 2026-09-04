@@ -4,29 +4,41 @@ import { useState, useMemo, useTransition } from 'react'
 import { AdminHeader, Metric } from '@/components/admin/ui'
 import { SubirImagen } from '@/components/admin/SubirImagen'
 import { ACTIVIDADES_MONITOR, ESTADOS_MONITOR, badgeEstadoMonitor, labelEstadoMonitor, resumenHoras, resumenHorasActividades, horasActividad, horasDeFichaje, fmtHoras } from '@/lib/monitores/constants'
-import { crearMonitor, editarMonitor, eliminarMonitor, asignarActividad, editarActividad, eliminarActividad } from './actions'
+import { crearMonitor, editarMonitor, eliminarMonitor, asignarActividad, editarActividad, eliminarActividad, registrarMovimiento, eliminarMovimiento } from './actions'
+import { DniPrivado } from './DniPrivado'
 import Calendario from './Calendario'
 import Recursos from './Recursos'
-import type { Monitor, Actividad, Fichaje, Carpeta, Documento } from '@/lib/monitores/tipos'
+import type { Monitor, MovimientoMonitor, Actividad, Fichaje, Carpeta, Documento } from '@/lib/monitores/tipos'
 
 const fechaLarga = (s: string) => new Intl.DateTimeFormat('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(s + 'T12:00:00'))
 const horaCorta = (iso: string) => new Date(iso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+const fechaCortaES = (s: string) => (s ? new Date(s + 'T12:00:00').toLocaleDateString('es-ES') : '—')
 
 type Tab = 'equipo' | 'calendario' | 'horas' | 'recursos'
 
-export default function MonitoresAdmin({ monitores, actividades, fichajes, carpetas, documentos, puedeBorrar, puedeEditar }: {
-  monitores: Monitor[]; actividades: Actividad[]; fichajes: Fichaje[]; carpetas: Carpeta[]; documentos: Documento[]; puedeBorrar: boolean; puedeEditar: boolean
+export default function MonitoresAdmin({ monitores, movimientos, actividades, fichajes, carpetas, documentos, puedeBorrar, puedeEditar }: {
+  monitores: Monitor[]; movimientos: MovimientoMonitor[]; actividades: Actividad[]; fichajes: Fichaje[]
+  carpetas: Carpeta[]; documentos: Documento[]; puedeBorrar: boolean; puedeEditar: boolean
 }) {
   const [tab, setTab] = useState<Tab>('equipo')
   const [ficha, setFicha] = useState<Monitor | 'nuevo' | null>(null)
   const [actModal, setActModal] = useState<Actividad | 'nueva' | null>(null)
   const [monSel, setMonSel] = useState('')
+  const [q, setQ] = useState('')
+  const [estadoF, setEstadoF] = useState('')
   const [error, setError] = useState('')
 
   const nombreDe = useMemo(() => {
     const m = new Map(monitores.map(x => [x.id, `${x.nombre} ${x.apellidos}`.trim()]))
     return (id: string) => m.get(id) ?? '—'
   }, [monitores])
+
+  const monitoresFiltrados = useMemo(() => {
+    const t = q.trim().toLowerCase()
+    return monitores.filter(m =>
+      (!estadoF || m.estado === estadoF) &&
+      (!t || `${m.nombre} ${m.apellidos} ${m.email} ${m.especialidades.join(' ')}`.toLowerCase().includes(t)))
+  }, [monitores, q, estadoF])
 
   const actsFiltradas = monSel ? actividades.filter(a => a.monitor_id === monSel) : actividades
   const fichajesMon = monSel ? fichajes.filter(f => f.monitor_id === monSel) : fichajes
@@ -51,8 +63,18 @@ export default function MonitoresAdmin({ monitores, actividades, fichajes, carpe
               <Metric label="Monitores" valor={monitores.length} tono="navy" />
               {puedeEditar && <button onClick={() => setFicha('nuevo')} className="bg-pm-red hover:bg-pm-red-dark text-white font-bold text-sm px-4 py-2.5 rounded-xl">+ Añadir monitor</button>}
             </div>
+            <div className="flex flex-wrap gap-2 items-center">
+              <input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar por nombre, correo o especialidad…"
+                className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:border-pm-red w-full sm:w-80" />
+              <div className="flex flex-wrap gap-1.5">
+                <button onClick={() => setEstadoF('')} className={`text-xs font-bold px-3 py-1.5 rounded-full border ${estadoF === '' ? 'bg-pm-navy text-white border-transparent' : 'border-gray-200 text-gray-500'}`}>Todos</button>
+                {ESTADOS_MONITOR.map(e => (
+                  <button key={e.id} onClick={() => setEstadoF(e.id)} className={`text-xs font-bold px-3 py-1.5 rounded-full border ${estadoF === e.id ? `${e.badge} border-transparent ring-2 ring-offset-1 ring-pm-navy/20` : 'border-gray-200 text-gray-500'}`}>{e.label}</button>
+                ))}
+              </div>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {monitores.map(m => (
+              {monitoresFiltrados.map(m => (
                 <button key={m.id} onClick={() => setFicha(m)} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-pm-red/40 transition-colors p-4 text-left flex gap-3 items-center">
                   {m.foto_url
                     // eslint-disable-next-line @next/next/no-img-element
@@ -65,7 +87,13 @@ export default function MonitoresAdmin({ monitores, actividades, fichajes, carpe
                   <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${badgeEstadoMonitor(m.estado)}`}>{labelEstadoMonitor(m.estado)}</span>
                 </button>
               ))}
-              {monitores.length === 0 && <p className="text-gray-400 text-sm col-span-full py-8 text-center">No hay monitores todavía{puedeEditar ? '. Pulsa «Añadir monitor».' : '.'}</p>}
+              {monitoresFiltrados.length === 0 && (
+                <p className="text-gray-400 text-sm col-span-full py-8 text-center">
+                  {monitores.length === 0
+                    ? `No hay monitores todavía${puedeEditar ? '. Pulsa «Añadir monitor».' : '.'}`
+                    : 'Ningún monitor coincide con el filtro.'}
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -152,7 +180,7 @@ export default function MonitoresAdmin({ monitores, actividades, fichajes, carpe
         {tab === 'recursos' && <Recursos carpetas={carpetas} documentos={documentos} admin={puedeEditar} />}
       </div>
 
-      {ficha && <FichaMonitor monitor={ficha === 'nuevo' ? null : ficha} puedeBorrar={puedeBorrar} puedeEditar={puedeEditar} onClose={() => setFicha(null)} />}
+      {ficha && <FichaMonitor monitor={ficha === 'nuevo' ? null : ficha} movimientos={movimientos} puedeBorrar={puedeBorrar} puedeEditar={puedeEditar} onClose={() => setFicha(null)} />}
       {actModal && <ActividadModal monitores={monitores} actividad={actModal === 'nueva' ? null : actModal} monSelDefault={monSel} onClose={() => setActModal(null)} />}
     </>
   )
@@ -350,7 +378,87 @@ function RegistroMensual({ actividades, fichajes }: { actividades: Actividad[]; 
   )
 }
 
-function FichaMonitor({ monitor, puedeBorrar, puedeEditar, onClose }: { monitor: Monitor | null; puedeBorrar: boolean; puedeEditar: boolean; onClose: () => void }) {
+/**
+ * Historial de altas y bajas de un monitor. Cada línea es un movimiento: al
+ * registrar uno nuevo se actualiza también el estado y la fecha de la ficha.
+ */
+function HistorialMovimientos({ monitorId, movimientos, puedeEditar }: {
+  monitorId: string; movimientos: MovimientoMonitor[]; puedeEditar: boolean
+}) {
+  const mios = movimientos.filter(m => m.monitor_id === monitorId)
+  const [abierto, setAbierto] = useState(false)
+  const [tipo, setTipo] = useState<'alta' | 'baja'>('alta')
+  const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10))
+  const [motivo, setMotivo] = useState('')
+  const [error, setError] = useState('')
+  const [loading, start] = useTransition()
+
+  function registrar() {
+    setError('')
+    if (!fecha) { setError('Indica la fecha'); return }
+    start(async () => {
+      const r = await registrarMovimiento({ monitor_id: monitorId, tipo, fecha, motivo })
+      if (!r.ok) { setError(r.error); return }
+      setAbierto(false); setMotivo('')
+    })
+  }
+
+  function borrar(id: string) {
+    if (!window.confirm('¿Borrar esta línea del historial? No cambia el estado actual de la ficha.')) return
+    start(async () => { const r = await eliminarMovimiento(id); if (!r.ok) setError(r.error) })
+  }
+
+  return (
+    <div className="border-t border-gray-100 pt-4">
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="text-xs font-black text-pm-navy uppercase tracking-wider">Historial de altas y bajas</div>
+        {puedeEditar && (
+          <button onClick={() => setAbierto(v => !v)} className="text-xs font-bold text-pm-red hover:underline">
+            {abierto ? 'Cancelar' : '+ Registrar movimiento'}
+          </button>
+        )}
+      </div>
+
+      {abierto && puedeEditar && (
+        <div className="bg-pm-bg border border-gray-100 rounded-xl p-3 mb-3 space-y-2">
+          <div className="flex gap-1.5">
+            {(['alta', 'baja'] as const).map(t => (
+              <button key={t} onClick={() => setTipo(t)}
+                className={`text-xs font-bold px-3 py-1.5 rounded-full border ${tipo === t ? (t === 'alta' ? 'bg-green-100 text-green-700 border-transparent' : 'bg-amber-100 text-amber-700 border-transparent') : 'border-gray-200 text-gray-500'}`}>
+                {t === 'alta' ? 'Alta' : 'Baja'}
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <input type="date" value={fecha} onChange={e => setFecha(e.target.value)} className="border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:border-pm-red" />
+            <input value={motivo} onChange={e => setMotivo(e.target.value)} placeholder="Motivo (opcional)" className="border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:border-pm-red" />
+          </div>
+          <p className="text-[11px] text-gray-400">
+            Al guardar, la ficha pasa a <strong>{tipo === 'alta' ? 'Activo' : 'Inactivo'}</strong> y se actualiza la fecha de {tipo}.
+          </p>
+          <button onClick={registrar} disabled={loading} className="bg-pm-navy text-white font-bold text-xs px-4 py-2 rounded-lg disabled:opacity-50">Guardar movimiento</button>
+        </div>
+      )}
+
+      {mios.length ? (
+        <ul className="divide-y divide-gray-50">
+          {mios.map(m => (
+            <li key={m.id} className="flex items-center gap-2 py-2 text-sm">
+              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${m.tipo === 'alta' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{m.tipo === 'alta' ? 'Alta' : 'Baja'}</span>
+              <span className="font-semibold text-pm-navy">{fechaCortaES(m.fecha)}</span>
+              <span className="flex-1 min-w-0 truncate text-gray-500">{m.motivo || '—'}</span>
+              {puedeEditar && <button onClick={() => borrar(m.id)} className="text-gray-300 hover:text-red-500 shrink-0" title="Borrar línea">🗑</button>}
+            </li>
+          ))}
+        </ul>
+      ) : <p className="text-xs text-gray-400">Todavía no hay altas ni bajas registradas.</p>}
+
+      {error && <p className="text-red-600 text-xs mt-2">{error}</p>}
+    </div>
+  )
+}
+
+function FichaMonitor({ monitor, movimientos, puedeBorrar, puedeEditar, onClose }: { monitor: Monitor | null; movimientos: MovimientoMonitor[]; puedeBorrar: boolean; puedeEditar: boolean; onClose: () => void }) {
   const nuevo = !monitor
   const ro = !puedeEditar
   const [f, setF] = useState({
@@ -358,6 +466,9 @@ function FichaMonitor({ monitor, puedeBorrar, puedeEditar, onClose }: { monitor:
     telefono: monitor?.telefono ?? '', fecha_alta: monitor?.fecha_alta ?? '', estado: monitor?.estado ?? 'activo',
     observaciones: monitor?.observaciones ?? '', foto_url: monitor?.foto_url ?? '',
     especialidades: monitor?.especialidades ?? [] as string[],
+    fecha_nacimiento: monitor?.fecha_nacimiento ?? '',
+    num_seguridad_social: monitor?.num_seguridad_social ?? '',
+    dni_numero: monitor?.dni_numero ?? '',
   })
   const [error, setError] = useState('')
   const [, start] = useTransition()
@@ -370,8 +481,18 @@ function FichaMonitor({ monitor, puedeBorrar, puedeEditar, onClose }: { monitor:
     if (!f.nombre.trim() || (nuevo && !f.email.trim())) { setError('Nombre y correo son obligatorios'); return }
     start(async () => {
       const r = nuevo
-        ? await crearMonitor({ email: f.email, nombre: f.nombre, apellidos: f.apellidos, telefono: f.telefono, fecha_alta: f.fecha_alta || null, especialidades: f.especialidades, estado: f.estado, observaciones: f.observaciones })
-        : await editarMonitor(monitor!.id, { nombre: f.nombre, apellidos: f.apellidos, telefono: f.telefono || null, fecha_alta: f.fecha_alta || null, especialidades: f.especialidades, estado: f.estado, observaciones: f.observaciones || null, foto_url: f.foto_url || null })
+        ? await crearMonitor({
+          email: f.email, nombre: f.nombre, apellidos: f.apellidos, telefono: f.telefono, fecha_alta: f.fecha_alta || null,
+          especialidades: f.especialidades, estado: f.estado, observaciones: f.observaciones,
+          fecha_nacimiento: f.fecha_nacimiento || null, num_seguridad_social: f.num_seguridad_social, dni_numero: f.dni_numero,
+        })
+        : await editarMonitor(monitor!.id, {
+          nombre: f.nombre, apellidos: f.apellidos, telefono: f.telefono || null, fecha_alta: f.fecha_alta || null,
+          especialidades: f.especialidades, estado: f.estado, observaciones: f.observaciones || null, foto_url: f.foto_url || null,
+          fecha_nacimiento: f.fecha_nacimiento || null,
+          num_seguridad_social: f.num_seguridad_social.trim() || null,
+          dni_numero: f.dni_numero.trim() || null,
+        })
       if (!r.ok) setError(r.error); else onClose()
     })
   }
@@ -401,7 +522,21 @@ function FichaMonitor({ monitor, puedeBorrar, puedeEditar, onClose }: { monitor:
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div><label className={label}>Teléfono</label><input value={f.telefono} disabled={ro} onChange={e => setF({ ...f, telefono: e.target.value })} className={input} /></div>
+            <div><label className={label}>Fecha de nacimiento</label><input type="date" value={f.fecha_nacimiento ?? ''} disabled={ro} onChange={e => setF({ ...f, fecha_nacimiento: e.target.value })} className={input} /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
             <div><label className={label}>Fecha de alta</label><input type="date" value={f.fecha_alta ?? ''} disabled={ro} onChange={e => setF({ ...f, fecha_alta: e.target.value })} className={input} /></div>
+            <div>
+              <label className={label}>Fecha de baja</label>
+              <input type="date" value={monitor?.fecha_baja ?? ''} disabled readOnly className={`${input} bg-gray-50 text-gray-400`} />
+            </div>
+          </div>
+          <p className="text-[11px] text-gray-400 -mt-2">Las fechas de alta y baja se actualizan solas al registrar un movimiento en el historial.</p>
+
+          {/* Datos laborales */}
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className={label}>DNI / NIE</label><input value={f.dni_numero} disabled={ro} onChange={e => setF({ ...f, dni_numero: e.target.value })} className={input} /></div>
+            <div><label className={label}>Nº Seguridad Social</label><input value={f.num_seguridad_social} disabled={ro} onChange={e => setF({ ...f, num_seguridad_social: e.target.value })} className={input} /></div>
           </div>
           <div>
             <label className={label}>Estado</label>
@@ -419,6 +554,23 @@ function FichaMonitor({ monitor, puedeBorrar, puedeEditar, onClose }: { monitor:
               ))}
             </div>
           </div>
+          {/* Documentación (DNI) · archivos privados */}
+          {!nuevo && (
+            <div className="border-t border-gray-100 pt-4">
+              <div className="text-xs font-black text-pm-navy uppercase tracking-wider mb-2">Documentación · DNI</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <DniPrivado monitorId={monitor!.id} cara="frente" etiqueta="Anverso" tienePath={!!monitor!.dni_frente_path} soloLectura={ro} />
+                <DniPrivado monitorId={monitor!.id} cara="reverso" etiqueta="Reverso" tienePath={!!monitor!.dni_reverso_path} soloLectura={ro} />
+              </div>
+              <p className="text-[11px] text-gray-400 mt-2">
+                Se guardan en un almacén privado. Al pulsar «Ver» o «Descargar» se genera un enlace que caduca en 60 segundos.
+              </p>
+            </div>
+          )}
+
+          {/* Historial de altas y bajas */}
+          {!nuevo && <HistorialMovimientos monitorId={monitor!.id} movimientos={movimientos} puedeEditar={puedeEditar} />}
+
           <div><label className={label}>Observaciones internas</label><textarea rows={3} value={f.observaciones} disabled={ro} onChange={e => setF({ ...f, observaciones: e.target.value })} className={`${input} resize-none`} /></div>
           {error && <p className="text-red-600 text-sm">{error}</p>}
           <div className="flex items-center justify-between gap-2 pt-1">

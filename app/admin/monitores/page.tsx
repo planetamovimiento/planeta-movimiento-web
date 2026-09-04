@@ -2,7 +2,7 @@ import { requireSeccion, can } from '@/lib/admin/auth'
 import { AdminHeader } from '@/components/admin/ui'
 import {
   getMonitores, getMonitorPorEmail, getActividades, getFichajes, getFichajeAbierto,
-  getCarpetas, getTodosDocumentos,
+  getCarpetas, getTodosDocumentos, getMovimientos, sinDatosSensibles,
 } from '@/lib/monitores/data'
 import MonitorPortal from './MonitorPortal'
 import MonitoresAdmin from './MonitoresAdmin'
@@ -33,15 +33,20 @@ export default async function MonitoresPage() {
     const [actividades, fichajes, abierto, equipo] = await Promise.all([
       getActividades({ monitorId: mon.id }), getFichajes(mon.id), getFichajeAbierto(mon.id), getMonitores(),
     ])
-    return <MonitorPortal monitor={mon} equipo={equipo} actividades={actividades} fichajes={fichajes} abierto={abierto} carpetas={carpetas} documentos={documentos} />
+    return <MonitorPortal monitor={mon} equipo={equipo.map(sinDatosSensibles)} actividades={actividades} fichajes={fichajes} abierto={abierto} carpetas={carpetas} documentos={documentos} />
   }
 
-  const [monitores, actividades, fichajes] = await Promise.all([getMonitores(), getActividades(), getFichajes()])
+  const [monitoresRaw, movimientos, actividades, fichajes] = await Promise.all([
+    getMonitores(), getMovimientos(), getActividades(), getFichajes(),
+  ])
+  // Los datos laborales (nacimiento, Seguridad Social, DNI) solo salen del servidor
+  // para quien puede editar fichas; en modo lectura ni se envían al navegador.
+  const monitores = can.edit(admin.role) ? monitoresRaw : monitoresRaw.map(sinDatosSensibles)
 
   // ── Vista de administración del equipo ──
   return (
     <MonitoresAdmin
-      monitores={monitores} actividades={actividades} fichajes={fichajes}
+      monitores={monitores} movimientos={movimientos} actividades={actividades} fichajes={fichajes}
       carpetas={carpetas} documentos={documentos}
       puedeBorrar={can.manageUsers(admin.role)} puedeEditar={can.edit(admin.role)}
     />

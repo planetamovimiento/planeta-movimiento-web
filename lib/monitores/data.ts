@@ -1,5 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
-import type { Monitor, Actividad, Fichaje, Carpeta, Documento } from './tipos'
+import type { Monitor, MovimientoMonitor, Actividad, Fichaje, Carpeta, Documento } from './tipos'
 
 type Row = Record<string, unknown>
 const str = (v: unknown) => (typeof v === 'string' ? v : v == null ? '' : String(v))
@@ -15,7 +15,20 @@ function aMonitor(r: Row): Monitor {
     foto_url: str(r.foto_url), telefono: str(r.telefono), fecha_alta: r.fecha_alta ? str(r.fecha_alta) : null,
     especialidades: Array.isArray(r.especialidades) ? (r.especialidades as string[]) : [],
     estado: str(r.estado) || 'activo', observaciones: str(r.observaciones),
+    fecha_nacimiento: r.fecha_nacimiento ? str(r.fecha_nacimiento) : null,
+    fecha_baja: r.fecha_baja ? str(r.fecha_baja) : null,
+    num_seguridad_social: str(r.num_seguridad_social), dni_numero: str(r.dni_numero),
+    dni_frente_path: str(r.dni_frente_path), dni_reverso_path: str(r.dni_reverso_path),
   }
+}
+
+/**
+ * Quita de la ficha los datos laborales sensibles (fecha de nacimiento, nº de la
+ * Seguridad Social, DNI). Se usa para todo lo que no sea la administración del
+ * equipo: el directorio que ve cada monitor y las vistas de solo lectura.
+ */
+export function sinDatosSensibles(m: Monitor): Monitor {
+  return { ...m, fecha_nacimiento: null, num_seguridad_social: '', dni_numero: '', dni_frente_path: '', dni_reverso_path: '' }
 }
 function aActividad(r: Row): Actividad {
   return {
@@ -46,6 +59,22 @@ export async function getMonitorPorEmail(email: string): Promise<Monitor | null>
     const { data } = await db.from('monitores').select('*').eq('email', email.trim().toLowerCase()).maybeSingle()
     return data ? aMonitor(data as Row) : null
   } catch { return null }
+}
+
+/** Historial de altas y bajas (más reciente primero). Filtra por monitor si se indica. */
+export async function getMovimientos(monitorId?: string): Promise<MovimientoMonitor[]> {
+  const db = createAdminClient()
+  const rows = await safe<Row>(() => {
+    let q = db.from('monitor_movimientos').select('*')
+    if (monitorId) q = q.eq('monitor_id', monitorId)
+    return q as never
+  })
+  return rows
+    .map(r => ({
+      id: str(r.id), monitor_id: str(r.monitor_id), tipo: (str(r.tipo) === 'baja' ? 'baja' : 'alta') as 'alta' | 'baja',
+      fecha: str(r.fecha).slice(0, 10), motivo: str(r.motivo), registrado_por: str(r.registrado_por), created_at: str(r.created_at),
+    }))
+    .sort((a, b) => (b.fecha + b.created_at).localeCompare(a.fecha + a.created_at))
 }
 
 /** Actividades asignadas. Filtra por monitor y/o rango de fechas (YYYY-MM-DD). */
