@@ -124,9 +124,12 @@ export const CATALOGO_SERVICIOS: ServicioCatalogo[] = [
     nombre: 'Escuela de Bienestar', entidad: 'club', categoria: 'Club', tipo: 'clase',
     descripcionCorta: 'Pilates, Yoga y Baile para adultos.',
     descripcionLarga: 'Actividad física para adultos centrada en bienestar, movilidad y relajación.',
-    edad: 'Adultos', horarios: 'L, X, V · 09:30 – 10:30', estado: 'activo',
+    edad: 'Adultos', horarios: 'L a V · 10:00 – 11:00', estado: 'activo',
     botonTexto: 'Solicitar inscripción', botonAccion: 'formulario', enlace: '/servicios/escuela-bienestar',
-    preciosNota: 'Precio pendiente de confirmar. Consulta disponibilidad y precio.',
+    preciosClub: [
+      { concepto: '1 clase/semana · ~4 sesiones al mes', precio: '35 €/mes' },
+      { concepto: '2 clases/semana · ~8 sesiones al mes', precio: '50 €/mes' },
+    ],
   },
   {
     id: 'circo-inclusivo', icon: '♿', ...D,

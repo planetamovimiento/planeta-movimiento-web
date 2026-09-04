@@ -21,7 +21,8 @@ export type SocioInfo = {
   conceptoTransferencia: string
 }
 
-const ACTIVIDADES_SOCIO = ['Gimnasia Acrobática', 'Telas Aéreas', 'Escuela de Bienestar', 'Jiu-Jitsu Brasileño', 'Escuela Infantil', 'Circo Inclusivo']
+// Solo las actividades del Club con cuota de socio (Bienestar, JJB y Circo Inclusivo no la llevan).
+const ACTIVIDADES_SOCIO = ['Gimnasia Acrobática', 'Telas Aéreas', 'Escuela Infantil']
 
 type Hijo = { nombre: string; apellidos: string; fechaNacimiento: string; actividades: string[]; talla: string; observaciones: string }
 const hijoVacio = (): Hijo => ({ nombre: '', apellidos: '', fechaNacimiento: '', actividades: [], talla: '', observaciones: '' })

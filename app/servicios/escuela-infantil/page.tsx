@@ -4,6 +4,7 @@ import { fotoPrincipal, fotosDe } from '@/lib/fotos'
 import { waNegocio } from '@/lib/whatsapp'
 import { BotonApuntarme } from './InscripcionModal'
 import { PreciosServicioClub } from '@/components/club/PreciosServicioClub'
+import { AvisoServicioSocio } from '@/components/club/BloquesSocio'
 import { PanelSeptiembre } from '@/components/club/PanelSeptiembre'
 import TabsDescripcion from './TabsDescripcion'
 
@@ -123,6 +124,9 @@ export default function EscuelaInfantilPage() {
 
             {/* Botón */}
             <BotonApuntarme />
+
+            {/* Hazte socio del Club */}
+            <AvisoServicioSocio />
 
             <p className="mt-4 text-xs text-gray-400 flex items-center gap-1.5">
               <svg className="w-3.5 h-3.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

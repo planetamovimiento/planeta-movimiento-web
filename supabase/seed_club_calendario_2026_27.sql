@@ -32,4 +32,4 @@ values
   ('clase', 'Infantil · Infantil 5', 'Escuela infantil', 'Infantil 5', '2026/27', '2026-09-01', '16:00', '17:00', false, '{"dias":[5],"hasta":"2027-06-30","excluir_festivos":true,"excluir_sin_clase":true}'::jsonb, true, 'activo'),
   ('clase', 'Infantil · Infantil 6', 'Escuela infantil', 'Infantil 6', '2026/27', '2026-09-01', '17:00', '18:00', false, '{"dias":[5],"hasta":"2027-06-30","excluir_festivos":true,"excluir_sin_clase":true}'::jsonb, true, 'activo'),
   ('clase', 'JJB · JJB 1', 'Jiu-Jitsu Brasileño', 'JJB 1', '2026/27', '2026-09-01', '11:30', '13:30', false, '{"dias":[6],"hasta":"2027-06-30","excluir_festivos":true,"excluir_sin_clase":true}'::jsonb, true, 'activo'),
-  ('clase', 'Bienestar · Bienestar 1', 'Escuela de Bienestar', 'Bienestar 1', '2026/27', '2026-09-01', '09:30', '10:30', false, '{"dias":[1,3,5],"hasta":"2027-06-30","excluir_festivos":true,"excluir_sin_clase":true}'::jsonb, true, 'activo');
+  ('clase', 'Bienestar · Bienestar 1', 'Escuela de Bienestar', 'Bienestar 1', '2026/27', '2026-09-01', '10:00', '11:00', false, '{"dias":[1,2,3,4,5],"hasta":"2027-06-30","excluir_festivos":true,"excluir_sin_clase":true}'::jsonb, true, 'activo');

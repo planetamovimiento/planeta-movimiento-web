@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useTransition, useCallback } from 'react'
+import { horarioTexto, horarioDeGrupo as horarioOficial } from '@/lib/club/horarios'
 import { Metric, EmptyState } from '@/components/admin/ui'
 import { waCliente } from '@/lib/whatsapp'
 import {
@@ -1223,10 +1224,16 @@ function diasDeHorario(txt: string): number[] {
   return [...set].sort((a, b) => a - b)
 }
 
-/** Horario (texto libre) por defecto de un grupo: el de su actividad o el global. */
+/** Horario (texto libre) por defecto de un grupo: el guardado en BD o el oficial del club. */
 function horarioDeGrupo(grupos: Grupo[], grupo: string, actividad: string): string {
   return grupos.find(g => g.nombre === grupo && (g.actividad === actividad || !g.actividad))?.horario ||
-    grupos.find(g => g.nombre === grupo)?.horario || ''
+    grupos.find(g => g.nombre === grupo)?.horario ||
+    horarioTexto(actividad, grupo) || ''
+}
+
+/** Días de clase del grupo: los del horario oficial y, si no hay, los que se deducen del texto. */
+function diasDeGrupo(grupos: Grupo[], grupo: string, actividad: string): number[] {
+  return horarioOficial(actividad, grupo)?.dias ?? diasDeHorario(horarioDeGrupo(grupos, grupo, actividad))
 }
 
 function ModalAsistencia({ actividadInicial, grupoInicial, temporada, actividades, grupos, gruposParaActividad, onClose }: {
@@ -1242,7 +1249,7 @@ function ModalAsistencia({ actividadInicial, grupoInicial, temporada, actividade
   const [fDesde, setFDesde] = useState('')
   const [fHasta, setFHasta] = useState('')
   // Días prefijados leyendo el horario del grupo elegido (editables por el usuario).
-  const [dias, setDias] = useState<number[]>(() => diasDeHorario(horarioDeGrupo(grupos, grupoInicial, actividadInicial)))
+  const [dias, setDias] = useState<number[]>(() => diasDeGrupo(grupos, grupoInicial, actividadInicial))
   const [monitor, setMonitor] = useState('')
   const [error, setError] = useState('')
 
@@ -1305,7 +1312,7 @@ function ModalAsistencia({ actividadInicial, grupoInicial, temporada, actividade
             </div>
             <div>
               <label className={lbl}>Grupo</label>
-              <select value={grupo} onChange={e => { const v = e.target.value; setGrupo(v); setDias(diasDeHorario(horarioDeGrupo(grupos, v, actividad))) }} className={inp}>
+              <select value={grupo} onChange={e => { const v = e.target.value; setGrupo(v); setDias(diasDeGrupo(grupos, v, actividad)) }} className={inp}>
                 <option value="">— Elige grupo —</option>
                 {gruposDisponibles.map(g => <option key={g} value={g}>{g}</option>)}
                 {grupo && !gruposDisponibles.includes(grupo) && <option value={grupo}>{grupo}</option>}

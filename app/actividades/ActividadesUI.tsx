@@ -119,7 +119,7 @@ const SERVICIOS: Servicio[] = [
   {
     id: 'bienestar',
     nombre: 'Escuela de Bienestar',
-    desc: 'Pilates, Yoga y Baile para adultos. Lunes, miércoles y viernes de 09:30 a 10:30.',
+    desc: 'Pilates, Yoga y Baile para adultos. De lunes a viernes de 10:00 a 11:00.',
     edad: 'Adultos',
     href: '/servicios/escuela-bienestar',
     icon: '🧘',

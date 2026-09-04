@@ -2,14 +2,11 @@
 
 import { useState } from 'react'
 
-// Solo Lunes / Miércoles / Viernes — franja 09:30-10:30
+// De lunes a viernes — franja 10:00-11:00
+const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']
+
 const horarios = [
-  {
-    franja: '09:30 – 10:30',
-    lunes:    { texto: 'Pilates', color: 'bg-teal-500 text-white' },
-    miercoles:{ texto: 'Pilates', color: 'bg-teal-500 text-white' },
-    viernes:  { texto: 'Pilates', color: 'bg-teal-500 text-white' },
-  },
+  { franja: '10:00 – 11:00', texto: 'Pilates', color: 'bg-teal-500 text-white' },
 ]
 
 export default function TabsDescripcion() {
@@ -81,8 +78,8 @@ export default function TabsDescripcion() {
               {[
                 { label: 'Edad',      valor: 'Adultos' },
                 { label: 'Duración',  valor: '60 min' },
-                { label: 'Días',      valor: 'L · X · V' },
-                { label: 'Horario',   valor: '09:30 – 10:30' },
+                { label: 'Días',      valor: 'L a V' },
+                { label: 'Horario',   valor: '10:00 – 11:00' },
               ].map(({ label, valor }) => (
                 <div key={label} className="bg-pm-bg rounded-xl p-4 text-center">
                   <div className="font-black text-pm-navy text-base">{valor}</div>
@@ -108,7 +105,7 @@ export default function TabsDescripcion() {
         )}
       </div>
 
-      {/* Calendario — solo L/X/V, tono teal */}
+      {/* Calendario — de lunes a viernes, tono teal */}
       <div className="mt-4">
         <div className="bg-pm-navy rounded-2xl overflow-hidden">
           <div className="px-6 py-4 flex items-center justify-between">
@@ -124,19 +121,19 @@ export default function TabsDescripcion() {
               <thead>
                 <tr className="bg-pm-navy-md">
                   <th className="text-white/60 font-semibold px-4 py-2.5 text-left w-28">Horario</th>
-                  <th className="text-white font-bold px-3 py-2.5 text-center">Lunes</th>
-                  <th className="text-white font-bold px-3 py-2.5 text-center">Miércoles</th>
-                  <th className="text-white font-bold px-3 py-2.5 text-center">Viernes</th>
+                  {DIAS.map(d => (
+                    <th key={d} className="text-white font-bold px-3 py-2.5 text-center">{d}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {horarios.map((fila, i) => (
                   <tr key={i} className="border-t border-white/10">
                     <td className="text-white/70 font-semibold px-4 py-4 whitespace-nowrap">{fila.franja}</td>
-                    {(['lunes', 'miercoles', 'viernes'] as const).map(dia => (
-                      <td key={dia} className="px-3 py-3 text-center">
-                        <span className={`inline-block ${fila[dia].color} font-bold px-4 py-2 rounded-lg w-full`}>
-                          {fila[dia].texto}
+                    {DIAS.map(d => (
+                      <td key={d} className="px-3 py-3 text-center">
+                        <span className={`inline-block ${fila.color} font-bold px-3 py-2 rounded-lg w-full`}>
+                          {fila.texto}
                         </span>
                       </td>
                     ))}

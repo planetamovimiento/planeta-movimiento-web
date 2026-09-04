@@ -4,7 +4,6 @@ import { fotosDe } from '@/lib/fotos'
 import { waNegocio } from '@/lib/whatsapp'
 import { BotonApuntarme } from './InscripcionModal'
 import { PreciosServicioClub } from '@/components/club/PreciosServicioClub'
-import { AvisoServicioSocio } from '@/components/club/BloquesSocio'
 import TabsDescripcion from './TabsDescripcion'
 
 export const metadata = {
@@ -99,8 +98,8 @@ export default function EscuelaBienestarPage() {
               {[
                 { icon: '👩', texto: 'Para adultos' },
                 { icon: '⏱',  texto: '60 min/sesión' },
-                { icon: '📅', texto: 'L · X · V' },
-                { icon: '🕤',  texto: '09:30 – 10:30' },
+                { icon: '📅', texto: 'L · M · X · J · V' },
+                { icon: '🕙',  texto: '10:00 – 11:00' },
                 { icon: '🛡',  texto: 'Todos los niveles' },
               ].map(({ icon, texto }) => (
                 <span key={texto} className="inline-flex items-center gap-1.5 bg-pm-bg border border-gray-200 text-pm-navy text-xs font-semibold px-3 py-1.5 rounded-full">
@@ -111,9 +110,6 @@ export default function EscuelaBienestarPage() {
 
             {/* Botón */}
             <BotonApuntarme />
-
-            {/* Hazte socio del Club */}
-            <AvisoServicioSocio />
 
             <p className="mt-4 text-xs text-gray-400 flex items-center gap-1.5">
               <svg className="w-3.5 h-3.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,11 +126,11 @@ export default function EscuelaBienestarPage() {
             {/* Horario rápido */}
             <div className="mt-6 bg-teal-50 border border-teal-100 rounded-xl p-4">
               <p className="text-xs font-black text-teal-700 uppercase tracking-wider mb-3">Horario semanal</p>
-              <div className="flex gap-3">
-                {['Lunes', 'Miércoles', 'Viernes'].map(dia => (
+              <div className="flex gap-2">
+                {['Lun', 'Mar', 'Mié', 'Jue', 'Vie'].map(dia => (
                   <div key={dia} className="flex-1 bg-teal-500 text-white text-center rounded-lg py-2 px-1">
                     <div className="font-black text-xs">{dia}</div>
-                    <div className="text-teal-100 text-xs mt-0.5">09:30</div>
+                    <div className="text-teal-100 text-xs mt-0.5">10:00</div>
                   </div>
                 ))}
               </div>

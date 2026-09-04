@@ -36,7 +36,7 @@ const DISCIPLINAS = [
   },
   {
     nombre: 'Escuela de Bienestar',
-    desc: 'Pilates, Yoga y Baile para adultos. Cuerpo y mente en equilibrio, lunes, miércoles y viernes.',
+    desc: 'Pilates, Yoga y Baile para adultos. Cuerpo y mente en equilibrio, de lunes a viernes.',
     edad: 'Adultos', foto: '/fotos/escuela-bienestar/1.webp', grad: 'from-teal-600 to-cyan-700',
     href: '/servicios/escuela-bienestar',
   },

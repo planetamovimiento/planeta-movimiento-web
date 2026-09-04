@@ -3,6 +3,9 @@ import { getTemporadaActiva } from '@/lib/config/store'
 import { temporadaDisplay } from '@/lib/club/constants'
 import { AvisoCuotaClub } from '@/components/club/CuotaSocio'
 
+/** Servicios del Club que llevan cuota anual de socio. */
+const SERVICIOS_CON_SOCIO = ['gimnasia-acrobatica', 'telas-aereas', 'escuela-infantil']
+
 /**
  * Bloque de PRECIOS informativos de un servicio del Club Deportivo Origen.
  * Los precios y la nota son editables desde /admin/servicios (catálogo/BD).
@@ -41,7 +44,7 @@ export async function PreciosServicioClub({ servicioId }: { servicioId: string }
         <span>Inscripción por formulario · la mensualidad se abona al confirmar la plaza (sin pago online).</span>
       </p>
 
-      <AvisoCuotaClub temporada={temporadaDisplay(temporada)} />
+      {SERVICIOS_CON_SOCIO.includes(servicioId) && <AvisoCuotaClub temporada={temporadaDisplay(temporada)} />}
     </div>
   )
 }

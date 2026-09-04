@@ -40,8 +40,8 @@ export const HORARIOS_CLUB: Record<string, Record<string, HorarioGrupo>> = {
     'JJB 1': { dias: [6], ini: '11:30', fin: '13:30' },
   },
   'Escuela de Bienestar': {
-    'Bienestar 1': { dias: [1, 3, 5], ini: '09:30', fin: '10:30' },
-    'Pilates': { dias: [1, 3, 5], ini: '09:30', fin: '10:30' },
+    'Bienestar 1': { dias: [1, 2, 3, 4, 5], ini: '10:00', fin: '11:00' },
+    'Pilates': { dias: [1, 2, 3, 4, 5], ini: '10:00', fin: '11:00' },
   },
 }
 
