@@ -118,6 +118,12 @@ export type Alumno = {
   temporada: string
   /** "Septiembre 2026" / "Octubre 2026" (lo elige la familia en la inscripción). '' si no aplica. */
   periodoInicio: string
+  /** Modalidad elegida en la inscripción ("2 clases / semana"). '' si no consta. */
+  modalidad: string
+  /** Forma de pago elegida por la familia: "Mensual" / "Trimestral (3 meses)". '' si no consta. */
+  formaPago: string
+  /** Importe de esa modalidad y forma de pago ("195 € / trimestre"). '' si no consta. */
+  importeModalidad: string
   // Cuota de socio (temporada 2026/27+). Snake_case = columnas de club_gestion.
   cuota_estado: string
   cuota_importe_cents: number

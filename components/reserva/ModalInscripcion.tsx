@@ -11,6 +11,8 @@ export type Modalidad = {
   label: string
   sublabel: string
   precio: string
+  /** Precio informativo si se paga el trimestre por adelantado ('' si no aplica). */
+  precioTrimestral?: string
 }
 
 type Props = {
@@ -44,6 +46,7 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose, preg
     tutorLegal: '',
     experiencia: '',
     modalidad: '',
+    formaPago: 'mensual' as 'mensual' | 'trimestral',
     inicio: '',
     nivel: '',
     diasSemana: [] as string[],
@@ -52,6 +55,11 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose, preg
   })
 
   const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes']
+
+  const modSel = modalidades.find(m => m.id === form.modalidad)
+  const trimestralDisponible = !!modSel?.precioTrimestral
+  // Si la modalidad elegida no tiene precio trimestral, el pago vuelve a mensual.
+  const formaPago = trimestralDisponible ? form.formaPago : 'mensual'
 
   function toggleDia(dia: string) {
     setForm(f => ({
@@ -82,7 +90,9 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose, preg
           fechaNacimiento: form.fechaNacimiento,
           tutorLegal: form.tutorLegal,
           experienciaPrevia: form.experiencia,
-          modalidad: form.modalidad,
+          modalidad: modSel?.label ?? form.modalidad,
+          formaPago: formaPago === 'trimestral' ? 'Trimestral (3 meses)' : 'Mensual',
+          importeModalidad: (formaPago === 'trimestral' ? modSel?.precioTrimestral : modSel?.precio) ?? '',
           nivel: form.nivel,
           disponibilidad: form.diasSemana.join(', '),
           ...(preguntarInicio && form.inicio
@@ -136,7 +146,8 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose, preg
             </p>
             {form.modalidad && (
               <p className="text-xs text-pm-red font-semibold mb-4">
-                Modalidad elegida: {modalidades.find(m => m.id === form.modalidad)?.label}
+                Modalidad elegida: {modSel?.label}
+                {trimestralDisponible && ` · Pago ${formaPago} (${formaPago === 'trimestral' ? modSel!.precioTrimestral : modSel!.precio})`}
               </p>
             )}
             <PagoClub actividad={servicio} className="mb-6" />
@@ -179,6 +190,11 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose, preg
                     <div className={`text-xs font-black mt-1 ${form.modalidad === m.id ? 'text-pm-red' : 'text-gray-400'}`}>
                       {m.precio}
                     </div>
+                    {m.precioTrimestral && (
+                      <div className="text-[11px] font-bold text-green-600 mt-0.5 leading-tight">
+                        o {m.precioTrimestral}
+                      </div>
+                    )}
                   </button>
                 ))}
               </div>
@@ -186,6 +202,37 @@ export function ModalInscripcion({ servicio, niveles, modalidades, onClose, preg
                 <p className="text-xs text-gray-400 mt-1.5">Selecciona una opción para continuar</p>
               )}
             </div>
+
+            {/* ── 1a. Forma de pago (solo si la modalidad tiene descuento trimestral) ── */}
+            {trimestralDisponible && (
+              <div>
+                <label className="block text-xs font-black text-pm-navy mb-2 uppercase tracking-wider">
+                  ¿Cómo prefieres pagar? *
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    { id: 'mensual' as const, label: 'Mensual', sublabel: 'Cada mes', precio: modSel!.precio },
+                    { id: 'trimestral' as const, label: 'Trimestral', sublabel: '3 meses por adelantado', precio: modSel!.precioTrimestral! },
+                  ]).map(o => (
+                    <button
+                      key={o.id}
+                      type="button"
+                      onClick={() => setForm(f => ({ ...f, formaPago: o.id }))}
+                      className={`text-left border-2 rounded-xl p-3 transition-all ${
+                        formaPago === o.id ? 'border-pm-red bg-pm-red-light' : 'border-gray-200 hover:border-pm-red/40'
+                      }`}
+                    >
+                      <div className={`font-bold text-sm ${formaPago === o.id ? 'text-pm-red' : 'text-pm-navy'}`}>{o.label}</div>
+                      <div className="text-xs text-gray-500 mt-0.5">{o.sublabel}</div>
+                      <div className={`text-xs font-black mt-1 ${formaPago === o.id ? 'text-pm-red' : 'text-gray-400'}`}>{o.precio}</div>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-green-700 bg-green-50 border border-green-100 rounded-lg px-3 py-2 mt-2 leading-snug">
+                  <strong>Descuento por pago trimestral:</strong> pagando el trimestre por adelantado te ahorras respecto al pago mes a mes.
+                </p>
+              </div>
+            )}
 
             {/* ── 1b. ¿Cuándo empiezas? (solo servicios con periodo de septiembre) ── */}
             {preguntarInicio && (

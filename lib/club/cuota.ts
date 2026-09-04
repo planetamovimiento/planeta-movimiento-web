@@ -38,12 +38,12 @@ export const CUOTA = {
 // ── Cuotas mensuales por actividad (punto 22) ──────────────────────────────────
 // Fuente ÚNICA: la usa el default de la config del club (sugerencia en el CRM) y
 // los formularios públicos de inscripción (precio por modalidad). Céntimos.
-export type CuotaMensualActividad = { actividad: string; opciones: { label: string; cents: number }[] }
+export type CuotaMensualActividad = { actividad: string; opciones: { label: string; cents: number; trimestralCents?: number }[] }
 
 export const CUOTAS_MENSUALES: CuotaMensualActividad[] = [
-  { actividad: 'Gimnasia Acrobática', opciones: [{ label: '1 hora', cents: 4500 }, { label: '2 horas', cents: 7000 }, { label: '3 horas', cents: 10000 }] },
-  { actividad: 'Escuela de aéreos', opciones: [{ label: '1 hora', cents: 4500 }, { label: '2 horas', cents: 7000 }, { label: '3 horas', cents: 10000 }] },
-  { actividad: 'Escuela infantil', opciones: [{ label: '1 día', cents: 4000 }, { label: '2 días', cents: 6500 }, { label: '3 días', cents: 9000 }] },
+  { actividad: 'Gimnasia Acrobática', opciones: [{ label: '1 hora', cents: 4500, trimestralCents: 12000 }, { label: '2 horas', cents: 7000, trimestralCents: 19500 }, { label: '3 horas', cents: 10000, trimestralCents: 28500 }] },
+  { actividad: 'Escuela de aéreos', opciones: [{ label: '1 hora', cents: 4500, trimestralCents: 12000 }, { label: '2 horas', cents: 7000, trimestralCents: 19500 }, { label: '3 horas', cents: 10000, trimestralCents: 28500 }] },
+  { actividad: 'Escuela infantil', opciones: [{ label: '1 día', cents: 4000, trimestralCents: 10500 }, { label: '2 días', cents: 6500, trimestralCents: 18000 }, { label: '3 días', cents: 9000 }] },
   { actividad: 'Jiu-Jitsu Brasileño', opciones: [{ label: 'Cuota', cents: 6000 }] },
   { actividad: 'Escuela de Bienestar', opciones: [{ label: '1 hora', cents: 2500 }, { label: '2 horas', cents: 3500 }, { label: '3 horas', cents: 4500 }] },
 ]
@@ -58,6 +58,18 @@ export function cuotaMensualCents(actividad: string, tier: number): number | nul
 export function cuotaMensualTexto(actividad: string, tier: number): string {
   const c = cuotaMensualCents(actividad, tier)
   return c != null ? `${eurosCuota(c)} / mes` : 'Consultar precio'
+}
+
+/** Céntimos del pago trimestral (3 meses por adelantado) de la modalidad N. null si esa modalidad no tiene descuento. */
+export function cuotaTrimestralCents(actividad: string, tier: number): number | null {
+  const a = CUOTAS_MENSUALES.find(c => c.actividad.trim().toLowerCase() === actividad.trim().toLowerCase())
+  return a?.opciones[tier - 1]?.trimestralCents ?? null
+}
+
+/** Texto del pago trimestral ("120 € / trimestre") o '' si no hay descuento para esa modalidad. */
+export function cuotaTrimestralTexto(actividad: string, tier: number): string {
+  const c = cuotaTrimestralCents(actividad, tier)
+  return c != null ? `${eurosCuota(c)} / trimestre` : ''
 }
 
 /** Importe SUGERIDO según la fecha de pago (o hoy). El admin confirma el real. */

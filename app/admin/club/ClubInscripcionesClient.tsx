@@ -826,6 +826,8 @@ function FichaAlumno({ a, puedeEditar, gruposActividad, cuotaCfg, onClose, onGes
             <Dato k="Email" v={a.email || '—'} />
             <Dato k="Inscrito el" v={fechaCorta(a.created_at)} />
             <Dato k="Empieza" v={a.periodoInicio || '—'} />
+            <Dato k="Modalidad" v={a.modalidad || '—'} />
+            <Dato k="Forma de pago" v={a.formaPago ? `${a.formaPago}${a.importeModalidad ? ` · ${a.importeModalidad}` : ''}` : '—'} />
             <Dato k="Fecha de alta" v={fechaCorta(a.fecha_alta)} />
             <Dato k="Fecha de baja" v={fechaCorta(a.fecha_baja)} />
           </div>

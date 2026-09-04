@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { ModalInscripcion, type Modalidad } from '@/components/reserva/ModalInscripcion'
-import { cuotaMensualTexto } from '@/lib/club/cuota'
+import { cuotaMensualTexto, cuotaTrimestralTexto } from '@/lib/club/cuota'
 
 const NIVELES = [
   'Infantil 1', 'Infantil 2', 'Infantil 3',
@@ -10,8 +10,8 @@ const NIVELES = [
 ]
 
 const MODALIDADES: Modalidad[] = [
-  { id: '1dia',  label: '1 día / semana',  sublabel: 'Un día fijo a la semana',    precio: cuotaMensualTexto('Escuela infantil', 1) },
-  { id: '2dias', label: '2 días / semana', sublabel: 'Dos días fijos a la semana', precio: cuotaMensualTexto('Escuela infantil', 2) },
+  { id: '1dia',  label: '1 día / semana',  sublabel: 'Un día fijo a la semana',    precio: cuotaMensualTexto('Escuela infantil', 1), precioTrimestral: cuotaTrimestralTexto('Escuela infantil', 1) },
+  { id: '2dias', label: '2 días / semana', sublabel: 'Dos días fijos a la semana', precio: cuotaMensualTexto('Escuela infantil', 2), precioTrimestral: cuotaTrimestralTexto('Escuela infantil', 2) },
 ]
 
 export function BotonApuntarme() {
