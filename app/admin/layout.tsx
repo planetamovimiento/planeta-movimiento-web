@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { getAdminUser } from '@/lib/admin/auth'
+import { getBadgesAdmin } from '@/lib/admin/badges'
 import AdminSidebar from '@/components/admin/AdminSidebar'
 
 export const metadata = {
@@ -43,10 +44,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     )
   }
 
-  // Autorizado → panel completo
+  // Autorizado → panel completo. Los avisos por sección (globo rojo) se calculan
+  // aquí para que estén en todas las páginas del panel.
+  const badges = admin.role === 'monitor' ? {} : await getBadgesAdmin()
+
   return (
     <div className="min-h-screen flex bg-pm-bg">
-      <AdminSidebar role={admin.role} secciones={admin.secciones} email={admin.email} nombre={admin.nombre} />
+      <AdminSidebar role={admin.role} secciones={admin.secciones} email={admin.email} nombre={admin.nombre} badges={badges} />
       <div className="flex-1 min-w-0 flex flex-col">
         {children}
       </div>

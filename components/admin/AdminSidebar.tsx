@@ -3,11 +3,11 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { SECCIONES, puedeVerSeccion, type AdminRole, type SeccionMeta } from '@/lib/admin/secciones'
+import { SECCIONES, TITULO_BADGE, puedeVerSeccion, type AdminRole, type SeccionId, type SeccionMeta } from '@/lib/admin/secciones'
 
 export default function AdminSidebar(
-  { role, secciones, email, nombre }:
-  { role: AdminRole; secciones: string[] | null; email: string; nombre: string | null },
+  { role, secciones, email, nombre, badges = {} }:
+  { role: AdminRole; secciones: string[] | null; email: string; nombre: string | null; badges?: Partial<Record<SeccionId, number>> },
 ) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
@@ -68,12 +68,21 @@ export default function AdminSidebar(
                 <div className="px-4 pb-1.5 text-xs font-black text-white/30 uppercase tracking-wider">{grupo.titulo}</div>
               )}
               <div className="space-y-1">
-                {grupo.items.map(item => (
-                  <Link key={item.id} href={item.href} onClick={() => setOpen(false)} className={linkClass(item.href)}>
-                    <span className="text-base">{item.icon}</span>
-                    {item.label}
-                  </Link>
-                ))}
+                {grupo.items.map(item => {
+                  const n = badges[item.id] ?? 0
+                  return (
+                    <Link key={item.id} href={item.href} onClick={() => setOpen(false)} className={linkClass(item.href)}>
+                      <span className="text-base">{item.icon}</span>
+                      <span className="flex-1 min-w-0 truncate">{item.label}</span>
+                      {n > 0 && (
+                        <span title={`${n} ${TITULO_BADGE[item.id] ?? 'sin atender'}`}
+                          className="shrink-0 min-w-[20px] h-5 px-1.5 rounded-full bg-pm-red text-white text-[11px] font-black flex items-center justify-center">
+                          {n > 99 ? '99+' : n}
+                        </span>
+                      )}
+                    </Link>
+                  )
+                })}
               </div>
             </div>
           ))}

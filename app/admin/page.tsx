@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getAdminUser } from '@/lib/admin/auth'
 import { getDashboard, type Novedad } from '@/lib/admin/data'
+import { getBadgesAdmin } from '@/lib/admin/badges'
 import { puedeVerSeccion, type SeccionId } from '@/lib/admin/secciones'
 import { AdminHeader, Metric, SetupNotice } from '@/components/admin/ui'
 
@@ -21,7 +22,7 @@ export default async function DashboardPage() {
   const admin = await getAdminUser()
   // El monitor no ve el dashboard general: directo a su portal.
   if (admin?.role === 'monitor') redirect('/admin/monitores')
-  const d = await getDashboard()
+  const [d, badges] = await Promise.all([getDashboard(), getBadgesAdmin()])
   const hoy = new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date())
   const eur = (n: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n)
 
@@ -41,18 +42,17 @@ export default async function DashboardPage() {
     verFormularios && <Metric key="se" label="Solicitudes empresa" valor={d.formsNuevos} tono="red" />,
   ].filter(Boolean)
 
-  // Alertas accionables (cada chip enlaza a donde se resuelve).
+  // Tareas pendientes: cada una desaparece sola al hacerla (confirmar la reserva,
+  // gestionar la inscripción, leer la solicitud). Mismos números que los globos
+  // rojos de la barra lateral.
   const alertas = [
-    verReservas && d.pendientes > 0 && { href: '/admin/reservas', tono: 'amber', icon: '⏳', txt: `${d.pendientes} reserva(s) pendiente(s) de confirmar` },
-    verReservas && d.enEspera > 0 && { href: '/admin/reservas', tono: 'purple', icon: '📋', txt: `${d.enEspera} en lista de espera` },
-    verFormularios && d.formsNuevos > 0 && { href: '/admin/formularios', tono: 'red', icon: '✉️', txt: `${d.formsNuevos} solicitud(es) de empresa sin leer` },
-    verClub && d.clubNuevos > 0 && { href: '/admin/club', tono: 'blue', icon: '🏅', txt: `${d.clubNuevos} inscripción(es) al club sin gestionar` },
-    verClub && d.clubConPagoPendiente > 0 && { href: '/admin/club', tono: 'amber', icon: '💶', txt: `${d.clubConPagoPendiente} alumno(s) con cuota pendiente` },
+    verReservas && (badges.reservas ?? 0) > 0 && { href: '/admin/reservas', tono: 'amber', icon: '⏳', txt: `${badges.reservas} reserva(s) por confirmar` },
+    verFormularios && (badges.formularios ?? 0) > 0 && { href: '/admin/formularios', tono: 'red', icon: '✉️', txt: `${badges.formularios} solicitud(es) sin leer` },
+    verClub && (badges.club ?? 0) > 0 && { href: '/admin/club', tono: 'blue', icon: '🏅', txt: `${badges.club} inscripción(es) del club por gestionar` },
   ].filter(Boolean) as { href: string; tono: string; icon: string; txt: string }[]
 
   const tonoChip: Record<string, string> = {
     amber: 'bg-amber-50 text-amber-800 hover:bg-amber-100 border-amber-200',
-    purple: 'bg-purple-50 text-purple-800 hover:bg-purple-100 border-purple-200',
     red: 'bg-pm-red-light text-pm-red hover:bg-pm-red/10 border-pm-red/20',
     blue: 'bg-blue-50 text-pm-navy hover:bg-blue-100 border-blue-200',
   }
@@ -81,7 +81,7 @@ export default async function DashboardPage() {
 
         {/* ── Alertas accionables ── */}
         <div>
-          <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">Alertas</div>
+          <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">Tareas pendientes</div>
           {alertas.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
               {alertas.map((a, i) => (
@@ -108,7 +108,7 @@ export default async function DashboardPage() {
           <div>
             <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-3">Club Deportivo Origen · temporada {d.tempActiva.replace('/', '-')}</div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <Metric label="Inscripciones nuevas" valor={d.clubNuevos} sub="Sin gestionar" tono="red" />
+              <Metric label="Por gestionar" valor={badges.club ?? 0} sub="Inscripciones sin activar" tono="red" />
               <Metric label="Alumnos activos" valor={d.clubActivos} tono="navy" />
               {verFinanzas && <Metric label="Cuotas cobradas" valor={eur(d.clubIngresosTemporada)} sub="Temporada" tono="green" />}
               <Metric label="Con pago pendiente" valor={d.clubConPagoPendiente} tono="amber" />

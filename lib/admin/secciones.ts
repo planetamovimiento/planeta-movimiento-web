@@ -62,6 +62,15 @@ export const SECCIONES: SeccionMeta[] = [
   { id: 'actividad',       label: 'Actividad',           icon: '📝', href: '/admin/actividad',        grupo: 'General' },
 ]
 
+/** Qué significa el globo rojo de cada sección (tooltip de la barra lateral). */
+export const TITULO_BADGE: Partial<Record<SeccionId, string>> = {
+  club: 'inscripciones por gestionar',
+  reservas: 'reservas por confirmar',
+  formularios: 'solicitudes sin leer',
+  pagos: 'pagos cobrados esta semana',
+  productos: 'pedidos nuevos',
+}
+
 /** Secciones que el administrador principal puede asignar a un gestor / lectura. */
 export const SECCIONES_ASIGNABLES: SeccionMeta[] = SECCIONES.filter(s => !s.soloPrincipal)
 
