@@ -1,14 +1,14 @@
 import { requireSeccion, can } from '@/lib/admin/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { AdminHeader } from '@/components/admin/ui'
-import { type Alumno, type Grupo, type EstadoGeneral, type EstadoPago, type PagoMes } from '@/lib/club/constants'
+import { esSoloSocio, type Alumno, type Grupo, type EstadoGeneral, type EstadoPago, type PagoMes } from '@/lib/club/constants'
 import { getTemporadaActiva } from '@/lib/config/store'
 import { getClubConfig } from '@/lib/club/config'
 import ClubInscripcionesClient from './ClubInscripcionesClient'
 
 type SubRow = {
   id: string; nombre: string | null; email: string | null; telefono: string | null
-  mensaje: string | null; datos: Record<string, unknown> | null; created_at: string
+  asunto: string | null; mensaje: string | null; datos: Record<string, unknown> | null; created_at: string
 }
 type GestionRow = {
   submission_id: string; grupo: string | null; estado_general: string | null; temporada: string | null
@@ -38,7 +38,7 @@ export default async function ClubPage() {
   const [temporadaActiva, clubConfig] = await Promise.all([getTemporadaActiva(), getClubConfig()])
 
   const [subsRes, gestionRes, gruposRes] = await Promise.all([
-    safe<SubRow>(() => db.from('form_submissions').select('id, nombre, email, telefono, mensaje, datos, created_at')
+    safe<SubRow>(() => db.from('form_submissions').select('id, nombre, email, telefono, asunto, mensaje, datos, created_at')
       .eq('tipo', 'inscripcion_club').order('created_at', { ascending: false }).limit(2000) as never),
     safe<GestionRow>(() => db.from('club_gestion').select('*') as never),
     safe<Grupo>(() => db.from('club_grupos').select('*').order('orden', { ascending: true }) as never),
@@ -79,6 +79,7 @@ export default async function ClubPage() {
       talla: str(g?.talla),
       numero_socio: str(g?.numero_socio),
       esSocio: d.esSocio === true,
+      soloSocio: esSoloSocio(d, s.asunto),
       dniTutor: str(d.dniTutor),
       direccionTutor: str(d.direccionTutor),
       pendienteSync: !g,

@@ -1,5 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
-import { TEMPORADA_ACTUAL } from '@/lib/club/constants'
+import { TEMPORADA_ACTUAL, esSoloSocio } from '@/lib/club/constants'
 import type { AlumnoFamilia } from './tipos'
 
 type Row = Record<string, unknown>
@@ -49,6 +49,7 @@ function construir(s: Row, g: Row | undefined, grupos: Row[]): AlumnoFamilia {
   // Horario y WhatsApp = el manual del alumno, o el por defecto de su grupo.
   return {
     id: String(s.id),
+    soloSocio: esSoloSocio(d, str(s.asunto)),
     nombre,
     apellidos,
     actividad,
@@ -107,12 +108,15 @@ function fusionar(x: AlumnoFamilia, y: AlumnoFamilia): AlumnoFamilia {
 
 function fusionarDuplicados(items: { a: AlumnoFamilia; fechaNac: string }[]): AlumnoFamilia[] {
   const mapa = new Map<string, AlumnoFamilia>()
+  const soloSocio: AlumnoFamilia[] = []
   for (const { a, fechaNac } of items) {
+    // Las filas del alta de socio van aparte: se muestran como una línea simple.
+    if (a.soloSocio) { soloSocio.push(a); continue }
     const k = claveAlumno(a, fechaNac)
     const ex = mapa.get(k)
     mapa.set(k, ex ? fusionar(ex, a) : a)
   }
-  return [...mapa.values()]
+  return [...mapa.values(), ...soloSocio]
 }
 
 /** Todos los alumnos vinculados a la familia (datos seguros, sin duplicados). */
@@ -122,7 +126,7 @@ export async function getAlumnosDeFamilia(familiaId: string): Promise<AlumnoFami
   const db = createAdminClient()
   try {
     const [subs, gest, grup] = await Promise.all([
-      db.from('form_submissions').select('id, nombre, datos').in('id', ids),
+      db.from('form_submissions').select('id, nombre, asunto, datos').in('id', ids),
       db.from('club_gestion').select('*').in('submission_id', ids),
       db.from('club_grupos').select('nombre, actividad, horario, whatsapp_url'),
     ])
@@ -133,7 +137,8 @@ export async function getAlumnosDeFamilia(familiaId: string): Promise<AlumnoFami
       fechaNac: str((s.datos as Record<string, unknown> | null)?.fechaNacimiento).slice(0, 10),
     }))
     return fusionarDuplicados(construidos)
-      .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+      // Primero los participantes con ficha; las líneas de socio, al final.
+      .sort((a, b) => Number(a.soloSocio) - Number(b.soloSocio) || a.nombre.localeCompare(b.nombre, 'es'))
   } catch {
     return []
   }
@@ -146,7 +151,7 @@ export async function getAlumnoDeFamilia(familiaId: string, submissionId: string
   const db = createAdminClient()
   try {
     const [subRes, gRes, grupRes] = await Promise.all([
-      db.from('form_submissions').select('id, nombre, datos').eq('id', submissionId).maybeSingle(),
+      db.from('form_submissions').select('id, nombre, asunto, datos').eq('id', submissionId).maybeSingle(),
       db.from('club_gestion').select('*').eq('submission_id', submissionId).maybeSingle(),
       db.from('club_grupos').select('nombre, actividad, horario, whatsapp_url'),
     ])

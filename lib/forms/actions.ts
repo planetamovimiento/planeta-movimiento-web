@@ -235,6 +235,8 @@ export async function submitSocio(input: {
           nombre: nombreP, apellidos: apellidosP,
           fechaNacimiento: fechaNac,
           tutorLegal: tutorNombre, talla, esSocio: true,
+          // Marca la fila como "solo socio": informativa, sin cuotas ni talla propias.
+          origen: 'socio',
         }
         if (dni) datos.dniTutor = dni
         if (direccion) datos.direccionTutor = direccion
@@ -248,16 +250,19 @@ export async function submitSocio(input: {
       }
       if (!subId) continue
 
-      // Gestión/cuota: si ya existe fila, solo actualiza la talla (no toca una
-      // cuota ya registrada). Si es nueva, crea la cuota pendiente sugerida.
-      const { data: gexist } = await db.from('club_gestion').select('submission_id').eq('submission_id', subId).maybeSingle()
-      if (gexist) {
-        await db.from('club_gestion').update({ talla: talla || null, updated_at: now }).eq('submission_id', subId)
-      } else {
-        await db.from('club_gestion').insert({
-          submission_id: subId, temporada, estado_general: 'pendiente',
-          cuota_estado: 'pendiente', cuota_importe_cents: importeSugerido, talla: talla || null, updated_at: now,
-        })
+      // Gestión/cuota SOLO para la inscripción de verdad del niño. Los participantes
+      // que solo existen por el alta de socio quedan como fila informativa: sin cuota
+      // ni talla propias, para no duplicar el cobro con su inscripción del club.
+      if (prev) {
+        const { data: gexist } = await db.from('club_gestion').select('submission_id').eq('submission_id', subId).maybeSingle()
+        if (gexist) {
+          await db.from('club_gestion').update({ talla: talla || null, updated_at: now }).eq('submission_id', subId)
+        } else {
+          await db.from('club_gestion').insert({
+            submission_id: subId, temporada, estado_general: 'pendiente',
+            cuota_estado: 'pendiente', cuota_importe_cents: importeSugerido, talla: talla || null, updated_at: now,
+          })
+        }
       }
       creados.push(full)
     }

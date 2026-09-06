@@ -5,7 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getAdminUser, logActivity } from '@/lib/admin/auth'
 import { puedeVerSeccion } from '@/lib/admin/secciones'
 import type { EstadoFamilia } from '@/lib/familias/tipos'
-import { sincronizarFamilias, limpiarFamiliasSinSocio } from '@/lib/familias/sync'
+import { sincronizarFamilias } from '@/lib/familias/sync'
 import { siguienteNumeroSocio } from '@/lib/familias/socio'
 import { saveAvisos, type Aviso } from '@/lib/familias/avisos'
 
@@ -178,21 +178,4 @@ export async function eliminarFamilia(id: string) {
   await logActivity({ actorEmail: admin.email, accion: 'Eliminó cuenta familiar', entidad: 'club_familia', entidadId: id })
   revalidar()
   return { ok: true }
-}
-
-/**
- * Quita del Portal de Familias las cuentas que NO son de socios (el portal es
- * solo para socios del Club). Con soloContar=true no borra nada: sirve para
- * enseñar cuántas y cuáles se irían antes de confirmar. Las inscripciones del
- * CRM no se tocan.
- */
-export async function limpiarFamiliasNoSocias(soloContar = false) {
-  const { admin, error } = await exigir()
-  if (!admin) return { ok: false as const, error }
-  const r = await limpiarFamiliasSinSocio(soloContar)
-  if (!soloContar && r.borradas) {
-    await logActivity({ actorEmail: admin.email, accion: `Quitó ${r.borradas} cuenta(s) familiar(es) sin socio`, entidad: 'club_familia' })
-    revalidar()
-  }
-  return { ok: true as const, ...r }
 }

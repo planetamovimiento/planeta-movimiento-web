@@ -95,6 +95,23 @@ export const ACTIVIDADES_CLUB = [
   'Circo Inclusivo',
 ]
 
+/**
+ * true si esta fila del CRM la creó el FORMULARIO DE SOCIO (un participante que
+ * el tutor añadió en el alta) y no una inscripción a una disciplina del club.
+ *
+ * Son filas SOLO INFORMATIVAS: no llevan cuotas mensuales, ni talla, ni ficha
+ * completa, para que un mismo niño no se cobre dos veces. Cuando el alta de
+ * socio encuentra su inscripción, se fusiona con ella y no crea ninguna fila.
+ * Las de antes del marcador `origen` se reconocen por el asunto.
+ */
+export function esSoloSocio(datos: Record<string, unknown> | null | undefined, asunto?: string | null): boolean {
+  const origen = (datos ?? {}).origen
+  // El marcador manda: así se puede ascender una fila a inscripción normal
+  // (origen: 'inscripcion') cuando es el único registro de ese participante.
+  if (typeof origen === 'string') return origen === 'socio'
+  return typeof asunto === 'string' && asunto.trim().startsWith('Alta socio ·')
+}
+
 // ── Tipos de datos ────────────────────────────────────────────────────────────
 
 export type Grupo = { id: string; actividad: string | null; nombre: string; orden: number; horario?: string | null; whatsapp_url?: string | null }
@@ -133,6 +150,12 @@ export type Alumno = {
   numero_socio: string
   /** Alta realizada desde el formulario "Hazte socio". */
   esSocio: boolean
+  /**
+   * Fila creada por el formulario de socio (el tutor añadió al participante ahí).
+   * Es informativa: sin cuotas mensuales ni talla, para no duplicar el cobro con
+   * su inscripción del club. Ver esSoloSocio().
+   */
+  soloSocio: boolean
   /** Datos del tutor capturados en el alta de socio (solo lectura). */
   dniTutor: string
   direccionTutor: string

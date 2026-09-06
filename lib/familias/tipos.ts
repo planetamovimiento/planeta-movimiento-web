@@ -29,6 +29,8 @@ export function labelEstadoFamilia(e: EstadoFamilia): string {
 /** Subconjunto SEGURO del alumno que ve la familia (nunca datos internos). */
 export type AlumnoFamilia = {
   id: string
+  /** Participante añadido en el alta de socio: solo nombre y distintivo, sin ficha. */
+  soloSocio: boolean
   nombre: string
   apellidos: string
   actividad: string

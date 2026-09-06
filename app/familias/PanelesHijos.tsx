@@ -15,6 +15,20 @@ export default function PanelesHijos({ alumnos }: { alumnos: AlumnoFamilia[] }) 
   return (
     <div className="space-y-4">
       {alumnos.map(a => {
+        // Participante del alta de socio: una línea y ya. Su ficha, cuotas y talla
+        // viven en su inscripción del club, así que aquí no se despliega nada.
+        if (a.soloSocio) {
+          return (
+            <div key={a.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 flex items-center gap-4">
+              <Avatar foto="" nombre={a.nombre} size="md" />
+              <div className="flex-1 min-w-0">
+                <div className="font-black text-pm-navy truncate">{a.nombre} {a.apellidos}</div>
+                <div className="text-xs text-gray-400">Añadido en el alta de socio</div>
+              </div>
+              <span className="shrink-0 text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200 rounded-full px-3 py-1">⭐ Socio</span>
+            </div>
+          )
+        }
         const open = abierto === a.id
         return (
           <div key={a.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">

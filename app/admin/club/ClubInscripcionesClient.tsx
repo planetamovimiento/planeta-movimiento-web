@@ -142,7 +142,9 @@ export default function ClubInscripcionesClient({
 
   // Métricas de la temporada SELECCIONADA en el filtro (vacío = todas las temporadas).
   const metricas = useMemo(() => {
-    const base = fTemporada ? lista.filter(a => a.temporada === fTemporada) : lista
+    const conSocios = fTemporada ? lista.filter(a => a.temporada === fTemporada) : lista
+    // Las filas del alta de socio no son inscripciones: no cuentan como alumnos.
+    const base = conSocios.filter(a => !a.soloSocio)
     const cuenta = (fn: (a: Alumno) => boolean) => base.filter(fn).length
     const act = (fn: (actividad: string) => boolean) => base.filter(a => fn(normActividad(a.actividad))).length
     return {
@@ -153,7 +155,7 @@ export default function ClubInscripcionesClient({
       pendientes: cuenta(a => a.estado_general === 'pendiente'),
       espera: cuenta(a => a.estado_general === 'espera'),
       bajas: cuenta(a => a.estado_general === 'baja'),
-      socios: cuenta(a => a.esSocio),
+      socios: conSocios.filter(a => a.esSocio).length,
       acrobacia: act(n => n.includes('acrob')),
       telas: act(n => n.includes('aereo') || n.includes('telas')),
       infantil: act(n => n.includes('infantil')),
@@ -164,7 +166,8 @@ export default function ClubInscripcionesClient({
   }, [lista, fTemporada])
 
   // Red de seguridad (punto 28): inscripciones sin fila de gestión.
-  const pendientesSync = useMemo(() => lista.filter(a => a.pendienteSync), [lista])
+  // Las líneas de socio no llevan fila de gestión a propósito: no son "pendientes".
+  const pendientesSync = useMemo(() => lista.filter(a => a.pendienteSync && !a.soloSocio), [lista])
   const [syncing, setSyncing] = useState(false)
   function sincronizar() {
     if (!puedeEditar || pendientesSync.length === 0) return
@@ -495,7 +498,7 @@ export default function ClubInscripcionesClient({
                 {filtradas.map(a => (
                   <tr key={a.id} className="hover:bg-gray-50">
                     <td className="px-4 py-2.5 sticky left-0 bg-white z-10">
-                      <div className="font-semibold text-pm-navy whitespace-nowrap">
+                      <div className={`font-semibold whitespace-nowrap ${a.soloSocio ? 'text-gray-500' : 'text-pm-navy'}`}>
                         {a.nombre} <span className="text-gray-500">{a.apellidos}</span>
                         {a.periodoInicio && (
                           <span className={`ml-1.5 align-middle text-[10px] font-bold px-1.5 py-0.5 rounded-full ${a.periodoInicio.startsWith('Septiembre') ? 'bg-pm-red/10 text-pm-red' : 'bg-blue-50 text-blue-700'}`}
@@ -508,12 +511,14 @@ export default function ClubInscripcionesClient({
                     </td>
                     <td className="px-3 py-2.5 whitespace-nowrap text-gray-600">{a.actividad || '—'}</td>
                     <td className="px-3 py-2.5">
+                      {a.soloSocio ? <span className="text-gray-400">—</span> : (
                       <select value={a.grupo} disabled={!puedeEditar} onChange={e => aplicarGestion(a.id, { grupo: e.target.value })}
                         className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:border-pm-red max-w-[150px] disabled:opacity-60">
                         <option value="">— Sin grupo —</option>
                         {gruposParaActividad(a.actividad).map(g => <option key={g} value={g}>{g}</option>)}
                         {a.grupo && !gruposParaActividad(a.actividad).includes(a.grupo) && <option value={a.grupo}>{a.grupo}</option>}
                       </select>
+                      )}
                     </td>
                     <td className="px-3 py-2.5 whitespace-nowrap text-gray-600" title={a.fechaNacimiento}>
                       {edadDe(a.fechaNacimiento) != null ? `${edadDe(a.fechaNacimiento)} años` : '—'}
@@ -522,18 +527,26 @@ export default function ClubInscripcionesClient({
                     <td className="px-3 py-2.5 whitespace-nowrap text-gray-600">{a.telefono || '—'}</td>
                     <td className="px-3 py-2.5 whitespace-nowrap text-gray-500 text-xs">{fechaCorta(a.created_at)}</td>
                     <td className="px-3 py-2.5">
+                      {a.soloSocio ? <span className="text-gray-400">—</span> : (
                       <select value={a.estado_general} disabled={!puedeEditar} onChange={e => aplicarGestion(a.id, { estado_general: e.target.value as EstadoGeneral })}
                         className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white focus:outline-none focus:border-pm-red disabled:opacity-60">
                         {ESTADOS_GENERAL.map(e => <option key={e.id} value={e.id}>{e.label}</option>)}
                       </select>
+                      )}
                     </td>
                     <td className="px-3 py-2.5">
-                      <div className="flex items-center justify-center gap-1">
-                        {MESES_TEMPORADA.map(m => <CirculoMes key={m.key} alumno={a} mesKey={m.key} mesLabel={m.label} mesNombre={m.nombre} onClick={() => setMesEditando({ id: a.id, mes: m.key })} editable={puedeEditar} />)}
-                      </div>
+                      {a.soloSocio ? (
+                        <div className="text-center text-xs text-gray-400">Sin cuotas · añadido en el alta de socio</div>
+                      ) : (
+                        <div className="flex items-center justify-center gap-1">
+                          {MESES_TEMPORADA.map(m => <CirculoMes key={m.key} alumno={a} mesKey={m.key} mesLabel={m.label} mesNombre={m.nombre} onClick={() => setMesEditando({ id: a.id, mes: m.key })} editable={puedeEditar} />)}
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-2.5 text-right">
-                      <button onClick={() => setDetalleId(a.id)} className="text-pm-red font-bold text-xs hover:underline whitespace-nowrap">Ver ficha →</button>
+                      {a.soloSocio
+                        ? <span className="text-[11px] font-bold bg-amber-100 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5 whitespace-nowrap">⭐ Socio</span>
+                        : <button onClick={() => setDetalleId(a.id)} className="text-pm-red font-bold text-xs hover:underline whitespace-nowrap">Ver ficha →</button>}
                     </td>
                   </tr>
                 ))}

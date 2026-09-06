@@ -6,25 +6,9 @@ const txt = (v?: string | null) => (typeof v === 'string' && v.trim() ? v.trim()
 // Escapa comodines de ILIKE (% y _) para que el correo se compare de forma exacta (case-insensitive).
 const ilikeExacto = (s: string) => s.replace(/([%_\\])/g, '\\$1')
 
-/** ¿Esta inscripción viene del formulario de socio? */
-const esInscripcionSocio = (s: Row) => ((s.datos ?? {}) as Record<string, unknown>).esSocio === true
-
 /**
- * Correos que han hecho el formulario de socio. El Portal de Familias es SOLO
- * para socios del Club Deportivo Origen: quien solo tiene inscripciones de
- * actividad no llega a tener cuenta familiar.
- */
-function emailsSocios(subs: Row[]): Set<string> {
-  return new Set(subs.filter(esInscripcionSocio).map(s => str(s.email).trim().toLowerCase()).filter(Boolean))
-}
-
-/**
- * Crea cuentas familiares (una por correo que ha hecho el formulario de SOCIO) y
- * vincula a sus participantes. Idempotente: solo añade lo que falta. Nacen activas.
- *
- * Solo se vinculan las inscripciones del FORMULARIO DE SOCIO. Las inscripciones
- * de las disciplinas del club no entran en el portal: el mismo niño suele estar
- * en las dos y aparecía duplicado.
+ * Crea cuentas familiares (una por correo de inscripción del club) y vincula sus
+ * alumnos. Idempotente: solo añade lo que falta. Las cuentas nacen activas.
  */
 export async function sincronizarFamilias(): Promise<{ nuevasFamilias: number; nuevosVinculos: number }> {
   const db = createAdminClient()
@@ -40,11 +24,9 @@ export async function sincronizarFamilias(): Promise<{ nuevasFamilias: number; n
   // Vínculos que el admin quitó a mano: no se vuelven a crear.
   const exclSet = new Set(((exclRes.data ?? []) as Row[]).map(l => `${str(l.familia_id)}|${str(l.submission_id)}`))
 
-  const socios = emailsSocios(subs)
   const infoEmail = new Map<string, { nombre: string | null; telefono: string | null }>()
   for (const s of subs) {
     const email = str(s.email).trim().toLowerCase()
-    if (!socios.has(email)) continue // sin formulario de socio no hay cuenta familiar
     if (!infoEmail.has(email)) {
       const datos = (s.datos ?? {}) as Record<string, unknown>
       infoEmail.set(email, { nombre: txt(str(datos.tutorLegal)), telefono: txt(str(s.telefono)) })
@@ -61,7 +43,6 @@ export async function sincronizarFamilias(): Promise<{ nuevasFamilias: number; n
 
   const nuevosLinks: { familia_id: string; submission_id: string }[] = []
   for (const s of subs) {
-    if (!esInscripcionSocio(s)) continue // al portal solo van los participantes del alta de socio
     const famId = famByEmail.get(str(s.email).trim().toLowerCase())
     if (!famId) continue
     const key = `${famId}|${str(s.id)}`
@@ -78,9 +59,8 @@ export async function sincronizarFamilias(): Promise<{ nuevasFamilias: number; n
 
 /**
  * Asegura la cuenta + vínculos de UNA familia por su correo (al entrar al portal).
- * Crea la fila solo si ese correo hizo el formulario de SOCIO; si ya existe cuenta,
- * respeta su estado y sincroniza sus alumnos.
- * Devuelve la fila de la familia, o null si no es socio ni tiene cuenta.
+ * Crea la fila si falta (activa) y sincroniza sus alumnos. Respeta el estado existente.
+ * Devuelve la fila de la familia, o null si ese correo no tiene inscripciones ni cuenta.
  */
 export async function provisionarFamilia(email: string): Promise<Row | null> {
   const db = createAdminClient()
@@ -94,8 +74,8 @@ export async function provisionarFamilia(email: string): Promise<Row | null> {
   let { data: rowData } = await db.from('club_familias').select('*').eq('email', e).maybeSingle()
   let row = rowData as Row | null
 
-  // Sin inscripciones, o sin formulario de socio: solo es familia si ya tiene cuenta.
-  if (subs.length === 0 || !subs.some(esInscripcionSocio)) return row
+  // Sin inscripciones: solo es familia si ya tiene cuenta manual.
+  if (subs.length === 0) return row
 
   if (!row) {
     const datos = (subs[0].datos ?? {}) as Record<string, unknown>
@@ -114,58 +94,7 @@ export async function provisionarFamilia(email: string): Promise<Row | null> {
   // Respeta las desvinculaciones manuales (no re-vincular lo que el admin quitó).
   const { data: exclData } = await db.from('club_familia_excluidos').select('submission_id').eq('familia_id', str(row.id))
   const excl = new Set(((exclData ?? []) as Row[]).map(x => str(x.submission_id)))
-  const linkRows = subs.filter(esInscripcionSocio)
-    .map(s => ({ familia_id: str(row!.id), submission_id: str(s.id) }))
-    .filter(l => !excl.has(l.submission_id))
+  const linkRows = subs.map(s => ({ familia_id: str(row!.id), submission_id: str(s.id) })).filter(l => !excl.has(l.submission_id))
   if (linkRows.length) await db.from('club_familia_alumnos').upsert(linkRows, { onConflict: 'familia_id,submission_id' })
   return row
-}
-
-/** Familia socia = tiene nº de socio asignado o alguna inscripción de socio. */
-function esFamiliaSocia(fam: Row, socios: Set<string>, submissionsSocias: Set<string>, links: Row[]): boolean {
-  if (str(fam.numero_socio).trim()) return true
-  if (socios.has(str(fam.email).trim().toLowerCase())) return true
-  return links.some(l => str(l.familia_id) === str(fam.id) && submissionsSocias.has(str(l.submission_id)))
-}
-
-/**
- * Deja el portal solo con socios. Dos limpiezas en una:
- *  1. borra las cuentas familiares que NO son de socios;
- *  2. desvincula las inscripciones de las disciplinas del club, que duplicaban
- *     al mismo participante ya dado de alta en el formulario de socio.
- *
- * Las inscripciones del CRM no se tocan: solo se quitan del portal (al borrar
- * una familia, sus vínculos y sesiones caen por cascada).
- */
-export async function limpiarFamiliasSinSocio(soloContar = false): Promise<{ borradas: number; conservadas: number; vinculosQuitados: number; emails: string[] }> {
-  const db = createAdminClient()
-  const [famsRes, subsRes, linksRes] = await Promise.all([
-    db.from('club_familias').select('id, email, numero_socio'),
-    db.from('form_submissions').select('id, email, datos').eq('tipo', 'inscripcion_club'),
-    db.from('club_familia_alumnos').select('familia_id, submission_id'),
-  ])
-  const fams = (famsRes.data ?? []) as Row[]
-  const subs = (subsRes.data ?? []) as Row[]
-  const links = (linksRes.data ?? []) as Row[]
-
-  const socios = emailsSocios(subs)
-  const submissionsSocias = new Set(subs.filter(esInscripcionSocio).map(s => str(s.id)))
-
-  const sobran = fams.filter(f => !esFamiliaSocia(f, socios, submissionsSocias, links))
-  const idsSobran = new Set(sobran.map(f => str(f.id)))
-  // Vínculos que no vienen del alta de socio (y que no caerán ya por cascada).
-  const vinculosFuera = links.filter(l => !idsSobran.has(str(l.familia_id)) && !submissionsSocias.has(str(l.submission_id)))
-
-  if (!soloContar) {
-    if (sobran.length) await db.from('club_familias').delete().in('id', [...idsSobran])
-    for (const l of vinculosFuera) {
-      await db.from('club_familia_alumnos').delete().eq('familia_id', str(l.familia_id)).eq('submission_id', str(l.submission_id))
-    }
-  }
-  return {
-    borradas: sobran.length,
-    conservadas: fams.length - sobran.length,
-    vinculosQuitados: vinculosFuera.length,
-    emails: sobran.map(f => str(f.email)).sort(),
-  }
 }
