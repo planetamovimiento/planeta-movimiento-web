@@ -22,6 +22,22 @@ export function FichaParticipante({ alumno: a, slotFoto, slotTalla }: {
 }) {
   const cuota = a.cuota_estado ? cuotaEstadoMeta(a.cuota_estado) : null
 
+  // Participante añadido en el alta de socio: solo su nombre y el distintivo.
+  // Grupo, horario, talla y cuotas viven en su inscripción del club, así que no
+  // se repiten aquí para no confundirlos con la ficha del alumno inscrito.
+  if (a.soloSocio) {
+    return (
+      <div className="flex items-center gap-4">
+        <Avatar foto="" nombre={a.nombre} size="xl" />
+        <div className="min-w-0 flex-1">
+          <div className="font-black text-pm-navy text-lg leading-tight break-words">{a.nombre} {a.apellidos}</div>
+          <div className="text-xs text-gray-400 mt-0.5">Añadido en el alta de socio</div>
+        </div>
+        <span className="shrink-0 text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200 rounded-full px-3 py-1">⭐ Socio</span>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-5">
       {/* Cabecera tipo carnet */}
