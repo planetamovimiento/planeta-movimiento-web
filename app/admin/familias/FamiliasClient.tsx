@@ -46,13 +46,17 @@ export default function FamiliasClient({ familias, links, alumnos, migrado, pued
     startTransition(async () => {
       const previo = await limpiarFamiliasNoSocias(true)
       if (!previo.ok) { setError(previo.error || 'Error'); return }
-      if (previo.borradas === 0) { setMsg('✓ No hay cuentas sin socio: todas las familias del portal son socias.'); return }
+      if (previo.borradas === 0 && previo.vinculosQuitados === 0) { setMsg('✓ El portal ya tiene solo socios y sus participantes del alta de socio.'); return }
       const lista = previo.emails.slice(0, 10).join('\n')
       const resto = previo.borradas > 10 ? `\n…y ${previo.borradas - 10} más` : ''
-      if (!window.confirm(`Se quitarán ${previo.borradas} cuenta(s) familiar(es) que no han hecho el formulario de socio.\nSe conservan ${previo.conservadas}.\n\n${lista}${resto}\n\nLas inscripciones del CRM NO se borran. ¿Continuar?`)) return
+      const detalle = [
+        previo.borradas ? `${previo.borradas} cuenta(s) que no han hecho el formulario de socio (se conservan ${previo.conservadas})` : '',
+        previo.vinculosQuitados ? `${previo.vinculosQuitados} participante(s) que venían de una inscripción de actividad, no del alta de socio` : '',
+      ].filter(Boolean).join('\n')
+      if (!window.confirm(`Se quitará del portal:\n\n${detalle}\n\n${lista}${resto}\n\nLas inscripciones del CRM NO se borran. ¿Continuar?`)) return
       const r = await limpiarFamiliasNoSocias(false)
       if (!r.ok) setError(r.error || 'Error')
-      else { setMsg(`✓ ${r.borradas} cuenta(s) quitadas · ${r.conservadas} socias conservadas`); router.refresh() }
+      else { setMsg(`✓ ${r.borradas} cuenta(s) y ${r.vinculosQuitados} participante(s) fuera del portal · ${r.conservadas} familias socias`); router.refresh() }
     })
   }
 
@@ -89,13 +93,13 @@ export default function FamiliasClient({ familias, links, alumnos, migrado, pued
           </button>
         )}
         {puedeEditar && (
-          <button onClick={limpiar} disabled={pending} title="El portal es solo para socios: quita las cuentas de familias que no han hecho el formulario de socio"
+          <button onClick={limpiar} disabled={pending} title="Deja en el portal solo a las familias socias y a los participantes de su alta de socio"
             className="border border-gray-200 hover:border-pm-navy text-pm-navy disabled:opacity-50 font-bold px-4 py-2 rounded-xl text-sm whitespace-nowrap">
-            🧹 Quitar las que no son socias
+            🧹 Dejar solo socios
           </button>
         )}
       </div>
-      <p className="text-xs text-gray-400 -mt-3 px-1">El Portal de Familias es solo para socios del Club: al sincronizar solo se crean cuentas de correos que han hecho el formulario de socio.</p>
+      <p className="text-xs text-gray-400 -mt-3 px-1">El Portal de Familias es solo para socios del Club: solo se crean cuentas de correos que han hecho el formulario de socio, y solo se muestran los participantes que se añadieron en ese formulario. Si necesitas mostrar a alguien más, añádelo a mano con «Vincular alumno» (la limpieza volvería a quitarlo).</p>
       {error && <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">{error}</div>}
       {msg && <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-sm text-green-700">{msg}</div>}
 

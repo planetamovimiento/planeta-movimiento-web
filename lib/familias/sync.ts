@@ -20,10 +20,11 @@ function emailsSocios(subs: Row[]): Set<string> {
 
 /**
  * Crea cuentas familiares (una por correo que ha hecho el formulario de SOCIO) y
- * vincula sus alumnos. Idempotente: solo añade lo que falta. Nacen activas.
+ * vincula a sus participantes. Idempotente: solo añade lo que falta. Nacen activas.
  *
- * Los vínculos sí incluyen TODAS las inscripciones de ese correo (también las de
- * actividad), para que el socio vea a todos sus hijos en el portal.
+ * Solo se vinculan las inscripciones del FORMULARIO DE SOCIO. Las inscripciones
+ * de las disciplinas del club no entran en el portal: el mismo niño suele estar
+ * en las dos y aparecía duplicado.
  */
 export async function sincronizarFamilias(): Promise<{ nuevasFamilias: number; nuevosVinculos: number }> {
   const db = createAdminClient()
@@ -60,6 +61,7 @@ export async function sincronizarFamilias(): Promise<{ nuevasFamilias: number; n
 
   const nuevosLinks: { familia_id: string; submission_id: string }[] = []
   for (const s of subs) {
+    if (!esInscripcionSocio(s)) continue // al portal solo van los participantes del alta de socio
     const famId = famByEmail.get(str(s.email).trim().toLowerCase())
     if (!famId) continue
     const key = `${famId}|${str(s.id)}`
@@ -112,7 +114,9 @@ export async function provisionarFamilia(email: string): Promise<Row | null> {
   // Respeta las desvinculaciones manuales (no re-vincular lo que el admin quitó).
   const { data: exclData } = await db.from('club_familia_excluidos').select('submission_id').eq('familia_id', str(row.id))
   const excl = new Set(((exclData ?? []) as Row[]).map(x => str(x.submission_id)))
-  const linkRows = subs.map(s => ({ familia_id: str(row!.id), submission_id: str(s.id) })).filter(l => !excl.has(l.submission_id))
+  const linkRows = subs.filter(esInscripcionSocio)
+    .map(s => ({ familia_id: str(row!.id), submission_id: str(s.id) }))
+    .filter(l => !excl.has(l.submission_id))
   if (linkRows.length) await db.from('club_familia_alumnos').upsert(linkRows, { onConflict: 'familia_id,submission_id' })
   return row
 }
@@ -125,12 +129,15 @@ function esFamiliaSocia(fam: Row, socios: Set<string>, submissionsSocias: Set<st
 }
 
 /**
- * Cuenta (y opcionalmente borra) las cuentas familiares que NO son de socios.
- * El portal es solo para socios del Club, así que estas cuentas sobran: sus
- * inscripciones del CRM no se tocan, solo desaparece la cuenta del portal
- * (los vínculos y sesiones caen por cascada).
+ * Deja el portal solo con socios. Dos limpiezas en una:
+ *  1. borra las cuentas familiares que NO son de socios;
+ *  2. desvincula las inscripciones de las disciplinas del club, que duplicaban
+ *     al mismo participante ya dado de alta en el formulario de socio.
+ *
+ * Las inscripciones del CRM no se tocan: solo se quitan del portal (al borrar
+ * una familia, sus vínculos y sesiones caen por cascada).
  */
-export async function limpiarFamiliasSinSocio(soloContar = false): Promise<{ borradas: number; conservadas: number; emails: string[] }> {
+export async function limpiarFamiliasSinSocio(soloContar = false): Promise<{ borradas: number; conservadas: number; vinculosQuitados: number; emails: string[] }> {
   const db = createAdminClient()
   const [famsRes, subsRes, linksRes] = await Promise.all([
     db.from('club_familias').select('id, email, numero_socio'),
@@ -145,12 +152,20 @@ export async function limpiarFamiliasSinSocio(soloContar = false): Promise<{ bor
   const submissionsSocias = new Set(subs.filter(esInscripcionSocio).map(s => str(s.id)))
 
   const sobran = fams.filter(f => !esFamiliaSocia(f, socios, submissionsSocias, links))
-  if (!soloContar && sobran.length) {
-    await db.from('club_familias').delete().in('id', sobran.map(f => str(f.id)))
+  const idsSobran = new Set(sobran.map(f => str(f.id)))
+  // Vínculos que no vienen del alta de socio (y que no caerán ya por cascada).
+  const vinculosFuera = links.filter(l => !idsSobran.has(str(l.familia_id)) && !submissionsSocias.has(str(l.submission_id)))
+
+  if (!soloContar) {
+    if (sobran.length) await db.from('club_familias').delete().in('id', [...idsSobran])
+    for (const l of vinculosFuera) {
+      await db.from('club_familia_alumnos').delete().eq('familia_id', str(l.familia_id)).eq('submission_id', str(l.submission_id))
+    }
   }
   return {
     borradas: sobran.length,
     conservadas: fams.length - sobran.length,
+    vinculosQuitados: vinculosFuera.length,
     emails: sobran.map(f => str(f.email)).sort(),
   }
 }
