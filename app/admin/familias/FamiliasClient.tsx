@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { generarFamiliasDesdeCRM, guardarFamilia, cambiarEstadoFamilia, vincularAlumno, desvincularAlumno, eliminarFamilia, generarNumeroSocioFamilia, guardarNumeroSocio, guardarWhatsappAlumno } from './actions'
+import { generarFamiliasDesdeCRM, limpiarFamiliasNoSocias, guardarFamilia, cambiarEstadoFamilia, vincularAlumno, desvincularAlumno, eliminarFamilia, generarNumeroSocioFamilia, guardarNumeroSocio, guardarWhatsappAlumno } from './actions'
 import { ESTADOS_FAMILIA, type Familia, type EstadoFamilia } from '@/lib/familias/tipos'
 
 export type AlumnoLite = { id: string; nombre: string; actividad: string; email: string; grupo?: string; whatsapp_url?: string; esSocio?: boolean; cuotaEstado?: string }
@@ -40,6 +40,22 @@ export default function FamiliasClient({ familias, links, alumnos, migrado, pued
     })
   }
 
+  // Quita las cuentas que no son de socios: primero cuenta y pide confirmación.
+  function limpiar() {
+    setError(''); setMsg('')
+    startTransition(async () => {
+      const previo = await limpiarFamiliasNoSocias(true)
+      if (!previo.ok) { setError(previo.error || 'Error'); return }
+      if (previo.borradas === 0) { setMsg('✓ No hay cuentas sin socio: todas las familias del portal son socias.'); return }
+      const lista = previo.emails.slice(0, 10).join('\n')
+      const resto = previo.borradas > 10 ? `\n…y ${previo.borradas - 10} más` : ''
+      if (!window.confirm(`Se quitarán ${previo.borradas} cuenta(s) familiar(es) que no han hecho el formulario de socio.\nSe conservan ${previo.conservadas}.\n\n${lista}${resto}\n\nLas inscripciones del CRM NO se borran. ¿Continuar?`)) return
+      const r = await limpiarFamiliasNoSocias(false)
+      if (!r.ok) setError(r.error || 'Error')
+      else { setMsg(`✓ ${r.borradas} cuenta(s) quitadas · ${r.conservadas} socias conservadas`); router.refresh() }
+    })
+  }
+
   const filtradas = familias.filter(f => !q.trim() || `${f.nombre ?? ''} ${f.email}`.toLowerCase().includes(q.toLowerCase()))
   const activas = familias.filter(f => f.estado === 'activo').length
 
@@ -72,7 +88,14 @@ export default function FamiliasClient({ familias, links, alumnos, migrado, pued
             {pending ? 'Procesando…' : '↻ Generar / actualizar desde CRM'}
           </button>
         )}
+        {puedeEditar && (
+          <button onClick={limpiar} disabled={pending} title="El portal es solo para socios: quita las cuentas de familias que no han hecho el formulario de socio"
+            className="border border-gray-200 hover:border-pm-navy text-pm-navy disabled:opacity-50 font-bold px-4 py-2 rounded-xl text-sm whitespace-nowrap">
+            🧹 Quitar las que no son socias
+          </button>
+        )}
       </div>
+      <p className="text-xs text-gray-400 -mt-3 px-1">El Portal de Familias es solo para socios del Club: al sincronizar solo se crean cuentas de correos que han hecho el formulario de socio.</p>
       {error && <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">{error}</div>}
       {msg && <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-sm text-green-700">{msg}</div>}
 
