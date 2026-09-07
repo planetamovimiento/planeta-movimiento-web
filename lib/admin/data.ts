@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getTemporadaActiva } from '@/lib/config/store'
+import { servicioNormalizado } from '@/lib/crm/data'
 
 export type Booking = {
   id: string; numero: string | null; servicio: string | null
@@ -74,7 +75,7 @@ export async function getDashboard() {
   const novedades: Novedad[] = [
     ...bookings.rows.filter(b => b.created_at >= hace7).map(b => ({
       id: `r:${b.id}`, clase: 'reserva' as const, nombre: b.cliente_nombre || '—',
-      detalle: b.servicio || 'Reserva', cuando: b.created_at, estado: b.estado_reserva,
+      detalle: servicioNormalizado(b.servicio || 'Reserva'), cuando: b.created_at, estado: b.estado_reserva,
     })),
     ...clubSubs.rows.filter(c => c.created_at >= hace7).map(c => {
       const d = (c.datos ?? {}) as Record<string, unknown>
@@ -85,7 +86,7 @@ export async function getDashboard() {
 
   // Servicios más reservados
   const conteo: Record<string, number> = {}
-  bookings.rows.forEach(b => { if (b.servicio) conteo[b.servicio] = (conteo[b.servicio] || 0) + 1 })
+  bookings.rows.forEach(b => { if (b.servicio) { const s = servicioNormalizado(b.servicio); conteo[s] = (conteo[s] || 0) + 1 } })
   const topServicios = Object.entries(conteo).sort((a, b) => b[1] - a[1]).slice(0, 5)
 
   return {

@@ -56,6 +56,16 @@ const SERVICIO_FORM: Record<string, string> = {
   ayuntamiento: 'Administración pública',
 }
 
+/**
+ * Nombre del servicio para la gestión interna. Las "fiestas privadas" que entran
+ * por la calculadora de Animación en tu evento se llevan igual que un cumpleaños
+ * (mismo montaje y mismo trato), así que se agrupan con ellos en el CRM, el
+ * calendario y el balance. Al cliente se le sigue llamando como él lo pidió.
+ */
+export function servicioNormalizado(servicio: string): string {
+  return /fiesta\s+privada/i.test(servicio) ? 'Cumpleaños · Fiesta privada' : servicio
+}
+
 function categoriaDe(servicio: string): string {
   const s = servicio.toLowerCase()
   if (s.includes('cumpleañ')) return 'Cumpleaños'
@@ -93,7 +103,7 @@ export async function getRegistrosCRM(): Promise<{ registros: Registro[]; ok: bo
 
   // BOOKINGS
   for (const b of bk.rows) {
-    const servicio = str(b.servicio) || 'Reserva'
+    const servicio = servicioNormalizado(str(b.servicio) || 'Reserva')
     const { mensaje, datos } = parseObs(str(b.observaciones))
     out.push(base({
       origen: 'booking', id: str(b.id), numero: str(b.numero) || 'PM-' + str(b.id).slice(0, 6),
