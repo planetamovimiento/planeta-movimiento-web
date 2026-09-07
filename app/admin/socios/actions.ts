@@ -47,6 +47,57 @@ export async function marcarEquipacion(submissionId: string, entregada: boolean)
 }
 
 /**
+ * Registra (o deshace) el cobro de la cuota de socio de un participante.
+ * Guarda importe, fecha y forma de pago en su ficha de gestión, que es de donde
+ * salen las cuotas cobradas del Balance del Club.
+ */
+export async function registrarPagoSocio(p: {
+  submissionId: string; importeCents: number; fecha: string; formaPago?: string
+}): Promise<Res> {
+  const { admin, error } = await exigir()
+  if (!admin) return { ok: false, error: error! }
+  if (!p.submissionId) return { ok: false, error: 'Participante no válido' }
+  if (!p.fecha) return { ok: false, error: 'Indica la fecha del pago' }
+  if (!Number.isFinite(p.importeCents) || p.importeCents <= 0) return { ok: false, error: 'Indica el importe cobrado' }
+
+  const db = createAdminClient()
+  const { error: e } = await db.from('club_gestion').upsert({
+    submission_id: p.submissionId,
+    cuota_estado: 'pagada',
+    cuota_importe_cents: Math.round(p.importeCents),
+    cuota_fecha_pago: p.fecha,
+    cuota_forma_pago: (p.formaPago || '').trim() || null,
+    updated_at: new Date().toISOString(),
+    updated_by: admin.email,
+  }, { onConflict: 'submission_id' })
+  if (e) return { ok: false, error: e.message }
+  await logActivity({ actorEmail: admin.email, accion: 'Cobró la cuota de socio', entidad: 'socio', entidadId: p.submissionId })
+  revalidatePath('/admin/socios')
+  revalidatePath('/admin/club')
+  return { ok: true }
+}
+
+/** Deshace el cobro: la cuota vuelve a pendiente y se borra fecha e importe. */
+export async function anularPagoSocio(submissionId: string): Promise<Res> {
+  const { admin, error } = await exigir()
+  if (!admin) return { ok: false, error: error! }
+  const db = createAdminClient()
+  const { error: e } = await db.from('club_gestion').upsert({
+    submission_id: submissionId,
+    cuota_estado: 'pendiente',
+    cuota_fecha_pago: null,
+    cuota_forma_pago: null,
+    updated_at: new Date().toISOString(),
+    updated_by: admin.email,
+  }, { onConflict: 'submission_id' })
+  if (e) return { ok: false, error: e.message }
+  await logActivity({ actorEmail: admin.email, accion: 'Anuló el cobro de la cuota de socio', entidad: 'socio', entidadId: submissionId })
+  revalidatePath('/admin/socios')
+  revalidatePath('/admin/club')
+  return { ok: true }
+}
+
+/**
  * Asigna el nº de socio a ese correo. Si aún no tiene cuenta en el Portal de
  * Familias, se crea con el mismo correo: es la credencial con la que la familia
  * entra al portal (correo + nº de socio).

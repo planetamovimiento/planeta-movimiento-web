@@ -26,6 +26,11 @@ export type ParticipanteSocio = {
   talla: string
   /** Fecha en la que se entregó la equipación ('' si aún no). */
   equipacionEntregada: string
+  // ── Cuota de socio (lo que paga por participante: plaza + equipación) ──
+  cuotaEstado: string
+  cuotaImporteCents: number
+  cuotaFechaPago: string
+  cuotaFormaPago: string
   /** true si solo existe por el alta de socio (no está inscrito a una disciplina). */
   soloSocio: boolean
 }
@@ -68,11 +73,11 @@ export async function getSocios(): Promise<Socio[]> {
   const [subs, gest, fams] = await Promise.all([
     filas(() => db.from('form_submissions').select('id, nombre, email, telefono, asunto, datos, created_at')
       .eq('tipo', 'inscripcion_club').order('created_at', { ascending: true }).limit(2000) as never),
-    filas(() => db.from('club_gestion').select('submission_id, talla') as never),
+    filas(() => db.from('club_gestion').select('submission_id, talla, cuota_estado, cuota_importe_cents, cuota_fecha_pago, cuota_forma_pago') as never),
     filas(() => db.from('club_familias').select('id, email, numero_socio, telefono, nombre') as never),
   ])
 
-  const tallaDe = new Map(gest.map(g => [str(g.submission_id), str(g.talla)]))
+  const gestDe = new Map(gest.map(g => [str(g.submission_id), g]))
   const famDe = new Map(fams.map(f => [str(f.email).trim().toLowerCase(), f]))
 
   const porEmail = new Map<string, Socio>()
@@ -89,8 +94,12 @@ export async function getSocios(): Promise<Socio[]> {
       apellidos: str(d.apellidos) || completo.split(' ').slice(1).join(' '),
       fechaNacimiento: str(d.fechaNacimiento).slice(0, 10),
       actividad: str(d.actividad),
-      talla: str(d.talla) || tallaDe.get(str(s.id)) || '',
+      talla: str(d.talla) || str(gestDe.get(str(s.id))?.talla) || '',
       equipacionEntregada: str(d.equipacionEntregada).slice(0, 10),
+      cuotaEstado: str(gestDe.get(str(s.id))?.cuota_estado),
+      cuotaImporteCents: Number(gestDe.get(str(s.id))?.cuota_importe_cents ?? 0) || 0,
+      cuotaFechaPago: str(gestDe.get(str(s.id))?.cuota_fecha_pago).slice(0, 10),
+      cuotaFormaPago: str(gestDe.get(str(s.id))?.cuota_forma_pago),
       soloSocio: esSoloSocio(d, str(s.asunto)),
     }
 
@@ -125,6 +134,12 @@ export async function getSocios(): Promise<Socio[]> {
       // Se queda la inscripción real, conservando la entrega ya registrada.
       p.equipacionEntregada ||= socio.participantes[yaIdx].equipacionEntregada
       p.talla ||= socio.participantes[yaIdx].talla
+      if (!p.cuotaFechaPago && socio.participantes[yaIdx].cuotaFechaPago) {
+        p.cuotaEstado = socio.participantes[yaIdx].cuotaEstado
+        p.cuotaImporteCents = socio.participantes[yaIdx].cuotaImporteCents
+        p.cuotaFechaPago = socio.participantes[yaIdx].cuotaFechaPago
+        p.cuotaFormaPago = socio.participantes[yaIdx].cuotaFormaPago
+      }
       socio.participantes[yaIdx] = p
     } else if (!p.equipacionEntregada && socio.participantes[yaIdx].equipacionEntregada) {
       // nada: ya está la mejor fila
