@@ -9,7 +9,7 @@ import {
 } from '@/lib/balance/documentos'
 import {
   subirFactura, guardarFactura, confirmarFactura, anularFactura,
-  estadoFactura, borrarFactura, urlFactura, crearCarpeta,
+  estadoFactura, borrarFactura, urlFactura, crearCarpeta, editarCarpeta, borrarCarpeta,
 } from './documentos-actions'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -122,27 +122,33 @@ export default function Carpetas({ carpetas, facturas, ambito, puedeEditar, pued
               const t = totalDe(c)
               const subs = hijasDe(c.id)
               return (
-                <button key={c.id} onClick={() => setAbierta(c.id)}
-                  className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-pm-red/40 transition-colors p-4 text-left">
-                  <div className="flex items-start gap-3">
-                    <span className="text-2xl">{c.icono || '📁'}</span>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-black text-pm-navy truncate">{c.nombre}</div>
-                      <div className="text-xs text-gray-400 truncate">
-                        {subs.length ? `${subs.length} subcarpeta(s) · ` : ''}{t.docs} documento(s)
+                <div key={c.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-pm-red/40 transition-colors p-4">
+                  <button onClick={() => setAbierta(c.id)} className="w-full text-left">
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl">{c.icono || '📁'}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-black text-pm-navy truncate">{c.nombre}</div>
+                        <div className="text-xs text-gray-400 truncate">
+                          {subs.length ? `${subs.length} subcarpeta(s) · ` : ''}{t.docs} documento(s)
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="mt-3 flex items-end justify-between gap-2">
-                    <div>
-                      <div className="text-lg font-black text-pm-navy">{eur(t.importe)}</div>
-                      <div className="text-[11px] text-gray-400">contabilizado</div>
+                    <div className="mt-3 flex items-end justify-between gap-2">
+                      <div>
+                        <div className="text-lg font-black text-pm-navy">{eur(t.importe)}</div>
+                        <div className="text-[11px] text-gray-400">contabilizado</div>
+                      </div>
+                      {t.revision > 0 && (
+                        <span className="text-[11px] font-bold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">{t.revision} por revisar</span>
+                      )}
                     </div>
-                    {t.revision > 0 && (
-                      <span className="text-[11px] font-bold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">{t.revision} por revisar</span>
-                    )}
-                  </div>
-                </button>
+                  </button>
+                  {puedeGestionar && (
+                    <div className="flex gap-3 mt-3 pt-2 border-t border-gray-50">
+                      <BotonesCarpeta carpeta={c} pending={pending} correr={correr} />
+                    </div>
+                  )}
+                </div>
               )
             })}
             {raiz.length === 0 && (
@@ -165,6 +171,14 @@ export default function Carpetas({ carpetas, facturas, ambito, puedeEditar, pued
           <button onClick={() => { setAbierta(null); setDetalle(null) }} className="text-sm text-gray-500 hover:text-pm-red">← Todas las carpetas</button>
 
           <ResumenCarpeta carpeta={carpetaAbierta} docs={[carpetaAbierta, ...hijasDe(carpetaAbierta.id)].flatMap(docsDe)} />
+
+          {puedeGestionar && (
+            <div className="flex flex-wrap gap-3 items-center">
+              <BotonesCarpeta carpeta={carpetaAbierta} pending={pending}
+                correr={correr} onBorrada={() => setAbierta(carpetaAbierta.parentId)} />
+              <button onClick={() => setNueva(true)} className="text-xs font-bold text-pm-navy hover:underline">+ Nueva subcarpeta</button>
+            </div>
+          )}
 
           {hijasDe(carpetaAbierta.id).length > 0 && (
             <div className="flex flex-wrap gap-2">
@@ -199,9 +213,33 @@ export default function Carpetas({ carpetas, facturas, ambito, puedeEditar, pued
       {/* Nueva carpeta */}
       {nueva && (
         <ModalCarpeta ambito={ambito} tipo={tipo} carpetasRaiz={raiz} pending={pending}
+          padrePorDefecto={carpetaAbierta && !carpetaAbierta.parentId ? carpetaAbierta.id : ''}
           onGuardar={p => { correr(() => crearCarpeta(p)); setNueva(false) }} onClose={() => setNueva(false)} />
       )}
     </div>
+  )
+}
+
+/** Renombrar o borrar una carpeta. Solo se borra si está vacía (lo valida el servidor). */
+function BotonesCarpeta({ carpeta, pending, correr, onBorrada }: {
+  carpeta: Carpeta; pending: boolean
+  correr: (fn: () => Promise<Resultado>) => void; onBorrada?: () => void
+}) {
+  return (
+    <>
+      <button disabled={pending}
+        onClick={() => {
+          const nombre = window.prompt('Nombre de la carpeta', carpeta.nombre)
+          if (nombre && nombre.trim() && nombre.trim() !== carpeta.nombre) correr(() => editarCarpeta(carpeta.id, { nombre: nombre.trim() }))
+        }}
+        className="text-xs font-bold text-gray-400 hover:text-pm-navy disabled:opacity-50">✏️ Renombrar</button>
+      <button disabled={pending}
+        onClick={() => {
+          if (!window.confirm(`¿Borrar la carpeta "${carpeta.nombre}"? Solo se puede si está vacía (sin subcarpetas ni facturas).`)) return
+          correr(async () => { const r = await borrarCarpeta(carpeta.id); if (r.ok) onBorrada?.(); return r })
+        }}
+        className="text-xs font-bold text-gray-400 hover:text-red-600 disabled:opacity-50">🗑 Borrar</button>
+    </>
   )
 }
 
@@ -477,12 +515,12 @@ function FichaFactura({ factura: f, carpetas, puedeEditar, puedeGestionar, pendi
 }
 
 // ── Nueva carpeta ───────────────────────────────────────────────────────────
-function ModalCarpeta({ ambito, tipo, carpetasRaiz, pending, onGuardar, onClose }: {
-  ambito: Ambito; tipo: TipoDoc; carpetasRaiz: Carpeta[]; pending: boolean
+function ModalCarpeta({ ambito, tipo, carpetasRaiz, pending, padrePorDefecto = '', onGuardar, onClose }: {
+  ambito: Ambito; tipo: TipoDoc; carpetasRaiz: Carpeta[]; pending: boolean; padrePorDefecto?: string
   onGuardar: (p: { nombre: string; descripcion: string; color: string; icono: string; ambito: string; tipo: string; parentId: string | null; orden: number }) => void
   onClose: () => void
 }) {
-  const [f, setF] = useState({ nombre: '', descripcion: '', color: 'gray', icono: '', parentId: '', orden: 99 })
+  const [f, setF] = useState({ nombre: '', descripcion: '', color: 'gray', icono: '', parentId: padrePorDefecto, orden: 99 })
   const input = 'w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-pm-red'
   const label = 'block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1'
 

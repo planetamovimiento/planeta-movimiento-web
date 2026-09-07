@@ -272,7 +272,7 @@ export default function BalanceClient({ ingresos, gastos, categorias, carpetas, 
           <input type="date" value={fHasta} onChange={e => setFHasta(e.target.value)} className={sel} title="Hasta" />
           <select value={fCat} onChange={e => setFCat(e.target.value)} className={sel}>
             <option value={TODO}>Toda categoría</option>
-            {categorias.map(c => <option key={c.id} value={c.nombre}>{c.nombre}</option>)}
+            {categorias.filter(c => (c.ambito || 'empresa') === ambito).map(c => <option key={c.id} value={c.nombre}>{c.nombre}</option>)}
           </select>
           {(tab === 'ingresos' || tab === 'resumen') && (
             <select value={fServicio} onChange={e => setFServicio(e.target.value)} className={sel}>
@@ -507,7 +507,7 @@ export default function BalanceClient({ ingresos, gastos, categorias, carpetas, 
 
       {/* ── MODALES ── */}
       {modalGasto !== null && (
-        <GastoModal gasto={modalGasto === 'nuevo' ? null : modalGasto} categorias={categorias}
+        <GastoModal gasto={modalGasto === 'nuevo' ? null : modalGasto} categorias={categorias.filter(c => (c.ambito || 'empresa') === (modalGasto === 'nuevo' ? ambito : (modalGasto.ambito || ambito)))}
           ambito={modalGasto === 'nuevo' ? ambito : (modalGasto.ambito || ambito)}
           onClose={() => setModalGasto(null)} onSaved={() => { setModalGasto(null); refrescar() }} />
       )}

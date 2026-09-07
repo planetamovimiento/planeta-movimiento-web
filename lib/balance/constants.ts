@@ -33,7 +33,7 @@ export const INGRESO_CUENTA = ['pagado', 'parcial', 'pendiente']
 export const GASTO_CUENTA   = ['pagado', 'pendiente', 'programado']
 
 // ── Categorías de gasto por defecto (sincronizadas con la migración) ─────────
-export type Categoria = { id: string; nombre: string; color: string; activa: boolean; orden: number }
+export type Categoria = { id: string; nombre: string; color: string; activa: boolean; orden: number; ambito?: 'empresa' | 'club' }
 
 // Estructura real de la empresa (Excel de tesorería 2026).
 export const CATEGORIAS_GASTO_DEFAULT: Omit<Categoria, 'id'>[] = [

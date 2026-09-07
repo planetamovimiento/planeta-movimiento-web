@@ -179,7 +179,14 @@ export async function getBalanceData(): Promise<BalanceData> {
   // ── Categorías (BD o por defecto) ───────────────────────────────────────────
   const cz = await safe<Record<string, unknown>>(() => db.from('gasto_categorias').select('*').order('orden', { ascending: true }) as never)
   const categorias: Categoria[] = cz.rows.length
-    ? cz.rows.map(c => ({ id: str(c.id), nombre: str(c.nombre), color: str(c.color) || 'gray', activa: c.activa !== false, orden: num(c.orden) }))
+    ? cz.rows
+      // Las carpetas de ingreso y las subcarpetas tienen su propia pestaña:
+      // aquí solo van las categorías de gasto de primer nivel, como siempre.
+      .filter(c => (str(c.tipo) || 'gasto') === 'gasto' && !c.parent_id)
+      .map(c => ({
+        id: str(c.id), nombre: str(c.nombre), color: str(c.color) || 'gray',
+        activa: c.activa !== false, orden: num(c.orden), ambito: (str(c.ambito) || 'empresa') as 'empresa' | 'club',
+      }))
     : CATEGORIAS_GASTO_DEFAULT.map((c, i) => ({ id: `def-${i}`, ...c }))
 
   const setupOk = gz.ok && cz.ok && im.ok
