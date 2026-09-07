@@ -46,7 +46,9 @@ export default async function ClubPage() {
 
   const gestionMap = new Map(gestionRes.rows.map(g => [g.submission_id, g]))
 
-  const alumnos: Alumno[] = subsRes.rows.map(s => {
+  // Las altas de socio tienen su propio apartado (Admin → Socios): aquí solo
+  // van las inscripciones a las disciplinas del club, sin duplicados.
+  const alumnos: Alumno[] = subsRes.rows.filter(s => !esSoloSocio(s.datos, s.asunto)).map(s => {
     const d = (s.datos ?? {}) as Record<string, unknown>
     const g = gestionMap.get(s.id)
     const completo = str(s.nombre)

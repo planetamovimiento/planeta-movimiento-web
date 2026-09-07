@@ -8,6 +8,7 @@ export type AdminRole = 'principal' | 'gestor' | 'lectura' | 'monitor'
 
 export type SeccionId =
   | 'club'
+  | 'socios'
   | 'circo-inclusivo'
   | 'calendario-club'
   | 'familias'
@@ -41,6 +42,7 @@ export type SeccionMeta = {
 /** Orden y agrupación = el que se muestra en la barra lateral. */
 export const SECCIONES: SeccionMeta[] = [
   { id: 'club',            label: 'Inscripciones Club',  icon: '🏅', href: '/admin/club',            grupo: 'Club Deportivo Origen' },
+  { id: 'socios',          label: 'Socios',              icon: '⭐', href: '/admin/socios',          grupo: 'Club Deportivo Origen' },
   { id: 'calendario-club', label: 'Calendario Club',     icon: '🗓️', href: '/admin/calendario-club',  grupo: 'Club Deportivo Origen' },
   { id: 'familias',        label: 'Portal de Familias',  icon: '👨‍👩‍👧', href: '/admin/familias',         grupo: 'Club Deportivo Origen' },
   { id: 'balance',         label: 'Balance Económico',   icon: '💰', href: '/admin/balance',          grupo: 'Empresa' },
@@ -65,6 +67,7 @@ export const SECCIONES: SeccionMeta[] = [
 /** Qué significa el globo rojo de cada sección (tooltip de la barra lateral). */
 export const TITULO_BADGE: Partial<Record<SeccionId, string>> = {
   club: 'inscripciones por gestionar',
+  socios: 'socios sin nº de socio',
   reservas: 'reservas por confirmar',
   formularios: 'solicitudes sin leer',
   pagos: 'pagos cobrados esta semana',

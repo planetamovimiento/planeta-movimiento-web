@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { esSoloSocio } from '@/lib/club/constants'
+import { contarSociosSinNumero } from '@/lib/club/socios'
 import type { SeccionId } from './secciones'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -29,13 +30,14 @@ async function filas(fn: () => Promise<{ data: unknown; error: unknown }>): Prom
 export async function getBadgesAdmin(): Promise<BadgesAdmin> {
   const db = createAdminClient()
 
-  const [bookings, forms, subsClub, gest, pagos, pedidos] = await Promise.all([
+  const [bookings, forms, subsClub, gest, pagos, pedidos, sociosSinNumero] = await Promise.all([
     filas(() => db.from('bookings').select('estado_reserva') as never),
     filas(() => db.from('form_submissions').select('estado, tipo') as never),
     filas(() => db.from('form_submissions').select('id, asunto, datos').eq('tipo', 'inscripcion_club') as never),
     filas(() => db.from('club_gestion').select('submission_id, estado_general') as never),
     filas(() => db.from('payments').select('estado, fecha') as never),
     filas(() => db.from('product_orders').select('estado') as never),
+    contarSociosSinNumero().catch(() => 0),
   ])
 
   // Inscripciones del club por atender: sin ficha de gestión todavía o aún en
@@ -58,6 +60,7 @@ export async function getBadgesAdmin(): Promise<BadgesAdmin> {
 
   return {
     club,
+    socios: sociosSinNumero,
     reservas: cuenta(bookings, 'estado_reserva', 'pendiente'),
     formularios: forms.filter(f => str(f.estado) === 'nueva' && str(f.tipo) !== 'inscripcion_club').length,
     pagos: pagosNuevos,
