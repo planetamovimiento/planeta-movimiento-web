@@ -9,7 +9,7 @@ import {
   labelEstadoGeneral, mesActualKey, edadDe, fechaCorta, temporadaDisplay, gruposDeActividad,
   type Alumno, type Grupo, type EstadoPago, type EstadoGeneral,
 } from '@/lib/club/constants'
-import { CUOTA_ESTADOS, TALLAS_EQUIPACION, eurosCuota, eurosACents } from '@/lib/club/cuota'
+import { CUOTA_ESTADOS, TALLAS_EQUIPACION, eurosCuota, eurosACents, CUOTAS_MENSUALES, cuotaTrimestralCents } from '@/lib/club/cuota'
 import type { ClubConfig } from '@/lib/club/config'
 import { guardarGestion, guardarMesDetalle, getHistorialAlumno, crearGrupo, renombrarGrupo, eliminarGrupo, fijarHorarioGrupo, fijarWhatsappGrupo, sincronizarPendientes, type HistorialMes } from './actions'
 import { setTemporadaActiva, guardarConfigTemporada } from './temporada-actions'
@@ -226,6 +226,28 @@ export default function ClubInscripcionesClient({
       const r = await guardarMesDetalle(id, mes, patch)
       if (!r.ok) setError(r.error || 'No se pudo guardar el mes')
       else if (r.metaGuardado === false) setError('Estado guardado, pero el importe no se guardó: falta ejecutar migration_club_pagos_meta.sql en Supabase.')
+    })
+  }
+
+  /**
+   * Registra un pago TRIMESTRAL: marca pagados el mes elegido y los dos
+   * siguientes de la temporada. El importe entero va en el primer mes (es
+   * cuando entra el dinero) y los otros dos quedan pagados sin importe, con
+   * una nota, para que el total del curso no se cuente tres veces.
+   */
+  function guardarTrimestre(id: string, mesInicio: string, importeCents: number, fecha: string) {
+    if (!puedeEditar) return
+    const i = MESES_TEMPORADA.findIndex(m => m.key === mesInicio)
+    if (i === -1) return
+    const meses = MESES_TEMPORADA.slice(i, i + 3)
+    const etiqueta = `Pago trimestral ${meses.map(m => m.label).join('–')}`
+    meses.forEach((m, idx) => {
+      guardarMes(id, m.key, {
+        estado: 'pagado',
+        importe_cents: idx === 0 ? importeCents : null,
+        fecha: fecha || null,
+        obs: idx === 0 ? etiqueta : `Incluido en el ${etiqueta.toLowerCase()}`,
+      })
     })
   }
 
@@ -564,7 +586,8 @@ export default function ClubInscripcionesClient({
           <MesModal alumno={a} mes={mesEditando.mes} puedeEditar={puedeEditar}
             sugerencias={clubConfig.cuotasMensuales.find(c => c.actividad === a.actividad)?.opciones ?? []}
             onClose={() => setMesEditando(null)}
-            onGuardar={patch => guardarMes(a.id, mesEditando.mes, patch)} />
+            onGuardar={patch => guardarMes(a.id, mesEditando.mes, patch)}
+            onGuardarTrimestre={(cents, fecha) => guardarTrimestre(a.id, mesEditando.mes, cents, fecha)} />
         )
       })()}
 
@@ -673,9 +696,11 @@ function resumenAlumno(a: Alumno) {
 }
 
 // ─── Editor de un mes (estado + importe + fecha de pago + observación) ──────────
-function MesModal({ alumno, mes, puedeEditar, sugerencias, onClose, onGuardar }: {
+function MesModal({ alumno, mes, puedeEditar, sugerencias, onClose, onGuardar, onGuardarTrimestre }: {
   alumno: Alumno; mes: string; puedeEditar: boolean; sugerencias: { label: string; cents: number }[]
-  onClose: () => void; onGuardar: (patch: { estado?: string; importe_cents?: number | null; fecha?: string | null; obs?: string | null }) => void
+  onClose: () => void
+  onGuardar: (patch: { estado?: string; importe_cents?: number | null; fecha?: string | null; obs?: string | null }) => void
+  onGuardarTrimestre: (importeCents: number, fecha: string) => void
 }) {
   const info = MESES_TEMPORADA.find(m => m.key === mes)
   const detalle = alumno.pagos_meta[mes] ?? {}
@@ -683,6 +708,16 @@ function MesModal({ alumno, mes, puedeEditar, sugerencias, onClose, onGuardar }:
   const [importe, setImporte] = useState(detalle.importe_cents ? eurosCuota(detalle.importe_cents).replace(' €', '') : '')
   const [fecha, setFecha] = useState(detalle.fecha ?? '')
   const [obs, setObs] = useState(detalle.obs ?? '')
+  const [modo, setModo] = useState<'mes' | 'trimestre'>('mes')
+
+  // Trimestrales del servicio del alumno (los del precio de su actividad).
+  const trimestrales = (CUOTAS_MENSUALES.find(c => c.actividad.trim().toLowerCase() === alumno.actividad.trim().toLowerCase())?.opciones ?? [])
+    .map((o, i) => ({ label: o.label, cents: cuotaTrimestralCents(alumno.actividad, i + 1) }))
+    .filter((o): o is { label: string; cents: number } => o.cents != null)
+  const iMes = MESES_TEMPORADA.findIndex(m => m.key === mes)
+  const mesesTrimestre = MESES_TEMPORADA.slice(Math.max(iMes, 0), Math.max(iMes, 0) + 3)
+  const [trimCents, setTrimCents] = useState<number>(trimestrales[1]?.cents ?? trimestrales[0]?.cents ?? 0)
+  const [trimFecha, setTrimFecha] = useState(detalle.fecha ?? new Date().toISOString().slice(0, 10))
 
   const OPCIONES: { id: string; label: string; badge: string }[] = [
     { id: '', label: 'Sin definir', badge: 'bg-gray-100 text-gray-500' },
@@ -719,6 +754,50 @@ function MesModal({ alumno, mes, puedeEditar, sugerencias, onClose, onGuardar }:
         </div>
 
         <div className="p-5 space-y-4">
+          {/* Mes suelto o trimestre completo */}
+          {puedeEditar && trimestrales.length > 0 && mesesTrimestre.length === 3 && (
+            <div className="flex bg-pm-bg rounded-xl p-1">
+              {([['mes', 'Un mes'], ['trimestre', 'Trimestre']] as const).map(([id, txt]) => (
+                <button key={id} onClick={() => setModo(id)}
+                  className={`flex-1 text-sm font-bold px-3 py-2 rounded-lg transition-colors ${modo === id ? 'bg-white text-pm-navy shadow-sm' : 'text-gray-500 hover:text-pm-navy'}`}>
+                  {txt}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {modo === 'trimestre' ? (
+            <div className="space-y-4">
+              <div>
+                <label className={lbl}>Modalidad <span className="text-gray-300 normal-case font-medium">· {alumno.actividad}</span></label>
+                <div className="flex flex-wrap gap-1.5">
+                  {trimestrales.map(t => (
+                    <button key={t.label} type="button" onClick={() => setTrimCents(t.cents)}
+                      className={`text-xs font-bold px-3 py-2 rounded-lg border transition-colors ${trimCents === t.cents ? 'bg-pm-red-light text-pm-red border-pm-red/30' : 'border-gray-200 text-pm-navy hover:border-pm-red'}`}>
+                      {t.label} · {eurosCuota(t.cents)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className={lbl}>Fecha de pago</label>
+                <input type="date" value={trimFecha} onChange={e => setTrimFecha(e.target.value)} className={inp} />
+              </div>
+              <p className="text-xs text-gray-500 bg-pm-bg border border-gray-100 rounded-xl px-3 py-2 leading-snug">
+                Se marcarán como pagados <strong>{mesesTrimestre.map(m => m.nombre).join(', ')}</strong>.
+                El importe ({eurosCuota(trimCents)}) se anota en {mesesTrimestre[0]?.nombre} y los otros dos quedan pagados sin importe,
+                para no contar el trimestre tres veces.
+              </p>
+              <div className="flex justify-end gap-2">
+                <button onClick={onClose} className="border border-gray-200 text-gray-600 font-bold text-sm px-4 py-2.5 rounded-xl">Cancelar</button>
+                <button onClick={() => { onGuardarTrimestre(trimCents, trimFecha); onClose() }} disabled={!trimCents}
+                  className="bg-pm-red hover:bg-pm-red-dark text-white font-black px-5 py-2.5 rounded-xl disabled:opacity-50">
+                  Registrar trimestre
+                </button>
+              </div>
+            </div>
+          ) : (
+          <>
           <div>
             <label className={lbl}>Estado</label>
             <div className="flex flex-wrap gap-1.5">
@@ -762,6 +841,8 @@ function MesModal({ alumno, mes, puedeEditar, sugerencias, onClose, onGuardar }:
               <button onClick={guardar} className="bg-pm-red hover:bg-pm-red-dark text-white font-bold px-5 py-2 rounded-xl text-sm">Guardar mes</button>
               <button onClick={onClose} className="text-sm font-bold text-gray-400 hover:text-pm-navy px-3 py-2 ml-auto">Cancelar</button>
             </div>
+          )}
+          </>
           )}
         </div>
       </div>
