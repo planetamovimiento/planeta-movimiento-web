@@ -13,11 +13,14 @@ import { MonthlyBars, HBars } from './Charts'
 import GastoModal from './GastoModal'
 import IngresoModal from './IngresoModal'
 import ImportarGastosModal from './ImportarGastosModal'
+import Carpetas from './Carpetas'
+import type { Carpeta, Factura } from '@/lib/balance/documentos'
 import { eliminarGasto, eliminarIngresoManual, crearCategoria, editarCategoria, toggleCategoria } from './actions'
 
-type Tab = 'resumen' | 'ingresos' | 'gastos' | 'mensual' | 'anual' | 'categorias'
+type Tab = 'resumen' | 'carpetas' | 'ingresos' | 'gastos' | 'mensual' | 'anual' | 'categorias'
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'resumen', label: 'Resumen', icon: '📊' },
+  { id: 'carpetas', label: 'Carpetas y facturas', icon: '📁' },
   { id: 'ingresos', label: 'Ingresos', icon: '📈' },
   { id: 'gastos', label: 'Gastos', icon: '📉' },
   { id: 'mensual', label: 'Mensual', icon: '🗓️' },
@@ -65,10 +68,13 @@ function ExportMenu({ onExport }: { onExport: (f: 'csv' | 'xlsx' | 'pdf') => voi
   )
 }
 
-export default function BalanceClient({ ingresos, gastos, categorias, setupOk, role }: {
+export default function BalanceClient({ ingresos, gastos, categorias, carpetas, facturas, docsOk, setupOk, role }: {
   ingresos: IngresoMov[]
   gastos: GastoMov[]
   categorias: Categoria[]
+  carpetas: Carpeta[]
+  facturas: Factura[]
+  docsOk: boolean
   setupOk: boolean
   role: AdminRole
 }) {
@@ -486,6 +492,12 @@ export default function BalanceClient({ ingresos, gastos, categorias, setupOk, r
             </table>
           </div>
         </div>
+      )}
+
+      {/* ════════════════ CARPETAS Y FACTURAS ════════════════ */}
+      {tab === 'carpetas' && (
+        <Carpetas carpetas={carpetas} facturas={facturas} ambito={ambito}
+          puedeEditar={puedeEditar} puedeGestionar={puedeGestionar} migrado={docsOk} />
       )}
 
       {/* ════════════════ CATEGORÍAS ════════════════ */}

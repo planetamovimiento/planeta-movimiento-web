@@ -1,5 +1,6 @@
 import { requireSeccion } from '@/lib/admin/auth'
 import { getBalanceData } from '@/lib/balance/data'
+import { getCarpetas, getFacturas } from '@/lib/balance/documentos'
 import { AdminHeader } from '@/components/admin/ui'
 import BalanceClient from './BalanceClient'
 
@@ -7,7 +8,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function BalancePage() {
   const admin = await requireSeccion('balance')
-  const data = await getBalanceData()
+  const [data, carp, fact] = await Promise.all([getBalanceData(), getCarpetas(), getFacturas()])
 
   return (
     <>
@@ -17,6 +18,9 @@ export default async function BalancePage() {
           ingresos={data.ingresos}
           gastos={data.gastos}
           categorias={data.categorias}
+          carpetas={carp.carpetas}
+          facturas={fact.facturas}
+          docsOk={carp.ok && fact.ok}
           setupOk={data.setupOk}
           role={admin?.role ?? 'lectura'}
         />
