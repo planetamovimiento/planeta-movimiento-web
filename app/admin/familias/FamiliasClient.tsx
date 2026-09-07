@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { generarFamiliasDesdeCRM, guardarFamilia, cambiarEstadoFamilia, vincularAlumno, desvincularAlumno, eliminarFamilia, generarNumeroSocioFamilia, guardarNumeroSocio, guardarWhatsappAlumno } from './actions'
+import { generarFamiliasDesdeCRM, guardarFamilia, cambiarEstadoFamilia, vincularAlumno, desvincularAlumno, eliminarFamilia, guardarWhatsappAlumno } from './actions'
 import { ESTADOS_FAMILIA, type Familia, type EstadoFamilia } from '@/lib/familias/tipos'
 
 export type AlumnoLite = { id: string; nombre: string; actividad: string; email: string; grupo?: string; whatsapp_url?: string; esSocio?: boolean; cuotaEstado?: string }
@@ -43,16 +43,10 @@ export default function FamiliasClient({ familias, links, alumnos, migrado, pued
   const filtradas = familias.filter(f => !q.trim() || `${f.nombre ?? ''} ${f.email}`.toLowerCase().includes(q.toLowerCase()))
   const activas = familias.filter(f => f.estado === 'activo').length
 
-  // Estado de socio por familia (socio = hizo el formulario; pagada = cuota cobrada).
-  const socioMap = useMemo(() => new Map(familias.map(f => {
-    const al = (idsPorFamilia.get(f.id) ?? []).map(id => alumnoMap.get(id)).filter(Boolean) as AlumnoLite[]
-    return [f.id, { esSocio: al.some(a => a.esSocio), pagada: al.some(a => a.cuotaEstado === 'pagada') }] as const
-  })), [familias, idsPorFamilia, alumnoMap])
-  const nSocios = [...socioMap.values()].filter(m => m.esSocio).length
-  const nPagados = [...socioMap.values()].filter(m => m.pagada).length
-  const rango = (f: Familia) => { const m = socioMap.get(f.id); return m?.pagada ? 2 : m?.esSocio ? 1 : 0 }
-  // Destaca a los socios: pagados primero, luego socios pendientes, luego el resto.
-  const ordenadas = [...filtradas].sort((a, b) => rango(b) - rango(a))
+  // Quién es socio se ve por su nº de socio (se asigna en Admin → Socios).
+  const nSocios = familias.filter(f => f.numero_socio).length
+  const ordenadas = [...filtradas].sort((a, b) =>
+    (a.nombre || a.email).localeCompare(b.nombre || b.email, 'es'))
 
   return (
     <div className="space-y-5">
@@ -77,12 +71,11 @@ export default function FamiliasClient({ familias, links, alumnos, migrado, pued
       {msg && <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-sm text-green-700">{msg}</div>}
 
       {/* Stats */}
-      <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4"><div className="text-2xl font-black text-pm-navy">{familias.length}</div><div className="text-xs text-gray-400">Cuentas familiares</div></div>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4"><div className="text-2xl font-black text-green-600">{activas}</div><div className="text-xs text-gray-400">Activas</div></div>
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4"><div className="text-2xl font-black text-pm-navy">{links.length}</div><div className="text-xs text-gray-400">Alumnos vinculados</div></div>
-        <div className="bg-white rounded-2xl border border-amber-200 shadow-sm p-4"><div className="text-2xl font-black text-amber-600">{nSocios}</div><div className="text-xs text-gray-400">Socios (formulario)</div></div>
-        <div className="bg-white rounded-2xl border border-green-200 shadow-sm p-4"><div className="text-2xl font-black text-green-600">{nPagados}</div><div className="text-xs text-gray-400">Socios pagados</div></div>
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4"><div className="text-2xl font-black text-pm-navy">{nSocios}</div><div className="text-xs text-gray-400">Con nº de socio</div></div>
       </div>
 
       {/* Lista */}
@@ -115,18 +108,13 @@ function CardFamilia({ familia, vinculados, disponibles, abierta, onToggle, pend
   const [nombre, setNombre] = useState(familia.nombre ?? '')
   const [telefono, setTelefono] = useState(familia.telefono ?? '')
   const [email, setEmail] = useState(familia.email)
-  const [numSocio, setNumSocio] = useState(familia.numero_socio ?? '')
   const [addId, setAddId] = useState('')
   const estadoMeta = ESTADOS_FAMILIA.find(e => e.valor === familia.estado)
   const cambiado = nombre !== (familia.nombre ?? '') || telefono !== (familia.telefono ?? '') || email !== familia.email
   const input = 'w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-pm-red'
 
-  // Socio = alguien de la familia hizo el formulario de socio; pagada = cuota cobrada.
-  const esSocio = vinculados.some(a => a.esSocio)
-  const cuotaPagada = vinculados.some(a => a.cuotaEstado === 'pagada')
-
   return (
-    <div className={`bg-white rounded-2xl shadow-sm border-2 ${cuotaPagada ? 'border-green-300' : esSocio ? 'border-amber-300' : 'border-gray-100'}`}>
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
       <div className="flex items-center gap-3 px-5 py-4 flex-wrap">
         <div className="w-10 h-10 bg-pm-navy rounded-full flex items-center justify-center text-white font-black shrink-0">{(familia.nombre || familia.email)[0].toUpperCase()}</div>
         <div className="flex-1 min-w-[160px]">
@@ -135,14 +123,9 @@ function CardFamilia({ familia, vinculados, disponibles, abierta, onToggle, pend
         </div>
         <span className="text-xs text-gray-400 hidden lg:block">Últ. acceso: {fechaHora(familia.ultimo_acceso)}</span>
         <span className="text-xs font-semibold bg-pm-bg border border-gray-200 rounded-full px-2 py-0.5 whitespace-nowrap">{vinculados.length} alumno(s)</span>
-        {cuotaPagada
-          ? <span className="text-xs font-black bg-green-100 text-green-700 border border-green-300 rounded-full px-2 py-0.5 whitespace-nowrap">✔ Socio pagado</span>
-          : esSocio
-            ? <span className="text-xs font-bold bg-amber-100 text-amber-700 border border-amber-300 rounded-full px-2 py-0.5 whitespace-nowrap">Socio · pago pendiente</span>
-            : null}
-        {familia.numero_socio
-          ? <span className="text-xs font-bold bg-pm-navy/5 text-pm-navy border border-pm-navy/15 rounded-full px-2 py-0.5 whitespace-nowrap">{familia.numero_socio}</span>
-          : <span className="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5 whitespace-nowrap">Sin nº socio</span>}
+        {familia.numero_socio && (
+          <span title="Socio del Club" className="text-xs font-bold bg-pm-navy/5 text-pm-navy border border-pm-navy/15 rounded-full px-2 py-0.5 whitespace-nowrap">⭐ {familia.numero_socio}</span>
+        )}
         {puedeEditar ? (
           <select value={familia.estado} disabled={pending} onChange={e => correr(() => cambiarEstadoFamilia(familia.id, e.target.value as EstadoFamilia))}
             className={`text-xs font-semibold border rounded-lg px-2 py-1.5 ${estadoMeta?.color ?? ''}`}>
@@ -171,19 +154,12 @@ function CardFamilia({ familia, vinculados, disponibles, abierta, onToggle, pend
             )}
           </div>
 
-          {/* Número de socio · credencial de acceso al Portal de Familias */}
-          <div className="border-t border-gray-100 pt-4">
-            <div className="text-xs font-black text-gray-400 uppercase tracking-wider mb-2">Número de socio · acceso al portal</div>
-            <div className="flex flex-wrap items-center gap-2">
-              <input className={`${input} max-w-[180px]`} placeholder="CDO-00231" value={numSocio} disabled={!puedeEditar} onChange={e => setNumSocio(e.target.value)} />
-              {puedeEditar && numSocio.trim().toUpperCase() !== (familia.numero_socio ?? '') && (
-                <button onClick={() => correr(() => guardarNumeroSocio(familia.id, numSocio))} disabled={pending} className="bg-pm-navy text-white text-xs font-bold px-3 py-2 rounded-lg">Guardar nº</button>
-              )}
-              {puedeEditar && !familia.numero_socio && (
-                <button onClick={() => correr(() => generarNumeroSocioFamilia(familia.id))} disabled={pending} className="bg-pm-red text-white text-xs font-bold px-3 py-2 rounded-lg">Activar socio (generar nº)</button>
-              )}
-            </div>
-            <p className="text-xs text-gray-400 mt-1.5">La familia entra al portal con su correo + este número. Genera uno automático (CDO-…) o escríbelo a mano.</p>
+          {/* El nº de socio se asigna en Admin → Socios; aquí solo se consulta. */}
+          <div className="border-t border-gray-100 pt-4 text-xs text-gray-500">
+            {familia.numero_socio
+              ? <>Socio <strong className="text-pm-navy">⭐ {familia.numero_socio}</strong>. Entra al portal con su correo y este número.</>
+              : <>Sin nº de socio: todavía no puede entrar al portal.</>}
+            {' '}El número se asigna en <a href="/admin/socios" className="text-pm-red font-semibold hover:underline">Socios</a>.
           </div>
 
           <div>
