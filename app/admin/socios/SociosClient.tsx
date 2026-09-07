@@ -238,10 +238,14 @@ function LineaParticipante({ p, puedeEditar, pending, correr }: {
             {p.nombre} {p.apellidos}
             {p.soloSocio && <span className="ml-2 text-[10px] font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">Solo socio</span>}
           </div>
-          <div className="text-xs text-gray-400 truncate">
-            {[p.actividad || 'Sin actividad', p.talla ? `Talla ${p.talla}` : 'Sin talla'].join(' · ')}
-          </div>
+          <div className="text-xs text-gray-400 truncate">{p.actividad || 'Sin actividad'}</div>
         </div>
+
+        {/* Talla: la del formulario de socio o la que haya puesto la familia en el portal */}
+        <span title="Talla de equipación"
+          className={`text-[11px] font-bold px-2.5 py-1 rounded-full whitespace-nowrap ${p.talla ? 'bg-pm-navy/5 text-pm-navy border border-pm-navy/15' : 'bg-gray-100 text-gray-400'}`}>
+          👕 {p.talla ? `Talla ${p.talla}` : 'Sin talla'}
+        </span>
 
         {/* Cuota de socio */}
         {pagada ? (

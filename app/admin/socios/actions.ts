@@ -46,6 +46,36 @@ export async function marcarEquipacion(submissionId: string, entregada: boolean)
   return { ok: true }
 }
 
+const norm = (v: unknown) => String(v ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase().replace(/s+/g, ' ')
+
+/**
+ * Las OTRAS filas del mismo participante (su inscripción y su línea del alta de
+ * socio). La cuota de socio se paga UNA vez por niño, así que al cobrarla hay que
+ * dejar limpias las demás para no contarla dos veces en el balance.
+ */
+async function otrasFilasDelParticipante(db: ReturnType<typeof createAdminClient>, submissionId: string): Promise<string[]> {
+  const { data: base } = await db.from('form_submissions').select('id, email, nombre, datos').eq('id', submissionId).maybeSingle()
+  if (!base?.email) return []
+  const d = (base.datos ?? {}) as Record<string, unknown>
+  const nac = String(d.fechaNacimiento ?? '').slice(0, 10)
+  const nom = norm(d.nombre) || norm(base.nombre).split(' ')[0]
+  const ape = norm(d.apellidos) || norm(base.nombre).split(' ').slice(1).join(' ')
+
+  const { data: otras } = await db.from('form_submissions')
+    .select('id, nombre, datos').eq('tipo', 'inscripcion_club').eq('email', base.email)
+  return ((otras ?? []) as { id: string; nombre: string | null; datos: Record<string, unknown> | null }[])
+    .filter(o => {
+      if (o.id === submissionId) return false
+      const od = (o.datos ?? {}) as Record<string, unknown>
+      const oNac = String(od.fechaNacimiento ?? '').slice(0, 10)
+      if (nac && oNac) return nac === oNac
+      const oNom = norm(od.nombre) || norm(o.nombre).split(' ')[0]
+      const oApe = norm(od.apellidos) || norm(o.nombre).split(' ').slice(1).join(' ')
+      return !!nom && oNom.split(' ')[0] === nom.split(' ')[0] && oApe.split(' ')[0] === ape.split(' ')[0]
+    })
+    .map(o => o.id)
+}
+
 /**
  * Registra (o deshace) el cobro de la cuota de socio de un participante.
  * Guarda importe, fecha y forma de pago en su ficha de gestión, que es de donde
@@ -71,6 +101,13 @@ export async function registrarPagoSocio(p: {
     updated_by: admin.email,
   }, { onConflict: 'submission_id' })
   if (e) return { ok: false, error: e.message }
+
+  // Un mismo niño puede tener dos filas: la cuota de socio queda solo en esta.
+  for (const otro of await otrasFilasDelParticipante(db, p.submissionId)) {
+    await db.from('club_gestion').update({ cuota_estado: 'pendiente', cuota_fecha_pago: null, cuota_forma_pago: null })
+      .eq('submission_id', otro).eq('cuota_estado', 'pagada')
+  }
+
   await logActivity({ actorEmail: admin.email, accion: 'Cobró la cuota de socio', entidad: 'socio', entidadId: p.submissionId })
   revalidatePath('/admin/socios')
   revalidatePath('/admin/club')
@@ -91,6 +128,10 @@ export async function anularPagoSocio(submissionId: string): Promise<Res> {
     updated_by: admin.email,
   }, { onConflict: 'submission_id' })
   if (e) return { ok: false, error: e.message }
+  for (const otro of await otrasFilasDelParticipante(db, submissionId)) {
+    await db.from('club_gestion').update({ cuota_estado: 'pendiente', cuota_fecha_pago: null, cuota_forma_pago: null })
+      .eq('submission_id', otro).eq('cuota_estado', 'pagada')
+  }
   await logActivity({ actorEmail: admin.email, accion: 'Anuló el cobro de la cuota de socio', entidad: 'socio', entidadId: submissionId })
   revalidatePath('/admin/socios')
   revalidatePath('/admin/club')

@@ -125,11 +125,15 @@ export async function getBalanceData(): Promise<BalanceData> {
     }
   })
 
-  // ── Ingresos del Club: cuotas mensuales COBRADAS (club_gestion.pagos_meta) ────
-  // Cada mes marcado "pagado" con importe cuenta como ingreso del Club (ámbito club).
+  // ── Ingresos del Club: cuotas COBRADAS (club_gestion) ────────────────────────
+  // Dos cosas distintas: las mensualidades marcadas "pagado" (pagos_meta) y la
+  // cuota anual de socio (cuota_estado 'pagada'), que se cobra a mano en
+  // Admin → Socios. Las dos son ingresos del Club.
   try {
-    const cg = await safe<Record<string, unknown>>(() => db.from('club_gestion').select('submission_id, temporada, pagos, pagos_meta').limit(5000) as never)
-    const conPagos = cg.rows.filter(g => g.pagos_meta && typeof g.pagos_meta === 'object')
+    const cg = await safe<Record<string, unknown>>(() => db.from('club_gestion')
+      .select('submission_id, temporada, pagos, pagos_meta, cuota_estado, cuota_importe_cents, cuota_fecha_pago, cuota_forma_pago').limit(5000) as never)
+    const conCuotaSocio = (g: Record<string, unknown>) => str(g.cuota_estado) === 'pagada' && num(g.cuota_importe_cents) > 0
+    const conPagos = cg.rows.filter(g => (g.pagos_meta && typeof g.pagos_meta === 'object') || conCuotaSocio(g))
     if (conPagos.length) {
       const ids = conPagos.map(g => str(g.submission_id)).filter(Boolean)
       const subs = await safe<Record<string, unknown>>(() => db.from('form_submissions').select('id, nombre, datos').in('id', ids) as never)
@@ -153,6 +157,19 @@ export async function getBalanceData(): Promise<BalanceData> {
             cliente: nombre, servicio: actividad, categoria: 'Cuotas',
             total: importe, pagado: importe, pendiente: 0,
             metodo: '', estado: 'pagado', referencia: `Cuota ${mes.nombre}`,
+          })
+        }
+
+        // Cuota anual de socio (la que se cobra en Admin → Socios).
+        if (conCuotaSocio(g)) {
+          const importeSocio = num(g.cuota_importe_cents) / 100
+          ingresos.push({
+            id: `socio:${str(g.submission_id)}`,
+            tipo: 'auto', origen: 'cuota', ambito: 'club',
+            fecha: str(g.cuota_fecha_pago).slice(0, 10) || fechaMesCuota(str(g.temporada), 9),
+            cliente: nombre, servicio: 'Cuota de socio', categoria: 'Cuota de socio',
+            total: importeSocio, pagado: importeSocio, pendiente: 0,
+            metodo: str(g.cuota_forma_pago), estado: 'pagado', referencia: 'Cuota de socio',
           })
         }
       }

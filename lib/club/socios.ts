@@ -94,7 +94,9 @@ export async function getSocios(): Promise<Socio[]> {
       apellidos: str(d.apellidos) || completo.split(' ').slice(1).join(' '),
       fechaNacimiento: str(d.fechaNacimiento).slice(0, 10),
       actividad: str(d.actividad),
-      talla: str(d.talla) || str(gestDe.get(str(s.id))?.talla) || '',
+      // La talla de la ficha (club_gestion) es la que edita la familia en el
+      // portal o el admin; la del formulario de socio es solo el punto de partida.
+      talla: str(gestDe.get(str(s.id))?.talla) || str(d.talla) || '',
       equipacionEntregada: str(d.equipacionEntregada).slice(0, 10),
       cuotaEstado: str(gestDe.get(str(s.id))?.cuota_estado),
       cuotaImporteCents: Number(gestDe.get(str(s.id))?.cuota_importe_cents ?? 0) || 0,
