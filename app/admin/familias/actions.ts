@@ -127,6 +127,24 @@ export async function guardarWhatsappAlumno(submissionId: string, url: string) {
   return { ok: true }
 }
 
+/**
+ * Observación de un alumno visible para su familia en el portal. Antes se
+ * escribía en la ficha del CRM; ahora vive donde se gestiona el portal.
+ */
+export async function guardarObservacionAlumno(submissionId: string, texto: string) {
+  const { admin, error } = await exigir()
+  if (!admin) return { ok: false, error }
+  const db = createAdminClient()
+  const { error: e } = await db.from('club_gestion').upsert(
+    { submission_id: submissionId, observaciones_familia: texto.trim() || null, updated_at: new Date().toISOString(), updated_by: admin.email },
+    { onConflict: 'submission_id' },
+  )
+  if (e) return { ok: false, error: e.message }
+  revalidar()
+  revalidatePath('/familias')
+  return { ok: true }
+}
+
 export async function eliminarFamilia(id: string) {
   const { admin, error } = await exigir()
   if (!admin) return { ok: false, error }

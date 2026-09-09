@@ -2,10 +2,10 @@
 
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { generarFamiliasDesdeCRM, guardarFamilia, cambiarEstadoFamilia, vincularAlumno, desvincularAlumno, eliminarFamilia, guardarWhatsappAlumno } from './actions'
+import { generarFamiliasDesdeCRM, guardarFamilia, cambiarEstadoFamilia, vincularAlumno, desvincularAlumno, eliminarFamilia, guardarWhatsappAlumno, guardarObservacionAlumno } from './actions'
 import { ESTADOS_FAMILIA, type Familia, type EstadoFamilia } from '@/lib/familias/tipos'
 
-export type AlumnoLite = { id: string; nombre: string; actividad: string; email: string; grupo?: string; whatsapp_url?: string; esSocio?: boolean; cuotaEstado?: string }
+export type AlumnoLite = { id: string; nombre: string; actividad: string; email: string; grupo?: string; whatsapp_url?: string; observaciones_familia?: string; esSocio?: boolean; cuotaEstado?: string }
 type Link = { familia_id: string; submission_id: string }
 type Props = { familias: Familia[]; links: Link[]; alumnos: AlumnoLite[]; migrado: boolean; puedeEditar: boolean }
 
@@ -203,7 +203,9 @@ function AlumnoVinculado({ familiaId, alumno, puedeEditar, correr, pending }: {
   correr: (fn: () => Promise<Resultado>) => void; pending: boolean
 }) {
   const [url, setUrl] = useState(alumno.whatsapp_url ?? '')
+  const [obs, setObs] = useState(alumno.observaciones_familia ?? '')
   const cambiado = url.trim() !== (alumno.whatsapp_url ?? '').trim()
+  const obsCambiada = obs.trim() !== (alumno.observaciones_familia ?? '').trim()
   const inp = 'w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-pm-red'
 
   return (
@@ -228,6 +230,17 @@ function AlumnoVinculado({ familiaId, alumno, puedeEditar, correr, pending }: {
             )}
           </div>
           <p className="text-[11px] text-gray-400 mt-1">La familia verá un botón «Unirme al grupo de WhatsApp» en la ficha de este hijo. Vacío = usa el enlace por defecto del grupo.</p>
+
+          <label className="block text-[11px] font-bold text-gray-400 mt-2.5 mb-1">Observación visible para la familia</label>
+          <div className="flex gap-2">
+            <textarea value={obs} onChange={e => setObs(e.target.value)} rows={2}
+              placeholder="Mensaje o información que verá la familia en la ficha de este hijo"
+              className={`${inp} flex-1 resize-none`} />
+            {obsCambiada && (
+              <button onClick={() => correr(() => guardarObservacionAlumno(alumno.id, obs))} disabled={pending}
+                className="bg-pm-navy text-white text-xs font-bold px-3 py-2 rounded-lg whitespace-nowrap self-start">Guardar</button>
+            )}
+          </div>
         </div>
       )}
     </div>

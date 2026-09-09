@@ -306,3 +306,61 @@ export async function eliminarGrupo(id: string) {
   revalidatePath('/admin/club')
   return { ok: true }
 }
+/**
+ * Corrige la ACTIVIDAD de una inscripción (la familia se equivocó al elegirla).
+ * Vive en los datos del formulario, no en la capa de gestión, así que se cambia
+ * ahí; el grupo se limpia porque los grupos son de cada actividad.
+ */
+export async function cambiarActividad(submissionId: string, actividad: string) {
+  const admin = await getAdminUser()
+  if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
+  const db = createAdminClient()
+
+  const { data } = await db.from('form_submissions').select('datos, nombre').eq('id', submissionId).maybeSingle()
+  if (!data) return { ok: false, error: 'No se encuentra la inscripción' }
+  const datos = (data.datos ?? {}) as Record<string, unknown>
+  const anterior = typeof datos.actividad === 'string' ? datos.actividad : ''
+
+  const { error } = await db.from('form_submissions')
+    .update({ datos: { ...datos, actividad: actividad.trim() } }).eq('id', submissionId)
+  if (error) return { ok: false, error: error.message }
+
+  // El grupo anterior era de la otra actividad: se queda sin asignar.
+  await db.from('club_gestion').update({ grupo: null, updated_at: new Date().toISOString(), updated_by: admin.email }).eq('submission_id', submissionId)
+
+  await logActivity({
+    actorEmail: admin.email,
+    accion: `Cambió la actividad de ${String(data.nombre ?? '')}: ${anterior || '—'} → ${actividad}`,
+    entidad: 'club', entidadId: submissionId,
+  })
+  revalidatePath('/admin/club')
+  return { ok: true }
+}
+
+/**
+ * Borra una inscripción entera (la típica duplicada o mal hecha). Se lleva por
+ * delante su gestión, sus pagos y su vínculo con la familia (cascada en BD), así
+ * que solo lo puede hacer el administrador principal.
+ */
+export async function eliminarInscripcion(submissionId: string) {
+  const admin = await getAdminUser()
+  if (!admin || !can.manageFinance(admin.role)) return { ok: false, error: 'Solo el administrador principal puede eliminar inscripciones' }
+  const db = createAdminClient()
+
+  const { data } = await db.from('form_submissions').select('nombre, email, datos').eq('id', submissionId).maybeSingle()
+  if (!data) return { ok: false, error: 'No se encuentra la inscripción' }
+  const actividad = ((data.datos ?? {}) as Record<string, unknown>).actividad
+
+  await db.from('club_gestion').delete().eq('submission_id', submissionId)
+  const { error } = await db.from('form_submissions').delete().eq('id', submissionId)
+  if (error) return { ok: false, error: error.message }
+
+  await logActivity({
+    actorEmail: admin.email,
+    accion: `Eliminó la inscripción de ${String(data.nombre ?? '')}${actividad ? ` · ${String(actividad)}` : ''}`,
+    entidad: 'club', entidadId: submissionId,
+  })
+  revalidatePath('/admin/club')
+  revalidatePath('/admin/familias')
+  return { ok: true }
+}

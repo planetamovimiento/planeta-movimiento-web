@@ -11,10 +11,9 @@ import {
 } from '@/lib/club/constants'
 import { CUOTA_ESTADOS, TALLAS_EQUIPACION, eurosCuota, eurosACents, CUOTAS_MENSUALES, cuotaTrimestralCents } from '@/lib/club/cuota'
 import type { ClubConfig } from '@/lib/club/config'
-import { guardarGestion, guardarMesDetalle, getHistorialAlumno, crearGrupo, renombrarGrupo, eliminarGrupo, fijarHorarioGrupo, fijarWhatsappGrupo, sincronizarPendientes, type HistorialMes } from './actions'
+import { guardarGestion, guardarMesDetalle, getHistorialAlumno, crearGrupo, renombrarGrupo, eliminarGrupo, fijarHorarioGrupo, fijarWhatsappGrupo, sincronizarPendientes, cambiarActividad, eliminarInscripcion, type HistorialMes } from './actions'
 import { setTemporadaActiva, guardarConfigTemporada } from './temporada-actions'
 import ImportarModal from './ImportarModal'
-import { SubirImagen } from '@/components/admin/SubirImagen'
 
 const MES_ACTUAL = mesActualKey() ?? 'jun'
 
@@ -29,9 +28,9 @@ function mensajeWhatsApp(a: Alumno): string {
 }
 
 export default function ClubInscripcionesClient({
-  alumnos: alumnosIniciales, grupos: gruposIniciales, puedeEditar, gestionOk, temporadaActiva, clubConfig,
+  alumnos: alumnosIniciales, grupos: gruposIniciales, puedeEditar, puedeBorrar = false, gestionOk, temporadaActiva, clubConfig,
 }: {
-  alumnos: Alumno[]; grupos: Grupo[]; puedeEditar: boolean; gestionOk: boolean; temporadaActiva: string
+  alumnos: Alumno[]; grupos: Grupo[]; puedeEditar: boolean; puedeBorrar?: boolean; gestionOk: boolean; temporadaActiva: string
   clubConfig: ClubConfig
 }) {
   const [lista, setLista] = useState<Alumno[]>(alumnosIniciales)
@@ -570,10 +569,22 @@ export default function ClubInscripcionesClient({
         <FichaAlumno
           a={detalle}
           puedeEditar={puedeEditar}
+          puedeBorrar={puedeBorrar}
+          actividades={actividades}
           gruposActividad={gruposParaActividad(detalle.actividad)}
           cuotaCfg={clubConfig.cuota}
           onClose={() => setDetalleId(null)}
           onGestion={p => aplicarGestion(detalle.id, p)}
+          onActividad={act => startTransition(async () => {
+            const r = await cambiarActividad(detalle.id, act)
+            if (!r.ok) setError(r.error || 'No se pudo cambiar la actividad')
+            else patchLocal(detalle.id, { actividad: act, grupo: '' })
+          })}
+          onEliminar={() => startTransition(async () => {
+            const r = await eliminarInscripcion(detalle.id)
+            if (!r.ok) setError(r.error || 'No se pudo eliminar la inscripción')
+            else { setDetalleId(null); setLista(l => l.filter(x => x.id !== detalle.id)) }
+          })}
           onEditMes={mes => setMesEditando({ id: detalle.id, mes })}
         />
       )}
@@ -851,20 +862,13 @@ function MesModal({ alumno, mes, puedeEditar, sugerencias, onClose, onGuardar, o
 }
 
 // ─── Ficha del alumno (panel lateral) ──────────────────────────────────────────
-function FichaAlumno({ a, puedeEditar, gruposActividad, cuotaCfg, onClose, onGestion, onEditMes }: {
-  a: Alumno; puedeEditar: boolean; gruposActividad: string[]; cuotaCfg: ClubConfig['cuota']
-  onClose: () => void; onGestion: (p: Partial<Alumno>) => void; onEditMes: (mes: string) => void
+function FichaAlumno({ a, puedeEditar, puedeBorrar, actividades, gruposActividad, onClose, onGestion, onActividad, onEliminar, onEditMes }: {
+  a: Alumno; puedeEditar: boolean; puedeBorrar: boolean; actividades: string[]; gruposActividad: string[]
+  cuotaCfg?: ClubConfig['cuota']
+  onClose: () => void; onGestion: (p: Partial<Alumno>) => void
+  onActividad: (actividad: string) => void; onEliminar: () => void; onEditMes: (mes: string) => void
 }) {
-  const sugerirImporteCents = () => {
-    const f = a.cuota_fecha_pago || new Date().toISOString().slice(0, 10)
-    return f <= cuotaCfg.fechaLimiteReducida ? cuotaCfg.reducidaCents : cuotaCfg.normalCents
-  }
   const [obs, setObs] = useState(a.observaciones)
-  const [obsFam, setObsFam] = useState(a.observaciones_familia)
-  const [horario, setHorario] = useState(a.horario)
-  const [whatsapp, setWhatsapp] = useState(a.whatsapp_url)
-  const [importe, setImporte] = useState(a.cuota_importe_cents ? eurosCuota(a.cuota_importe_cents).replace(' €', '') : '')
-  const [numSocio, setNumSocio] = useState(a.numero_socio)
   const edad = edadDe(a.fechaNacimiento)
 
   return (
@@ -895,6 +899,42 @@ function FichaAlumno({ a, puedeEditar, gruposActividad, cuotaCfg, onClose, onGes
             </div>
           </div>
 
+          {/* Estado + importe mensual */}
+          <div>
+            <div className="text-xs font-black text-pm-navy uppercase tracking-wider mb-2">Estado e importe mensual</div>
+            <div className="grid grid-cols-5 gap-2">
+              {MESES_TEMPORADA.map(m => {
+                const estado = (a.pagos[m.key] ?? '') as EstadoPago | ''
+                const meta = estado ? ESTADO_PAGO_META[estado] : null
+                const cents = a.pagos_meta[m.key]?.importe_cents
+                return (
+                  <button key={m.key} disabled={!puedeEditar} onClick={() => onEditMes(m.key)} title="Clic para editar estado e importe"
+                    className={`flex flex-col items-center gap-0.5 rounded-xl border py-2 transition-colors ${meta ? 'border-transparent' : 'border-gray-200'} ${editableBg(estado)}`}>
+                    <span className="text-[11px] font-bold text-gray-600">{m.label}</span>
+                    <span className={`w-3.5 h-3.5 rounded-full ${meta ? meta.dot : 'bg-white border border-gray-300'}`} />
+                    <span className="text-[10px] font-bold text-gray-500 leading-none h-3">{typeof cents === 'number' && cents > 0 ? eurosCuota(cents).replace(' €', '€') : ''}</span>
+                  </button>
+                )
+              })}
+            </div>
+            <p className="text-xs text-gray-400 mt-2">Clic en cada mes para editar estado, importe, fecha y observación.</p>
+
+            {/* Totales de la temporada (punto 24) */}
+            {(() => {
+              const r = resumenAlumno(a)
+              return (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
+                  <ResumenDato label="Pagado" valor={eurosCuota(r.pagadoCents)} tono="text-green-700" />
+                  <ResumenDato label="Pendiente" valor={eurosCuota(r.pendienteCents)} tono="text-amber-700" />
+                  <ResumenDato label="Meses pagados" valor={String(r.pagados)} />
+                  <ResumenDato label="Meses pendientes" valor={String(r.pendientes)} />
+                  <ResumenDato label="Meses de baja" valor={String(r.bajas)} />
+                </div>
+              )
+            })()}
+          </div>
+
+
           {/* Datos personales */}
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             <Dato k="Nombre" v={a.nombre} />
@@ -916,6 +956,18 @@ function FichaAlumno({ a, puedeEditar, gruposActividad, cuotaCfg, onClose, onGes
 
           {/* Actividad / Grupo / Temporada */}
           <div className="grid grid-cols-2 gap-3">
+            <div className="col-span-2">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
+                Actividad <span className="text-gray-300 normal-case font-medium">· si la familia se equivocó al inscribirse</span>
+              </label>
+              <select value={a.actividad} disabled={!puedeEditar}
+                onChange={e => { if (e.target.value !== a.actividad && window.confirm(`¿Cambiar la actividad a "${e.target.value}"? Se quitará el grupo actual, que era de la otra actividad.`)) onActividad(e.target.value) }}
+                className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:border-pm-red disabled:opacity-60">
+                {!a.actividad && <option value="">— Sin actividad —</option>}
+                {actividades.map(x => <option key={x} value={x}>{x}</option>)}
+                {a.actividad && !actividades.includes(a.actividad) && <option value={a.actividad}>{a.actividad}</option>}
+              </select>
+            </div>
             <div>
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Grupo</label>
               <select value={a.grupo} disabled={!puedeEditar} onChange={e => onGestion({ grupo: e.target.value })}
@@ -935,158 +987,6 @@ function FichaAlumno({ a, puedeEditar, gruposActividad, cuotaCfg, onClose, onGes
             </div>
           </div>
 
-          {/* Cuota de socio */}
-          <div className="border-t border-gray-100 pt-4">
-            <div className="text-xs font-black text-pm-navy uppercase tracking-wider mb-3">Cuota de socio</div>
-
-            {/* Estado */}
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              {CUOTA_ESTADOS.map(e => (
-                <button key={e.id} disabled={!puedeEditar} onClick={() => onGestion({ cuota_estado: e.id })}
-                  className={`text-xs font-bold px-3 py-1.5 rounded-full border transition-colors ${a.cuota_estado === e.id ? `${e.badge} border-transparent ring-2 ring-offset-1 ring-pm-navy/20` : 'border-gray-200 text-gray-500 hover:border-pm-navy'}`}>
-                  {e.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Importe */}
-              <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Importe (€)</label>
-                <div className="flex items-center gap-1.5">
-                  <input value={importe} disabled={!puedeEditar} onChange={e => setImporte(e.target.value)} placeholder="0"
-                    inputMode="decimal" className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-pm-red disabled:opacity-60" />
-                  {puedeEditar && (
-                    <button type="button" title="Sugerir según la fecha de pago"
-                      onClick={() => setImporte(eurosCuota(sugerirImporteCents()).replace(' €', ''))}
-                      className="text-xs font-bold text-pm-navy border border-gray-200 rounded-lg px-2 py-2 whitespace-nowrap hover:border-pm-navy">Sugerir</button>
-                  )}
-                </div>
-                {puedeEditar && eurosACents(importe) !== a.cuota_importe_cents && (
-                  <button onClick={() => onGestion({ cuota_importe_cents: eurosACents(importe) })} className="mt-1.5 bg-pm-navy text-white text-xs font-bold px-3 py-1.5 rounded-lg">Guardar importe</button>
-                )}
-              </div>
-              {/* Fecha de pago */}
-              <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Fecha de pago</label>
-                <input type="date" value={a.cuota_fecha_pago} disabled={!puedeEditar} onChange={e => onGestion({ cuota_fecha_pago: e.target.value })}
-                  className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:border-pm-red disabled:opacity-60" />
-              </div>
-              {/* Forma de pago */}
-              <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Forma de pago</label>
-                <select value={a.cuota_forma_pago} disabled={!puedeEditar} onChange={e => onGestion({ cuota_forma_pago: e.target.value })}
-                  className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:border-pm-red disabled:opacity-60">
-                  <option value="">— Sin definir —</option>
-                  <option value="efectivo">Efectivo</option>
-                  <option value="transferencia">Transferencia</option>
-                </select>
-              </div>
-              {/* Talla de equipación */}
-              <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Talla de equipación</label>
-                <select value={a.talla} disabled={!puedeEditar} onChange={e => onGestion({ talla: e.target.value })}
-                  className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm bg-white focus:outline-none focus:border-pm-red disabled:opacity-60">
-                  <option value="">— Sin definir —</option>
-                  {TALLAS_EQUIPACION.map(t => <option key={t} value={t}>{t}</option>)}
-                  {a.talla && !TALLAS_EQUIPACION.includes(a.talla as never) && <option value={a.talla}>{a.talla}</option>}
-                </select>
-              </div>
-              {/* Número de socio */}
-              <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Número de socio</label>
-                <input value={numSocio} disabled={!puedeEditar} onChange={e => setNumSocio(e.target.value)} placeholder="Ej. 001"
-                  className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-pm-red disabled:opacity-60" />
-                {puedeEditar && numSocio !== a.numero_socio && (
-                  <button onClick={() => onGestion({ numero_socio: numSocio })} className="mt-1.5 bg-pm-navy text-white text-xs font-bold px-3 py-1.5 rounded-lg">Guardar nº</button>
-                )}
-              </div>
-            </div>
-            <p className="text-xs text-gray-400 mt-2">Cuota reducida 40 € hasta el 27/09/2026; 60 € desde el 28/09. El pago se registra a mano (sin cobro online).</p>
-          </div>
-
-          {/* Portal de Familias — datos visibles para la familia */}
-          <div className="border-t border-gray-100 pt-4">
-            <div className="text-xs font-black text-pm-navy uppercase tracking-wider mb-3">
-              Portal de Familias <span className="text-gray-400 font-medium normal-case">· lo que ve la familia</span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Foto del alumno</label>
-                {puedeEditar ? (
-                  <SubirImagen value={a.foto_url} onChange={url => onGestion({ foto_url: url })} carpeta="club-alumnos" />
-                ) : a.foto_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={a.foto_url} alt={a.nombre} className="w-24 h-24 rounded-xl object-cover border border-gray-200" />
-                ) : (
-                  <span className="text-xs text-gray-400">Sin foto</span>
-                )}
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Horario (visible)</label>
-                <input value={horario} disabled={!puedeEditar} onChange={e => setHorario(e.target.value)}
-                  placeholder="Ej. Lunes y miércoles · 16:00–17:00"
-                  className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-pm-red disabled:opacity-60" />
-                {puedeEditar && horario !== a.horario && (
-                  <button onClick={() => onGestion({ horario })} className="mt-1.5 bg-pm-navy text-white text-xs font-bold px-3 py-1.5 rounded-lg">Guardar horario</button>
-                )}
-              </div>
-            </div>
-            <div className="mt-3">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Enlace al grupo de WhatsApp <span className="text-gray-300 normal-case">(opcional · anula el del grupo)</span></label>
-              <input value={whatsapp} disabled={!puedeEditar} onChange={e => setWhatsapp(e.target.value)} placeholder="https://chat.whatsapp.com/…"
-                className="w-full border border-gray-200 rounded-lg px-2.5 py-2 text-sm focus:outline-none focus:border-pm-red disabled:opacity-60" />
-              {puedeEditar && whatsapp !== a.whatsapp_url && (
-                <button onClick={() => onGestion({ whatsapp_url: whatsapp })} className="mt-1.5 bg-pm-navy text-white text-xs font-bold px-3 py-1.5 rounded-lg">Guardar enlace</button>
-              )}
-            </div>
-
-            <div className="mt-3">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">Observaciones visibles para la familia</label>
-              <textarea value={obsFam} disabled={!puedeEditar} onChange={e => setObsFam(e.target.value)} rows={2}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-pm-red resize-none disabled:opacity-60"
-                placeholder="Mensaje o información que verá la familia (no son las notas internas)" />
-              {puedeEditar && obsFam !== a.observaciones_familia && (
-                <button onClick={() => onGestion({ observaciones_familia: obsFam })} className="mt-1.5 bg-pm-navy text-white text-xs font-bold px-3 py-1.5 rounded-lg">Guardar observación</button>
-              )}
-            </div>
-          </div>
-
-          {/* Estado + importe mensual */}
-          <div>
-            <div className="text-xs font-black text-pm-navy uppercase tracking-wider mb-2">Estado e importe mensual</div>
-            <div className="grid grid-cols-5 gap-2">
-              {MESES_TEMPORADA.map(m => {
-                const estado = (a.pagos[m.key] ?? '') as EstadoPago | ''
-                const meta = estado ? ESTADO_PAGO_META[estado] : null
-                const cents = a.pagos_meta[m.key]?.importe_cents
-                return (
-                  <button key={m.key} disabled={!puedeEditar} onClick={() => onEditMes(m.key)} title="Clic para editar estado e importe"
-                    className={`flex flex-col items-center gap-0.5 rounded-xl border py-2 transition-colors ${meta ? 'border-transparent' : 'border-gray-200'} ${editableBg(estado)}`}>
-                    <span className="text-[11px] font-bold text-gray-600">{m.label}</span>
-                    <span className={`w-3.5 h-3.5 rounded-full ${meta ? meta.dot : 'bg-white border border-gray-300'}`} />
-                    <span className="text-[10px] font-bold text-gray-500 leading-none h-3">{typeof cents === 'number' && cents > 0 ? eurosCuota(cents).replace(' €', '€') : ''}</span>
-                  </button>
-                )
-              })}
-            </div>
-            <p className="text-xs text-gray-400 mt-2">Clic en cada mes para editar estado, importe, fecha y observación.</p>
-
-            {/* Totales de la temporada (punto 24) */}
-            {(() => {
-              const r = resumenAlumno(a)
-              return (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
-                  <ResumenDato label="Pagado" valor={eurosCuota(r.pagadoCents)} tono="text-green-700" />
-                  <ResumenDato label="Pendiente" valor={eurosCuota(r.pendienteCents)} tono="text-amber-700" />
-                  <ResumenDato label="Meses pagados" valor={String(r.pagados)} />
-                  <ResumenDato label="Meses pendientes" valor={String(r.pendientes)} />
-                  <ResumenDato label="Meses de baja" valor={String(r.bajas)} />
-                </div>
-              )
-            })()}
-          </div>
-
           {/* Historial de cambios económicos */}
           <HistorialAlumno submissionId={a.id} />
 
@@ -1100,6 +1000,18 @@ function FichaAlumno({ a, puedeEditar, gruposActividad, cuotaCfg, onClose, onGes
               <button onClick={() => onGestion({ observaciones: obs })} className="mt-2 bg-pm-navy text-white text-xs font-bold px-4 py-2 rounded-lg">Guardar observaciones</button>
             )}
           </div>
+
+          {/* Eliminar la inscripción (duplicada o mal hecha) */}
+          {puedeBorrar && (
+            <div className="border-t border-gray-100 pt-4">
+              <button
+                onClick={() => { if (window.confirm(`¿Eliminar la inscripción de ${a.nombre} ${a.apellidos} en ${a.actividad || 'sin actividad'}?\n\nSe borran también sus pagos del curso y su vínculo con la familia. No se puede deshacer.`)) onEliminar() }}
+                className="text-xs font-bold text-red-600 border border-red-200 hover:bg-red-50 px-4 py-2 rounded-xl">
+                Eliminar esta inscripción
+              </button>
+              <p className="text-xs text-gray-400 mt-1.5">Úsalo solo con inscripciones duplicadas o equivocadas. Si el alumno se va, mejor ponle «Baja» en el estado general.</p>
+            </div>
+          )}
 
           {/* Acciones de contacto */}
           <div className="flex gap-2 flex-wrap border-t border-gray-100 pt-4">

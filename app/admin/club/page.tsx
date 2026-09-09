@@ -108,6 +108,7 @@ export default async function ClubPage() {
           alumnos={alumnos}
           grupos={gruposRes.rows}
           puedeEditar={admin ? can.edit(admin.role) : false}
+          puedeBorrar={admin ? can.manageFinance(admin.role) : false}
           gestionOk={gestionRes.ok}
           temporadaActiva={temporadaActiva}
           clubConfig={clubConfig}
