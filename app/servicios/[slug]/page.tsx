@@ -333,7 +333,7 @@ export default async function ServicioPage({ params }: Props) {
           <h2 className="text-3xl font-black mb-3">¿Tienes dudas? Llámanos</h2>
           <p className="text-red-100 mb-6">Estaremos encantados de ayudarte a elegir la mejor opción</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="tel:+34657604665" className="text-2xl font-black hover:underline">657 604 665</a>
+            <a href="tel:+34657606465" className="text-2xl font-black hover:underline">657 606 465</a>
             <a
               href={waNegocio(`Hola 👋, me gustaría recibir información sobre ${servicio.nombre} de Planeta Movimiento.`)}
               target="_blank"

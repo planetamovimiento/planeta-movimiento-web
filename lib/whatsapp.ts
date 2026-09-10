@@ -3,7 +3,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Número de WhatsApp del negocio (Planeta Movimiento). */
-export const WHATSAPP_NEGOCIO = '34657604665'
+export const WHATSAPP_NEGOCIO = '34657606465'
 
 /** Normaliza un teléfono a formato wa.me con prefijo de España (34). */
 export function telefonoWa(tel: string): string {

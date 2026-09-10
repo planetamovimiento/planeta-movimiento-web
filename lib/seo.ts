@@ -20,7 +20,7 @@ export const NEGOCIO_JSONLD = {
   url: SITE_URL,
   logo: `${SITE_URL}/logo.png`,
   image: `${SITE_URL}/og.png`,
-  telephone: '+34657604665',
+  telephone: '+34657606465',
   email: 'info@planetamovimiento.com',
   address: {
     '@type': 'PostalAddress',

@@ -61,7 +61,7 @@ export default function Footer() {
             <div className="space-y-2 text-sm text-white/70">
               <p>Polígono Los Palancares, 8 · 16004 Cuenca</p>
               <p><a href="mailto:info@planetamovimiento.com" className="hover:text-pm-red transition-colors">info@planetamovimiento.com</a></p>
-              <p><a href="tel:+34657604665" className="hover:text-pm-red transition-colors">657 604 665</a></p>
+              <p><a href="tel:+34657606465" className="hover:text-pm-red transition-colors">657 606 465</a></p>
             </div>
           </div>
         </div>
