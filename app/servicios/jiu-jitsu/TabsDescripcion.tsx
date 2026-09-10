@@ -36,7 +36,7 @@ export default function TabsDescripcion() {
             </p>
             <p>
               Nuestras clases están impartidas por <strong className="text-pm-navy">especialistas de la Academia Adamas de Madrid</strong>,
-              que se desplazan cada sábado a nuestras instalaciones en Cuenca para ofrecer clases de alto nivel.
+              que se desplazan a Cuenca para ofrecer clases de alto nivel. Entrenamos en el pabellón municipal de El Sargal.
             </p>
             <p>
               Aprenderás posiciones básicas, barridos, guardias, sumisiones y estrategia de combate en un ambiente
@@ -74,8 +74,8 @@ export default function TabsDescripcion() {
                   </div>
                 </div>
                 <p className="text-xs text-gray-600 leading-relaxed">
-                  Colaboramos con la Academia Adamas de Madrid, trayendo cada sábado a sus instructores
-                  certificados a nuestras instalaciones. Una oportunidad única de recibir enseñanza de alto nivel
+                  Colaboramos con la Academia Adamas de Madrid, trayendo a sus instructores certificados al
+                  pabellón municipal de El Sargal. Una oportunidad única de recibir enseñanza de alto nivel
                   sin desplazarte a la capital.
                 </p>
               </div>
@@ -86,9 +86,9 @@ export default function TabsDescripcion() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
                 { label: 'Edad mínima', valor: '16 años' },
-                { label: 'Duración', valor: '2 horas' },
-                { label: 'Día', valor: 'Sábados' },
-                { label: 'Horario', valor: '11:30 – 13:30' },
+                { label: 'Días', valor: 'Mar · Jue · Sáb' },
+                { label: 'Horario', valor: '19:00 / 20:00 / 11:30' },
+                { label: 'Lugar', valor: 'El Sargal' },
               ].map(({ label, valor }) => (
                 <div key={label} className="bg-pm-bg rounded-xl p-4 text-center">
                   <div className="font-black text-pm-navy text-base">{valor}</div>
@@ -101,13 +101,13 @@ export default function TabsDescripcion() {
               <div className="bg-slate-800 text-white rounded-xl p-5">
                 <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Precio</div>
                 <div className="text-3xl font-black text-white">60 €</div>
-                <div className="text-slate-400 text-sm">por mes · todos los sábados</div>
+                <div className="text-slate-400 text-sm">por mes · martes, jueves y sábados</div>
                 <div className="text-xs text-slate-500 mt-2">Temporada septiembre – junio</div>
               </div>
               <div className="bg-pm-bg rounded-xl p-5">
                 <div className="text-xs font-bold text-pm-navy uppercase tracking-wider mb-2">Temporada</div>
                 <div className="font-black text-pm-navy text-lg">Sept – Junio</div>
-                <div className="text-gray-500 text-sm mt-1">Clases todos los sábados del curso</div>
+                <div className="text-gray-500 text-sm mt-1">Tres entrenamientos por semana</div>
                 <div className="text-xs text-gray-400 mt-2">Sin clases en periodos festivos</div>
               </div>
             </div>
@@ -153,24 +153,31 @@ export default function TabsDescripcion() {
                   <th className="text-slate-300 font-bold px-3 py-2.5 text-center">Miércoles</th>
                   <th className="text-slate-300 font-bold px-3 py-2.5 text-center">Jueves</th>
                   <th className="text-slate-300 font-bold px-3 py-2.5 text-center">Viernes</th>
-                  <th className="text-white font-black px-3 py-2.5 text-center">Sábado ⭐</th>
+                  <th className="text-white font-black px-3 py-2.5 text-center">Sábado</th>
                 </tr>
               </thead>
               <tbody>
-                <tr className="border-t border-slate-700">
-                  <td className="text-slate-400 font-semibold px-4 py-4 whitespace-nowrap">11:30 – 13:30</td>
-                  {['', '', '', '', ''].map((_, i) => (
-                    <td key={i} className="px-2 py-3 text-center">
-                      <span className="text-slate-700">—</span>
-                    </td>
-                  ))}
-                  <td className="px-2 py-3 text-center">
-                    <span className="inline-block bg-pm-red text-white font-black px-3 py-2 rounded-lg text-center w-full leading-tight">
-                      BJJ<br/>
-                      <span className="text-red-200 font-normal text-xs">Academia Adamas</span>
-                    </span>
-                  </td>
-                </tr>
+                {[
+                  { franja: '19:00 – 20:30', dia: 2 },
+                  { franja: '20:00 – 21:30', dia: 4 },
+                  { franja: '11:30 – 13:30', dia: 6 },
+                ].map(fila => (
+                  <tr key={fila.franja} className="border-t border-slate-700">
+                    <td className="text-slate-400 font-semibold px-4 py-4 whitespace-nowrap">{fila.franja}</td>
+                    {[1, 2, 3, 4, 5, 6].map(d => (
+                      <td key={d} className="px-2 py-3 text-center">
+                        {d === fila.dia ? (
+                          <span className="inline-block bg-pm-red text-white font-black px-3 py-2 rounded-lg text-center w-full leading-tight">
+                            BJJ<br/>
+                            <span className="text-red-200 font-normal text-xs">El Sargal</span>
+                          </span>
+                        ) : (
+                          <span className="text-slate-700">—</span>
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

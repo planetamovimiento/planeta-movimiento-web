@@ -111,12 +111,12 @@ export const CATALOGO_SERVICIOS: ServicioCatalogo[] = [
     id: 'jiu-jitsu', icon: '🥋', ...D,
     nombre: 'Jiu-Jitsu Brasileño', entidad: 'club', categoria: 'Club', tipo: 'clase',
     descripcionCorta: 'Arte marcial de agarre y suelo. Con Academia Adamas (Madrid).',
-    descripcionLarga: 'Fundamentos y práctica de BJJ con instructores de Academia Adamas. Sábados 11:30-13:30.',
-    edad: '+16 años', precio: 60, horarios: 'Sábados 11:30 – 13:30', estado: 'activo',
+    descripcionLarga: 'Fundamentos y práctica de BJJ con instructores de Academia Adamas, en el pabellón municipal de El Sargal. Martes de 19:00 a 20:30, jueves de 20:00 a 21:30 y sábados de 11:30 a 13:30.',
+    edad: '+16 años', precio: 60, horarios: 'Martes 19:00 – 20:30 · Jueves 20:00 – 21:30 · Sábados 11:30 – 13:30', estado: 'activo',
     botonTexto: 'Solicitar inscripción', botonAccion: 'formulario', enlace: '/servicios/jiu-jitsu',
     profesores: 'Academia Adamas · Madrid',
     preciosClub: [
-      { concepto: 'Sábados · 1 sesión de 1 h 30 min · ~4 sábados al mes', precio: '60 €/mes' },
+      { concepto: 'Martes, jueves y sábados · ~12 sesiones al mes', precio: '60 €/mes' },
     ],
   },
   {

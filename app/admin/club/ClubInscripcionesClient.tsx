@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useTransition, useCallback } from 'react'
-import { horarioTexto, horarioDeGrupo as horarioOficial } from '@/lib/club/horarios'
+import { horarioTexto, diasDeGrupoOficial } from '@/lib/club/horarios'
 import { Metric, EmptyState } from '@/components/admin/ui'
 import { waCliente } from '@/lib/whatsapp'
 import {
@@ -1226,7 +1226,8 @@ function horarioDeGrupo(grupos: Grupo[], grupo: string, actividad: string): stri
 
 /** Días de clase del grupo: los del horario oficial y, si no hay, los que se deducen del texto. */
 function diasDeGrupo(grupos: Grupo[], grupo: string, actividad: string): number[] {
-  return horarioOficial(actividad, grupo)?.dias ?? diasDeHorario(horarioDeGrupo(grupos, grupo, actividad))
+  const oficiales = diasDeGrupoOficial(actividad, grupo)
+  return oficiales.length ? oficiales : diasDeHorario(horarioDeGrupo(grupos, grupo, actividad))
 }
 
 function ModalAsistencia({ actividadInicial, grupoInicial, temporada, actividades, grupos, gruposParaActividad, onClose }: {

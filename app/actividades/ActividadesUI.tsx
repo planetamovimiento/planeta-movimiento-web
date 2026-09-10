@@ -129,7 +129,7 @@ const SERVICIOS: Servicio[] = [
   {
     id: 'jiujitsu',
     nombre: 'Jiu-Jitsu Brasileño',
-    desc: 'Arte marcial de agarre y suelo. Todos los sábados 11:30-13:30 con instructores de Academia Adamas (Madrid).',
+    desc: 'Arte marcial de agarre y suelo con instructores de Academia Adamas (Madrid). Martes, jueves y sábados en el pabellón municipal de El Sargal.',
     edad: 'Mayores de 16 años',
     href: '/servicios/jiu-jitsu',
     icon: '🥋',

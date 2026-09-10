@@ -9,7 +9,7 @@ import TabsDescripcion from './TabsDescripcion'
 export const metadata = {
   title: 'Jiu-Jitsu Brasileño — Academia Adamas | Planeta Movimiento',
   description:
-    'Clases de Jiu-Jitsu Brasileño para mayores de 16 años, impartidas por especialistas de la Academia Adamas de Madrid. Todos los sábados de 11:30 a 13:30 en Cuenca.',
+    'Clases de Jiu-Jitsu Brasileño para mayores de 16 años con especialistas de la Academia Adamas de Madrid, en el pabellón municipal de El Sargal (Cuenca). Martes, jueves y sábados.',
 }
 
 export default function JiuJitsuPage() {
@@ -112,8 +112,11 @@ export default function JiuJitsuPage() {
                 técnica, palancas y estrangulaciones — no fuerza bruta.
               </p>
               <p>
-                Cada sábado vienen desde Madrid los <strong className="text-pm-navy">instructores especializados de la Academia Adamas</strong> a
-                impartir clases de alto nivel directamente en Cuenca.
+                Los <strong className="text-pm-navy">instructores especializados de la Academia Adamas</strong> vienen desde Madrid
+                para impartir clases de alto nivel directamente en Cuenca.
+              </p>
+              <p>
+                Entrenamos en el <strong className="text-pm-navy">pabellón municipal de El Sargal</strong>, cedido por el Ayuntamiento de Cuenca.
               </p>
               <p>
                 Un arte marcial que <strong className="text-pm-navy">desarrolla la mente, la estrategia y el cuerpo</strong> por igual.
@@ -126,12 +129,13 @@ export default function JiuJitsuPage() {
               <div>
                 <div className="text-slate-400 text-xs uppercase tracking-wider mb-1">Mensualidad</div>
                 <div className="text-4xl font-black">60 €</div>
-                <div className="text-slate-400 text-sm">/ mes · todos los sábados</div>
+                <div className="text-slate-400 text-sm">/ mes · 3 días por semana</div>
               </div>
               <div className="border-l border-slate-700 pl-5 text-sm text-slate-300 space-y-1">
                 <div>📅 Septiembre – Junio</div>
-                <div>⏱ 2 horas/sesión</div>
-                <div>🕑 11:30 – 13:30</div>
+                <div>🕖 Martes 19:00 – 20:30</div>
+                <div>🕗 Jueves 20:00 – 21:30</div>
+                <div>🕚 Sábados 11:30 – 13:30</div>
               </div>
             </div>
 
@@ -139,8 +143,8 @@ export default function JiuJitsuPage() {
             <div className="flex flex-wrap gap-2 mb-8">
               {[
                 { icon: '🥋', texto: 'Mayores de 16 años' },
-                { icon: '📅', texto: 'Sábados' },
-                { icon: '⏱',  texto: '2 horas/sesión' },
+                { icon: '📅', texto: 'Martes, jueves y sábados' },
+                { icon: '📍', texto: 'Pabellón municipal de El Sargal' },
                 { icon: '🏙️', texto: 'Instructores de Madrid' },
                 { icon: '🛡',  texto: 'Todos los niveles' },
               ].map(({ icon, texto }) => (
@@ -157,7 +161,7 @@ export default function JiuJitsuPage() {
               <svg className="w-3.5 h-3.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
               </svg>
-              60 € / mes · pago al inicio de cada mes
+              60 € / mes · pago al inicio de cada mes · pabellón municipal de El Sargal
             </p>
 
             {/* Precios informativos (Temporada activa) */}

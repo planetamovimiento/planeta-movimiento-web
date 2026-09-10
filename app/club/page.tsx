@@ -42,7 +42,7 @@ const DISCIPLINAS = [
   },
   {
     nombre: 'Jiu-Jitsu Brasileño',
-    desc: 'Arte marcial de suelo en colaboración con Academia Adamas (Madrid). Disciplina, técnica y confianza. Sábados 11:30-13:30.',
+    desc: 'Arte marcial de suelo en colaboración con Academia Adamas (Madrid). Martes, jueves y sábados en el pabellón municipal de El Sargal.',
     edad: '+16 años · 60 €/mes', foto: '/fotos/jiu-jitsu/1.webp', grad: 'from-slate-800 to-pm-navy',
     href: '/servicios/jiu-jitsu',
   },

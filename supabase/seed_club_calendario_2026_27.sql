@@ -1,6 +1,6 @@
 -- ═══════════════════════════════════════════════════════════════════════════
 -- SEED · Clases de TODO el Club en el Calendario Club (temporada 2026/27)
--- Acrobática, Telas (Escuela de aéreos), Infantil, JJB (sábados) y Bienestar.
+-- Acrobática, Telas (Escuela de aéreos), Infantil, JJB (mar/jue/sáb) y Bienestar.
 -- Borra las clases 2026/27 existentes y las vuelve a crear: idempotente.
 -- Ejecutar en Supabase → SQL Editor. Requiere migration_calendario_club.sql.
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -31,5 +31,8 @@ values
   ('clase', 'Infantil · Infantil 4', 'Escuela infantil', 'Infantil 4', '2026/27', '2026-09-01', '17:00', '18:00', false, '{"dias":[2,4],"hasta":"2027-06-30","excluir_festivos":true,"excluir_sin_clase":true}'::jsonb, true, 'activo'),
   ('clase', 'Infantil · Infantil 5', 'Escuela infantil', 'Infantil 5', '2026/27', '2026-09-01', '16:00', '17:00', false, '{"dias":[5],"hasta":"2027-06-30","excluir_festivos":true,"excluir_sin_clase":true}'::jsonb, true, 'activo'),
   ('clase', 'Infantil · Infantil 6', 'Escuela infantil', 'Infantil 6', '2026/27', '2026-09-01', '17:00', '18:00', false, '{"dias":[5],"hasta":"2027-06-30","excluir_festivos":true,"excluir_sin_clase":true}'::jsonb, true, 'activo'),
+  -- JJB: pabellón municipal de El Sargal, tres tramos con horas distintas.
+  ('clase', 'JJB · JJB 1', 'Jiu-Jitsu Brasileño', 'JJB 1', '2026/27', '2026-09-01', '19:00', '20:30', false, '{"dias":[2],"hasta":"2027-06-30","excluir_festivos":true,"excluir_sin_clase":true}'::jsonb, true, 'activo'),
+  ('clase', 'JJB · JJB 1', 'Jiu-Jitsu Brasileño', 'JJB 1', '2026/27', '2026-09-01', '20:00', '21:30', false, '{"dias":[4],"hasta":"2027-06-30","excluir_festivos":true,"excluir_sin_clase":true}'::jsonb, true, 'activo'),
   ('clase', 'JJB · JJB 1', 'Jiu-Jitsu Brasileño', 'JJB 1', '2026/27', '2026-09-01', '11:30', '13:30', false, '{"dias":[6],"hasta":"2027-06-30","excluir_festivos":true,"excluir_sin_clase":true}'::jsonb, true, 'activo'),
   ('clase', 'Bienestar · Bienestar 1', 'Escuela de Bienestar', 'Bienestar 1', '2026/27', '2026-09-01', '10:00', '11:00', false, '{"dias":[1,2,3,4,5],"hasta":"2027-06-30","excluir_festivos":true,"excluir_sin_clase":true}'::jsonb, true, 'activo');

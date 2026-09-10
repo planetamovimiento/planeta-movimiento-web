@@ -7,7 +7,7 @@ import { cuotaMensualTexto } from '@/lib/club/cuota'
 const NIVELES = ['Sin experiencia previa', 'Principiante (< 1 año)', 'Intermedio (1-3 años)', 'Avanzado (> 3 años)']
 
 const MODALIDADES: Modalidad[] = [
-  { id: 'mensual', label: 'Mensualidad', sublabel: 'Todos los sábados del mes', precio: cuotaMensualTexto('Jiu-Jitsu Brasileño', 1) },
+  { id: 'mensual', label: 'Mensualidad', sublabel: 'Martes, jueves y sábados', precio: cuotaMensualTexto('Jiu-Jitsu Brasileño', 1) },
 ]
 
 export function BotonApuntarme() {
