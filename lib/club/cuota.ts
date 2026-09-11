@@ -43,7 +43,7 @@ export type CuotaMensualActividad = { actividad: string; opciones: { label: stri
 export const CUOTAS_MENSUALES: CuotaMensualActividad[] = [
   { actividad: 'Gimnasia Acrobática', opciones: [{ label: '1 hora', cents: 4500, trimestralCents: 12000 }, { label: '2 horas', cents: 7000, trimestralCents: 19000 }, { label: '3 horas', cents: 10000, trimestralCents: 28500 }] },
   { actividad: 'Escuela de aéreos', opciones: [{ label: '1 hora', cents: 4500, trimestralCents: 12000 }, { label: '2 horas', cents: 7000, trimestralCents: 19000 }, { label: '3 horas', cents: 10000, trimestralCents: 28500 }] },
-  { actividad: 'Escuela infantil', opciones: [{ label: '1 día', cents: 4000, trimestralCents: 10500 }, { label: '2 días', cents: 6500, trimestralCents: 18000 }, { label: '3 días', cents: 9000 }] },
+  { actividad: 'Escuela infantil', opciones: [{ label: '1 día', cents: 4000, trimestralCents: 10500 }, { label: '2 días', cents: 6500, trimestralCents: 17500 }, { label: '3 días', cents: 9000 }] },
   { actividad: 'Jiu-Jitsu Brasileño', opciones: [{ label: 'Cuota', cents: 6000 }] },
   { actividad: 'Escuela de Bienestar', opciones: [{ label: '1 clase', cents: 3500 }, { label: '2 clases', cents: 5000 }] },
 ]

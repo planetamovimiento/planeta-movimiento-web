@@ -103,7 +103,7 @@ export const CATALOGO_SERVICIOS: ServicioCatalogo[] = [
       { concepto: '2 días/semana · ~8 sesiones al mes', precio: '65 €/mes' },
       { concepto: '3 días/semana · ~12 sesiones al mes', precio: '90 €/mes' },
       { concepto: '1 día/semana · pago trimestral (3 meses)', precio: '105 €/trimestre' },
-      { concepto: '2 días/semana · pago trimestral (3 meses)', precio: '180 €/trimestre' },
+      { concepto: '2 días/semana · pago trimestral (3 meses)', precio: '175 €/trimestre' },
     ],
     preciosNota: 'Pagando el trimestre por adelantado (3 meses) te ahorras respecto al pago mes a mes. Indícalo al inscribirte.',
   },
