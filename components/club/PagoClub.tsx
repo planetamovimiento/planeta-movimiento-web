@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { CLUB_IBAN, CLUB_BANCO, CLUB_TITULAR, conceptoPago } from '@/lib/club/pago'
+import { DESCUENTO_HERMANOS, tieneDescuentoHermanos, eurosCuota } from '@/lib/club/cuota'
 
 /**
  * Bloque de información de pago para las actividades del Club Deportivo Origen.
@@ -46,6 +47,17 @@ export function PagoClub({ actividad, className = '' }: { actividad?: string; cl
           <div className="text-[11px] uppercase tracking-wider text-gray-400 font-bold">Concepto de la transferencia</div>
           <div className="text-pm-navy text-sm mt-0.5 font-semibold">{conceptoPago(actividad)}</div>
         </div>
+
+        {/* Descuento por hermanos (informativo: se descuenta al pagar) */}
+        {actividad && tieneDescuentoHermanos(actividad) && (
+          <div className="bg-green-50 border border-green-100 rounded-lg p-3">
+            <div className="text-[11px] uppercase tracking-wider text-green-700 font-bold">Descuento por hermanos</div>
+            <div className="text-green-800 text-xs mt-0.5 leading-relaxed">
+              {eurosCuota(DESCUENTO_HERMANOS.mensualCents)} menos al mes por cada hermano inscrito,
+              o {eurosCuota(DESCUENTO_HERMANOS.trimestralCents)} si pagáis el trimestre. Descontadlo vosotros al hacer la transferencia.
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

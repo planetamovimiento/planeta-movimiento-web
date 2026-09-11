@@ -48,6 +48,24 @@ export const CUOTAS_MENSUALES: CuotaMensualActividad[] = [
   { actividad: 'Escuela de Bienestar', opciones: [{ label: '1 clase', cents: 3500 }, { label: '2 clases', cents: 5000 }] },
 ]
 
+// ── Descuento por hermanos (punto informativo: el pago es manual) ─────────────
+// 5 € al mes por hermano, o 15 € si se paga el trimestre. Solo en estas
+// actividades (Escuela de Bienestar no lo tiene).
+export const DESCUENTO_HERMANOS = { mensualCents: 500, trimestralCents: 1500 } as const
+
+const sinAcentos = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase()
+const CON_DESCUENTO_HERMANOS = [
+  // nombres de actividad (formularios, CRM)
+  'gimnasia acrobatica', 'escuela de aereos', 'telas aereas', 'escuela infantil', 'jiu-jitsu brasileno',
+  // ids de servicio (páginas)
+  'gimnasia-acrobatica', 'telas-aereas', 'escuela-infantil', 'jiu-jitsu',
+]
+
+/** ¿Esta actividad (o id de servicio) tiene descuento por hermanos? */
+export function tieneDescuentoHermanos(actividadOServicio: string): boolean {
+  return CON_DESCUENTO_HERMANOS.includes(sinAcentos(actividadOServicio || ''))
+}
+
 /** Céntimos de la cuota mensual de una actividad para el nivel N (1,2,3…). null si no hay tarifa. */
 export function cuotaMensualCents(actividad: string, tier: number): number | null {
   const a = CUOTAS_MENSUALES.find(c => c.actividad.trim().toLowerCase() === actividad.trim().toLowerCase())

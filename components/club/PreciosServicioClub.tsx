@@ -2,6 +2,7 @@ import { getServicio } from '@/lib/servicios/store'
 import { getTemporadaActiva } from '@/lib/config/store'
 import { temporadaDisplay } from '@/lib/club/constants'
 import { AvisoCuotaClub } from '@/components/club/CuotaSocio'
+import { DESCUENTO_HERMANOS, tieneDescuentoHermanos, eurosCuota } from '@/lib/club/cuota'
 
 /** Servicios del Club que llevan cuota anual de socio. */
 const SERVICIOS_CON_SOCIO = ['gimnasia-acrobatica', 'telas-aereas', 'escuela-infantil']
@@ -38,6 +39,13 @@ export async function PreciosServicioClub({ servicioId }: { servicioId: string }
       )}
 
       {nota && <p className="text-sm text-gray-600 leading-relaxed">{nota}</p>}
+
+      {tieneDescuentoHermanos(servicioId) && (
+        <p className="text-sm text-green-800 bg-green-50 border border-green-100 rounded-xl px-3 py-2 mt-3 leading-snug">
+          👨‍👩‍👧 <strong>Descuento por hermanos:</strong> {eurosCuota(DESCUENTO_HERMANOS.mensualCents)} menos al mes
+          por cada hermano inscrito, o {eurosCuota(DESCUENTO_HERMANOS.trimestralCents)} si pagáis el trimestre.
+        </p>
+      )}
 
       <p className="text-xs text-gray-400 mt-4 flex items-start gap-1.5">
         <svg className="w-3.5 h-3.5 text-green-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/></svg>
