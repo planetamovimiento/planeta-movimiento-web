@@ -37,8 +37,8 @@ export default function Calendario({ actividades, nombreMonitor, onEditarActivid
   const Chip = ({ a }: { a: Actividad }) => {
     const contenido = <>{a.hora_inicio && <span className="font-bold">{a.hora_inicio} </span>}{a.actividad}{nombreMonitor ? ` · ${nombreMonitor(a.monitor_id)}` : ''}</>
     const titulo = `${a.hora_inicio || ''} ${a.actividad}${a.lugar ? ' · ' + a.lugar : ''}${onEditarActividad ? ' · pulsa para editar' : ''}`
-    const cls = 'block w-full text-left text-[11px] leading-tight bg-pm-red-light text-pm-red rounded px-1.5 py-0.5 truncate'
-    return onEditarActividad
+    const cls = `block w-full text-left text-[11px] leading-tight rounded px-1.5 py-0.5 truncate ${a.auto ? 'bg-blue-50 text-blue-700' : 'bg-pm-red-light text-pm-red'}`
+    return onEditarActividad && !a.auto
       ? <button type="button" onClick={() => onEditarActividad(a)} className={`${cls} hover:bg-pm-red hover:text-white cursor-pointer`} title={titulo}>{contenido}</button>
       : <div className={cls} title={titulo}>{contenido}</div>
   }
@@ -127,7 +127,7 @@ export default function Calendario({ actividades, nombreMonitor, onEditarActivid
                   </div>
                 </>
               )
-              return onEditarActividad
+              return onEditarActividad && !a.auto
                 ? <button key={a.id} type="button" onClick={() => onEditarActividad(a)} className="w-full flex items-start gap-3 border border-gray-100 rounded-xl p-3 text-left hover:border-pm-red/50 hover:bg-pm-red-light/20">{fila}<span className="ml-auto text-gray-300 text-xs self-center">✎ editar</span></button>
                 : <div key={a.id} className="flex items-start gap-3 border border-gray-100 rounded-xl p-3">{fila}</div>
             })}

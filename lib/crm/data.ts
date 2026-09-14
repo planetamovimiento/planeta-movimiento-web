@@ -66,7 +66,7 @@ export function servicioNormalizado(servicio: string): string {
   return /fiesta\s+privada/i.test(servicio) ? 'Cumpleaños · Fiesta privada' : servicio
 }
 
-function categoriaDe(servicio: string): string {
+export function categoriaDe(servicio: string): string {
   const s = servicio.toLowerCase()
   if (s.includes('cumpleañ')) return 'Cumpleaños'
   if (s.includes('campamento')) return 'Campamentos'

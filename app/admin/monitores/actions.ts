@@ -5,6 +5,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getAdminUser, can, logActivity } from '@/lib/admin/auth'
 import { getMonitorPorEmail, getFichajeAbierto } from '@/lib/monitores/data'
 import { tipoDocumento, CARPETAS_DEFAULT } from '@/lib/monitores/constants'
+import { setReglasMonitor } from '@/lib/monitores/reglas'
+import type { ReglaMonitor } from '@/lib/monitores/tipos'
 
 type Res = { ok: true } | { ok: false; error: string }
 
@@ -373,6 +375,30 @@ export async function eliminarDocumento(id: string): Promise<Res> {
   const db = createAdminClient()
   const { error } = await db.from('recursos_documentos').delete().eq('id', id)
   if (error) return { ok: false, error: error.message }
+  revalidatePath('/admin/monitores')
+  return { ok: true }
+}
+// ── Reglas del calendario automático ──────────────────────────────────────────
+
+/**
+ * Guarda las reglas de asignación automática de un monitor (qué categorías de la
+ * empresa o actividades del club le tocan y qué días). Sin reglas = sin nada automático.
+ */
+export async function guardarReglasMonitor(monitorId: string, reglas: ReglaMonitor[]): Promise<Res> {
+  const admin = await getAdminUser()
+  if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
+  if (!monitorId) return { ok: false, error: 'Monitor no válido' }
+  const limpias = (reglas || [])
+    .filter(r => (r.ambito === 'empresa' || r.ambito === 'club') && r.categoria?.trim() && r.dias?.length)
+    .map(r => ({
+      id: r.id || crypto.randomUUID(),
+      ambito: r.ambito,
+      categoria: r.categoria.trim(),
+      dias: [...new Set(r.dias.map(Number).filter(d => d >= 1 && d <= 7))].sort((a, b) => a - b),
+    }))
+  const ok = await setReglasMonitor(monitorId, limpias, admin.email)
+  if (!ok) return { ok: false, error: 'No se pudieron guardar las reglas (¿existe la tabla global_config?)' }
+  await logActivity({ actorEmail: admin.email, accion: `Reglas del calendario automático (${limpias.length})`, entidad: 'monitor', entidadId: monitorId })
   revalidatePath('/admin/monitores')
   return { ok: true }
 }

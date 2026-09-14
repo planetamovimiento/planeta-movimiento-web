@@ -41,6 +41,21 @@ export type Actividad = {
   lugar: string
   grupo: string
   observaciones: string
+  /** Generada sola por una regla del monitor (no se edita ni se borra a mano). */
+  auto?: boolean
+}
+
+/**
+ * Regla de asignación automática: el monitor recibe en su calendario los
+ * eventos de esa categoría (empresa) o actividad (club) que caigan en esos días.
+ */
+export type ReglaMonitor = {
+  id: string
+  ambito: 'empresa' | 'club'
+  /** Empresa: categoría del CRM (Cumpleaños, Eventos…). Club: actividad (Gimnasia Acrobática…). */
+  categoria: string
+  /** 1=Lun … 7=Dom */
+  dias: number[]
 }
 
 export type Fichaje = {
