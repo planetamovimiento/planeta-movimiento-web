@@ -2,17 +2,21 @@
 
 import { useState, useMemo, useTransition } from 'react'
 import { MESES, DIAS_SEMANA, COLOR_CATEGORIA, colorDe, type EventoCalendario } from '@/lib/calendario/constants'
-import { crearEventoManual, eliminarEventoManual } from './actions'
+import { crearEventoManual, eliminarEventoManual, asignarMonitoresEvento } from './actions'
+
+type MonitorLite = { id: string; nombre: string }
 
 const HOY = new Date()
 const pad = (n: number) => String(n).padStart(2, '0')
 const iso = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}`
 const HOY_ISO = iso(HOY.getFullYear(), HOY.getMonth(), HOY.getDate())
 
-export default function CalendarioClient({ eventos: ini, servicios, puedeEditar, gestionOk }: {
-  eventos: EventoCalendario[]; servicios: string[]; puedeEditar: boolean; gestionOk: boolean
+export default function CalendarioClient({ eventos: ini, servicios, monitores, asignaciones: asigIni, puedeEditar, gestionOk }: {
+  eventos: EventoCalendario[]; servicios: string[]; monitores: MonitorLite[]; asignaciones: Record<string, string[]>
+  puedeEditar: boolean; gestionOk: boolean
 }) {
   const [eventos, setEventos] = useState<EventoCalendario[]>(ini)
+  const [asignaciones, setAsignaciones] = useState<Record<string, string[]>>(asigIni)
   const [year, setYear] = useState(HOY.getFullYear())
   const [month, setMonth] = useState(HOY.getMonth())
   const [fServicio, setFServicio] = useState('')
@@ -50,6 +54,14 @@ export default function CalendarioClient({ eventos: ini, servicios, puedeEditar,
   function delManual(id: string) {
     setEventos(prev => prev.filter(e => e.id !== id))
     startTransition(async () => { await eliminarEventoManual(id.replace(/^m-/, '')) })
+  }
+
+  function guardarMonitores(e: EventoCalendario, ids: string[]) {
+    setAsignaciones(prev => { const n = { ...prev }; if (ids.length) n[e.id] = ids; else delete n[e.id]; return n })
+    startTransition(async () => {
+      const r = await asignarMonitoresEvento(e.id, ids, e.titulo)
+      if (!r.ok) setError(r.error || 'No se pudo guardar')
+    })
   }
 
   const eventosDia = diaSel ? (porDia.get(diaSel) || []) : []
@@ -123,6 +135,7 @@ export default function CalendarioClient({ eventos: ini, servicios, puedeEditar,
       {diaSel && (
         <DiaPanel
           fecha={diaSel} eventos={eventosDia} servicios={servicios} puedeEditar={puedeEditar}
+          monitores={monitores} asignaciones={asignaciones} onMonitores={guardarMonitores}
           onClose={() => setDiaSel(null)} onAdd={addManual} onDel={delManual}
         />
       )}
@@ -131,8 +144,56 @@ export default function CalendarioClient({ eventos: ini, servicios, puedeEditar,
 }
 
 // ─── Panel de un día ────────────────────────────────────────────────────────────
-function DiaPanel({ fecha, eventos, servicios, puedeEditar, onClose, onAdd, onDel }: {
+/** Monitores de un evento: chips para marcar/desmarcar y guardar. */
+function MonitoresEvento({ evento, monitores, asignados, puedeEditar, onGuardar }: {
+  evento: EventoCalendario; monitores: MonitorLite[]; asignados: string[]; puedeEditar: boolean
+  onGuardar: (e: EventoCalendario, ids: string[]) => void
+}) {
+  const [abierto, setAbierto] = useState(false)
+  const [sel, setSel] = useState<string[]>(asignados)
+  const nombre = (id: string) => monitores.find(m => m.id === id)?.nombre ?? '—'
+  const cambiado = [...sel].sort().join() !== [...asignados].sort().join()
+
+  return (
+    <div className="mt-2 pt-2 border-t border-current/10">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-[11px] font-bold opacity-70">🧑‍🏫</span>
+        {asignados.length
+          ? asignados.map(id => <span key={id} className="text-[11px] font-bold bg-white/70 rounded-full px-2 py-0.5">{nombre(id)}</span>)
+          : <span className="text-[11px] opacity-60">Sin monitor</span>}
+        {puedeEditar && (
+          <button onClick={() => { setSel(asignados); setAbierto(v => !v) }} className="ml-auto text-[11px] font-bold underline opacity-80 hover:opacity-100">
+            {abierto ? 'Cerrar' : asignados.length ? 'Cambiar' : 'Asignar monitor'}
+          </button>
+        )}
+      </div>
+      {abierto && (
+        <div className="mt-2 bg-white rounded-lg p-2 text-pm-navy">
+          <div className="flex flex-wrap gap-1.5">
+            {monitores.map(m => {
+              const on = sel.includes(m.id)
+              return (
+                <button key={m.id} type="button" onClick={() => setSel(s => on ? s.filter(x => x !== m.id) : [...s, m.id])}
+                  className={`text-[11px] font-bold px-2 py-1 rounded-full border ${on ? 'bg-pm-navy text-white border-transparent' : 'border-gray-200 text-gray-600'}`}>
+                  {m.nombre}
+                </button>
+              )
+            })}
+          </div>
+          <button disabled={!cambiado} onClick={() => { onGuardar(evento, sel); setAbierto(false) }}
+            className="mt-2 w-full bg-pm-red hover:bg-pm-red-dark text-white text-xs font-bold py-1.5 rounded-lg disabled:opacity-40">
+            Guardar monitores
+          </button>
+          <p className="text-[10px] text-gray-400 mt-1">Les aparecerá en su calendario de monitor.</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function DiaPanel({ fecha, eventos, servicios, puedeEditar, monitores, asignaciones, onMonitores, onClose, onAdd, onDel }: {
   fecha: string; eventos: EventoCalendario[]; servicios: string[]; puedeEditar: boolean
+  monitores: MonitorLite[]; asignaciones: Record<string, string[]>; onMonitores: (e: EventoCalendario, ids: string[]) => void
   onClose: () => void; onAdd: (fecha: string, titulo: string, servicio: string, hora: string, nota: string) => void; onDel: (id: string) => void
 }) {
   const [titulo, setTitulo] = useState('')
@@ -155,15 +216,19 @@ function DiaPanel({ fecha, eventos, servicios, puedeEditar, onClose, onAdd, onDe
           {eventos.length === 0 && <p className="text-gray-400">No hay nada programado este día.</p>}
           <div className="space-y-2">
             {eventos.map(e => (
-              <div key={e.id} className={`rounded-xl p-3 ${colorDe(e.categoria)} flex items-start justify-between gap-2`}>
-                <div>
-                  <div className="font-bold text-sm">{e.titulo}</div>
-                  {e.hora && <div className="text-xs font-semibold opacity-80">🕒 {e.hora}</div>}
-                  <div className="text-xs opacity-70">{e.servicio} · {e.tipo === 'reserva' ? 'Reserva' : e.tipo === 'manual' ? 'Manual' : 'Programado'}{e.detalle ? ` · ${e.detalle}` : ''}</div>
+              <div key={e.id} className={`rounded-xl p-3 ${colorDe(e.categoria)}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="font-bold text-sm">{e.titulo}</div>
+                    {e.hora && <div className="text-xs font-semibold opacity-80">🕒 {e.hora}</div>}
+                    <div className="text-xs opacity-70">{e.servicio} · {e.tipo === 'reserva' ? 'Reserva' : e.tipo === 'manual' ? 'Manual' : 'Programado'}{e.detalle ? ` · ${e.detalle}` : ''}</div>
+                  </div>
+                  {e.tipo === 'manual' && puedeEditar && (
+                    <button onClick={() => onDel(e.id)} className="text-current/60 hover:text-red-600 shrink-0" title="Eliminar"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg></button>
+                  )}
                 </div>
-                {e.tipo === 'manual' && puedeEditar && (
-                  <button onClick={() => onDel(e.id)} className="text-current/60 hover:text-red-600 shrink-0" title="Eliminar"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg></button>
-                )}
+                <MonitoresEvento evento={e} monitores={monitores} asignados={asignaciones[e.id] ?? []}
+                  puedeEditar={puedeEditar} onGuardar={onMonitores} />
               </div>
             ))}
           </div>

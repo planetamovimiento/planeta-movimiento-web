@@ -3,6 +3,7 @@ import { getEventosCalendario } from '@/lib/calendario/data'
 import { getEventos, getExcepciones } from '@/lib/calendario-club/data'
 import { expandirOcurrencias } from '@/lib/calendario-club/expand'
 import { categoriaDe } from '@/lib/crm/data'
+import { getAsignacionesCalendario } from '@/lib/calendario/asignaciones'
 import type { Actividad, ReglaMonitor } from './tipos'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -63,11 +64,17 @@ export async function setReglasMonitor(monitorId: string, reglas: ReglaMonitor[]
  * Si se pasa `soloMonitor`, solo calcula las de ese monitor.
  */
 export async function actividadesAutomaticas(desde: string, hasta: string, soloMonitor?: string): Promise<Actividad[]> {
-  const todas = await getReglasMonitores()
-  const entradas = Object.entries(todas).filter(([id, r]) => r?.length && (!soloMonitor || id === soloMonitor))
+  const [todas, asignaciones] = await Promise.all([getReglasMonitores(), getAsignacionesCalendario()])
+  // Monitores con reglas o con algún evento asignado a mano en el calendario.
+  const conAsignacion = new Set(Object.values(asignaciones).flat())
+  const ids = new Set([...Object.keys(todas).filter(id => todas[id]?.length), ...conAsignacion])
+  const entradas: [string, ReglaMonitor[]][] = [...ids]
+    .filter(id => !soloMonitor || id === soloMonitor)
+    .map(id => [id, todas[id] ?? []])
   if (!entradas.length) return []
 
-  const quiereEmpresa = entradas.some(([, rs]) => rs.some(r => r.ambito === 'empresa'))
+  const hayAsignaciones = Object.keys(asignaciones).length > 0
+  const quiereEmpresa = hayAsignaciones || entradas.some(([, rs]) => rs.some(r => r.ambito === 'empresa'))
   const quiereClub = entradas.some(([, rs]) => rs.some(r => r.ambito === 'club'))
 
   const [empresa, club] = await Promise.all([
@@ -85,14 +92,16 @@ export async function actividadesAutomaticas(desde: string, hasta: string, soloM
       // Los eventos manuales no traen categoría: se deduce de su servicio y título.
       const categoria = e.categoria === 'Manual' ? categoriaDe(`${e.servicio} ${e.titulo}`) : e.categoria
       const dia = diaSemana(e.fecha)
+      // Asignado a mano en el calendario de la empresa, o por una de sus reglas.
+      const aMano = (asignaciones[e.id] ?? []).includes(monitorId)
       const regla = reglas.find(r => r.ambito === 'empresa' && norm(r.categoria) === norm(categoria) && r.dias.includes(dia))
-      if (!regla) continue
+      if (!aMano && !regla) continue
       const h = horas(e.hora)
       out.push({
         id: `auto:${monitorId}:${e.id}`, monitor_id: monitorId, fecha: e.fecha,
         hora_inicio: h.ini, hora_fin: h.fin,
         actividad: `⚡ ${e.titulo}`, lugar: '', grupo: '',
-        observaciones: `Automática · ${categoria}`, auto: true,
+        observaciones: aMano ? 'Asignada en el calendario' : `Automática · ${categoria}`, auto: true,
       })
     }
 

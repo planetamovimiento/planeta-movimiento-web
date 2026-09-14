@@ -3,6 +3,20 @@
 import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAdminUser, can, logActivity } from '@/lib/admin/auth'
+import { setAsignacionEvento } from '@/lib/calendario/asignaciones'
+
+/** Asigna uno o varios monitores a un evento; les aparece en su calendario. */
+export async function asignarMonitoresEvento(eventoId: string, monitorIds: string[], titulo?: string) {
+  const admin = await getAdminUser()
+  if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
+  if (!eventoId) return { ok: false, error: 'Evento no válido' }
+  const ok = await setAsignacionEvento(eventoId, monitorIds, admin.email)
+  if (!ok) return { ok: false, error: 'No se pudo guardar la asignación' }
+  await logActivity({ actorEmail: admin.email, accion: `Monitores de «${titulo || eventoId}»: ${monitorIds.length}`, entidad: 'calendario', entidadId: eventoId })
+  revalidatePath('/admin/calendario')
+  revalidatePath('/admin/monitores')
+  return { ok: true }
+}
 
 export async function crearEventoManual(input: { fecha: string; titulo: string; servicio?: string; hora?: string; nota?: string }) {
   const admin = await getAdminUser()

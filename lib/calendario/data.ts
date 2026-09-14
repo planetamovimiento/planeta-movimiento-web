@@ -18,6 +18,12 @@ function rango(inicio: string, fin: string): string[] {
   return res
 }
 
+/** Servicios cuyas reservas son plazas individuales de un evento ya programado. */
+function esPlazaDeEventoProgramado(servicio: string): boolean {
+  const t = (servicio || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+  return t.includes('dias sin cole') || t.includes('campamento')
+}
+
 export async function getEventosCalendario(): Promise<{ eventos: EventoCalendario[]; ok: boolean }> {
   const out: EventoCalendario[] = []
 
@@ -30,6 +36,10 @@ export async function getEventosCalendario(): Promise<{ eventos: EventoCalendari
       // Solo las reservas CONFIRMADAS (o ya finalizadas) aparecen en el calendario.
       // Las nuevas solicitudes (sin confirmar) y las canceladas no se muestran.
       if (r.estado_reserva !== 'confirmada' && r.estado_reserva !== 'finalizada') continue
+      // Las plazas sueltas de un evento que ya sale como programado (Días Sin Cole,
+      // campamentos) no son eventos: son personas apuntadas a ese día. En el
+      // calendario solo va el evento; los cumpleaños sí, porque se reserva entero.
+      if (esPlazaDeEventoProgramado(r.servicio)) continue
       const cumpleanero = r.categoria === 'Cumpleaños' ? String((r.datos as Record<string, unknown>)?.cumpleanero ?? '') : ''
       const nombre = cumpleanero || r.cliente_nombre
       out.push({
