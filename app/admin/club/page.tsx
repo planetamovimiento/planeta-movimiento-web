@@ -72,6 +72,7 @@ export default async function ClubPage() {
       temporada: g?.temporada ?? temporadaActiva,
       periodoInicio: str(d.periodoInicio),
       modalidad: str(d.modalidad),
+      diasAsistencia: Array.isArray(d.diasAsistencia) ? (d.diasAsistencia as unknown[]).map(Number).filter(n => n >= 1 && n <= 7) : null,
       formaPago: str(d.formaPago),
       importeModalidad: str(d.importeModalidad),
       cuota_estado: str(g?.cuota_estado),

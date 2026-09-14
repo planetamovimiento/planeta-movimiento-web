@@ -137,6 +137,8 @@ export type Alumno = {
   periodoInicio: string
   /** Modalidad elegida en la inscripción ("2 clases / semana"). '' si no consta. */
   modalidad: string
+  /** Días que viene de verdad (1=Lun … 7=Dom) si no son los de su grupo. null = los del grupo. */
+  diasAsistencia: number[] | null
   /** Forma de pago elegida por la familia: "Mensual" / "Trimestral (3 meses)". '' si no consta. */
   formaPago: string
   /** Importe de esa modalidad y forma de pago ("195 € / trimestre"). '' si no consta. */

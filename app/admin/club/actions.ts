@@ -364,3 +364,25 @@ export async function eliminarInscripcion(submissionId: string) {
   revalidatePath('/admin/familias')
   return { ok: true }
 }
+
+/**
+ * Días de la semana que viene un alumno (1=Lun … 7=Dom). Por defecto salen del
+ * horario oficial de su grupo; esto guarda la excepción (p. ej. un grupo de
+ * lunes y miércoles al que solo puede venir los lunes). null = volver al automático.
+ */
+export async function guardarDiasAlumno(submissionId: string, dias: number[] | null) {
+  const admin = await getAdminUser()
+  if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
+  const db = createAdminClient()
+
+  const { data } = await db.from('form_submissions').select('datos').eq('id', submissionId).maybeSingle()
+  if (!data) return { ok: false, error: 'No se encuentra la inscripción' }
+  const datos = { ...((data.datos ?? {}) as Record<string, unknown>) }
+  if (dias === null) delete datos.diasAsistencia
+  else datos.diasAsistencia = [...new Set(dias.map(Number).filter(d => d >= 1 && d <= 7))].sort((a, b) => a - b)
+
+  const { error } = await db.from('form_submissions').update({ datos }).eq('id', submissionId)
+  if (error) return { ok: false, error: error.message }
+  revalidatePath('/admin/club')
+  return { ok: true }
+}

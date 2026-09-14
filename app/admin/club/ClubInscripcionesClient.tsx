@@ -11,11 +11,18 @@ import {
 } from '@/lib/club/constants'
 import { CUOTA_ESTADOS, TALLAS_EQUIPACION, eurosCuota, eurosACents, CUOTAS_MENSUALES, cuotaTrimestralCents } from '@/lib/club/cuota'
 import type { ClubConfig } from '@/lib/club/config'
-import { guardarGestion, guardarMesDetalle, getHistorialAlumno, crearGrupo, renombrarGrupo, eliminarGrupo, fijarHorarioGrupo, fijarWhatsappGrupo, sincronizarPendientes, cambiarActividad, eliminarInscripcion, type HistorialMes } from './actions'
+import { guardarGestion, guardarMesDetalle, getHistorialAlumno, crearGrupo, renombrarGrupo, eliminarGrupo, fijarHorarioGrupo, fijarWhatsappGrupo, sincronizarPendientes, cambiarActividad, eliminarInscripcion, guardarDiasAlumno, type HistorialMes } from './actions'
 import { setTemporadaActiva, guardarConfigTemporada } from './temporada-actions'
 import ImportarModal from './ImportarModal'
 
 const MES_ACTUAL = mesActualKey() ?? 'jun'
+
+const LETRA_DIA: Record<number, string> = { 1: 'L', 2: 'M', 3: 'X', 4: 'J', 5: 'V', 6: 'S', 7: 'D' }
+
+/** Días que viene el alumno: los que se le hayan puesto a mano o, si no, los de su grupo. */
+function diasDeAlumno(a: Alumno): number[] {
+  return a.diasAsistencia ?? diasDeGrupoOficial(a.actividad, a.grupo)
+}
 
 /** Normaliza el nombre de una actividad (sin acentos, minúsculas) para contar por actividad. */
 const normActividad = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
@@ -50,6 +57,7 @@ export default function ClubInscripcionesClient({
   const [fEstado, setFEstado] = useState('')
   const [fInicio, setFInicio] = useState('')
   const [fSocio, setFSocio] = useState(false)
+  const [fDia, setFDia] = useState('')
   const [fMes, setFMes] = useState('')
   const [fPago, setFPago] = useState('')
   const [fImpMin, setFImpMin] = useState('')
@@ -98,6 +106,7 @@ export default function ClubInscripcionesClient({
     if (fEstado && a.estado_general !== fEstado) return false
     if (fInicio && a.periodoInicio !== fInicio) return false
     if (fSocio && !a.esSocio) return false
+    if (fDia && !diasDeAlumno(a).includes(Number(fDia))) return false
     if (fPago) {
       if (fMes) {
         const e: EstadoPago | '' = (a.pagos[fMes] as EstadoPago | undefined) ?? ''
@@ -114,7 +123,7 @@ export default function ClubInscripcionesClient({
       if (fImpMax && total > eurosACents(fImpMax)) return false
     }
     return true
-  }, [q, fActividad, fGrupo, fTemporada, fEstado, fInicio, fSocio, fMes, fPago, fImpMin, fImpMax])
+  }, [q, fActividad, fGrupo, fTemporada, fEstado, fInicio, fSocio, fDia, fMes, fPago, fImpMin, fImpMax])
 
   const filtradas = useMemo(() => lista.filter(coincide), [lista, coincide])
 
@@ -177,8 +186,18 @@ export default function ClubInscripcionesClient({
     })
   }
 
-  const hayFiltros = !!(q || fActividad || fGrupo || fTemporada || fEstado || fInicio || fSocio || fMes || fPago || fImpMin || fImpMax)
-  function limpiar() { setQ(''); setFActividad(''); setFGrupo(''); setFTemporada(''); setFEstado(''); setFInicio(''); setFSocio(false); setFMes(''); setFPago(''); setFImpMin(''); setFImpMax('') }
+  const hayFiltros = !!(q || fActividad || fGrupo || fTemporada || fEstado || fInicio || fSocio || fDia || fMes || fPago || fImpMin || fImpMax)
+  function limpiar() { setQ(''); setFActividad(''); setFGrupo(''); setFTemporada(''); setFEstado(''); setFInicio(''); setFSocio(false); setFDia(''); setFMes(''); setFPago(''); setFImpMin(''); setFImpMax('') }
+
+  /** Guarda los días de un alumno (null = volver a los de su grupo). */
+  function guardarDias(id: string, dias: number[] | null) {
+    if (!puedeEditar) return
+    patchLocal(id, { diasAsistencia: dias })
+    startTransition(async () => {
+      const r = await guardarDiasAlumno(id, dias)
+      if (!r.ok) setError(r.error || 'No se pudieron guardar los días')
+    })
+  }
 
   // Totales económicos del grupo filtrado (punto 25).
   const totalesGrupo = useMemo(() => {
@@ -387,6 +406,11 @@ export default function ClubInscripcionesClient({
             {gruposFiltro.map(g => <option key={g} value={g}>{g}</option>)}
             <option value="Sin grupo">Sin grupo</option>
           </select>
+          <select value={fDia} onChange={e => setFDia(e.target.value)}
+            className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-pm-red">
+            <option value="">Cualquier día</option>
+            {[1, 2, 3, 4, 5, 6].map(d => <option key={d} value={d}>{['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'][d]}</option>)}
+          </select>
           <select value={fEstado} onChange={e => setFEstado(e.target.value)}
             className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:border-pm-red">
             <option value="">Cualquier estado</option>
@@ -503,6 +527,7 @@ export default function ClubInscripcionesClient({
                   <th className="text-left font-bold px-4 py-3 sticky left-0 bg-pm-bg z-10">Alumno</th>
                   <th className="text-left font-bold px-3 py-3">Actividad</th>
                   <th className="text-left font-bold px-3 py-3">Grupo</th>
+                  <th className="text-left font-bold px-3 py-3" title="Días que viene. Por defecto, los de su grupo; clic para cambiarlos">Días</th>
                   <th className="text-left font-bold px-3 py-3">Edad</th>
                   <th className="text-left font-bold px-3 py-3">Tutor</th>
                   <th className="text-left font-bold px-3 py-3">Teléfono</th>
@@ -535,6 +560,9 @@ export default function ClubInscripcionesClient({
                         {gruposParaActividad(a.actividad).map(g => <option key={g} value={g}>{g}</option>)}
                         {a.grupo && !gruposParaActividad(a.actividad).includes(a.grupo) && <option value={a.grupo}>{a.grupo}</option>}
                       </select>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <CeldaDias alumno={a} editable={puedeEditar} onGuardar={dias => guardarDias(a.id, dias)} />
                     </td>
                     <td className="px-3 py-2.5 whitespace-nowrap text-gray-600" title={a.fechaNacimiento}>
                       {edadDe(a.fechaNacimiento) != null ? `${edadDe(a.fechaNacimiento)} años` : '—'}
@@ -1194,6 +1222,55 @@ function FilaGrupos({ titulo, items, onRenombrar, onEliminar, onHorario, onWhats
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+
+// ─── Celda "Días" de la tabla ──────────────────────────────────────────────────
+/**
+ * Muestra los días que viene el alumno (L X, M J…). Automático según su grupo;
+ * clic para marcar a mano solo los días que puede venir, o volver al automático.
+ */
+function CeldaDias({ alumno: a, editable, onGuardar }: { alumno: Alumno; editable: boolean; onGuardar: (dias: number[] | null) => void }) {
+  const [abierto, setAbierto] = useState(false)
+  const delGrupo = diasDeGrupoOficial(a.actividad, a.grupo)
+  const manual = a.diasAsistencia !== null
+  const dias = a.diasAsistencia ?? delGrupo
+  const [sel, setSel] = useState<number[]>(dias)
+  const texto = dias.length ? dias.map(d => LETRA_DIA[d]).join(' ') : '—'
+
+  return (
+    <div className="relative">
+      <button type="button" disabled={!editable} onClick={() => { setSel(dias); setAbierto(v => !v) }}
+        title={manual ? 'Días puestos a mano (distintos a los de su grupo)' : 'Días de su grupo · clic para cambiarlos'}
+        className={`text-xs font-black tracking-wider px-2 py-1 rounded-lg whitespace-nowrap disabled:cursor-default ${manual ? 'bg-amber-100 text-amber-800' : dias.length ? 'bg-gray-100 text-pm-navy' : 'text-gray-300'}`}>
+        {texto}{manual && ' ✎'}
+      </button>
+      {abierto && (
+        <div className="absolute z-20 top-full left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl p-2.5 w-56">
+          <div className="text-[11px] font-bold text-gray-400 mb-1.5">¿Qué días viene?</div>
+          <div className="flex gap-1">
+            {[1, 2, 3, 4, 5, 6].map(d => (
+              <button key={d} type="button" onClick={() => setSel(s => s.includes(d) ? s.filter(x => x !== d) : [...s, d].sort((x, y) => x - y))}
+                className={`w-7 h-7 rounded-full text-[11px] font-black border ${sel.includes(d) ? 'bg-pm-navy text-white border-transparent' : 'border-gray-200 text-gray-500'}`}>
+                {LETRA_DIA[d]}
+              </button>
+            ))}
+          </div>
+          <div className="text-[10px] text-gray-400 mt-1.5">
+            Su grupo: {delGrupo.length ? delGrupo.map(d => LETRA_DIA[d]).join(' ') : 'sin horario'}
+          </div>
+          <div className="flex items-center gap-2 mt-2">
+            <button type="button" onClick={() => { onGuardar(sel); setAbierto(false) }}
+              className="bg-pm-navy text-white text-[11px] font-bold px-3 py-1.5 rounded-lg">Guardar</button>
+            {manual && (
+              <button type="button" onClick={() => { onGuardar(null); setAbierto(false) }}
+                className="text-[11px] font-bold text-pm-red hover:underline">Los de su grupo</button>
+            )}
+            <button type="button" onClick={() => setAbierto(false)} className="ml-auto text-[11px] text-gray-400">Cerrar</button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
