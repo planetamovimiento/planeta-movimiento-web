@@ -12,7 +12,7 @@ export function normalizarNumeroSocio(v: string): string {
 }
 
 /**
- * Genera el siguiente nº de socio libre para el prefijo configurado.
+ * Genera el siguiente nº de socio: el mayor ya usado (con o sin prefijo, "42" o "CDO-00042") + 1.
  * ponytail: correlativo por max+1; el índice único de la BD atrapa colisiones
  * concurrentes (volumen bajo). No reutiliza ni renumera los existentes.
  */
@@ -20,7 +20,7 @@ export async function siguienteNumeroSocio(): Promise<string> {
   const cfg = await getClubConfig()
   const prefijo = (cfg.socioPrefijo || 'CDO-').trim()
   const db = createAdminClient()
-  const { data } = await db.from('club_familias').select('numero_socio').ilike('numero_socio', `${prefijo}%`)
+  const { data } = await db.from('club_familias').select('numero_socio').not('numero_socio', 'is', null)
   let max = 0
   for (const r of (data ?? []) as { numero_socio: string | null }[]) {
     const m = String(r.numero_socio ?? '').match(/(\d+)\s*$/)
