@@ -1,13 +1,14 @@
 import { requireSeccion, can } from '@/lib/admin/auth'
 import { AdminHeader } from '@/components/admin/ui'
 import { getSocios } from '@/lib/club/socios'
+import { siguienteNumeroSocio } from '@/lib/familias/socio'
 import SociosClient from './SociosClient'
 
 export const dynamic = 'force-dynamic'
 
 export default async function SociosPage() {
   const admin = await requireSeccion('socios')
-  const socios = await getSocios()
+  const [socios, siguiente] = await Promise.all([getSocios(), siguienteNumeroSocio()])
 
   return (
     <>
@@ -16,7 +17,7 @@ export default async function SociosPage() {
         subtitulo="Altas del formulario de socio: nº de socio, participantes y entrega de equipación"
       />
       <div className="p-4 lg:p-6">
-        <SociosClient socios={socios} puedeEditar={can.edit(admin.role)} />
+        <SociosClient socios={socios} siguienteNumero={siguiente} puedeEditar={can.edit(admin.role)} />
       </div>
     </>
   )

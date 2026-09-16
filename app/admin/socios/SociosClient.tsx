@@ -30,7 +30,7 @@ function mensajeBienvenida(s: Socio): string {
   ].join('\n')
 }
 
-export default function SociosClient({ socios, puedeEditar }: { socios: Socio[]; puedeEditar: boolean }) {
+export default function SociosClient({ socios, puedeEditar, siguienteNumero }: { socios: Socio[]; puedeEditar: boolean; siguienteNumero: string }) {
   const router = useRouter()
   const [q, setQ] = useState('')
   const [filtro, setFiltro] = useState<'' | 'sin-numero' | 'sin-equipacion' | 'sin-pagar'>('')
@@ -42,7 +42,6 @@ export default function SociosClient({ socios, puedeEditar }: { socios: Socio[];
     const parts = socios.flatMap(s => s.participantes)
     return {
       conNumero: socios.filter(s => s.numeroSocio).length,
-      ultimoNumero: Math.max(0, ...socios.map(s => parseInt(s.numeroSocio?.match(/(\d+)\s*$/)?.[1] ?? '0', 10))),
       participantes: parts.length,
       sinNumero: socios.filter(s => !s.numeroSocio).length,
       equipacionPendiente: parts.filter(p => !p.equipacionEntregada).length,
@@ -90,7 +89,7 @@ export default function SociosClient({ socios, puedeEditar }: { socios: Socio[];
 
       {/* Resumen */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <Metric label="Socios con nº" valor={totales.conNumero} sub={`Último nº: ${totales.ultimoNumero} · siguiente: ${totales.ultimoNumero + 1}`} tono="navy" />
+        <Metric label="Socios con nº" valor={totales.conNumero} sub={`Siguiente nº: ${siguienteNumero}`} tono="navy" />
         <Metric label="Participantes" valor={totales.participantes} tono="navy" />
         <Metric label="Cuotas cobradas" valor={eurosCuota(totales.cobrado)} sub={`${totales.sinPagar} sin cobrar`} tono="green" />
         <Metric label="Sin nº de socio" valor={totales.sinNumero} sub="No pueden entrar al portal" tono="red" />
