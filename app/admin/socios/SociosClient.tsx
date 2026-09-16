@@ -42,7 +42,7 @@ export default function SociosClient({ socios, puedeEditar }: { socios: Socio[];
     const parts = socios.flatMap(s => s.participantes)
     return {
       conNumero: socios.filter(s => s.numeroSocio).length,
-      ultimoNumero: Math.max(0, ...socios.map(s => parseInt(s.numeroSocio?.match(/(d+)s*$/)?.[1] ?? '0', 10))),
+      ultimoNumero: Math.max(0, ...socios.map(s => parseInt(s.numeroSocio?.match(/(\d+)\s*$/)?.[1] ?? '0', 10))),
       participantes: parts.length,
       sinNumero: socios.filter(s => !s.numeroSocio).length,
       equipacionPendiente: parts.filter(p => !p.equipacionEntregada).length,
