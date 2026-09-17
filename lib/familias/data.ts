@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { TEMPORADA_ACTUAL, esSoloSocio } from '@/lib/club/constants'
 import type { AlumnoFamilia } from './tipos'
+import { provisionarFamilia } from './sync'
 
 type Row = Record<string, unknown>
 const str = (v: unknown): string => (typeof v === 'string' ? v : '')
@@ -17,10 +18,16 @@ function soloImportes(v: unknown): Record<string, { importe_cents?: number }> {
   return out
 }
 
-/** submission_id de los alumnos vinculados a una familia. */
+/**
+ * submission_id de los alumnos vinculados a una familia.
+ * Antes vincula las inscripciones nuevas de su correo: si no, una inscripción
+ * hecha hoy no salía en el portal hasta que alguien abría Admin → Familias.
+ */
 export async function idsDeFamilia(familiaId: string): Promise<string[]> {
   const db = createAdminClient()
   try {
+    const { data: fam } = await db.from('club_familias').select('email').eq('id', familiaId).maybeSingle()
+    if (fam?.email) await provisionarFamilia(String(fam.email))
     const { data } = await db.from('club_familia_alumnos').select('submission_id').eq('familia_id', familiaId)
     return (data ?? []).map(r => (r as Row).submission_id as string).filter(Boolean)
   } catch {
@@ -116,7 +123,10 @@ function fusionarDuplicados(items: { a: AlumnoFamilia; fechaNac: string }[]): Al
     const ex = mapa.get(k)
     mapa.set(k, ex ? fusionar(ex, a) : a)
   }
-  return [...mapa.values(), ...soloSocio]
+  // Si el participante ya tiene su inscripción, sobra la línea de socio (no sale dos veces).
+  const nombre = (a: AlumnoFamilia) => normTxt(`${a.nombre} ${a.apellidos}`)
+  const conFicha = new Set([...mapa.values()].map(nombre))
+  return [...mapa.values(), ...soloSocio.filter(a => !conFicha.has(nombre(a)))]
 }
 
 /** Todos los alumnos vinculados a la familia (datos seguros, sin duplicados). */
