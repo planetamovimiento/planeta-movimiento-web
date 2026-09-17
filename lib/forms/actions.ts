@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getTemporadaActiva } from '@/lib/config/store'
 import { importeCuotaSugeridoCents } from '@/lib/club/cuota'
 import { enviarEmail, NOTIF_TO } from '@/lib/emails/enviar'
-import { enviarConfirmacionReserva, enviarBienvenidaClub } from '@/lib/emails/confirmacion'
+import { enviarConfirmacionReserva, enviarBienvenidaClub, enviarAltaSocio } from '@/lib/emails/confirmacion'
 import { comprobarEnvioForm } from '@/lib/seguridad/guard'
 import { limpiarCabecera, limpiarTexto, escHtml } from '@/lib/seguridad/sanitize'
 
@@ -288,7 +288,7 @@ export async function submitSocio(input: {
       { label: 'Temporada', valor: temporada },
       { label: 'Observaciones', valor: obsT },
     ])
-    await enviarConfirmacionReserva({ servicio: 'Alta de socio · Club Deportivo Origen', clienteNombre: tutorNombre, clienteEmail: email })
+    await enviarAltaSocio({ email, tutor: tutorNombre, participantes: creados })
     return { ok: true }
   } catch {
     return { ok: false, error: 'No se pudo enviar. Inténtalo de nuevo.' }

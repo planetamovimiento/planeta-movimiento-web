@@ -185,12 +185,51 @@ export async function avisarNegocioReserva(p: DatosConfirmacion & { motivo: stri
   })
 }
 
-// ─── Bienvenida al Club (inscripción a una disciplina) ─────────────────────────
-// Texto fijo acordado con el club; los datos salen de la propia inscripción.
+// ─── Correos del Club: bienvenida (inscripción) y alta de socio ───────────────
+// Textos fijos acordados con el club; los datos salen del propio formulario.
 
 const IBAN_CLUB = 'ES35 3190 1010 0650 2365 8916'
 const PORTAL_FAMILIAS = 'https://planetamovimiento.com/familias'
 const COMUNIDAD_WHATSAPP = 'https://chat.whatsapp.com/FbwVcyucmSMGGojiEJt3dY'
+
+const esc = (s: string) => escHtml((s || '').trim())
+const parrafo = (html: string) => `<p style="color:#334155;font-size:15px;line-height:1.6;margin:0 0 14px">${html}</p>`
+const titulo = (txt: string) => `<h2 style="color:#0F1A3D;font-size:16px;margin:24px 0 10px">${txt}</h2>`
+const enlace = (url: string) => parrafo(`👉 <a href="${url}" style="color:#e11d2a;font-weight:700">${url}</a>`)
+const saludo = (tutor: string) => parrafo(`Hola${tutor?.trim() ? `, ${esc(tutor)}` : ''}:`)
+
+/** "A", "A y B", "A, B y C". */
+const listaNombres = (n: string[]) => (n.length < 2 ? n.join('') : `${n.slice(0, -1).join(', ')} y ${n[n.length - 1]}`)
+
+function formasDePago(transferencia: string, concepto: string): string {
+  return `${titulo('💳 FORMAS DE PAGO')}
+      <ul style="color:#334155;font-size:15px;line-height:1.6;margin:0 0 14px;padding-left:20px">
+        <li>En efectivo, en las instalaciones de Planeta Movimiento.</li>
+        <li>${transferencia}:<br>IBAN: <b>${IBAN_CLUB}</b> (Global Caja)</li>
+      </ul>
+      ${parrafo(`Concepto: ${concepto}`)}`
+}
+
+const ACCESO_PORTAL = 'Acceded con el correo electrónico del socio + número de socio. Desde el portal podréis indicar la talla de la equipación, consultar pagos y revisar el calendario de actividades y festivos.'
+
+const CIERRE_CLUB = `${titulo('📲 COMUNIDAD DE PLANETA MOVIMIENTO')}
+      ${parrafo('Únete a nuestra comunidad oficial de WhatsApp para estar al día de actividades, novedades, eventos y promociones de Planeta Movimiento.')}
+      ${enlace(COMUNIDAD_WHATSAPP)}
+      ${parrafo('Muchas gracias por confiar en nosotros.')}
+      ${parrafo('<b>¡Bienvenido a la familia! 🤸‍♀️</b>')}
+      <p style="color:#0F1A3D;font-size:15px;line-height:1.6;margin:0;font-weight:700">Club Deportivo Origen<br>Planeta Movimiento</p>`
+
+const envolver = (cuerpo: string) => `
+<div style="background:#f1f5f9;padding:24px 0;font-family:-apple-system,Segoe UI,Roboto,sans-serif">
+  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+    <div style="background:#0F1A3D;padding:24px 28px">
+      <div style="color:#fff;font-weight:900;font-size:20px"><span style="color:#e11d2a">Planeta</span> Movimiento</div>
+    </div>
+    <div style="padding:28px">
+      ${cuerpo}
+    </div>
+  </div>
+</div>`
 
 export type DatosBienvenidaClub = {
   email: string
@@ -202,49 +241,23 @@ export type DatosBienvenidaClub = {
   grupo: string
 }
 
+/** Inscripción a una disciplina del club. */
 export async function enviarBienvenidaClub(d: DatosBienvenidaClub): Promise<void> {
   const email = (d.email || '').trim()
   if (!email) return
-  const e = (s: string) => escHtml((s || '').trim())
-  const p = (html: string) => `<p style="color:#334155;font-size:15px;line-height:1.6;margin:0 0 14px">${html}</p>`
-  const h = (txt: string) => `<h2 style="color:#0F1A3D;font-size:16px;margin:24px 0 10px">${txt}</h2>`
-  const enlace = (url: string) => `👉 <a href="${url}" style="color:#e11d2a;font-weight:700">${url}</a>`
   const deportista = [d.nombre, d.apellidos].map(s => (s || '').trim()).filter(Boolean).join(' ')
-  const actividad = `${e(d.actividad)}${d.grupo?.trim() ? ` – ${e(d.grupo)}` : ''}`
+  const actividad = `${esc(d.actividad)}${d.grupo?.trim() ? ` – ${esc(d.grupo)}` : ''}`
 
-  const html = `
-<div style="background:#f1f5f9;padding:24px 0;font-family:-apple-system,Segoe UI,Roboto,sans-serif">
-  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08)">
-    <div style="background:#0F1A3D;padding:24px 28px">
-      <div style="color:#fff;font-weight:900;font-size:20px"><span style="color:#e11d2a">Planeta</span> Movimiento</div>
-    </div>
-    <div style="padding:28px">
-      ${p(`Hola${d.tutor?.trim() ? `, ${e(d.tutor)}` : ''}:`)}
-      ${p('<b>¡Bienvenidos al Club Deportivo Origen! 🎉</b>')}
-      ${p(`Hemos recibido correctamente la inscripción de <b>${e(deportista)}</b> en <b>${actividad}</b>.`)}
-
-      ${h('💳 FORMAS DE PAGO')}
-      <ul style="color:#334155;font-size:15px;line-height:1.6;margin:0 0 14px;padding-left:20px">
-        <li>En efectivo, en las instalaciones de Planeta Movimiento.</li>
-        <li>Por transferencia bancaria:<br>IBAN: <b>${IBAN_CLUB}</b> (Global Caja)</li>
-      </ul>
-      ${p('Concepto: Nombre y apellido del niño/a + actividad + mes/meses que abona.')}
-
-      ${h('👨‍👩‍👧 PORTAL DE FAMILIAS')}
-      ${p('Es importante estar dado de alta como socio del club. Si ya lo sois y no conocéis vuestro número de socio, podéis consultárnoslo.')}
-      ${p(enlace(PORTAL_FAMILIAS))}
-      ${p('Acceded con el correo electrónico del socio + número de socio. Desde el portal podréis indicar la talla de la equipación, consultar pagos y revisar el calendario de actividades y festivos.')}
-
-      ${h('📲 COMUNIDAD DE PLANETA MOVIMIENTO')}
-      ${p('Únete a nuestra comunidad oficial de WhatsApp para estar al día de actividades, novedades, eventos y promociones de Planeta Movimiento.')}
-      ${p(enlace(COMUNIDAD_WHATSAPP))}
-
-      ${p('Muchas gracias por confiar en nosotros.')}
-      ${p('<b>¡Bienvenido a la familia! 🤸‍♀️</b>')}
-      <p style="color:#0F1A3D;font-size:15px;line-height:1.6;margin:0;font-weight:700">Club Deportivo Origen<br>Planeta Movimiento</p>
-    </div>
-  </div>
-</div>`
+  const html = envolver(`
+      ${saludo(d.tutor)}
+      ${parrafo('<b>¡Bienvenidos al Club Deportivo Origen! 🎉</b>')}
+      ${parrafo(`Hemos recibido correctamente la inscripción de <b>${esc(deportista)}</b> en <b>${actividad}</b>.`)}
+      ${formasDePago('Por transferencia bancaria', 'Nombre y apellido del niño/a + actividad + mes/meses que abona.')}
+      ${titulo('👨‍👩‍👧 PORTAL DE FAMILIAS')}
+      ${parrafo('Es importante estar dado de alta como socio del club. Si ya lo sois y no conocéis vuestro número de socio, podéis consultárnoslo.')}
+      ${enlace(PORTAL_FAMILIAS)}
+      ${parrafo(ACCESO_PORTAL)}
+      ${CIERRE_CLUB}`)
 
   await enviarEmail({
     to: email,
@@ -252,5 +265,31 @@ export async function enviarBienvenidaClub(d: DatosBienvenidaClub): Promise<void
     html,
     tipo: 'confirmacion-cliente',
     meta: { servicio: `Inscripción Club · ${d.actividad}` },
+  })
+}
+
+/** Alta de socio (formulario "Hazte socio"): tutor + todos sus participantes. */
+export async function enviarAltaSocio(d: { email: string; tutor: string; participantes: string[] }): Promise<void> {
+  const email = (d.email || '').trim()
+  if (!email) return
+  const nombres = d.participantes.map(n => `<b>${esc(n)}</b>`)
+
+  const html = envolver(`
+      ${saludo(d.tutor)}
+      ${parrafo('<b>¡Gracias por hacerte socio del Club Origen! 🎉</b>')}
+      ${parrafo(`Hemos registrado como socios a toda la familia añadiendo a ${nombres.length > 1 ? 'los participantes' : 'el participante'} que has introducido: ${listaNombres(nombres)}.`)}
+      ${formasDePago('Por transferencia bancaria (60 € o, si se paga antes de octubre, 40 €)', 'Nombre y apellido del tutor + socio')}
+      ${titulo('👨‍👩‍👧 PORTAL DE FAMILIAS')}
+      ${parrafo('Recordad que podéis entrar en la plataforma de Portal de familias en nuestra web de Planeta Movimiento. Si no conocéis vuestro número de socio, podéis consultárnoslo.')}
+      ${enlace(PORTAL_FAMILIAS)}
+      ${parrafo(ACCESO_PORTAL)}
+      ${CIERRE_CLUB}`)
+
+  await enviarEmail({
+    to: email,
+    subject: 'Solicitud de socio al Club Deportivo Origen',
+    html,
+    tipo: 'confirmacion-cliente',
+    meta: { servicio: 'Alta de socio · Club Deportivo Origen' },
   })
 }
