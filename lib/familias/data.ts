@@ -84,9 +84,14 @@ function construir(s: Row, g: Row | undefined, grupos: Row[]): AlumnoFamilia {
 
 const normTxt = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase().replace(/\s+/g, ' ')
 
-/** Clave de identidad. Con fecha de nacimiento + nombre no fusiona a gemelos. */
+/**
+ * Clave de identidad. Con fecha de nacimiento + nombre no fusiona a gemelos.
+ * Incluye la actividad: el mismo niño en dos disciplinas tiene dos fichas
+ * (cada una con su grupo y sus cuotas), como hermanos.
+ */
 function claveAlumno(a: AlumnoFamilia, fechaNac: string): string {
-  return fechaNac ? `${fechaNac}|${normTxt(a.nombre)}` : normTxt(`${a.nombre} ${a.apellidos}`)
+  const quien = fechaNac ? `${fechaNac}|${normTxt(a.nombre)}` : normTxt(`${a.nombre} ${a.apellidos}`)
+  return `${quien}|${normTxt(a.actividad)}`
 }
 
 function fusionar(x: AlumnoFamilia, y: AlumnoFamilia): AlumnoFamilia {
