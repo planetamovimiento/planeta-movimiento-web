@@ -6,6 +6,7 @@ import { Avatar } from './ui'
 import { FichaParticipante } from '@/components/familias/FichaParticipante'
 import { guardarFotoHijo, quitarFotoHijo, guardarTallaHijo } from './actions'
 import { TALLAS_EQUIPACION } from '@/lib/club/cuota'
+import { GuiaTallas } from '@/components/club/GuiaTallas'
 import type { AlumnoFamilia } from '@/lib/familias/tipos'
 
 export default function PanelesHijos({ alumnos }: { alumnos: AlumnoFamilia[] }) {
@@ -83,8 +84,11 @@ function TallaHijo({ submissionId, talla }: { submissionId: string; talla: strin
       <select value={val} disabled={pending} onChange={e => guardar(e.target.value)}
         className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none focus:border-pm-red disabled:opacity-60">
         <option value="">— Elegir —</option>
+        {/* Talla antigua que ya no existe: se sigue viendo hasta que la cambien */}
+        {val && !(TALLAS_EQUIPACION as readonly string[]).includes(val) && <option value={val}>{val}</option>}
         {TALLAS_EQUIPACION.map(t => <option key={t} value={t}>{t}</option>)}
       </select>
+      <GuiaTallas />
       {msg && <p className="text-[11px] text-gray-500 mt-1">{pending ? 'Guardando…' : msg}</p>}
     </div>
   )

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { GuiaTallas } from '@/components/club/GuiaTallas'
 import { submitSocio } from '@/lib/forms/actions'
 import { TALLAS_EQUIPACION, eurosCuota, importeCuotaSugeridoCents } from '@/lib/club/cuota'
 import { edadDe } from '@/lib/club/constants'
@@ -153,6 +154,7 @@ function FormularioSocio({ info, onClose }: { info: SocioInfo; onClose: () => vo
                           <option value="">— Sin definir —</option>
                           {TALLAS_EQUIPACION.map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
+                        <GuiaTallas />
                       </div>
                     </div>
                     <div>

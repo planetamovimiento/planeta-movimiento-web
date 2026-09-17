@@ -18,8 +18,21 @@ export function cuotaEstadoMeta(id: string) {
   return CUOTA_ESTADOS.find(e => e.id === id) ?? null
 }
 
-/** Tallas de equipación (selector estándar: infantil por edad + adulto por letra). */
-export const TALLAS_EQUIPACION = ['4', '6', '8', '10', '12', '14', 'XS', 'S', 'M', 'L', 'XL'] as const
+/** Medidas de la equipación (camiseta + pantalón), en cm: ancho / largo de la prenda. */
+export const MEDIDAS_EQUIPACION = [
+  { talla: '4', camiseta: '39 / 52', pantalon: '26 / 35' },
+  { talla: '8', camiseta: '41 / 54', pantalon: '28 / 37' },
+  { talla: '12', camiseta: '43 / 58', pantalon: '30 / 39' },
+  { talla: '16', camiseta: '46 / 62', pantalon: '32 / 41' },
+  { talla: 'S', camiseta: '49 / 68', pantalon: '34 / 44' },
+  { talla: 'M', camiseta: '51 / 71', pantalon: '36 / 45' },
+  { talla: 'L', camiseta: '54 / 73', pantalon: '38 / 46' },
+  { talla: 'XL', camiseta: '57 / 75', pantalon: '40 / 48' },
+  { talla: '2XL', camiseta: '60 / 77', pantalon: '42 / 49' },
+] as const
+
+/** Tallas de equipación: las que existen en la equipación del club (infantil por edad + adulto). */
+export const TALLAS_EQUIPACION = ['4', '8', '12', '16', 'S', 'M', 'L', 'XL', '2XL'] as const
 
 /** Configuración de la cuota de la temporada activa (Fase D la moverá a config). */
 export const CUOTA = {
