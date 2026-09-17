@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getTemporadaActiva } from '@/lib/config/store'
 import { importeCuotaSugeridoCents } from '@/lib/club/cuota'
 import { enviarEmail, NOTIF_TO } from '@/lib/emails/enviar'
-import { enviarConfirmacionReserva } from '@/lib/emails/confirmacion'
+import { enviarConfirmacionReserva, enviarBienvenidaClub } from '@/lib/emails/confirmacion'
 import { comprobarEnvioForm } from '@/lib/seguridad/guard'
 import { limpiarCabecera, limpiarTexto, escHtml } from '@/lib/seguridad/sanitize'
 
@@ -111,10 +111,21 @@ export async function submitForm(input: {
       ...Object.entries(input.datos ?? {}).map(([k, v]) => ({ label: k, valor: String(v ?? '') })),
     ]
     await avisarNegocio(`Nueva solicitud · ${input.tipo}`, resumen)
-    await enviarConfirmacionReserva({
-      servicio: asunto || input.tipo,
-      clienteNombre: nombre, clienteEmail: email,
-    })
+    const d = input.datos ?? {}
+    const txtDato = (k: string) => (typeof d[k] === 'string' ? limpiarCabecera(d[k] as string) : '')
+    if (input.tipo === 'inscripcion_club' && txtDato('nombre')) {
+      // Inscripción a una disciplina del club: correo de bienvenida del club.
+      await enviarBienvenidaClub({
+        email, tutor: txtDato('tutorLegal') || nombre,
+        nombre: txtDato('nombre'), apellidos: txtDato('apellidos'),
+        actividad: txtDato('actividad'), grupo: txtDato('nivel'),
+      })
+    } else {
+      await enviarConfirmacionReserva({
+        servicio: asunto || input.tipo,
+        clienteNombre: nombre, clienteEmail: email,
+      })
+    }
     return { ok: true }
   } catch (e) {
     return { ok: false, error: 'No se pudo enviar. Inténtalo de nuevo.' }
