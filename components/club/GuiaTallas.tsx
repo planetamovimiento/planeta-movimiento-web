@@ -1,9 +1,11 @@
 'use client'
 
 import { useRef } from 'react'
-import { MEDIDAS_EQUIPACION } from '@/lib/club/cuota'
+import Image from 'next/image'
 
-/** Enlace "Ver guía de tallas" que abre las medidas de la equipación (camiseta + pantalón). */
+const IMAGEN = '/medidas-equipacion-club-origen-26-27.jpg'
+
+/** Enlace "Ver guía de tallas" que abre la imagen de la equipación con sus medidas. */
 export function GuiaTallas() {
   const ref = useRef<HTMLDialogElement>(null)
   return (
@@ -13,35 +15,20 @@ export function GuiaTallas() {
         📏 Ver guía de tallas
       </button>
       <dialog ref={ref} onClick={e => { if (e.target === ref.current) ref.current?.close() }}
-        className="m-auto rounded-2xl p-0 w-[calc(100%-32px)] max-w-md backdrop:bg-black/40">
-        <div className="p-5">
+        className="m-auto rounded-2xl p-0 w-[calc(100%-32px)] max-w-3xl backdrop:bg-black/40">
+        <div className="p-4 sm:p-5">
           <div className="flex items-start justify-between gap-3 mb-1">
-            <h3 className="font-black text-pm-navy">Guía de tallas · Equipación</h3>
-            <button type="button" onClick={() => ref.current?.close()} className="text-gray-400 text-xl leading-none" aria-label="Cerrar">×</button>
+            <h3 className="font-black text-pm-navy">Equipación Club Origen 26-27 · Tallas</h3>
+            <button type="button" onClick={() => ref.current?.close()} className="text-gray-400 text-2xl leading-none" aria-label="Cerrar">×</button>
           </div>
           <p className="text-xs text-gray-500 mb-3">
-            Camiseta + pantalón. Medidas de la prenda en plano: <b>ancho / largo</b>.
-            Si duda entre dos tallas, mejor la mayor.
+            Medidas de la prenda en cm: [camiseta ancho/largo]·[pantalón ancho/largo]. Si duda entre dos tallas, mejor la mayor.
           </p>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs text-gray-400">
-                <th className="py-1.5 font-bold">Talla</th>
-                <th className="py-1.5 font-bold">Camiseta</th>
-                <th className="py-1.5 font-bold">Pantalón</th>
-              </tr>
-            </thead>
-            <tbody>
-              {MEDIDAS_EQUIPACION.map(m => (
-                <tr key={m.talla} className="border-t border-gray-100">
-                  <td className="py-1.5 font-black text-pm-navy">{m.talla}</td>
-                  <td className="py-1.5 text-gray-600">{m.camiseta}</td>
-                  <td className="py-1.5 text-gray-600">{m.pantalon}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <p className="text-[11px] text-gray-400 mt-3">4, 8, 12 y 16 son tallas infantiles (edad aproximada).</p>
+          <a href={IMAGEN} target="_blank" rel="noopener noreferrer" title="Abrir a tamaño completo">
+            <Image src={IMAGEN} alt="Equipación del Club Origen 26-27 (camiseta y pantalón) con tabla de medidas por talla"
+              width={805} height={434} sizes="(max-width: 800px) 100vw, 768px" className="w-full h-auto rounded-lg border border-gray-100" />
+          </a>
+          <p className="text-[11px] text-gray-400 mt-2">Toca la imagen para verla en grande.</p>
         </div>
       </dialog>
     </>
