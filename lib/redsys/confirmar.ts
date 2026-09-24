@@ -34,7 +34,7 @@ export async function procesarRespuestaRedsys(datos: DatosNotificacion): Promise
       await db.from('bookings').update({
         estado_pago: bookingPago,
         estado_reserva: 'confirmada',
-        notas_internas: `Pago online (Redsys) OK. Pedido ${order}. Autorización ${auth}.`,
+        notas_internas: `✅ PAGADO con tarjeta (Redsys) · ${importe.toFixed(2)} €. Pedido ${order}. Autorización ${auth}.`,
       }).eq('id', bookingId)
 
       await db.from('crm_gestion').upsert({
@@ -78,7 +78,10 @@ export async function procesarRespuestaRedsys(datos: DatosNotificacion): Promise
     })
   } else {
     await db.from('payments').update({ estado: 'fallido' }).eq('id', p.id as string)
-    if (bookingId) await db.from('bookings').update({ estado_pago: 'fallido' }).eq('id', bookingId)
+    if (bookingId) await db.from('bookings').update({
+      estado_pago: 'fallido',
+      notas_internas: `❌ SIN PAGAR · Pago con tarjeta rechazado (Redsys). Pedido ${order}. Cobrar la señal en la instalación.`,
+    }).eq('id', bookingId)
     await db.from('activity_log').insert({
       actor_email: 'redsys', accion: `Cobro online rechazado (${order}) · resp ${datos.Ds_Response}`,
       entidad: 'booking', entidad_id: bookingId || order,

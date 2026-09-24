@@ -91,7 +91,7 @@ async function emitirPago(args: {
     estado_reserva: 'pendiente',
     estado_pago: 'pendiente',
     observaciones: args.observaciones,
-    notas_internas: `Pago online (Redsys). Pedido ${dsOrder}.`,
+    notas_internas: `⏳ SIN PAGAR · Pago con tarjeta empezado pero no completado (Redsys). Pedido ${dsOrder}. Cobrar la señal en la instalación.`,
   }).select('id').single()
 
   if (e1 || !bk) return { ok: false, error: 'No se pudo registrar la reserva. Inténtalo de nuevo.' }

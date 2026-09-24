@@ -392,6 +392,7 @@ function FichaCliente({ r, todas, puedeEditar, puedeBorrar, onClose, onGestion, 
             <Dato k="Email" v={r.cliente_email || '—'} />
             <Dato k="Teléfono" v={r.cliente_telefono || '—'} />
             <CampoFecha label="Fecha realización" value={r.fecha_realizacion} disabled={!puedeEditar} onSave={v => onGestion({ fecha_realizacion: v })} />
+            <Dato k="Hora" v={r.hora || '—'} />
             <CampoNum label="Participantes" value={r.participantes} disabled={!puedeEditar} onSave={v => onGestion({ participantes: v })} />
             <Dato k="Solicitado el" v={fechaCorta(r.fecha_reserva)} />
             <Dato k="Categoría" v={r.categoria} />
