@@ -85,3 +85,19 @@ export type Documento = {
   subido_por: string
   created_at: string
 }
+
+/** Hoja de horas trabajadas que el administrador sube y el monitor firma. */
+export type HojaHoras = {
+  id: string
+  monitor_id: string
+  periodo: string
+  archivo_path: string
+  archivo_tipo: string
+  subido_por: string
+  observaciones: string
+  /** null = pendiente de firmar. */
+  firmado_at: string | null
+  firma_path: string
+  firma_nombre: string
+  created_at: string
+}

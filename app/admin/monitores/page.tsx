@@ -2,7 +2,7 @@ import { requireSeccion, can } from '@/lib/admin/auth'
 import { AdminHeader } from '@/components/admin/ui'
 import {
   getMonitores, getMonitorPorEmail, getActividades, getFichajes, getFichajeAbierto,
-  getCarpetas, getTodosDocumentos, getMovimientos, sinDatosSensibles,
+  getCarpetas, getTodosDocumentos, getMovimientos, getHojasHoras, sinDatosSensibles,
 } from '@/lib/monitores/data'
 import { actividadesAutomaticas, getReglasMonitores, CATEGORIAS_EMPRESA } from '@/lib/monitores/reglas'
 import { ACTIVIDADES_CLUB } from '@/lib/club/constants'
@@ -51,11 +51,12 @@ export default async function MonitoresPage() {
       getFichajes(mon.id), getFichajeAbierto(mon.id), getMonitores(),
     ])
     const actividades = [...manuales, ...automaticas].sort(porFecha)
-    return <MonitorPortal monitor={mon} equipo={equipo.map(sinDatosSensibles)} actividades={actividades} fichajes={fichajes} abierto={abierto} carpetas={carpetas} documentos={documentos} />
+    const hojas = await getHojasHoras(mon.id)
+    return <MonitorPortal monitor={mon} equipo={equipo.map(sinDatosSensibles)} actividades={actividades} fichajes={fichajes} abierto={abierto} carpetas={carpetas} documentos={documentos} hojasHoras={hojas} />
   }
 
-  const [monitoresRaw, movimientos, manuales, automaticas, fichajes, reglas] = await Promise.all([
-    getMonitores(), getMovimientos(), getActividades(), actividadesAutomaticas(desde, hasta), getFichajes(), getReglasMonitores(),
+  const [monitoresRaw, movimientos, manuales, automaticas, fichajes, reglas, hojasHoras] = await Promise.all([
+    getMonitores(), getMovimientos(), getActividades(), actividadesAutomaticas(desde, hasta), getFichajes(), getReglasMonitores(), getHojasHoras(),
   ])
   // Los datos laborales (nacimiento, Seguridad Social, DNI) solo salen del servidor
   // para quien puede editar fichas; en modo lectura ni se envían al navegador.
@@ -66,7 +67,7 @@ export default async function MonitoresPage() {
   return (
     <MonitoresAdmin
       monitores={monitores} movimientos={movimientos} actividades={actividades} fichajes={fichajes}
-      carpetas={carpetas} documentos={documentos}
+      carpetas={carpetas} documentos={documentos} hojasHoras={hojasHoras}
       reglas={reglas} categoriasEmpresa={CATEGORIAS_EMPRESA} actividadesClub={ACTIVIDADES_CLUB}
       puedeBorrar={can.manageUsers(admin.role)} puedeEditar={can.edit(admin.role)}
     />

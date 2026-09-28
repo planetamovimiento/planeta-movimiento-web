@@ -1,5 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
-import type { Monitor, MovimientoMonitor, Actividad, Fichaje, Carpeta, Documento } from './tipos'
+import type { Monitor, MovimientoMonitor, Actividad, Fichaje, Carpeta, Documento, HojaHoras } from './tipos'
 
 type Row = Record<string, unknown>
 const str = (v: unknown) => (typeof v === 'string' ? v : v == null ? '' : String(v))
@@ -144,6 +144,26 @@ export async function getDocumentos(carpetaId: string): Promise<Documento[]> {
     .map(r => ({
       id: str(r.id), carpeta_id: str(r.carpeta_id), nombre: str(r.nombre), tipo: str(r.tipo),
       url: str(r.url), tamano: num(r.tamano), subido_por: str(r.subido_por), created_at: str(r.created_at),
+    }))
+    .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
+}
+
+/** Hojas de horas (todas, o las de un monitor). Requiere migration_monitor_hojas_horas.sql. */
+export async function getHojasHoras(monitorId?: string): Promise<HojaHoras[]> {
+  const db = createAdminClient()
+  const rows = await safe<Row>(() => {
+    let q = db.from('monitor_hojas_horas').select('*')
+    if (monitorId) q = q.eq('monitor_id', monitorId)
+    return q as never
+  })
+  return rows
+    .map(r => ({
+      id: str(r.id), monitor_id: str(r.monitor_id), periodo: str(r.periodo),
+      archivo_path: str(r.archivo_path), archivo_tipo: str(r.archivo_tipo),
+      subido_por: str(r.subido_por), observaciones: str(r.observaciones),
+      firmado_at: r.firmado_at ? str(r.firmado_at) : null,
+      firma_path: str(r.firma_path), firma_nombre: str(r.firma_nombre),
+      created_at: str(r.created_at),
     }))
     .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
 }

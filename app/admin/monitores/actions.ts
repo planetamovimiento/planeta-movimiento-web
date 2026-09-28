@@ -402,3 +402,113 @@ export async function guardarReglasMonitor(monitorId: string, reglas: ReglaMonit
   revalidatePath('/admin/monitores')
   return { ok: true }
 }
+
+// ── Hojas de horas trabajadas (el admin las sube, el monitor las firma) ───────
+// El PDF/imagen y la firma viven en el bucket PRIVADO "monitores-docs": en la BD
+// solo van rutas, y se ven con enlaces firmados de 60 s.
+
+/** Monitor de la sesión actual (para las acciones del propio portal). */
+async function monitorDeSesion() {
+  const admin = await getAdminUser()
+  if (!admin) return { mon: null, admin: null, error: 'Sin sesión' }
+  const mon = await getMonitorPorEmail(admin.email)
+  if (!mon) return { mon: null, admin, error: 'Tu cuenta no está vinculada a una ficha de monitor' }
+  return { mon, admin, error: null as string | null }
+}
+
+export async function subirHojaHoras(formData: FormData): Promise<Res> {
+  const admin = await getAdminUser()
+  if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
+  const monitorId = String(formData.get('monitorId') || '')
+  const periodo = String(formData.get('periodo') || '').trim()
+  const observaciones = String(formData.get('observaciones') || '').trim()
+  const file = formData.get('file') as File | null
+  if (!monitorId) return { ok: false, error: 'Monitor no válido' }
+  if (!periodo) return { ok: false, error: 'Indica el periodo (p. ej. «Septiembre 2026»)' }
+  if (!file || file.size === 0) return { ok: false, error: 'No se ha seleccionado ningún archivo' }
+  if (file.size > 15 * 1024 * 1024) return { ok: false, error: 'El archivo supera los 15 MB' }
+  if (!['application/pdf', 'image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    return { ok: false, error: 'Formato no válido (usa PDF, JPG, PNG o WebP)' }
+  }
+
+  const db = createAdminClient()
+  const ext = file.type === 'application/pdf' ? 'pdf' : (file.type.split('/')[1] || 'jpg')
+  const path = `${monitorId}/horas-${Date.now()}.${ext}`
+  const { error: upErr } = await db.storage.from(BUCKET_DOCS)
+    .upload(path, Buffer.from(await file.arrayBuffer()), { contentType: file.type, upsert: true })
+  if (upErr) return { ok: false, error: `No se pudo subir: ${upErr.message}` }
+
+  const { error } = await db.from('monitor_hojas_horas').insert({
+    monitor_id: monitorId, periodo, archivo_path: path, archivo_tipo: file.type,
+    subido_por: admin.email, observaciones: observaciones || null,
+  })
+  if (error) return { ok: false, error: error.message }
+  await logActivity({ actorEmail: admin.email, accion: `Subió la hoja de horas «${periodo}» de un monitor`, entidad: 'monitor', entidadId: monitorId })
+  revalidatePath('/admin/monitores')
+  return { ok: true }
+}
+
+/** Enlace firmado (60 s) de la hoja o de la firma. El monitor solo ve las suyas. */
+export async function urlHojaHoras(id: string, que: 'hoja' | 'firma' = 'hoja', descargar = false): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  const admin = await getAdminUser()
+  if (!admin) return { ok: false, error: 'Sin sesión' }
+  const db = createAdminClient()
+  const { data } = await db.from('monitor_hojas_horas').select('*').eq('id', id).maybeSingle()
+  const h = data as Record<string, unknown> | null
+  if (!h) return { ok: false, error: 'No se encuentra la hoja de horas' }
+
+  if (!can.edit(admin.role)) {
+    const mon = await getMonitorPorEmail(admin.email)
+    if (!mon || mon.id !== String(h.monitor_id)) return { ok: false, error: 'Sin permisos' }
+  }
+  const path = String((que === 'firma' ? h.firma_path : h.archivo_path) ?? '')
+  if (!path) return { ok: false, error: que === 'firma' ? 'Todavía sin firmar' : 'Sin archivo' }
+  const { data: firmada, error } = await db.storage.from(BUCKET_DOCS)
+    .createSignedUrl(path, 60, descargar ? { download: `${que}-${String(h.periodo ?? '')}.${path.split('.').pop()}` } : undefined)
+  if (error || !firmada?.signedUrl) return { ok: false, error: error?.message || 'No se pudo generar el enlace' }
+  return { ok: true, url: firmada.signedUrl }
+}
+
+/** Firma del monitor (PNG en base64 del canvas). Solo firma sus propias hojas. */
+export async function firmarHojaHoras(id: string, firmaDataUrl: string): Promise<Res> {
+  const { mon, admin, error: e } = await monitorDeSesion()
+  if (!mon || !admin) return { ok: false, error: e! }
+  const m = /^data:image\/png;base64,([A-Za-z0-9+/=]+)$/.exec((firmaDataUrl || '').trim())
+  if (!m) return { ok: false, error: 'Firma no válida' }
+  const buffer = Buffer.from(m[1], 'base64')
+  if (buffer.length > 2 * 1024 * 1024) return { ok: false, error: 'La firma es demasiado grande' }
+
+  const db = createAdminClient()
+  const { data } = await db.from('monitor_hojas_horas').select('monitor_id, firmado_at, periodo').eq('id', id).maybeSingle()
+  const h = data as Record<string, unknown> | null
+  if (!h || String(h.monitor_id) !== mon.id) return { ok: false, error: 'Esta hoja no es tuya' }
+  if (h.firmado_at) return { ok: false, error: 'Esta hoja ya está firmada' }
+
+  const path = `${mon.id}/firma-${id}.png`
+  const { error: upErr } = await db.storage.from(BUCKET_DOCS).upload(path, buffer, { contentType: 'image/png', upsert: true })
+  if (upErr) return { ok: false, error: `No se pudo guardar la firma: ${upErr.message}` }
+
+  const { error } = await db.from('monitor_hojas_horas').update({
+    firmado_at: new Date().toISOString(), firma_path: path,
+    firma_nombre: `${mon.nombre} ${mon.apellidos}`.trim() || admin.email,
+  }).eq('id', id)
+  if (error) return { ok: false, error: error.message }
+  await logActivity({ actorEmail: admin.email, accion: `Firmó la hoja de horas «${String(h.periodo ?? '')}»`, entidad: 'monitor', entidadId: mon.id })
+  revalidatePath('/admin/monitores')
+  return { ok: true }
+}
+
+export async function eliminarHojaHoras(id: string): Promise<Res> {
+  const admin = await getAdminUser()
+  if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
+  const db = createAdminClient()
+  const { data } = await db.from('monitor_hojas_horas').select('archivo_path, firma_path, periodo').eq('id', id).maybeSingle()
+  const h = data as Record<string, unknown> | null
+  const rutas = [h?.archivo_path, h?.firma_path].filter((p): p is string => typeof p === 'string' && !!p)
+  if (rutas.length) await db.storage.from(BUCKET_DOCS).remove(rutas)
+  const { error } = await db.from('monitor_hojas_horas').delete().eq('id', id)
+  if (error) return { ok: false, error: error.message }
+  await logActivity({ actorEmail: admin.email, accion: `Eliminó la hoja de horas «${String(h?.periodo ?? '')}»`, entidad: 'monitor', entidadId: id })
+  revalidatePath('/admin/monitores')
+  return { ok: true }
+}

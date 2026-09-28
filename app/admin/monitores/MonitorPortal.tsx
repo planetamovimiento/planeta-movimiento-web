@@ -8,7 +8,8 @@ import { descargarICS } from '@/lib/monitores/ics'
 import { ficharEntrada, ficharSalida } from './actions'
 import Calendario from './Calendario'
 import Recursos from './Recursos'
-import type { Monitor, Actividad, Fichaje, Carpeta, Documento } from '@/lib/monitores/tipos'
+import type { Monitor, Actividad, Fichaje, Carpeta, Documento, HojaHoras } from '@/lib/monitores/tipos'
+import { HojasHorasMonitor } from './HojasHoras'
 
 const horaCorta = (iso: string) => new Date(iso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
 const fechaLarga = (s: string) => new Intl.DateTimeFormat('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(s + 'T12:00:00'))
@@ -28,11 +29,11 @@ function Cronometro({ desde }: { desde: string }) {
   return <span className="font-mono tabular-nums">{hh}:{mm}:{ss}</span>
 }
 
-export default function MonitorPortal({ monitor, equipo, actividades, fichajes, abierto, carpetas, documentos }: {
+export default function MonitorPortal({ monitor, equipo, actividades, fichajes, abierto, carpetas, documentos, hojasHoras }: {
   monitor: Monitor; equipo: Monitor[]; actividades: Actividad[]; fichajes: Fichaje[]; abierto: Fichaje | null
-  carpetas: Carpeta[]; documentos: Documento[]
+  carpetas: Carpeta[]; documentos: Documento[]; hojasHoras: HojaHoras[]
 }) {
-  const [tab, setTab] = useState<'inicio' | 'calendario' | 'recursos' | 'perfil' | 'equipo'>('inicio')
+  const [tab, setTab] = useState<'inicio' | 'calendario' | 'horas' | 'recursos' | 'perfil' | 'equipo'>('inicio')
   const [error, setError] = useState('')
   const [loading, start] = useTransition()
   const router = useRouter()
@@ -59,7 +60,7 @@ export default function MonitorPortal({ monitor, equipo, actividades, fichajes, 
       <div className="p-4 lg:p-6 space-y-4">
         {/* Pestañas */}
         <div className="flex flex-wrap gap-1 bg-white rounded-xl border border-gray-100 p-1 w-fit">
-          {([['inicio', 'Inicio'], ['calendario', 'Mi calendario'], ['recursos', 'Recursos'], ['perfil', 'Mi perfil'], ['equipo', 'Equipo']] as const).map(([id, label]) => (
+          {([['inicio', 'Inicio'], ['calendario', 'Mi calendario'], ['horas', hojasHoras.some(h => !h.firmado_at) ? 'Hojas de horas ●' : 'Hojas de horas'], ['recursos', 'Recursos'], ['perfil', 'Mi perfil'], ['equipo', 'Equipo']] as const).map(([id, label]) => (
             <button key={id} onClick={() => setTab(id)} className={`px-4 py-2 rounded-lg text-sm font-semibold ${tab === id ? 'bg-pm-red text-white' : 'text-gray-500 hover:bg-gray-50'}`}>{label}</button>
           ))}
         </div>
@@ -174,6 +175,8 @@ export default function MonitorPortal({ monitor, equipo, actividades, fichajes, 
         {tab === 'calendario' && (
           <Calendario actividades={actividades} onExportar={() => descargarICS(actividades, `calendario-${(monitor.nombre || 'monitor').toLowerCase()}.ics`)} />
         )}
+        {tab === 'horas' && <HojasHorasMonitor hojas={hojasHoras} />}
+
         {tab === 'recursos' && <Recursos carpetas={carpetas} documentos={documentos} admin={false} />}
         {tab === 'perfil' && <MiPerfil monitor={monitor} />}
         {tab === 'equipo' && <EquipoDirectorio equipo={equipo} miId={monitor.id} />}

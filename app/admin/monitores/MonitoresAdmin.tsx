@@ -6,9 +6,10 @@ import { SubirImagen } from '@/components/admin/SubirImagen'
 import { ACTIVIDADES_MONITOR, ESTADOS_MONITOR, badgeEstadoMonitor, labelEstadoMonitor, resumenHoras, resumenHorasActividades, horasActividad, horasDeFichaje, fmtHoras } from '@/lib/monitores/constants'
 import { crearMonitor, editarMonitor, eliminarMonitor, asignarActividad, editarActividad, eliminarActividad, registrarMovimiento, eliminarMovimiento, guardarReglasMonitor } from './actions'
 import { DniPrivado } from './DniPrivado'
+import { HojasHorasAdmin } from './HojasHoras'
 import Calendario from './Calendario'
 import Recursos from './Recursos'
-import type { Monitor, MovimientoMonitor, Actividad, Fichaje, Carpeta, Documento, ReglaMonitor } from '@/lib/monitores/tipos'
+import type { Monitor, MovimientoMonitor, Actividad, Fichaje, Carpeta, Documento, ReglaMonitor, HojaHoras } from '@/lib/monitores/tipos'
 
 const fechaLarga = (s: string) => new Intl.DateTimeFormat('es-ES', { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(s + 'T12:00:00'))
 const horaCorta = (iso: string) => new Date(iso).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
@@ -16,9 +17,9 @@ const fechaCortaES = (s: string) => (s ? new Date(s + 'T12:00:00').toLocaleDateS
 
 type Tab = 'equipo' | 'calendario' | 'horas' | 'recursos'
 
-export default function MonitoresAdmin({ monitores, movimientos, actividades, fichajes, carpetas, documentos, reglas, categoriasEmpresa, actividadesClub, puedeBorrar, puedeEditar }: {
+export default function MonitoresAdmin({ monitores, movimientos, actividades, fichajes, carpetas, documentos, hojasHoras, reglas, categoriasEmpresa, actividadesClub, puedeBorrar, puedeEditar }: {
   monitores: Monitor[]; movimientos: MovimientoMonitor[]; actividades: Actividad[]; fichajes: Fichaje[]
-  carpetas: Carpeta[]; documentos: Documento[]
+  carpetas: Carpeta[]; documentos: Documento[]; hojasHoras: HojaHoras[]
   reglas: Record<string, ReglaMonitor[]>; categoriasEmpresa: string[]; actividadesClub: string[]
   puedeBorrar: boolean; puedeEditar: boolean
 }) {
@@ -183,6 +184,7 @@ export default function MonitoresAdmin({ monitores, movimientos, actividades, fi
       </div>
 
       {ficha && <FichaMonitor monitor={ficha === 'nuevo' ? null : ficha} movimientos={movimientos}
+        hojasHoras={ficha === 'nuevo' ? [] : hojasHoras.filter(h => h.monitor_id === ficha.id)}
         reglas={ficha === 'nuevo' ? [] : (reglas[ficha.id] ?? [])} categoriasEmpresa={categoriasEmpresa} actividadesClub={actividadesClub}
         puedeBorrar={puedeBorrar} puedeEditar={puedeEditar} onClose={() => setFicha(null)} />}
       {actModal && <ActividadModal monitores={monitores} actividad={actModal === 'nueva' ? null : actModal} monSelDefault={monSel} onClose={() => setActModal(null)} />}
@@ -540,8 +542,8 @@ function ReglasCalendario({ monitorId, reglasIniciales, categoriasEmpresa, activ
   )
 }
 
-function FichaMonitor({ monitor, movimientos, reglas, categoriasEmpresa, actividadesClub, puedeBorrar, puedeEditar, onClose }: {
-  monitor: Monitor | null; movimientos: MovimientoMonitor[]
+function FichaMonitor({ monitor, movimientos, hojasHoras, reglas, categoriasEmpresa, actividadesClub, puedeBorrar, puedeEditar, onClose }: {
+  monitor: Monitor | null; movimientos: MovimientoMonitor[]; hojasHoras: HojaHoras[]
   reglas: ReglaMonitor[]; categoriasEmpresa: string[]; actividadesClub: string[]
   puedeBorrar: boolean; puedeEditar: boolean; onClose: () => void
 }) {
@@ -659,6 +661,9 @@ function FichaMonitor({ monitor, movimientos, reglas, categoriasEmpresa, activid
             <ReglasCalendario monitorId={monitor!.id} reglasIniciales={reglas}
               categoriasEmpresa={categoriasEmpresa} actividadesClub={actividadesClub} puedeEditar={puedeEditar} />
           )}
+
+          {/* Hojas de horas trabajadas (las firma el monitor en su portal) */}
+          {!nuevo && <HojasHorasAdmin monitorId={monitor!.id} hojas={hojasHoras} />}
 
           {/* Historial de altas y bajas */}
           {!nuevo && <HistorialMovimientos monitorId={monitor!.id} movimientos={movimientos} puedeEditar={puedeEditar} />}
