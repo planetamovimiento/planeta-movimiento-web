@@ -7,6 +7,7 @@
 
 import { enviarEmail, NOTIF_TO } from '@/lib/emails/enviar'
 import { escHtml } from '@/lib/seguridad/sanitize'
+import { CUOTA, eurosCuota, fechaLarga } from '@/lib/club/cuota'
 
 /** Mensaje específico por servicio. Se elige por palabras clave del nombre. */
 type Plantilla = { titulo: string; intro: string; cierre?: string }
@@ -278,7 +279,7 @@ export async function enviarAltaSocio(d: { email: string; tutor: string; partici
       ${saludo(d.tutor)}
       ${parrafo('<b>¡Gracias por hacerte socio del Club Origen! 🎉</b>')}
       ${parrafo(`Hemos registrado como socios a toda la familia añadiendo a ${nombres.length > 1 ? 'los participantes' : 'el participante'} que has introducido: ${listaNombres(nombres)}.`)}
-      ${formasDePago('Por transferencia bancaria (60 € o, si se paga antes de octubre, 40 €)', 'Nombre y apellido del tutor + socio')}
+      ${formasDePago(`Por transferencia bancaria (${eurosCuota(CUOTA.normalCents)} o, si se paga hasta el ${fechaLarga(CUOTA.fechaLimiteReducida)}, ${eurosCuota(CUOTA.reducidaCents)})`, 'Nombre y apellido del tutor + socio')}
       ${titulo('👨‍👩‍👧 PORTAL DE FAMILIAS')}
       ${parrafo('Recordad que podéis entrar en la plataforma de Portal de familias en nuestra web de Planeta Movimiento. Si no conocéis vuestro número de socio, podéis consultárnoslo.')}
       ${enlace(PORTAL_FAMILIAS)}

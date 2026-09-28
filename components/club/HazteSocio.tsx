@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { GuiaTallas } from '@/components/club/GuiaTallas'
 import { submitSocio } from '@/lib/forms/actions'
-import { TALLAS_EQUIPACION, eurosCuota, importeCuotaSugeridoCents } from '@/lib/club/cuota'
+import { TALLAS_EQUIPACION, eurosCuota, importeCuotaSugeridoCents, fechaLarga, diaSiguiente } from '@/lib/club/cuota'
 import { edadDe } from '@/lib/club/constants'
 import { CLUB_IBAN, CLUB_TITULAR, conceptoPagoSocio } from '@/lib/club/pago'
 
@@ -184,7 +184,7 @@ function FormularioSocio({ info, onClose }: { info: SocioInfo; onClose: () => vo
                 <span className="text-lg font-black text-pm-red">{eurosCuota(importeHoy)}</span>
               </div>
               <p className="text-xs text-gray-600">
-                {eurosCuota(info.reducidaCents)} hasta el 27/09/2026 · {eurosCuota(info.normalCents)} a partir del 28/09. El importe se confirma al registrar el pago.
+                {eurosCuota(info.reducidaCents)} hasta el {fechaLarga(info.fechaLimiteReducida)} · {eurosCuota(info.normalCents)} a partir del {fechaLarga(diaSiguiente(info.fechaLimiteReducida))}. El importe se confirma al registrar el pago.
               </p>
               <div className="text-xs text-gray-600 border-t border-pm-red/15 pt-2 space-y-0.5">
                 <div className="font-bold text-pm-navy mb-0.5">Formas de pago (sin cobro online):</div>

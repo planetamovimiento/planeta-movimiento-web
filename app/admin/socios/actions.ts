@@ -2,9 +2,10 @@
 
 import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { getAdminUser, logActivity } from '@/lib/admin/auth'
+import { getAdminUser, logActivity, can } from '@/lib/admin/auth'
 import { puedeVerSeccion } from '@/lib/admin/secciones'
 import { siguienteNumeroSocio, normalizarNumeroSocio } from '@/lib/familias/socio'
+import { esSoloSocio } from '@/lib/club/constants'
 
 type Res = { ok: true; numero?: string } | { ok: false; error: string }
 
@@ -198,5 +199,58 @@ export async function quitarNumeroSocio(email: string): Promise<Res> {
   if (e) return { ok: false, error: e.message }
   await logActivity({ actorEmail: admin.email, accion: `Quitó el nº de socio · ${email}`, entidad: 'socio', entidadId: email })
   revalidar()
+  return { ok: true }
+}
+
+/**
+ * Borra un alta de socio completa (se equivocaron al crearla).
+ *
+ * - Las filas creadas POR el formulario de socio (origen 'socio') se eliminan.
+ * - Las inscripciones de verdad NO se borran: solo se les quita la marca de
+ *   socio y el cobro de la cuota, para no perder al alumno de su disciplina.
+ * - El nº de socio se libera. La cuenta del Portal de Familias se borra si esa
+ *   familia ya no tiene ninguna inscripción.
+ */
+export async function eliminarAltaSocio(email: string): Promise<Res> {
+  const { admin, error } = await exigir()
+  if (!admin) return { ok: false, error: error! }
+  if (!can.manageFinance(admin.role)) return { ok: false, error: 'Solo el administrador principal puede eliminar altas de socio' }
+  const correo = (email || '').trim().toLowerCase()
+  if (!correo) return { ok: false, error: 'Alta de socio no válida' }
+
+  const db = createAdminClient()
+  const { data: filas } = await db.from('form_submissions')
+    .select('id, asunto, datos').eq('tipo', 'inscripcion_club').ilike('email', correo)
+  const todas = (filas ?? []) as { id: string; asunto: string | null; datos: Record<string, unknown> | null }[]
+  const soloSocio = todas.filter(f => esSoloSocio(f.datos, f.asunto))
+  const conInscripcion = todas.filter(f => !esSoloSocio(f.datos, f.asunto) && f.datos?.esSocio)
+
+  for (const f of soloSocio) {
+    await db.from('club_gestion').delete().eq('submission_id', f.id)
+    await db.from('club_familia_alumnos').delete().eq('submission_id', f.id)
+    await db.from('form_submissions').delete().eq('id', f.id)
+  }
+  // Inscripciones reales: dejan de ser socios (sin cuota), pero siguen en su disciplina.
+  for (const f of conInscripcion) {
+    const { esSocio: _, ...resto } = (f.datos ?? {}) as Record<string, unknown>
+    await db.from('form_submissions').update({ datos: resto }).eq('id', f.id)
+    await db.from('club_gestion').update({
+      cuota_estado: null, cuota_importe_cents: null, cuota_fecha_pago: null, cuota_forma_pago: null,
+      updated_at: new Date().toISOString(), updated_by: admin.email,
+    }).eq('submission_id', f.id)
+  }
+
+  // Cuenta del portal: se borra si ya no le queda ninguna inscripción.
+  const quedan = todas.length - soloSocio.length
+  if (quedan === 0) await db.from('club_familias').delete().eq('email', correo)
+  else await db.from('club_familias').update({ numero_socio: null }).eq('email', correo)
+
+  await logActivity({
+    actorEmail: admin.email,
+    accion: `Eliminó el alta de socio de ${correo} (${soloSocio.length} participante(s) borrados, ${conInscripcion.length} inscripción(es) conservadas)`,
+    entidad: 'socio', entidadId: correo,
+  })
+  revalidar()
+  revalidatePath('/admin/club')
   return { ok: true }
 }

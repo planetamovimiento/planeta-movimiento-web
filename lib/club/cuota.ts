@@ -24,7 +24,7 @@ export const TALLAS_EQUIPACION = ['4', '8', '12', '16', 'S', 'M', 'L', 'XL', '2X
 /** Configuración de la cuota de la temporada activa (Fase D la moverá a config). */
 export const CUOTA = {
   temporada: '2026-2027',
-  fechaLimiteReducida: '2026-09-27', // hasta esta fecha inclusive
+  fechaLimiteReducida: '2026-10-15', // hasta esta fecha inclusive
   reducidaCents: 4000, // 40 €
   normalCents: 6000,   // 60 €
   incluye: [

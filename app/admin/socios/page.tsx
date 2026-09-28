@@ -17,7 +17,7 @@ export default async function SociosPage() {
         subtitulo="Altas del formulario de socio: nº de socio, participantes y entrega de equipación"
       />
       <div className="p-4 lg:p-6">
-        <SociosClient socios={socios} siguienteNumero={siguiente} puedeEditar={can.edit(admin.role)} />
+        <SociosClient socios={socios} siguienteNumero={siguiente} puedeEditar={can.edit(admin.role)} puedeBorrar={can.manageFinance(admin.role)} />
       </div>
     </>
   )

@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Metric, EmptyState } from '@/components/admin/ui'
-import { marcarEquipacion, asignarNumeroSocio, quitarNumeroSocio, registrarPagoSocio, anularPagoSocio } from './actions'
+import { marcarEquipacion, asignarNumeroSocio, quitarNumeroSocio, registrarPagoSocio, anularPagoSocio, eliminarAltaSocio } from './actions'
 import { eurosCuota, eurosACents, importeCuotaSugeridoCents } from '@/lib/club/cuota'
 import { waCliente } from '@/lib/whatsapp'
 import type { Socio, ParticipanteSocio } from '@/lib/club/socios'
@@ -30,7 +30,7 @@ function mensajeBienvenida(s: Socio): string {
   ].join('\n')
 }
 
-export default function SociosClient({ socios, puedeEditar, siguienteNumero }: { socios: Socio[]; puedeEditar: boolean; siguienteNumero: string }) {
+export default function SociosClient({ socios, puedeEditar, puedeBorrar, siguienteNumero }: { socios: Socio[]; puedeEditar: boolean; puedeBorrar: boolean; siguienteNumero: string }) {
   const router = useRouter()
   const [q, setQ] = useState('')
   const [filtro, setFiltro] = useState<'' | 'sin-numero' | 'sin-equipacion' | 'sin-pagar'>('')
@@ -104,7 +104,7 @@ export default function SociosClient({ socios, puedeEditar, siguienteNumero }: {
           {lista.map(s => (
             <FichaSocio key={s.email} socio={s} abierto={abierto === s.email}
               onToggle={() => setAbierto(abierto === s.email ? null : s.email)}
-              puedeEditar={puedeEditar} pending={pending} correr={correr} />
+              puedeEditar={puedeEditar} puedeBorrar={puedeBorrar} pending={pending} correr={correr} />
           ))}
         </div>
       )}
@@ -112,8 +112,8 @@ export default function SociosClient({ socios, puedeEditar, siguienteNumero }: {
   )
 }
 
-function FichaSocio({ socio: s, abierto, onToggle, puedeEditar, pending, correr }: {
-  socio: Socio; abierto: boolean; onToggle: () => void; puedeEditar: boolean
+function FichaSocio({ socio: s, abierto, onToggle, puedeEditar, puedeBorrar, pending, correr }: {
+  socio: Socio; abierto: boolean; onToggle: () => void; puedeEditar: boolean; puedeBorrar: boolean
   pending: boolean; correr: (fn: () => Promise<{ ok: boolean; error?: string }>) => void
 }) {
   const [numManual, setNumManual] = useState(s.numeroSocio)
@@ -208,6 +208,25 @@ function FichaSocio({ socio: s, abierto, onToggle, puedeEditar, pending, correr 
               ))}
             </div>
           </div>
+
+          {/* Borrar el alta (se equivocaron al crearla) */}
+          {puedeBorrar && (
+            <div className="border-t border-gray-100 pt-4">
+              <button disabled={pending}
+                onClick={() => {
+                  const soloSocio = s.participantes.filter(p => p.soloSocio).length
+                  const conInscripcion = s.participantes.length - soloSocio
+                  const aviso = `¿Eliminar el alta de socio de ${s.tutor || s.email}?\n\n`
+                    + `· Se borran ${soloSocio} participante(s) que solo existen por este formulario.\n`
+                    + (conInscripcion > 0 ? `· ${conInscripcion} inscripción(es) del club NO se borran: dejan de ser socios y se les quita la cuota.\n` : '')
+                    + `· Se libera el nº de socio${s.numeroSocio ? ` (${s.numeroSocio})` : ''}.\n\nEsta acción no se puede deshacer.`
+                  if (window.confirm(aviso)) correr(() => eliminarAltaSocio(s.email))
+                }}
+                className="w-full border-2 border-red-200 text-red-600 hover:bg-red-50 text-sm font-bold px-4 py-2.5 rounded-xl transition-colors disabled:opacity-50">
+                🗑 Eliminar alta de socio
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
