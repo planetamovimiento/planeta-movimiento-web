@@ -17,6 +17,8 @@ export type EventoCentroCfg = {
   evento: string          // Halloween: nombre temático del año
   plazas: number          // Halloween: plazas máximas
   aforo: number           // Días Sin Cole / Domingos: plazas (niños) por fecha; 0 = sin límite
+  /** Foto de portada del evento (URL). Vacío = la imagen por defecto del código. */
+  imagen: string
   estado: EstadoMM
   updatedAt?: string | null
   updatedBy?: string | null
@@ -37,16 +39,16 @@ export const EVENTOS_CENTRO_DEFAULT: Record<EventoCentroId, EventoCentroCfg> = {
       '2027-01-02 = Inicio de año escolar',
       '2027-01-07 = Post-Reyes',
     ].join('\n'),
-    evento: '', plazas: 0, aforo: 0, estado: 'abierto',
+    evento: '', plazas: 0, aforo: 0, imagen: '', estado: 'abierto',
   },
   domingos: {
     precio: 15, ivaIncluido: true, horario: '11:00 – 13:00', edad: 'Desde 2 años',
-    nota: 'Adultos gratis · Menores de 2 años gratis', fechas: '', evento: '', plazas: 0, aforo: 0, estado: 'abierto',
+    nota: 'Adultos gratis · Menores de 2 años gratis', fechas: '', evento: '', plazas: 0, aforo: 0, imagen: '', estado: 'abierto',
   },
   halloween: {
     precio: 0, ivaIncluido: true, horario: '22:00 – 09:00', edad: 'Mín. 10 años',
     nota: 'Plazas muy limitadas · El precio se confirma al contactar',
-    fechas: '31 oct → 1 nov', evento: 'Apocalipsis Zombie', plazas: 20, aforo: 0, estado: 'proximo',
+    fechas: '31 oct → 1 nov', evento: 'Apocalipsis Zombie', plazas: 20, aforo: 0, imagen: '', estado: 'proximo',
   },
 }
 

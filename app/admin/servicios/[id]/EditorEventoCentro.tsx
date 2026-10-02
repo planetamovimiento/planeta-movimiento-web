@@ -5,6 +5,7 @@ import { ESTADOS_MM } from '@/lib/eventos/manana-magica'
 import type { EventoCentroCfg } from '@/lib/eventos/centro'
 import { guardarEventoConfig } from '../evento-actions'
 import EditorFechas from './EditorFechas'
+import { SubirImagen } from '@/components/admin/SubirImagen'
 
 export default function EditorEventoCentro({ id, inicial, puedeEditar }: { id: string; inicial: EventoCentroCfg; puedeEditar: boolean }) {
   const [f, setF] = useState<EventoCentroCfg>(inicial)
@@ -21,7 +22,7 @@ export default function EditorEventoCentro({ id, inicial, puedeEditar }: { id: s
     const contenido = {
       precio: Number(f.precio) || 0, ivaIncluido: f.ivaIncluido, horario: f.horario, edad: f.edad,
       nota: f.nota, fechas: f.fechas, evento: f.evento, plazas: Number(f.plazas) || 0,
-      aforo: Number(f.aforo) || 0,
+      aforo: Number(f.aforo) || 0, imagen: f.imagen || '',
     }
     const r = await guardarEventoConfig(id, contenido, estado)
     setGuardando(false)
@@ -63,6 +64,12 @@ export default function EditorEventoCentro({ id, inicial, puedeEditar }: { id: s
             <p className="text-[11px] text-gray-400 mt-1.5">Plazas máximas de niños por día. Al llenarse, esa fecha aparece como «Completo» en la web.</p>
           </div>
         )}
+      </div>
+
+      <div>
+        <label className={label}>Foto de portada</label>
+        <SubirImagen value={f.imagen || ''} carpeta="eventos" onChange={url => set('imagen', url)} />
+        <p className="text-[11px] text-gray-400 mt-1.5">Se ve en la web, arriba del evento. Si la quitas, vuelve la foto por defecto.</p>
       </div>
 
       {esHalloween && (
