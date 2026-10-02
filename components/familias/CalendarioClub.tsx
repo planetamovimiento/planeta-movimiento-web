@@ -82,10 +82,17 @@ export function CalendarioClub({ ocurrencias, tipos, desde, hasta }: {
                     <div className="space-y-0.5 mt-0.5">
                       {evs.slice(0, 4).map((o, k) => {
                         const p = paleta(colorOcurrencia(o, tipos))
-                        return (
-                          <div key={k} className={`text-[9px] leading-tight px-1 py-0.5 rounded truncate ${p.chip}`} title={`${o.hora_inicio ? o.hora_inicio + ' ' : ''}${o.titulo}`}>
-                            {o.hora_inicio ? `${o.hora_inicio} ` : ''}{o.titulo}
-                          </div>
+                        const texto = `${o.hora_inicio ? `${o.hora_inicio} ` : ''}${o.titulo}`
+                        const clase = `block text-[9px] leading-tight px-1 py-0.5 rounded truncate ${p.chip}`
+                        // Si el evento tiene enlace, la familia pincha y se le abre (p. ej. para reservar).
+                        return o.url ? (
+                          <a key={k} href={o.url} target="_blank" rel="noopener noreferrer"
+                            className={`${clase} underline underline-offset-2 hover:brightness-95`}
+                            title={`${texto} · abrir enlace`}>
+                            {texto} ↗
+                          </a>
+                        ) : (
+                          <div key={k} className={clase} title={texto}>{texto}</div>
                         )
                       })}
                       {evs.length > 4 && <div className="text-[9px] text-gray-400 px-1">+{evs.length - 4} más</div>}

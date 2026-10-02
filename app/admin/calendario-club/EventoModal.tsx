@@ -31,6 +31,7 @@ export default function EventoModal({ evento, fechaPreset, tipos, opciones, onCl
   const [color, setColor] = useState(evento?.color ?? '')
   const [publico, setPublico] = useState(evento?.publico ?? true)
   const [descripcion, setDescripcion] = useState(evento?.descripcion ?? '')
+  const [url, setUrl] = useState(evento?.url ?? '')
   const [observaciones, setObservaciones] = useState(evento?.observaciones ?? '')
   const [error, setError] = useState('')
   const [pending, startTransition] = useTransition()
@@ -48,9 +49,11 @@ export default function EventoModal({ evento, fechaPreset, tipos, opciones, onCl
         fecha, fecha_fin: fechaFin || null,
         hora_inicio: horaInicio, hora_fin: horaFin, todo_el_dia: todoDia,
         recurrencia: repetir && dias.length ? { dias, hasta: hasta || fecha, excluir_festivos: exFest, excluir_sin_clase: exSin } : null,
-        color: color || null, publico, descripcion, observaciones,
+        color: color || null, publico, descripcion, url: url.trim(), observaciones,
       })
-      if (!res.ok) setError(res.error || 'Error al guardar'); else onDone()
+      if (!res.ok) setError(res.error || 'Error al guardar')
+      else if (res.aviso) setError(res.aviso)
+      else onDone()
     })
   }
   function accion(fn: () => Promise<{ ok: boolean; error?: string | null }>) {
@@ -166,6 +169,11 @@ export default function EventoModal({ evento, fechaPreset, tipos, opciones, onCl
             <label className="flex items-center gap-2 text-sm text-gray-600">
               <input type="checkbox" className="accent-pm-red" checked={publico} onChange={e => setPublico(e.target.checked)} /> Visible en el calendario para familias
             </label>
+            <div>
+              <label className="text-xs font-bold text-gray-500">Enlace del evento (opcional)</label>
+              <input className={input} type="url" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://planetamovimiento.com/servicios/eventos#domingos-en-familia" />
+              <p className="text-[11px] text-gray-400 mt-1">Las familias podrán pinchar el evento en su calendario y se les abre esta página (p. ej. para reservar).</p>
+            </div>
             <div><label className="text-xs font-bold text-gray-500">Descripción</label><textarea rows={2} className={input} value={descripcion} onChange={e => setDescripcion(e.target.value)} /></div>
             <div><label className="text-xs font-bold text-gray-500">Observaciones internas (no salen en el PDF de familias)</label><textarea rows={2} className={input} value={observaciones} onChange={e => setObservaciones(e.target.value)} /></div>
           </div>

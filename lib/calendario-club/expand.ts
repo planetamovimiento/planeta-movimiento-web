@@ -24,7 +24,7 @@ function ocurrenciaDe(e: EventoClub, fecha: string, ex: Excepcion | undefined, e
     eventoId: e.id, fecha, tipo: e.tipo, titulo: e.titulo,
     actividad: e.actividad, grupo: e.grupo, monitor: e.monitor, ubicacion: e.ubicacion, temporada: e.temporada,
     hora_inicio: e.hora_inicio, hora_fin: e.hora_fin, todo_el_dia: e.todo_el_dia,
-    color: e.color, publico: e.publico, descripcion: e.descripcion, observaciones: e.observaciones,
+    color: e.color, publico: e.publico, descripcion: e.descripcion, url: e.url ?? null, observaciones: e.observaciones,
     cancelado: e.estado === 'cancelado', esRecurrente,
   }
   if (ex) {

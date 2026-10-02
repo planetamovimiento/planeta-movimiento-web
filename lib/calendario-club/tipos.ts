@@ -69,6 +69,8 @@ export type EventoClub = {
   estado: string            // activo | cancelado
   publico: boolean
   descripcion: string | null
+  /** Enlace al que lleva el evento (p. ej. la página para reservar). */
+  url: string | null
   observaciones: string | null
   created_at?: string
   updated_at?: string
@@ -100,6 +102,7 @@ export type Ocurrencia = {
   color: string | null
   publico: boolean
   descripcion: string | null
+  url: string | null
   observaciones: string | null
   cancelado: boolean
   esRecurrente: boolean

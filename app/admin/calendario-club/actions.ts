@@ -36,6 +36,7 @@ export type EventoInput = {
   color?: string | null
   publico?: boolean
   descripcion?: string | null
+  url?: string | null
   observaciones?: string | null
 }
 
@@ -63,14 +64,26 @@ export async function guardarEvento(input: EventoInput) {
     color: txt(input.color),
     publico: input.publico ?? true,
     descripcion: txt(input.descripcion),
+    url: txt(input.url),
     observaciones: txt(input.observaciones),
     updated_at: new Date().toISOString(),
     updated_by: admin.email,
   }
 
-  const { error } = input.id
-    ? await db.from('cc_eventos').update(row).eq('id', input.id)
-    : await db.from('cc_eventos').insert({ ...row, estado: 'activo' })
+  const guardarFila = (fila: Record<string, unknown>) => (input.id
+    ? db.from('cc_eventos').update(fila).eq('id', input.id)
+    : db.from('cc_eventos').insert({ ...fila, estado: 'activo' }))
+
+  let { error } = await guardarFila(row)
+  // Sin la migración del enlace (migration_cc_eventos_url.sql) la columna no existe:
+  // se guarda el resto y se avisa, en vez de perder el evento entero.
+  if (error && /url/i.test(error.message) && /column/i.test(error.message)) {
+    const { url: _descartada, ...sinUrl } = row
+    const reintento = await guardarFila(sinUrl)
+    if (reintento.error) return { ok: false, error: reintento.error.message }
+    error = null
+    if (row.url) return { ok: true, aviso: 'Guardado, pero el enlace no: falta ejecutar migration_cc_eventos_url.sql en Supabase.' }
+  }
   if (error) return { ok: false, error: error.message }
 
   await logActivity({ actorEmail: admin.email, accion: input.id ? 'Editó evento (Calendario Club)' : 'Creó evento (Calendario Club)', entidad: 'cc_evento', entidadId: input.id, detalle: row.titulo })
