@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { ESTADOS_MM, type MananaMagica } from '@/lib/eventos/manana-magica'
 import { guardarMananaMagica } from './actions'
 import { SubirImagen } from '@/components/admin/SubirImagen'
+import EditorSecciones from '@/app/admin/servicios/[id]/EditorSecciones'
 
 export default function EditorMananaMagica({ inicial, puedeEditar }: { inicial: MananaMagica; puedeEditar: boolean }) {
   const [f, setF] = useState<MananaMagica>(inicial)
@@ -22,6 +23,7 @@ export default function EditorMananaMagica({ inicial, puedeEditar }: { inicial: 
       precio: Number(f.precio) || 0, descuentoHermanos: Number(f.descuentoHermanos) || 0,
       aforo: Number(f.aforo) || 0,
       edades: f.edades, descripcion: f.descripcion, imagen: f.imagen || '',
+      titulo: f.titulo, subtitulo: f.subtitulo, secciones: f.secciones,
       actividades: actsText.split('\n').map(s => s.trim()).filter(Boolean),
     }
     const r = await guardarMananaMagica(contenido, estado)
@@ -81,6 +83,22 @@ export default function EditorMananaMagica({ inicial, puedeEditar }: { inicial: 
           <label className={label}>Aforo (niños · 0 = sin límite)</label>
           <input type="number" min={0} value={f.aforo} disabled={!puedeEditar} onChange={e => set('aforo', e.target.value)} className={input} />
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className={label}>Título en la web</label>
+          <input value={f.titulo} disabled={!puedeEditar} onChange={e => set('titulo', e.target.value)} className={input} />
+        </div>
+        <div>
+          <label className={label}>Línea pequeña sobre el título</label>
+          <input value={f.subtitulo} disabled={!puedeEditar} onChange={e => set('subtitulo', e.target.value)} className={input} />
+        </div>
+      </div>
+
+      <div>
+        <label className={label}>Bloques de contenido de la web</label>
+        <EditorSecciones value={f.secciones} disabled={!puedeEditar} onChange={v => set('secciones', v)} />
       </div>
 
       <div>

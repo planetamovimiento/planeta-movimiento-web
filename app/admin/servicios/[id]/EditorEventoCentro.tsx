@@ -5,6 +5,7 @@ import { ESTADOS_MM } from '@/lib/eventos/manana-magica'
 import type { EventoCentroCfg } from '@/lib/eventos/centro'
 import { guardarEventoConfig } from '../evento-actions'
 import EditorFechas from './EditorFechas'
+import EditorSecciones from './EditorSecciones'
 import { SubirImagen } from '@/components/admin/SubirImagen'
 
 export default function EditorEventoCentro({ id, inicial, puedeEditar }: { id: string; inicial: EventoCentroCfg; puedeEditar: boolean }) {
@@ -23,6 +24,8 @@ export default function EditorEventoCentro({ id, inicial, puedeEditar }: { id: s
       precio: Number(f.precio) || 0, ivaIncluido: f.ivaIncluido, horario: f.horario, edad: f.edad,
       nota: f.nota, fechas: f.fechas, evento: f.evento, plazas: Number(f.plazas) || 0,
       aforo: Number(f.aforo) || 0, imagen: f.imagen || '',
+      titulo: f.titulo, subtitulo: f.subtitulo, descripcion: f.descripcion,
+      chips: f.chips, secciones: f.secciones,
     }
     const r = await guardarEventoConfig(id, contenido, estado)
     setGuardando(false)
@@ -92,6 +95,34 @@ export default function EditorEventoCentro({ id, inicial, puedeEditar }: { id: s
           <textarea rows={2} value={f.fechas} disabled={!puedeEditar} onChange={e => set('fechas', e.target.value)} className={`${input} resize-none`} />
         </div>
       )}
+
+      {/* Textos que ve la familia en la web */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className={label}>Título en la web</label>
+          <input value={f.titulo} disabled={!puedeEditar} onChange={e => set('titulo', e.target.value)} className={input} />
+        </div>
+        <div>
+          <label className={label}>Línea pequeña sobre el título</label>
+          <input value={f.subtitulo} disabled={!puedeEditar} onChange={e => set('subtitulo', e.target.value)} className={input} placeholder="Evento anual especial" />
+        </div>
+      </div>
+
+      <div>
+        <label className={label}>Descripción</label>
+        <textarea rows={3} value={f.descripcion} disabled={!puedeEditar} onChange={e => set('descripcion', e.target.value)} className={`${input} resize-none`} />
+      </div>
+
+      <div>
+        <label className={label}>Etiquetas extra de la cabecera</label>
+        <textarea rows={3} value={f.chips} disabled={!puedeEditar} onChange={e => set('chips', e.target.value)} className={`${input} resize-none`} placeholder="Una por línea" />
+        <p className="text-[11px] text-gray-400 mt-1.5">Una por línea. El horario, el precio y la edad ya salen solos.</p>
+      </div>
+
+      <div>
+        <label className={label}>Bloques de contenido de la web</label>
+        <EditorSecciones value={f.secciones} disabled={!puedeEditar} onChange={v => set('secciones', v)} />
+      </div>
 
       <div>
         <label className={label}>Nota / aviso</label>

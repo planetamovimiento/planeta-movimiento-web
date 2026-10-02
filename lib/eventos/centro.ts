@@ -6,6 +6,21 @@
 
 import type { EstadoMM } from './manana-magica'
 
+/**
+ * Bloque de contenido editable del evento (lo que se ve en la web bajo la
+ * cabecera): el programa de la noche, lo que incluye, el ambiente…
+ * - 'programa': cada línea es  (la hora sale destacada a la izquierda).
+ * - 'lista': una línea por punto, con su ✓.
+ * - 'chips': una línea por etiqueta redonda.
+ */
+export type SeccionEvento = { titulo: string; tipo: 'programa' | 'lista' | 'chips'; items: string[] }
+
+/** 'hora = texto' → { hora, texto }. Sin '=', todo va al texto. */
+export function parteDePrograma(linea: string): { hora: string; texto: string } {
+  const i = linea.indexOf('=')
+  return i < 0 ? { hora: '', texto: linea.trim() } : { hora: linea.slice(0, i).trim(), texto: linea.slice(i + 1).trim() }
+}
+
 /** Config unificada (cada evento usa los campos que le aplican). */
 export type EventoCentroCfg = {
   precio: number          // € por niño
@@ -19,6 +34,16 @@ export type EventoCentroCfg = {
   aforo: number           // Días Sin Cole / Domingos: plazas (niños) por fecha; 0 = sin límite
   /** Foto de portada del evento (URL). Vacío = la imagen por defecto del código. */
   imagen: string
+  /** Título grande en la web. */
+  titulo: string
+  /** Línea pequeña sobre el título (Halloween: «Evento anual especial»). */
+  subtitulo: string
+  /** Párrafo de presentación. */
+  descripcion: string
+  /** Etiquetas extra de la cabecera (una por línea). Las de horario y precio salen solas. */
+  chips: string
+  /** Bloques de contenido que se ven debajo (programa, actividades…). */
+  secciones: SeccionEvento[]
   estado: EstadoMM
   updatedAt?: string | null
   updatedBy?: string | null
@@ -40,15 +65,63 @@ export const EVENTOS_CENTRO_DEFAULT: Record<EventoCentroId, EventoCentroCfg> = {
       '2027-01-07 = Post-Reyes',
     ].join('\n'),
     evento: '', plazas: 0, aforo: 0, imagen: '', estado: 'abierto',
+    titulo: 'Días Sin Cole', subtitulo: '',
+    descripcion: 'En los festivos escolares abrimos nuestras instalaciones para que los niños vivan una mañana épica de la Escuela de Superhéroes mientras las familias concilian.',
+    chips: 'Hermanos −20%\nFestivos escolares',
+    secciones: [
+      {
+        titulo: '🦸 Habilidades de superhéroe', tipo: 'chips',
+        items: ['⚡ Agilidad', '💪 Fuerza', '🎯 Coordinación', '⚖️ Equilibrio', '🔋 Resistencia', '🤹 Destreza', '🤝 Equipo'],
+      },
+      {
+        titulo: '🏃 Actividades incluidas', tipo: 'lista',
+        items: ['Gimnasia acrobática', 'Parkour', 'Telas aéreas', 'Equilibrios', 'Circuitos', 'Juegos cooperativos', 'Retos físicos', 'Práctica libre'],
+      },
+    ],
   },
   domingos: {
     precio: 15, ivaIncluido: true, horario: '11:00 – 13:00', edad: 'Desde 2 años',
     nota: 'Adultos gratis · Menores de 2 años gratis', fechas: '', evento: '', plazas: 0, aforo: 0, imagen: '', estado: 'abierto',
+    titulo: 'Domingos en Familia', subtitulo: '',
+    descripcion: 'Práctica libre dentro de nuestras instalaciones. Sin clases, sin presión — solo movimiento, juego y tiempo de calidad en familia.',
+    chips: 'Todos los domingos\nAdultos gratis',
+    secciones: [
+      {
+        titulo: '🌿 El ambiente', tipo: 'lista',
+        items: ['🎵 Música de fondo', '🤸 Todo el material disponible', '🛡 Supervisión de monitores', '💬 Monitores resuelven dudas', '🏆 Espacios de juego libre'],
+      },
+      {
+        titulo: '👶 Edades y precios', tipo: 'programa',
+        items: [
+          'Desde 2 años = 15 € por niño',
+          'Menores de 2 años = Entrada gratuita acompañados',
+          'Adultos = Siempre gratis · deben permanecer en la instalación',
+          '⚠ Aviso = No es servicio de guardería',
+        ],
+      },
+    ],
   },
   halloween: {
     precio: 0, ivaIncluido: true, horario: '22:00 – 09:00', edad: 'Mín. 10 años',
     nota: 'Plazas muy limitadas · El precio se confirma al contactar',
     fechas: '31 oct → 1 nov', evento: 'Apocalipsis Zombie', plazas: 20, aforo: 0, imagen: '', estado: 'proximo',
+    titulo: 'Noche de Halloween', subtitulo: 'Evento anual especial',
+    descripcion: 'Una noche épica e inolvidable. Fiesta de pijamas temática, gymkana zombie, actividades nocturnas, película de terror y desayuno con churros al amanecer.',
+    chips: '',
+    secciones: [
+      {
+        titulo: 'Programa de la noche', tipo: 'programa',
+        items: [
+          '22:00 = 🧟 Inicio del apocalipsis',
+          '22:00 – 23:00 = Gymkana temática zombie',
+          '23:00 – 00:00 = Actividades y retos especiales',
+          '00:00+ = Práctica libre',
+          'Madrugada = 🎬 Película de terror (apta +10 años)',
+          '08:00 – 09:00 = 🍫 Desayuno: churros con chocolate',
+          '09:00 = 🏠 Recogida por las familias',
+        ],
+      },
+    ],
   },
 }
 

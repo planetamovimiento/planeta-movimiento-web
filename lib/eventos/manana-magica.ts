@@ -4,6 +4,8 @@
 // Este archivo es "puro" (sin imports de servidor) para poder usarlo en cliente.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import type { SeccionEvento } from './centro'
+
 export type EstadoMM = 'proximo' | 'abierto' | 'completo'
 
 export type MananaMagica = {
@@ -20,6 +22,11 @@ export type MananaMagica = {
   descripcion: string
   /** Cartel/foto del mes (URL). Vacío = sin cartel. */
   imagen: string
+  /** Título y línea pequeña de la cabecera en la web. */
+  titulo: string
+  subtitulo: string
+  /** Bloques de contenido extra (programa, normas…). */
+  secciones: SeccionEvento[]
   actividades: string[]
   estado: EstadoMM
   updatedAt?: string | null
@@ -38,6 +45,9 @@ export const MANANA_MAGICA_DEFAULT: MananaMagica = {
   aforo: 0,
   edades: 'Infantil y primaria',
   imagen: '',
+  titulo: 'Mañanas Mágicas',
+  subtitulo: 'Mañanas Mágicas · Personaje del mes',
+  secciones: [],
   descripcion:
     'Una mañana mágica llena de juego, creatividad y diversión sin pantallas. Una jornada temática con un personaje invitado distinto cada mes, pensada para que los peques disfruten de un montón de actividades en nuestras instalaciones.',
   actividades: [

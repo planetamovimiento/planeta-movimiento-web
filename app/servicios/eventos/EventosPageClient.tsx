@@ -8,6 +8,7 @@ import { ReservaDiasSinCole, ReservaDomingos, ReservaHalloween, ReservaMananaMag
 import type { MananaMagica } from '@/lib/eventos/manana-magica'
 import type { EventoCentroCfg } from '@/lib/eventos/centro'
 import { CartelEvento } from './CartelEvento'
+import { SeccionesEvento, TEMA_CLARO, TEMA_OSCURO } from './SeccionesEvento'
 
 // ─── Datos ────────────────────────────────────────────────────────────────────
 const TIPOS_EVENTO = [
@@ -200,6 +201,9 @@ function PanelExterno({ senal }: { senal: number }) {
   )
 }
 
+/** Texto de varias líneas → lista (ignora líneas vacías). */
+const lineas = (txt: string): string[] => (txt || '').split('\n').map(l => l.trim()).filter(Boolean)
+
 /** Etiqueta de precio a partir de la config editable (respeta IVA). null si precio 0. */
 function precioLabel(cfg: EventoCentroCfg): string | null {
   if (!cfg.precio) return null
@@ -214,38 +218,18 @@ function PanelDiasSinCole({ cfg, ocupacion }: { cfg: EventoCentroCfg; ocupacion:
         <div className="space-y-6">
           <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl p-8 text-white">
             <CartelEvento src={cfg.imagen || "/fotos/eventos-centro/dias-sin-cole.webp"} alt="Días Sin Cole" />
-            <h2 className="text-3xl font-black mb-2">Días Sin Cole</h2>
-            <p className="text-amber-100 text-sm leading-relaxed mb-4">
-              En los festivos escolares abrimos nuestras instalaciones para que los niños vivan una mañana épica de la Escuela de Superhéroes mientras las familias concilian.
-            </p>
+            {cfg.subtitulo && <div className="text-white/70 font-black text-xs uppercase tracking-widest mb-1">{cfg.subtitulo}</div>}
+            <h2 className="text-3xl font-black mb-2">{cfg.titulo}</h2>
+            <p className="text-amber-100 text-sm leading-relaxed mb-4">{cfg.descripcion}</p>
             <div className="flex flex-wrap gap-2">
-              {[cfg.horario, precioLabel(cfg), cfg.edad, 'Hermanos −20%', 'Festivos escolares'].filter(Boolean).map(b => (
+              {[cfg.horario, precioLabel(cfg), cfg.edad, ...lineas(cfg.chips)].filter(Boolean).map(b => (
                 <span key={b} className="bg-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-full">{b}</span>
               ))}
             </div>
             {cfg.nota && <p className="text-amber-100 text-xs mt-3">ℹ {cfg.nota}</p>}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-              <h3 className="font-black text-pm-navy text-sm mb-3">🦸 Habilidades de superhéroe</h3>
-              <div className="flex flex-wrap gap-2">
-                {['⚡ Agilidad','💪 Fuerza','🎯 Coordinación','⚖️ Equilibrio','🔋 Resistencia','🤹 Destreza','🤝 Equipo'].map(h => (
-                  <span key={h} className="bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold px-2 py-1 rounded-full">{h}</span>
-                ))}
-              </div>
-            </div>
-            <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-              <h3 className="font-black text-pm-navy text-sm mb-3">🏃 Actividades incluidas</h3>
-              <div className="grid grid-cols-2 gap-1.5">
-                {['Gimnasia acrobática','Parkour','Telas aéreas','Equilibrios','Circuitos','Juegos cooperativos','Retos físicos','Práctica libre'].map(a => (
-                  <div key={a} className="flex items-center gap-1.5 text-xs text-gray-700">
-                    <span className="text-amber-500 font-bold">✓</span>{a}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <SeccionesEvento secciones={cfg.secciones} tema={TEMA_CLARO('text-amber-500', 'bg-amber-50 border border-amber-200 text-amber-700')} />
         </div>
 
         <div className="lg:sticky lg:top-28 lg:self-start">
@@ -270,47 +254,18 @@ function PanelDomingos({ cfg, ocupacion }: { cfg: EventoCentroCfg; ocupacion: Re
         <div className="space-y-6">
           <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl p-8 text-white">
             <CartelEvento src={cfg.imagen || "/fotos/eventos-centro/domingos.webp"} alt="Domingos en Familia" />
-            <h2 className="text-3xl font-black mb-2">Domingos en Familia</h2>
-            <p className="text-emerald-100 text-sm leading-relaxed mb-4">
-              Práctica libre dentro de nuestras instalaciones. Sin clases, sin presión — solo movimiento, juego y tiempo de calidad en familia.
-            </p>
+            {cfg.subtitulo && <div className="text-white/70 font-black text-xs uppercase tracking-widest mb-1">{cfg.subtitulo}</div>}
+            <h2 className="text-3xl font-black mb-2">{cfg.titulo}</h2>
+            <p className="text-emerald-100 text-sm leading-relaxed mb-4">{cfg.descripcion}</p>
             <div className="flex flex-wrap gap-2">
-              {['Todos los domingos', cfg.horario, precioLabel(cfg), 'Adultos gratis'].filter(Boolean).map(b => (
+              {[cfg.horario, precioLabel(cfg), cfg.edad, ...lineas(cfg.chips)].filter(Boolean).map(b => (
                 <span key={b} className="bg-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-full">{b}</span>
               ))}
             </div>
+            {cfg.nota && <p className="text-emerald-100 text-xs mt-3">ℹ {cfg.nota}</p>}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-              <h3 className="font-black text-pm-navy text-sm mb-3">🌿 El ambiente</h3>
-              <div className="space-y-2">
-                {['🎵 Música de fondo','🤸 Todo el material disponible','🛡 Supervisión de monitores','💬 Monitores resuelven dudas','🏆 Espacios de juego libre'].map(i => (
-                  <div key={i} className="text-sm text-gray-700">{i}</div>
-                ))}
-              </div>
-            </div>
-            <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
-              <h3 className="font-black text-pm-navy text-sm mb-3">👶 Edades</h3>
-              <div className="space-y-3">
-                <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-sm">
-                  <div className="font-bold text-green-700">{cfg.edad}</div>
-                  <div className="text-xs text-green-600">{precioLabel(cfg) ?? 'Consultar precio'}</div>
-                </div>
-                <div className="bg-pm-bg border border-gray-200 rounded-xl p-3 text-sm">
-                  <div className="font-bold text-pm-navy">Menores de 2 años</div>
-                  <div className="text-xs text-gray-500">Entrada gratuita acompañados</div>
-                </div>
-                <div className="bg-pm-bg border border-gray-200 rounded-xl p-3 text-sm">
-                  <div className="font-bold text-pm-navy">Adultos</div>
-                  <div className="text-xs text-gray-500">Siempre gratis · Deben permanecer</div>
-                </div>
-              </div>
-              <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-2.5 text-xs text-amber-700">
-                ⚠ No es servicio de guardería. Los padres permanecen en la instalación.
-              </div>
-            </div>
-          </div>
+          <SeccionesEvento secciones={cfg.secciones} tema={TEMA_CLARO('text-emerald-600', 'bg-emerald-50 border border-emerald-200 text-emerald-700')} />
         </div>
 
         <div className="lg:sticky lg:top-28 lg:self-start">
@@ -336,8 +291,8 @@ function PanelMananaMagica({ cfg, ocupacion }: { cfg: MananaMagica; ocupacion: R
           <div className="bg-gradient-to-br from-fuchsia-600 to-violet-600 rounded-2xl p-8 text-white">
             <CartelEvento src={cfg.imagen} alt="Mañanas Mágicas" fondo="bg-violet-900/40" />
             <div className="text-5xl mb-3">{cfg.emoji}🎉</div>
-            <div className="text-white/70 font-black text-xs uppercase tracking-widest mb-1">Mañanas Mágicas · Personaje del mes</div>
-            <h2 className="text-3xl font-black mb-1">Mañanas Mágicas</h2>
+            {cfg.subtitulo && <div className="text-white/70 font-black text-xs uppercase tracking-widest mb-1">{cfg.subtitulo}</div>}
+            <h2 className="text-3xl font-black mb-1">{cfg.titulo}</h2>
             <div className="text-white font-black text-lg mb-3">«{cfg.personaje}»</div>
             <p className="text-fuchsia-100 text-sm leading-relaxed mb-4">{cfg.descripcion}</p>
             <div className="flex flex-wrap gap-2">
@@ -346,6 +301,8 @@ function PanelMananaMagica({ cfg, ocupacion }: { cfg: MananaMagica; ocupacion: R
               ))}
             </div>
           </div>
+
+          <SeccionesEvento secciones={cfg.secciones} tema={TEMA_CLARO('text-fuchsia-500', 'bg-fuchsia-50 border border-fuchsia-200 text-fuchsia-700')} />
 
           <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
             <h3 className="font-black text-pm-navy text-sm uppercase tracking-wider mb-4">✨ Qué incluye la jornada</h3>
@@ -381,38 +338,18 @@ function PanelHalloween({ cfg }: { cfg: EventoCentroCfg }) {
         <div className="space-y-6">
           <div className="bg-gradient-to-br from-gray-900 to-orange-950 rounded-2xl p-8 text-white border border-orange-500/30">
             <CartelEvento src={cfg.imagen || "/fotos/eventos-centro/halloween.webp"} alt="Noche de Halloween" fondo="bg-black/40" />
-            <div className="text-orange-400 font-black text-xs uppercase tracking-widest mb-1">Evento anual especial</div>
-            <h2 className="text-3xl font-black mb-1">Noche de Halloween</h2>
+            {cfg.subtitulo && <div className="text-orange-400 font-black text-xs uppercase tracking-widest mb-1">{cfg.subtitulo}</div>}
+            <h2 className="text-3xl font-black mb-1">{cfg.titulo}</h2>
             {cfg.evento && <div className="text-orange-400 font-black text-lg mb-3">«{cfg.evento}»</div>}
-            <p className="text-gray-300 text-sm leading-relaxed mb-4">
-              Una noche épica e inolvidable. Fiesta de pijamas temática, gymkana zombie, actividades nocturnas, película de terror y desayuno con churros al amanecer.
-            </p>
+            <p className="text-gray-300 text-sm leading-relaxed mb-4">{cfg.descripcion}</p>
             <div className="flex flex-wrap gap-2">
-              {[cfg.fechas, cfg.horario, cfg.edad, cfg.plazas ? `${cfg.plazas} plazas` : '', precioLabel(cfg)].filter(Boolean).map(b => (
+              {[cfg.fechas, cfg.horario, cfg.edad, cfg.plazas ? `${cfg.plazas} plazas` : '', precioLabel(cfg), ...lineas(cfg.chips)].filter(Boolean).map(b => (
                 <span key={b} className="bg-orange-500/20 border border-orange-500/30 text-orange-300 text-xs font-bold px-3 py-1.5 rounded-full">{b}</span>
               ))}
             </div>
           </div>
 
-          <div className="bg-gray-900 border border-orange-500/30 rounded-2xl p-6">
-            <h3 className="font-black text-orange-400 text-sm uppercase tracking-wider mb-5">Programa de la noche</h3>
-            <div className="space-y-3">
-              {[
-                { hora: '22:00',          evento: '🧟 Inicio del apocalipsis', highlight: true },
-                { hora: '22:00 – 23:00',  evento: 'Gymkana temática zombie' },
-                { hora: '23:00 – 00:00',  evento: 'Actividades y retos especiales' },
-                { hora: '00:00+',         evento: 'Práctica libre' },
-                { hora: 'Madrugada',      evento: '🎬 Película de terror (apta +10 años)' },
-                { hora: '08:00 – 09:00',  evento: '🍫 Desayuno: churros con chocolate', highlight: true },
-                { hora: '09:00',          evento: '🏠 Recogida por las familias' },
-              ].map(({ hora, evento, highlight }) => (
-                <div key={hora} className={`flex items-center gap-4 text-sm ${highlight ? 'text-orange-400 font-bold' : 'text-gray-400'}`}>
-                  <span className="text-orange-500 font-black text-xs w-28 shrink-0">{hora}</span>
-                  <span>{evento}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <SeccionesEvento secciones={cfg.secciones} tema={TEMA_OSCURO} columnas={false} />
         </div>
 
         <div className="lg:sticky lg:top-28 lg:self-start">
