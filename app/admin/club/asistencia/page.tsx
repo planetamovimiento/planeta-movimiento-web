@@ -15,6 +15,8 @@ const PRINT_CSS = `
 @page { size: A4 landscape; margin: 10mm; }
 @media print {
   .no-print { display: none !important; }
+  /* globals.css ya oculta lo que no esté en .pm-print-root; esto la coloca apaisada. */
+  .asis-hoja.pm-print-root { position: static !important; inset: auto !important; width: 100% !important; }
   body { background: #fff !important; }
   .asis-hoja { box-shadow: none !important; border: none !important; margin: 0 !important; max-width: 100% !important; padding: 0 !important; }
   thead { display: table-header-group; }
@@ -123,12 +125,12 @@ export default async function AsistenciaPage({ searchParams }: { searchParams: P
     <div className="bg-gray-100 min-h-screen py-6">
       <style dangerouslySetInnerHTML={{ __html: PRINT_CSS }} />
 
-      <div className="no-print max-w-5xl mx-auto px-4 mb-4 flex items-center justify-between gap-3 flex-wrap">
+      <div className="no-print pm-no-print max-w-5xl mx-auto px-4 mb-4 flex items-center justify-between gap-3 flex-wrap">
         <Link href="/admin/club" className="text-sm text-gray-500 hover:text-pm-red">← Volver a Inscripciones</Link>
         <BarraAsistencia nombreArchivo={nombreArchivo} />
       </div>
 
-      <div className="asis-hoja max-w-5xl mx-auto bg-white shadow-sm rounded-lg p-8">
+      <div className="asis-hoja pm-print-root max-w-5xl mx-auto bg-white shadow-sm rounded-lg p-8">
         {/* Cabecera */}
         <div className="flex items-center gap-4 border-b-2 border-pm-red pb-4 mb-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}

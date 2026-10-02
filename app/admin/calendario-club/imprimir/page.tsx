@@ -7,7 +7,7 @@ import BarraImprimir from './BarraImprimir'
 
 export const dynamic = 'force-dynamic'
 
-const PRINT_CSS = `@media print { aside{display:none!important} .no-print{display:none!important} body{background:#fff!important} .cal-hoja{box-shadow:none!important;border:none!important;margin:0!important;max-width:100%!important} .cal-mes{break-inside:avoid} }`
+const PRINT_CSS = `@media print { aside{display:none!important} .no-print{display:none!important} body{background:#fff!important} .cal-hoja.pm-print-root{position:static!important;inset:auto!important;width:100%!important} .cal-hoja{box-shadow:none!important;border:none!important;margin:0!important;max-width:100%!important} .cal-mes{break-inside:avoid} }`
 const DIAS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
 
 function mesesEnRango(desde: string, hasta: string): { y: number; m: number }[] {
@@ -39,12 +39,12 @@ export default async function ImprimirCalendarioPage({ searchParams }: { searchP
     <div className="bg-gray-100 min-h-screen py-6">
       <style dangerouslySetInnerHTML={{ __html: PRINT_CSS }} />
 
-      <div className="no-print max-w-4xl mx-auto px-4 mb-4 flex items-center justify-between gap-3 flex-wrap">
+      <div className="no-print pm-no-print max-w-4xl mx-auto px-4 mb-4 flex items-center justify-between gap-3 flex-wrap">
         <Link href="/admin/calendario-club" className="text-sm text-gray-500 hover:text-pm-red">← Volver al calendario</Link>
         <BarraImprimir ocurrencias={todas} tipos={tipos} />
       </div>
 
-      <div className="cal-hoja max-w-4xl mx-auto bg-white shadow-sm rounded-lg p-8">
+      <div className="cal-hoja pm-print-root max-w-4xl mx-auto bg-white shadow-sm rounded-lg p-8">
         <div className="flex items-center gap-4 border-b-2 border-pm-red pb-4 mb-5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo-origen.png" alt="Club Deportivo Origen" className="h-16 w-auto" />

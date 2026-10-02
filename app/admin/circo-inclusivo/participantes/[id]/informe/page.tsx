@@ -12,6 +12,7 @@ const PRINT_CSS = `
   aside { display: none !important; }
   .no-print { display: none !important; }
   body { background: #fff !important; }
+  .informe-hoja.pm-print-root { position: static !important; inset: auto !important; width: 100% !important; }
   .informe-hoja { box-shadow: none !important; border: none !important; margin: 0 !important; max-width: 100% !important; }
   .informe-eval { break-inside: avoid; }
 }
@@ -58,13 +59,13 @@ export default async function InformePage(
       <style dangerouslySetInnerHTML={{ __html: PRINT_CSS }} />
 
       {/* Barra de acciones (no se imprime) */}
-      <div className="no-print max-w-3xl mx-auto px-4 mb-4 flex items-center justify-between">
+      <div className="no-print pm-no-print max-w-3xl mx-auto px-4 mb-4 flex items-center justify-between">
         <Link href={`/admin/circo-inclusivo/participantes/${id}`} className="text-sm text-gray-500 hover:text-pm-red">← Volver a la ficha</Link>
         <ImprimirBoton />
       </div>
 
       {/* Hoja del informe */}
-      <div className="informe-hoja max-w-3xl mx-auto bg-white shadow-sm rounded-lg p-8 text-[13px] text-gray-800">
+      <div className="informe-hoja pm-print-root max-w-3xl mx-auto bg-white shadow-sm rounded-lg p-8 text-[13px] text-gray-800">
         {/* Cabecera */}
         <div className="flex items-center gap-4 border-b-2 border-pm-red pb-4 mb-5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
