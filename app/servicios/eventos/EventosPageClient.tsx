@@ -7,6 +7,7 @@ import CalculadoraEventos from './CalculadoraEventos'
 import { ReservaDiasSinCole, ReservaDomingos, ReservaHalloween, ReservaMananaMagica } from './EventosInstalaciones'
 import type { MananaMagica } from '@/lib/eventos/manana-magica'
 import type { EventoCentroCfg } from '@/lib/eventos/centro'
+import { CartelEvento } from './CartelEvento'
 
 // ─── Datos ────────────────────────────────────────────────────────────────────
 const TIPOS_EVENTO = [
@@ -212,8 +213,7 @@ function PanelDiasSinCole({ cfg, ocupacion }: { cfg: EventoCentroCfg; ocupacion:
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10">
         <div className="space-y-6">
           <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl p-8 text-white">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={cfg.imagen || "/fotos/eventos-centro/dias-sin-cole.webp"} alt="Días Sin Cole" className="-mx-8 -mt-8 mb-5 w-[calc(100%+4rem)] h-56 object-cover rounded-t-2xl" />
+            <CartelEvento src={cfg.imagen || "/fotos/eventos-centro/dias-sin-cole.webp"} alt="Días Sin Cole" />
             <h2 className="text-3xl font-black mb-2">Días Sin Cole</h2>
             <p className="text-amber-100 text-sm leading-relaxed mb-4">
               En los festivos escolares abrimos nuestras instalaciones para que los niños vivan una mañana épica de la Escuela de Superhéroes mientras las familias concilian.
@@ -269,8 +269,7 @@ function PanelDomingos({ cfg, ocupacion }: { cfg: EventoCentroCfg; ocupacion: Re
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10">
         <div className="space-y-6">
           <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl p-8 text-white">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={cfg.imagen || "/fotos/eventos-centro/domingos.webp"} alt="Domingos en Familia" className="-mx-8 -mt-8 mb-5 w-[calc(100%+4rem)] h-56 object-cover rounded-t-2xl" />
+            <CartelEvento src={cfg.imagen || "/fotos/eventos-centro/domingos.webp"} alt="Domingos en Familia" />
             <h2 className="text-3xl font-black mb-2">Domingos en Familia</h2>
             <p className="text-emerald-100 text-sm leading-relaxed mb-4">
               Práctica libre dentro de nuestras instalaciones. Sin clases, sin presión — solo movimiento, juego y tiempo de calidad en familia.
@@ -335,6 +334,7 @@ function PanelMananaMagica({ cfg, ocupacion }: { cfg: MananaMagica; ocupacion: R
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10">
         <div className="space-y-6">
           <div className="bg-gradient-to-br from-fuchsia-600 to-violet-600 rounded-2xl p-8 text-white">
+            <CartelEvento src={cfg.imagen} alt="Mañanas Mágicas" fondo="bg-violet-900/40" />
             <div className="text-5xl mb-3">{cfg.emoji}🎉</div>
             <div className="text-white/70 font-black text-xs uppercase tracking-widest mb-1">Mañanas Mágicas · Personaje del mes</div>
             <h2 className="text-3xl font-black mb-1">Mañanas Mágicas</h2>
@@ -380,8 +380,7 @@ function PanelHalloween({ cfg }: { cfg: EventoCentroCfg }) {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10">
         <div className="space-y-6">
           <div className="bg-gradient-to-br from-gray-900 to-orange-950 rounded-2xl p-8 text-white border border-orange-500/30">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={cfg.imagen || "/fotos/eventos-centro/halloween.webp"} alt="Noche de Halloween" className="-mx-8 -mt-8 mb-5 w-[calc(100%+4rem)] h-56 object-cover rounded-t-2xl" />
+            <CartelEvento src={cfg.imagen || "/fotos/eventos-centro/halloween.webp"} alt="Noche de Halloween" fondo="bg-black/40" />
             <div className="text-orange-400 font-black text-xs uppercase tracking-widest mb-1">Evento anual especial</div>
             <h2 className="text-3xl font-black mb-1">Noche de Halloween</h2>
             {cfg.evento && <div className="text-orange-400 font-black text-lg mb-3">«{cfg.evento}»</div>}

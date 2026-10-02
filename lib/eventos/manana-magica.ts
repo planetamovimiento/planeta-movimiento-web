@@ -18,6 +18,8 @@ export type MananaMagica = {
   aforo: number              // plazas (niños) para la fecha única; 0 = sin límite
   edades: string
   descripcion: string
+  /** Cartel/foto del mes (URL). Vacío = sin cartel. */
+  imagen: string
   actividades: string[]
   estado: EstadoMM
   updatedAt?: string | null
@@ -35,6 +37,7 @@ export const MANANA_MAGICA_DEFAULT: MananaMagica = {
   descuentoHermanos: 20,
   aforo: 0,
   edades: 'Infantil y primaria',
+  imagen: '',
   descripcion:
     'Una mañana mágica llena de juego, creatividad y diversión sin pantallas. Una jornada temática con un personaje invitado distinto cada mes, pensada para que los peques disfruten de un montón de actividades en nuestras instalaciones.',
   actividades: [

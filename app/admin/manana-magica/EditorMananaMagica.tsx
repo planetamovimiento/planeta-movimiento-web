@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ESTADOS_MM, type MananaMagica } from '@/lib/eventos/manana-magica'
 import { guardarMananaMagica } from './actions'
+import { SubirImagen } from '@/components/admin/SubirImagen'
 
 export default function EditorMananaMagica({ inicial, puedeEditar }: { inicial: MananaMagica; puedeEditar: boolean }) {
   const [f, setF] = useState<MananaMagica>(inicial)
@@ -20,7 +21,7 @@ export default function EditorMananaMagica({ inicial, puedeEditar }: { inicial: 
       fecha: f.fecha, fechaTexto: f.fechaTexto, horario: f.horario,
       precio: Number(f.precio) || 0, descuentoHermanos: Number(f.descuentoHermanos) || 0,
       aforo: Number(f.aforo) || 0,
-      edades: f.edades, descripcion: f.descripcion,
+      edades: f.edades, descripcion: f.descripcion, imagen: f.imagen || '',
       actividades: actsText.split('\n').map(s => s.trim()).filter(Boolean),
     }
     const r = await guardarMananaMagica(contenido, estado)
@@ -80,6 +81,12 @@ export default function EditorMananaMagica({ inicial, puedeEditar }: { inicial: 
           <label className={label}>Aforo (niños · 0 = sin límite)</label>
           <input type="number" min={0} value={f.aforo} disabled={!puedeEditar} onChange={e => set('aforo', e.target.value)} className={input} />
         </div>
+      </div>
+
+      <div>
+        <label className={label}>Cartel del mes</label>
+        <SubirImagen value={f.imagen || ''} carpeta="eventos" onChange={url => set('imagen', url)} />
+        <p className="text-[11px] text-gray-400 mt-1.5">Se ve entero arriba del evento en la web. Sin cartel, no aparece ninguna imagen.</p>
       </div>
 
       <div>
