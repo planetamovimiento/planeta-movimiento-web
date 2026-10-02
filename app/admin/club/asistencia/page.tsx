@@ -22,6 +22,19 @@ const PRINT_CSS = `
   thead { display: table-header-group; }
   tr { break-inside: avoid; }
   .asis-bloque { break-before: page; }
+
+  /* Impresora en blanco y negro: las líneas grises claras no salían. Todo a negro,
+     sin depender de los fondos (Chrome no imprime los colores de fondo por defecto). */
+  .asis-hoja table { border-collapse: collapse !important; }
+  .asis-hoja th, .asis-hoja td {
+    border: 0.6mm solid #000 !important;
+    border-width: 0.3mm !important;
+    color: #000 !important;
+    background: transparent !important;
+  }
+  .asis-hoja thead th { font-weight: 800 !important; border-bottom-width: 0.6mm !important; }
+  .asis-hoja td { height: 9mm !important; }
+  .asis-hoja .asis-cabecera { border-bottom: 0.6mm solid #000 !important; }
 }
 `
 const LETRA = ['L', 'M', 'X', 'J', 'V', 'S', 'D']       // 1=Lun … 7=Dom
@@ -132,7 +145,7 @@ export default async function AsistenciaPage({ searchParams }: { searchParams: P
 
       <div className="asis-hoja pm-print-root max-w-5xl mx-auto bg-white shadow-sm rounded-lg p-8">
         {/* Cabecera */}
-        <div className="flex items-center gap-4 border-b-2 border-pm-red pb-4 mb-4">
+        <div className="asis-cabecera flex items-center gap-4 border-b-2 border-pm-red pb-4 mb-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo-origen.png" alt="Club Deportivo Origen" className="h-14 w-auto" />
           <div className="flex-1">
@@ -162,21 +175,21 @@ export default async function AsistenciaPage({ searchParams }: { searchParams: P
               <table className="w-full border-collapse text-sm">
                 <thead>
                   <tr className="bg-pm-bg">
-                    <th className="border border-gray-300 px-1 py-1.5 text-[10px] font-black text-gray-400 w-8">#</th>
-                    <th className="border border-gray-300 px-2 py-1.5 text-left text-xs font-black text-pm-navy min-w-[180px]">Alumno</th>
+                    <th className="border border-gray-400 px-1 py-1.5 text-[10px] font-black text-gray-400 w-8">#</th>
+                    <th className="border border-gray-400 px-2 py-1.5 text-left text-xs font-black text-pm-navy min-w-[180px]">Alumno</th>
                     {bloque.map(f => (
-                      <th key={f} className="border border-gray-300 px-1 py-1.5 text-[10px] font-bold text-pm-navy whitespace-nowrap min-w-[44px]">{etiquetaFecha(f)}</th>
+                      <th key={f} className="border border-gray-400 px-1 py-1.5 text-[10px] font-bold text-pm-navy whitespace-nowrap min-w-[44px]">{etiquetaFecha(f)}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {alumnos.map((a, i) => (
                     <tr key={i} className={i % 2 ? 'bg-gray-50' : ''}>
-                      <td className="border border-gray-300 px-1 py-1 text-center text-[10px] text-gray-400">{i + 1}</td>
-                      <td className="border border-gray-300 px-2 py-1 text-[13px] text-pm-navy whitespace-nowrap">
+                      <td className="border border-gray-400 px-1 py-1 text-center text-[10px] text-gray-400">{i + 1}</td>
+                      <td className="border border-gray-400 px-2 py-1 text-[13px] text-pm-navy whitespace-nowrap">
                         <span className="font-semibold">{a.apellidos}</span>{a.apellidos ? ', ' : ''}{a.nombre}
                       </td>
-                      {bloque.map(f => <td key={f} className="border border-gray-300 h-8 min-w-[44px]" />)}
+                      {bloque.map(f => <td key={f} className="border border-gray-400 h-8 min-w-[44px]" />)}
                     </tr>
                   ))}
                 </tbody>
