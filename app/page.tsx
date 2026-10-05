@@ -6,6 +6,10 @@ import Reveal from '@/components/home/Reveal'
 import CountUp from '@/components/home/CountUp'
 import { Foto } from '@/components/ui/Foto'
 import { getResenasActivas } from '@/lib/home/resenas'
+import CalendarioMes, { type EventoHome } from '@/components/home/CalendarioMes'
+import { getEventos, getExcepciones, getTipos } from '@/lib/calendario-club/data'
+import { expandirOcurrencias } from '@/lib/calendario-club/expand'
+import { colorOcurrencia } from '@/lib/calendario-club/tipos'
 
 export const metadata = {
   title: 'Planeta Movimiento — Educación, deporte y ocio en Cuenca',
@@ -65,14 +69,33 @@ const COLABORADORES = [
 
 export default async function HomePage() {
   // Reseñas reales de Google, editables desde Admin → Promociones.
-  const resenas = await getResenasActivas()
+  // Agenda del mes: lo PÚBLICO del Calendario del Club (lo mismo que ven las familias).
+  const [resenas, eventos, excepciones, tipos] = await Promise.all([
+    getResenasActivas(), getEventos(), getExcepciones(), getTipos(),
+  ])
+  const hoy = new Date()
+  const mes = String(hoy.getMonth() + 1).padStart(2, '0')
+  const mesInicial = `${hoy.getFullYear()}-${mes}`
+  const desde = `${mesInicial}-01`
+  const hasta = `${hoy.getFullYear() + 1}-12-31`
+  const agenda: EventoHome[] = expandirOcurrencias(eventos, excepciones, desde, hasta)
+    // Las clases regulares no van a la portada: solo lo especial del mes.
+    .filter(o => o.publico && !o.cancelado && o.tipo !== 'clase')
+    .map(o => ({
+      fecha: o.fecha, titulo: o.titulo, hora: o.todo_el_dia ? '' : (o.hora_inicio ?? ''),
+      tipo: o.tipo, color: colorOcurrencia(o, tipos), url: o.url ?? '',
+    }))
   return (
     <main className="bg-white">
 
       {/* ════ HERO ════ */}
       <Hero />
 
+      {/* ════ AGENDA DEL MES (se alimenta del Calendario del Club) ════ */}
+      <CalendarioMes eventos={agenda} mesInicial={mesInicial} />
+
       {/* ════ PROMOCIONES DESTACADAS (editables desde el admin, incl. 50 días) ════ */}
+
       <PromosDestacadas />
 
       {/* ════ SERVICIOS DESTACADOS ════ */}
