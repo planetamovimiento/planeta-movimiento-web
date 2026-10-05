@@ -10,6 +10,7 @@ import CalendarioMes, { type EventoHome } from '@/components/home/CalendarioMes'
 import { getEventos, getExcepciones, getTipos } from '@/lib/calendario-club/data'
 import { expandirOcurrencias } from '@/lib/calendario-club/expand'
 import { colorOcurrencia } from '@/lib/calendario-club/tipos'
+import { enlaceDeEvento } from '@/lib/calendario-club/enlaces'
 
 export const metadata = {
   title: 'Planeta Movimiento — Educación, deporte y ocio en Cuenca',
@@ -83,7 +84,7 @@ export default async function HomePage() {
     .filter(o => o.publico && !o.cancelado && o.tipo !== 'clase')
     .map(o => ({
       fecha: o.fecha, titulo: o.titulo, hora: o.todo_el_dia ? '' : (o.hora_inicio ?? ''),
-      tipo: o.tipo, color: colorOcurrencia(o, tipos), url: o.url ?? '',
+      tipo: o.tipo, color: colorOcurrencia(o, tipos), url: enlaceDeEvento(o),
     }))
   return (
     <main className="bg-white">

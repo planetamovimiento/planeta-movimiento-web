@@ -133,8 +133,8 @@ export default function CalendarioMes({ eventos, mesInicial }: { eventos: Evento
               <ul className="space-y-2">
                 {delMes.map((e, i) => {
                   const dia = Number(e.fecha.slice(8, 10))
-                  const fila = (
-                    <>
+                  return (
+                    <li key={`${e.fecha}-${i}`} className="flex items-center gap-3 p-2 rounded-2xl hover:bg-white/5 transition-colors">
                       <span className={`w-1.5 h-10 rounded-full shrink-0 ${punto(e.color)}`} />
                       <span className="w-9 shrink-0 text-center">
                         <span className="block text-lg font-black text-white leading-none">{dia}</span>
@@ -142,17 +142,14 @@ export default function CalendarioMes({ eventos, mesInicial }: { eventos: Evento
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-sm font-bold text-white truncate">{e.titulo}</span>
-                        <span className="block text-[11px] text-white/50">{e.hora || 'Todo el día'}{e.url ? ' · Ver más ↗' : ''}</span>
+                        <span className="block text-[11px] text-white/50">{e.hora || 'Todo el día'}</span>
                       </span>
-                    </>
-                  )
-                  return (
-                    <li key={`${e.fecha}-${i}`}>
-                      {e.url ? (
-                        <a href={e.url} target="_blank" rel="noopener noreferrer"
-                          className="flex items-center gap-3 p-2 rounded-2xl hover:bg-white/10 transition-colors">{fila}</a>
-                      ) : (
-                        <div className="flex items-center gap-3 p-2 rounded-2xl">{fila}</div>
+                      {/* Botón de apuntarse: solo si ese evento lleva a algún sitio. */}
+                      {e.url && (
+                        <a href={e.url} target={e.url.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer"
+                          className="shrink-0 bg-pm-red hover:bg-pm-red-dark text-white text-[11px] font-black px-3 py-2 rounded-xl transition-colors whitespace-nowrap">
+                          Apúntate →
+                        </a>
                       )}
                     </li>
                   )

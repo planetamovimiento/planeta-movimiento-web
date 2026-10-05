@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import { iso, paleta, colorOcurrencia, type Ocurrencia, type TipoEvento } from '@/lib/calendario-club/tipos'
+import { enlaceDeEvento } from '@/lib/calendario-club/enlaces'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Calendario del Club para el Portal de Familias: vista mensual navegable con
@@ -85,8 +86,9 @@ export function CalendarioClub({ ocurrencias, tipos, desde, hasta }: {
                         const texto = `${o.hora_inicio ? `${o.hora_inicio} ` : ''}${o.titulo}`
                         const clase = `block text-[9px] leading-tight px-1 py-0.5 rounded truncate ${p.chip}`
                         // Si el evento tiene enlace, la familia pincha y se le abre (p. ej. para reservar).
-                        return o.url ? (
-                          <a key={k} href={o.url} target="_blank" rel="noopener noreferrer"
+                        const enlace = enlaceDeEvento(o)
+                        return enlace ? (
+                          <a key={k} href={enlace} target="_blank" rel="noopener noreferrer"
                             className={`${clase} underline underline-offset-2 hover:brightness-95`}
                             title={`${texto} · abrir enlace`}>
                             {texto} ↗
