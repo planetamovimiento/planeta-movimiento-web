@@ -3,6 +3,7 @@ import { Galeria } from '@/components/ui/Galeria'
 import { VideoYoutube } from '@/components/ui/VideoYoutube'
 import ReservaCumpleanos from './ReservaCumpleanos'
 import { getCumpleanosOcupados } from '@/lib/cumpleanos/disponibilidad'
+import { getHorarioServicio } from '@/lib/reservas/horarios'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { breadcrumbsJsonLd } from '@/lib/seo'
 
@@ -30,7 +31,7 @@ const incluye = [
 const noIncluye = ['La tarta (podéis traerla vosotros)']
 
 export default async function CumpleanosPage() {
-  const ocupados = await getCumpleanosOcupados()
+  const [ocupados, franjas] = await Promise.all([getCumpleanosOcupados(), getHorarioServicio('cumpleanos')])
   return (
     <main className="bg-pm-bg min-h-screen">
       <JsonLd data={breadcrumbsJsonLd([{ name: 'Inicio', path: '/' }, { name: 'Ocio', path: '/ocio' }, { name: 'Cumpleaños', path: '/servicios/cumpleanos' }])} />
@@ -169,7 +170,7 @@ export default async function CumpleanosPage() {
                 <div className="text-red-200 text-xs mt-0.5">Fianza de 50 € para confirmar la fecha</div>
               </div>
               <div className="p-5">
-                <ReservaCumpleanos ocupados={ocupados} />
+                <ReservaCumpleanos ocupados={ocupados} franjas={franjas} />
               </div>
             </div>
           </div>

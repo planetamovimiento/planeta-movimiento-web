@@ -11,6 +11,7 @@ import {
   CUMPLE_EXTRA_MONITOR as EXTRA_MONITOR,
   CUMPLE_FIANZA as FIANZA,
 } from '@/lib/cumpleanos/precio'
+import { slotsDelDia, etiquetaSlot, type SlotSemanal } from '@/lib/reservas/slots'
 
 const MERIENDAS = [
   { id: 'sandwich-mixto', label: 'Sándwich mixto', desc: 'Jamón york y queso' },
@@ -27,11 +28,9 @@ function esFindeSemanaOFestivo(date: Date) {
   return d === 0 || d === 5 || d === 6 // Dom, Vie, Sáb
 }
 
-function getSlotsDelDia(date: Date): string[] {
-  const d = date.getDay()
-  const esSabDom = d === 0 || d === 6
-  if (esSabDom) return ['16:45 – 18:45', '18:15 – 20:15']
-  return ['18:15 – 20:15']
+/** Franjas de ese día, según lo configurado en Admin → Horarios de reserva. */
+function horariosDelDia(franjas: SlotSemanal[], date: Date): string[] {
+  return slotsDelDia(franjas, date).map(etiquetaSlot)
 }
 
 function calcularPrecio(date: Date, participantes: number): {
@@ -212,7 +211,7 @@ function ResumenPrecio({ fecha, participantes }: { fecha: Date; participantes: n
 }
 
 // ─── Componente principal ─────────────────────────────────────────────────────
-export default function ReservaCumpleanos({ ocupados = {} }: { ocupados?: Record<string, string[]> }) {
+export default function ReservaCumpleanos({ ocupados = {}, franjas = [] }: { ocupados?: Record<string, string[]>; franjas?: SlotSemanal[] }) {
   const [fechaSeleccionada, setFechaSeleccionada] = useState<Date | null>(null)
   const [slotSeleccionado, setSlotSeleccionado]   = useState<string | null>(null)
   const [participantes, setParticipantes]          = useState<number>(13)
@@ -233,9 +232,9 @@ export default function ReservaCumpleanos({ ocupados = {} }: { ocupados?: Record
     return [...(ocupados[k] ?? [])]
   }
   const slotTomado = (date: Date, slot: string) => inicioTomados(date).includes(horaInicio(slot))
-  const diaCompleto = (date: Date) => { const t = getSlotsDelDia(date); return t.length > 0 && t.every(s => slotTomado(date, s)) }
+  const diaCompleto = (date: Date) => { const t = horariosDelDia(franjas, date); return t.length > 0 && t.every(s => slotTomado(date, s)) }
 
-  const slots = useMemo(() => fechaSeleccionada ? getSlotsDelDia(fechaSeleccionada) : [], [fechaSeleccionada])
+  const slots = useMemo(() => fechaSeleccionada ? horariosDelDia(franjas, fechaSeleccionada) : [], [fechaSeleccionada, franjas])
   const precio = useMemo(() => fechaSeleccionada ? calcularPrecio(fechaSeleccionada, participantes) : null, [fechaSeleccionada, participantes])
 
   function handleFechaSelect(fecha: Date) {
