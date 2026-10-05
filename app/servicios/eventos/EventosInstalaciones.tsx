@@ -6,6 +6,7 @@ import { iniciarPagoReserva, type PagoReservaPayload } from '@/app/reservar/acti
 import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
 import type { MananaMagica } from '@/lib/eventos/manana-magica'
 import { parseFechasDSC, type EventoCentroCfg } from '@/lib/eventos/centro'
+import { SelectorDescuento, aplicarDescuento, textoDescuento, DESCUENTO_VACIO, type Descuento } from './DescuentoEvento'
 
 // ─── Días Sin Cole ─────────────────────────────────────────────────────────
 // Configurar aquí cada temporada
@@ -65,6 +66,7 @@ export function ReservaDiasSinCole({ cfg, onClose = () => {}, ocupacion = {}, on
   const [fecha, setFecha]      = useState('')
   const [ninos, setNinos]       = useState(1)
   const [form, setForm]         = useState({ nombre: '', email: '', telefono: '' })
+  const [desc, setDesc]         = useState<Descuento>(DESCUENTO_VACIO)
   const [enviando, setEnviando] = useState(false)
   const [error, setError]       = useState('')
 
@@ -74,12 +76,11 @@ export function ReservaDiasSinCole({ cfg, onClose = () => {}, ocupacion = {}, on
   const libresDe = (f: string) => (aforo > 0 ? Math.max(0, aforo - (ocupacion[f] ?? 0)) : Infinity)
   const libresSel = fecha ? libresDe(fecha) : Infinity
   useEffect(() => { setNinos(n => Math.max(1, Math.min(n, libresSel))) }, [fecha]) // eslint-disable-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
-  // Descuento por hermanos: el 2º niño en adelante paga un 20% menos (igual que Mañanas Mágicas).
-  const DESC_HERMANOS = 20
-  const ninosEfectivos = ninos > 0 ? 1 + Math.max(0, ninos - 1) * (1 - DESC_HERMANOS / 100) : 0
-  const precioConIva = (cfg && cfg.ivaIncluido)
-    ? Math.round(precioBase * ninosEfectivos * 100) / 100
-    : Math.round(precioBase * (1 + IVA) * ninosEfectivos * 100) / 100
+  // El descuento (hermanos o socio) lo elige la familia y nunca se acumulan.
+  const sinDescuento = (cfg && cfg.ivaIncluido)
+    ? Math.round(precioBase * ninos * 100) / 100
+    : Math.round(precioBase * (1 + IVA) * ninos * 100) / 100
+  const precioConIva = aplicarDescuento(sinDescuento, desc)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault(); setError('')
@@ -87,7 +88,7 @@ export function ReservaDiasSinCole({ cfg, onClose = () => {}, ocupacion = {}, on
       servicioId: 'dias-sin-cole',
       cliente: { nombre: form.nombre, email: form.email, telefono: form.telefono },
       fecha, participantes: ninos, total: precioConIva,
-      datos: { horario: '9:00 - 14:00', numNinos: ninos },
+      datos: { horario: '9:00 - 14:00', numNinos: ninos, descuento: textoDescuento(desc), numeroSocio: desc.numeroSocio },
     }
     if (onReservar) { onReservar(payload); return }
     setEnviando(true)
@@ -145,11 +146,13 @@ export function ReservaDiasSinCole({ cfg, onClose = () => {}, ocupacion = {}, on
         )}
       </div>
 
+      <SelectorDescuento ninos={ninos} valor={desc} onChange={setDesc} />
+
       {/* Precio */}
       {fecha && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-sm">
           <div className="flex justify-between text-amber-800">
-            <span>{ninos} niño{ninos > 1 ? 's' : ''} × {precioBase} €{cfg?.ivaIncluido ? '' : ' + IVA'}{ninos > 1 ? ` (hermanos −${DESC_HERMANOS}%)` : ''}</span>
+            <span>{ninos} niño{ninos > 1 ? 's' : ''} × {precioBase} €{cfg?.ivaIncluido ? '' : ' + IVA'}{textoDescuento(desc) ? ` · ${textoDescuento(desc)}` : ''}</span>
             <strong>{precioConIva} €</strong>
           </div>
         </div>
@@ -203,10 +206,11 @@ export function ReservaDomingos({ cfg, onClose = () => {}, ocupacion = {}, onRes
   const [fecha, setFecha]   = useState('')
   const [ninos, setNinos]   = useState(1)
   const [form, setForm]     = useState({ nombre: '', email: '', telefono: '' })
+  const [desc, setDesc]     = useState<Descuento>(DESCUENTO_VACIO)
   const [enviando, setEnviando] = useState(false)
   const [error, setError]   = useState('')
 
-  const total = ninos * precioNino
+  const total = aplicarDescuento(ninos * precioNino, desc)
   const libresSel = fecha ? libresDe(fecha) : Infinity
   useEffect(() => { setNinos(n => Math.max(1, Math.min(n, libresSel))) }, [fecha]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -216,7 +220,7 @@ export function ReservaDomingos({ cfg, onClose = () => {}, ocupacion = {}, onRes
       servicioId: 'domingos',
       cliente: { nombre: form.nombre, email: form.email, telefono: form.telefono },
       fecha, participantes: ninos, total,
-      datos: { horario: '11:00 - 13:00', numNinos: ninos, nota: 'Adultos gratis' },
+      datos: { horario: '11:00 - 13:00', numNinos: ninos, nota: 'Adultos gratis', descuento: textoDescuento(desc), numeroSocio: desc.numeroSocio },
     }
     if (onReservar) { onReservar(payload); return }
     setEnviando(true)
@@ -281,10 +285,12 @@ export function ReservaDomingos({ cfg, onClose = () => {}, ocupacion = {}, onRes
         )}
       </div>
 
+      <SelectorDescuento ninos={ninos} valor={desc} onChange={setDesc} />
+
       {fecha && (
         <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-sm">
           <div className="flex justify-between text-green-800">
-            <span>{ninos} niño{ninos > 1 ? 's' : ''} × {precioNino} € · Adultos gratis</span>
+            <span>{ninos} niño{ninos > 1 ? 's' : ''} × {precioNino} €{textoDescuento(desc) ? ` · ${textoDescuento(desc)}` : ' · Adultos gratis'}</span>
             <strong>{total} €</strong>
           </div>
         </div>
@@ -313,6 +319,7 @@ export function ReservaHalloween({ cfg, onClose = () => {} }: { cfg?: EventoCent
   const evento = cfg?.evento || 'Apocalipsis Zombie'
   const [ninos, setNinos]   = useState(1)
   const [form, setForm]     = useState({ nombre: '', email: '', telefono: '', edades: '', notas: '' })
+  const [desc, setDesc]     = useState<Descuento>(DESCUENTO_VACIO)
   const [enviando, setEnviando] = useState(false)
   const [listo, setListo]   = useState(false)
 
@@ -322,7 +329,7 @@ export function ReservaHalloween({ cfg, onClose = () => {} }: { cfg?: EventoCent
       servicio: 'Noche de Halloween',
       cliente_nombre: form.nombre, cliente_email: form.email, cliente_telefono: form.telefono,
       participantes: ninos, observaciones: form.notas,
-      datos: { edades: form.edades, numNinos: ninos, evento },
+      datos: { edades: form.edades, numNinos: ninos, evento, descuento: textoDescuento(desc), numeroSocio: desc.numeroSocio },
     })
     setEnviando(false); setListo(true)
   }
@@ -351,6 +358,8 @@ export function ReservaHalloween({ cfg, onClose = () => {} }: { cfg?: EventoCent
         </div>
       </div>
 
+      <SelectorDescuento ninos={ninos} valor={desc} onChange={setDesc} tema="oscuro" />
+
       <input required type="text" placeholder="Nombre del responsable *" value={form.nombre} onChange={e => setForm(f => ({...f, nombre: e.target.value}))} className="w-full border border-orange-500/30 bg-orange-950/20 rounded-xl px-3 py-2.5 text-sm text-white placeholder-orange-300/50 focus:outline-none focus:border-orange-400"/>
       <input required type="email" placeholder="Email *" value={form.email} onChange={e => setForm(f => ({...f, email: e.target.value}))} className="w-full border border-orange-500/30 bg-orange-950/20 rounded-xl px-3 py-2.5 text-sm text-white placeholder-orange-300/50 focus:outline-none focus:border-orange-400"/>
       <input required type="tel" placeholder="Teléfono *" value={form.telefono} onChange={e => setForm(f => ({...f, telefono: e.target.value}))} className="w-full border border-orange-500/30 bg-orange-950/20 rounded-xl px-3 py-2.5 text-sm text-white placeholder-orange-300/50 focus:outline-none focus:border-orange-400"/>
@@ -373,11 +382,11 @@ export function ReservaHalloween({ cfg, onClose = () => {} }: { cfg?: EventoCent
 export function ReservaMananaMagica({ cfg, onClose = () => {}, ocupacion = {}, onReservar }: { cfg: MananaMagica; onClose?: () => void; ocupacion?: Record<string, number>; onReservar?: (p: PagoReservaPayload) => void }) {
   const [ninos, setNinos] = useState(1)
   const [form, setForm] = useState({ nombre: '', email: '', telefono: '', edades: '' })
+  const [desc, setDesc] = useState<Descuento>(DESCUENTO_VACIO)
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState('')
 
-  const desc = cfg.descuentoHermanos / 100
-  const total = Math.round((cfg.precio + Math.max(0, ninos - 1) * cfg.precio * (1 - desc)) * 100) / 100
+  const total = aplicarDescuento(Math.round(cfg.precio * ninos * 100) / 100, desc)
   const aforo = cfg.aforo ?? 0
   const libres = aforo > 0 && cfg.fecha ? Math.max(0, aforo - (ocupacion[cfg.fecha] ?? 0)) : Infinity
   useEffect(() => { setNinos(n => Math.max(1, Math.min(n, libres))) }, [libres])
@@ -388,7 +397,7 @@ export function ReservaMananaMagica({ cfg, onClose = () => {}, ocupacion = {}, o
       servicioId: 'manana-magica',
       cliente: { nombre: form.nombre, email: form.email, telefono: form.telefono },
       fecha: cfg.fecha || null, participantes: ninos, total,
-      datos: { personaje: cfg.personaje, tematica: cfg.tematica, horario: cfg.horario, fecha: cfg.fechaTexto, edades: form.edades, numNinos: ninos },
+      datos: { personaje: cfg.personaje, tematica: cfg.tematica, horario: cfg.horario, fecha: cfg.fechaTexto, edades: form.edades, numNinos: ninos, descuento: textoDescuento(desc), numeroSocio: desc.numeroSocio },
     }
     if (onReservar) { onReservar(payload); return }
     setEnviando(true)
@@ -407,7 +416,7 @@ export function ReservaMananaMagica({ cfg, onClose = () => {}, ocupacion = {}, o
           <div>📅 {cfg.fechaTexto}</div>
           <div>🕙 {cfg.horario}</div>
           <div>👧 {cfg.edades}</div>
-          <div>💰 {cfg.precio} € / niño · Hermanos −{cfg.descuentoHermanos}%</div>
+          <div>💰 {cfg.precio} € / niño · Hermanos −20% o socio −15%</div>
         </div>
       </div>
 
@@ -423,9 +432,11 @@ export function ReservaMananaMagica({ cfg, onClose = () => {}, ocupacion = {}, o
         )}
       </div>
 
+      <SelectorDescuento ninos={ninos} valor={desc} onChange={setDesc} />
+
       <div className="bg-fuchsia-50 border border-fuchsia-200 rounded-xl p-3 text-sm">
         <div className="flex justify-between text-fuchsia-800">
-          <span>{ninos} niño{ninos > 1 ? 's' : ''}{ninos > 1 ? ` (hermanos −${cfg.descuentoHermanos}%)` : ''}</span>
+          <span>{ninos} niño{ninos > 1 ? 's' : ''}{textoDescuento(desc) ? ` · ${textoDescuento(desc)}` : ''}</span>
           <strong>{total} €</strong>
         </div>
       </div>
