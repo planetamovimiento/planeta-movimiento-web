@@ -5,6 +5,7 @@ import { PromosDestacadas } from '@/components/home/PromosDestacadas'
 import Reveal from '@/components/home/Reveal'
 import CountUp from '@/components/home/CountUp'
 import { Foto } from '@/components/ui/Foto'
+import { getResenasActivas } from '@/lib/home/resenas'
 
 export const metadata = {
   title: 'Planeta Movimiento — Educación, deporte y ocio en Cuenca',
@@ -62,13 +63,9 @@ const COLABORADORES = [
   { nombre: 'Club Deportivo Origen', tipo: 'Entidad deportiva' },
 ]
 
-const RESENAS = [
-  { nombre: 'María G.', rol: 'Madre', texto: 'El cumpleaños de mi hija fue increíble. Los monitores son súper profesionales y los niños no pararon de reír y moverse.', estrellas: 5 },
-  { nombre: 'Carlos P.', rol: 'RRHH empresa', texto: 'Llevamos a nuestro equipo al taller de empresa y fue una experiencia transformadora. Cohesión total. 100% recomendable.', estrellas: 5 },
-  { nombre: 'AMPA CEIP San Julián', rol: 'Centro educativo', texto: 'El multideporte extraescolar es un éxito entre los alumnos. Organización impecable y trato cercano con las familias.', estrellas: 5 },
-]
-
-export default function HomePage() {
+export default async function HomePage() {
+  // Reseñas reales de Google, editables desde Admin → Promociones.
+  const resenas = await getResenasActivas()
   return (
     <main className="bg-white">
 
@@ -230,11 +227,13 @@ export default function HomePage() {
               {Array.from({ length: 5 }).map((_, i) => <span key={i} className="text-pm-red text-xl">★</span>)}
             </div>
             <h2 className="text-3xl sm:text-4xl font-black text-pm-navy mb-3">Lo que dicen de nosotros</h2>
-            <p className="text-gray-500 text-base">Familias, colegios y empresas que ya confían en nosotros</p>
+            <p className="text-gray-500 text-base">
+              <strong className="text-pm-navy">{resenas.nota}</strong> sobre 5 en Google · {resenas.total} reseñas de familias, colegios y empresas
+            </p>
           </Reveal>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {RESENAS.map((r, i) => (
-              <Reveal key={r.nombre} delay={i * 80}>
+            {resenas.items.map((r, i) => (
+              <Reveal key={r.id} delay={i * 80}>
                 <div className="h-full bg-white rounded-3xl p-7 shadow-sm border border-gray-100 flex flex-col pm-card">
                   <div className="flex gap-0.5 mb-4">
                     {Array.from({ length: r.estrellas }).map((_, j) => <span key={j} className="text-pm-red">★</span>)}
@@ -253,6 +252,15 @@ export default function HomePage() {
               </Reveal>
             ))}
           </div>
+          {resenas.enlace && (
+            <div className="text-center mt-8">
+              <a href={resenas.enlace} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-white border border-gray-200 hover:border-pm-red text-pm-navy font-bold text-sm px-5 py-3 rounded-2xl transition-colors">
+                Ver todas las reseñas en Google
+                <span className="text-pm-red">↗</span>
+              </a>
+            </div>
+          )}
         </div>
       </section>
 
