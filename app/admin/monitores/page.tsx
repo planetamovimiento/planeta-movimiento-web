@@ -46,13 +46,13 @@ export default async function MonitoresPage() {
       )
     }
     // Lo asignado a mano + lo que le toca por sus reglas.
-    const [manuales, automaticas, fichajes, abierto, equipo] = await Promise.all([
+    const [manuales, automaticas, fichajes, abierto] = await Promise.all([
       getActividades({ monitorId: mon.id }), actividadesAutomaticas(desde, hasta, mon.id),
-      getFichajes(mon.id), getFichajeAbierto(mon.id), getMonitores(),
+      getFichajes(mon.id), getFichajeAbierto(mon.id),
     ])
     const actividades = [...manuales, ...automaticas].sort(porFecha)
     const hojas = await getHojasHoras(mon.id)
-    return <MonitorPortal monitor={mon} equipo={equipo.map(sinDatosSensibles)} actividades={actividades} fichajes={fichajes} abierto={abierto} carpetas={carpetas} documentos={documentos} hojasHoras={hojas} />
+    return <MonitorPortal monitor={mon} actividades={actividades} fichajes={fichajes} abierto={abierto} carpetas={carpetas} documentos={documentos} hojasHoras={hojas} />
   }
 
   const [monitoresRaw, movimientos, manuales, automaticas, fichajes, reglas, hojasHoras] = await Promise.all([

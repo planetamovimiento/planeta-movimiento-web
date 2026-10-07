@@ -139,12 +139,22 @@ export async function eliminarMovimiento(id: string): Promise<Res> {
 // descarga con un enlace firmado de 60 segundos que genera el servidor.
 const BUCKET_DOCS = 'monitores-docs'
 const CARAS_DNI = { frente: 'dni_frente_path', reverso: 'dni_reverso_path' } as const
+
+/** Puede tocar el DNI de ese monitor: un admin con permiso, o el propio monitor. */
+async function puedeTocarDni(monitorId: string) {
+  const admin = await getAdminUser()
+  if (!admin) return { admin: null, error: 'Sin sesión' }
+  if (can.edit(admin.role)) return { admin, error: null as string | null }
+  const mio = await getMonitorPorEmail(admin.email)
+  if (mio && mio.id === monitorId) return { admin, error: null as string | null }
+  return { admin: null, error: 'Sin permisos' }
+}
 export type CaraDni = keyof typeof CARAS_DNI
 
 export async function subirDniMonitor(formData: FormData): Promise<{ ok: true; path: string } | { ok: false; error: string }> {
-  const admin = await getAdminUser()
-  if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
   const monitorId = String(formData.get('monitorId') || '')
+  const { admin, error: permErr } = await puedeTocarDni(monitorId)
+  if (!admin) return { ok: false, error: permErr! }
   const cara = String(formData.get('cara') || '') as CaraDni
   const file = formData.get('file') as File | null
   if (!monitorId) return { ok: false, error: 'Monitor no válido' }
@@ -178,8 +188,8 @@ export async function subirDniMonitor(formData: FormData): Promise<{ ok: true; p
 
 /** Enlace firmado (60 s) para ver o descargar el DNI guardado. */
 export async function urlDniMonitor(monitorId: string, cara: CaraDni, descargar = false): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
-  const admin = await getAdminUser()
-  if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
+  const { admin, error: permErr } = await puedeTocarDni(monitorId)
+  if (!admin) return { ok: false, error: permErr! }
   if (!CARAS_DNI[cara]) return { ok: false, error: 'Cara del DNI no válida' }
   const db = createAdminClient()
   const { data } = await db.from('monitores').select(CARAS_DNI[cara]).eq('id', monitorId).maybeSingle()
@@ -192,8 +202,8 @@ export async function urlDniMonitor(monitorId: string, cara: CaraDni, descargar 
 }
 
 export async function eliminarDniMonitor(monitorId: string, cara: CaraDni): Promise<Res> {
-  const admin = await getAdminUser()
-  if (!admin || !can.edit(admin.role)) return { ok: false, error: 'Sin permisos' }
+  const { admin, error: permErr } = await puedeTocarDni(monitorId)
+  if (!admin) return { ok: false, error: permErr! }
   if (!CARAS_DNI[cara]) return { ok: false, error: 'Cara del DNI no válida' }
   const db = createAdminClient()
   const { data } = await db.from('monitores').select(CARAS_DNI[cara]).eq('id', monitorId).maybeSingle()
@@ -509,6 +519,38 @@ export async function eliminarHojaHoras(id: string): Promise<Res> {
   const { error } = await db.from('monitor_hojas_horas').delete().eq('id', id)
   if (error) return { ok: false, error: error.message }
   await logActivity({ actorEmail: admin.email, accion: `Eliminó la hoja de horas «${String(h?.periodo ?? '')}»`, entidad: 'monitor', entidadId: id })
+  revalidatePath('/admin/monitores')
+  return { ok: true }
+}
+
+/**
+ * Datos que el propio monitor puede cambiar desde su portal (los suyos y solo
+ * los suyos). El correo, el estado y las especialidades los lleva el admin,
+ * porque son los que dan acceso y organizan el equipo.
+ */
+export async function guardarMiFicha(p: {
+  nombre?: string; apellidos?: string; telefono?: string
+  fecha_nacimiento?: string; dni_numero?: string; num_seguridad_social?: string
+  foto_url?: string
+}): Promise<Res> {
+  const { mon, admin, error } = await monitorDeSesion()
+  if (!mon || !admin) return { ok: false, error: error! }
+
+  const t = (v?: string) => (typeof v === 'string' ? v.trim() : '')
+  const db = createAdminClient()
+  const { error: e } = await db.from('monitores').update({
+    nombre: t(p.nombre) || null,
+    apellidos: t(p.apellidos) || null,
+    telefono: t(p.telefono) || null,
+    fecha_nacimiento: t(p.fecha_nacimiento) || null,
+    dni_numero: t(p.dni_numero) || null,
+    num_seguridad_social: t(p.num_seguridad_social) || null,
+    foto_url: t(p.foto_url) || null,
+    updated_at: new Date().toISOString(),
+  }).eq('id', mon.id)
+  if (e) return { ok: false, error: e.message }
+
+  await logActivity({ actorEmail: admin.email, accion: 'Actualizó sus datos de monitor', entidad: 'monitor', entidadId: mon.id })
   revalidatePath('/admin/monitores')
   return { ok: true }
 }

@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation'
 import { AdminHeader, Metric } from '@/components/admin/ui'
 import { resumenHoras, resumenHorasActividades, horasPorMes, fmtHoras, badgeEstadoMonitor, labelEstadoMonitor } from '@/lib/monitores/constants'
 import { descargarICS } from '@/lib/monitores/ics'
-import { ficharEntrada, ficharSalida } from './actions'
+import { ficharEntrada, ficharSalida, guardarMiFicha } from './actions'
+import { DniPrivado } from './DniPrivado'
+import { SubirImagen } from '@/components/admin/SubirImagen'
 import Calendario from './Calendario'
 import Recursos from './Recursos'
 import type { Monitor, Actividad, Fichaje, Carpeta, Documento, HojaHoras } from '@/lib/monitores/tipos'
@@ -29,11 +31,11 @@ function Cronometro({ desde }: { desde: string }) {
   return <span className="font-mono tabular-nums">{hh}:{mm}:{ss}</span>
 }
 
-export default function MonitorPortal({ monitor, equipo, actividades, fichajes, abierto, carpetas, documentos, hojasHoras }: {
-  monitor: Monitor; equipo: Monitor[]; actividades: Actividad[]; fichajes: Fichaje[]; abierto: Fichaje | null
+export default function MonitorPortal({ monitor, actividades, fichajes, abierto, carpetas, documentos, hojasHoras }: {
+  monitor: Monitor; actividades: Actividad[]; fichajes: Fichaje[]; abierto: Fichaje | null
   carpetas: Carpeta[]; documentos: Documento[]; hojasHoras: HojaHoras[]
 }) {
-  const [tab, setTab] = useState<'inicio' | 'calendario' | 'horas' | 'recursos' | 'perfil' | 'equipo'>('inicio')
+  const [tab, setTab] = useState<'inicio' | 'calendario' | 'horas' | 'recursos' | 'perfil'>('inicio')
   const [error, setError] = useState('')
   const [loading, start] = useTransition()
   const router = useRouter()
@@ -60,7 +62,7 @@ export default function MonitorPortal({ monitor, equipo, actividades, fichajes, 
       <div className="p-4 lg:p-6 space-y-4">
         {/* Pestañas */}
         <div className="flex flex-wrap gap-1 bg-white rounded-xl border border-gray-100 p-1 w-fit">
-          {([['inicio', 'Inicio'], ['calendario', 'Mi calendario'], ['horas', hojasHoras.some(h => !h.firmado_at) ? 'Hojas de horas ●' : 'Hojas de horas'], ['recursos', 'Recursos'], ['perfil', 'Mi perfil'], ['equipo', 'Equipo']] as const).map(([id, label]) => (
+          {([['inicio', 'Inicio'], ['calendario', 'Mi calendario'], ['horas', hojasHoras.some(h => !h.firmado_at) ? 'Hojas de horas ●' : 'Hojas de horas'], ['recursos', 'Recursos'], ['perfil', 'Mi perfil']] as const).map(([id, label]) => (
             <button key={id} onClick={() => setTab(id)} className={`px-4 py-2 rounded-lg text-sm font-semibold ${tab === id ? 'bg-pm-red text-white' : 'text-gray-500 hover:bg-gray-50'}`}>{label}</button>
           ))}
         </div>
@@ -179,76 +181,92 @@ export default function MonitorPortal({ monitor, equipo, actividades, fichajes, 
 
         {tab === 'recursos' && <Recursos carpetas={carpetas} documentos={documentos} admin={false} />}
         {tab === 'perfil' && <MiPerfil monitor={monitor} />}
-        {tab === 'equipo' && <EquipoDirectorio equipo={equipo} miId={monitor.id} />}
       </div>
     </>
   )
 }
 
-/** Directorio del equipo — solo consulta (sin acceso al portal de los compañeros). */
-function EquipoDirectorio({ equipo, miId }: { equipo: Monitor[]; miId: string }) {
-  if (!equipo.length) return <p className="text-gray-400 text-sm py-8 text-center">Todavía no hay más monitores en el equipo.</p>
-  return (
-    <div>
-      <p className="text-sm text-gray-500 mb-3">Estos son los monitores del equipo. Es solo una guía de contacto: no puedes entrar en su portal ni editar sus datos.</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {equipo.map(m => (
-          <div key={m.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex gap-3 items-center">
-            {m.foto_url
-              // eslint-disable-next-line @next/next/no-img-element
-              ? <img src={m.foto_url} alt="" className="w-12 h-12 rounded-full object-cover shrink-0" />
-              : <div className="w-12 h-12 rounded-full bg-pm-navy/10 flex items-center justify-center text-pm-navy font-black shrink-0">{(m.nombre || m.email)[0]?.toUpperCase()}</div>}
-            <div className="min-w-0 flex-1">
-              <div className="font-bold text-pm-navy truncate">{`${m.nombre} ${m.apellidos}`.trim() || m.email}{m.id === miId && <span className="text-pm-red text-xs font-bold"> · tú</span>}</div>
-              <div className="text-xs text-gray-400 truncate">{m.especialidades.join(', ') || '—'}</div>
-              {(m.telefono || m.email) && <div className="text-xs text-gray-500 truncate mt-0.5">{[m.telefono, m.email].filter(Boolean).join(' · ')}</div>}
-            </div>
-            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 ${badgeEstadoMonitor(m.estado)}`}>{labelEstadoMonitor(m.estado)}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-/** Ficha personal del monitor — solo lectura (el alta/edición la hacen los admins). */
+/** Ficha personal del monitor. Él mismo mantiene sus datos y su DNI al día. */
 function MiPerfil({ monitor }: { monitor: Monitor }) {
-  const nombreCompleto = `${monitor.nombre} ${monitor.apellidos}`.trim() || monitor.email
-  const Dato = ({ label, valor }: { label: string; valor: string }) => (
-    <div>
-      <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-0.5">{label}</div>
-      <div className="text-pm-navy font-semibold">{valor || '—'}</div>
-    </div>
-  )
+  const [f, setF] = useState({
+    nombre: monitor.nombre ?? '', apellidos: monitor.apellidos ?? '', telefono: monitor.telefono ?? '',
+    fecha_nacimiento: monitor.fecha_nacimiento ?? '', dni_numero: monitor.dni_numero ?? '',
+    num_seguridad_social: monitor.num_seguridad_social ?? '', foto_url: monitor.foto_url ?? '',
+  })
+  const [pendiente, empezar] = useTransition()
+  const [msg, setMsg] = useState('')
+  const router = useRouter()
+  const nombreCompleto = `${f.nombre} ${f.apellidos}`.trim() || monitor.email
+
+  const set = (k: keyof typeof f, v: string) => setF(p => ({ ...p, [k]: v }))
+  const guardar = () => {
+    setMsg('')
+    empezar(async () => {
+      const r = await guardarMiFicha(f)
+      if (r.ok) { setMsg('Datos guardados ✓'); router.refresh() }
+      else setMsg(r.error)
+    })
+  }
+
+  const input = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red'
+  const label = 'block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5'
+
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 max-w-2xl space-y-5">
       <div className="flex items-center gap-4">
-        {monitor.foto_url
+        {f.foto_url
           // eslint-disable-next-line @next/next/no-img-element
-          ? <img src={monitor.foto_url} alt="" className="w-20 h-20 rounded-full object-cover shrink-0" />
-          : <div className="w-20 h-20 rounded-full bg-pm-navy/10 flex items-center justify-center text-pm-navy font-black text-2xl shrink-0">{(monitor.nombre || monitor.email)[0]?.toUpperCase()}</div>}
+          ? <img src={f.foto_url} alt="" className="w-20 h-20 rounded-full object-cover shrink-0" />
+          : <div className="w-20 h-20 rounded-full bg-pm-navy/10 flex items-center justify-center text-pm-navy font-black text-2xl shrink-0">{(f.nombre || monitor.email)[0]?.toUpperCase()}</div>}
         <div className="min-w-0">
           <div className="text-xl font-black text-pm-navy">{nombreCompleto}</div>
+          <div className="text-xs text-gray-400">{monitor.email}</div>
           <span className={`inline-block mt-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${badgeEstadoMonitor(monitor.estado)}`}>{labelEstadoMonitor(monitor.estado)}</span>
         </div>
       </div>
 
+      <div className="border-t border-gray-100 pt-4">
+        <div className={label}>Tu foto</div>
+        <SubirImagen value={f.foto_url} carpeta="monitores" onChange={url => set('foto_url', url)} />
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-gray-100 pt-4">
-        <Dato label="Correo" valor={monitor.email} />
-        <Dato label="Teléfono" valor={monitor.telefono || ''} />
-        <Dato label="Fecha de alta" valor={monitor.fecha_alta ? fechaLarga(monitor.fecha_alta) : ''} />
+        <div><label className={label}>Nombre</label><input className={input} value={f.nombre} onChange={e => set('nombre', e.target.value)} /></div>
+        <div><label className={label}>Apellidos</label><input className={input} value={f.apellidos} onChange={e => set('apellidos', e.target.value)} /></div>
+        <div><label className={label}>Teléfono</label><input className={input} value={f.telefono} onChange={e => set('telefono', e.target.value)} /></div>
+        <div><label className={label}>Fecha de nacimiento</label><input type="date" className={input} value={f.fecha_nacimiento} onChange={e => set('fecha_nacimiento', e.target.value)} /></div>
+        <div><label className={label}>DNI / NIE</label><input className={input} value={f.dni_numero} onChange={e => set('dni_numero', e.target.value)} /></div>
+        <div><label className={label}>Nº Seguridad Social</label><input className={input} value={f.num_seguridad_social} onChange={e => set('num_seguridad_social', e.target.value)} /></div>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <button type="button" onClick={guardar} disabled={pendiente}
+          className="bg-pm-red hover:bg-pm-red-dark text-white font-black text-sm px-5 py-2.5 rounded-xl disabled:opacity-50">
+          {pendiente ? 'Guardando…' : 'Guardar mis datos'}
+        </button>
+        {msg && <span className="text-sm text-gray-500">{msg}</span>}
       </div>
 
       <div className="border-t border-gray-100 pt-4">
-        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Especialidades</div>
+        <div className={label}>Fotos de tu DNI</div>
+        <p className="text-xs text-gray-400 mb-3">Solo las ve el club. Se guardan en un almacén privado.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <DniPrivado monitorId={monitor.id} cara="frente" etiqueta="Anverso" tienePath={!!monitor.dni_frente_path} soloLectura={false} />
+          <DniPrivado monitorId={monitor.id} cara="reverso" etiqueta="Reverso" tienePath={!!monitor.dni_reverso_path} soloLectura={false} />
+        </div>
+      </div>
+
+      <div className="border-t border-gray-100 pt-4">
+        <div className={label}>Especialidades</div>
         {monitor.especialidades.length ? (
           <div className="flex flex-wrap gap-1.5">
             {monitor.especialidades.map(e => <span key={e} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-pm-red-light text-pm-red">{e}</span>)}
           </div>
         ) : <p className="text-gray-400 text-sm">Sin especialidades asignadas.</p>}
+        <p className="text-xs text-gray-400 mt-3">
+          Tu correo, tus especialidades y tu fecha de alta ({monitor.fecha_alta ? fechaLarga(monitor.fecha_alta) : 'sin registrar'}) los lleva el club.
+        </p>
       </div>
-
-      <p className="text-xs text-gray-400 border-t border-gray-100 pt-4">¿Algún dato incorrecto? Avisa a tu coordinador para que lo actualice.</p>
     </div>
   )
 }

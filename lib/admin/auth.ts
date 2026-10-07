@@ -22,7 +22,16 @@ export async function getAdminUser(): Promise<AdminUser | null> {
   // Acceso directo SOLO en desarrollo local (sin login) si ADMIN_DEV_BYPASS=true.
   // Protegido: nunca en producción.
   if (process.env.NODE_ENV !== 'production' && process.env.ADMIN_DEV_BYPASS === 'true') {
-    return { id: 'dev-local', email: 'zumitolol@gmail.com', nombre: 'Administrador (local)', role: 'principal', secciones: null }
+    // ADMIN_DEV_EMAIL / ADMIN_DEV_ROLE sirven para probar en local la vista de
+    // otro rol (p. ej. la de un monitor) sin tocar el código.
+    const role = (process.env.ADMIN_DEV_ROLE as AdminRole) || 'principal'
+    return {
+      id: 'dev-local',
+      email: process.env.ADMIN_DEV_EMAIL || 'zumitolol@gmail.com',
+      nombre: 'Administrador (local)',
+      role,
+      secciones: null,
+    }
   }
 
   const supabase = await createClient()
