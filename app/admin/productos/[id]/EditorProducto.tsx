@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { guardarProducto } from '../actions'
 import type { ProductoFull } from '@/lib/productos/store'
+import { SubirImagen } from '@/components/admin/SubirImagen'
 
 const lbl = 'block text-xs font-bold text-pm-navy mb-1.5'
 const inp = 'w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red'
@@ -12,6 +13,7 @@ export default function EditorProducto({ producto }: { producto: ProductoFull })
   const [f, setF] = useState({
     nombre: producto.nombre, tagline: producto.tagline, descripcionCorta: producto.descripcionCorta,
     precioDesde: producto.precioDesde, activo: producto.activo, stock: producto.stock,
+    imagen: producto.imagen ?? '',
     variantes: producto.variantes.map(v => ({ ...v })),
     colores: producto.colores.map(c => ({ ...c })),
     caracteristicas: [...producto.caracteristicas],
@@ -33,6 +35,10 @@ export default function EditorProducto({ producto }: { producto: ProductoFull })
 
   return (
     <div className="max-w-3xl space-y-6">
+      <Seccion titulo="Foto del producto" nota="Es la que se ve en Planeta Shop, en la tarjeta y en la ficha.">
+        <SubirImagen value={f.imagen} carpeta="shop" onChange={url => set('imagen', url)} />
+      </Seccion>
+
       <Seccion titulo="Información del producto">
         <label className={lbl}>Nombre</label>
         <input className={inp} value={f.nombre} onChange={e => set('nombre', e.target.value)} />

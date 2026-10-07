@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { useProteccion, ProteccionCampos } from '@/components/seguridad/ProteccionFormulario'
 import { enviarPedidoShop, type LineaPedido } from './actions'
-import { PRODUCTOS, type Color, type Producto, type Variante } from '@/lib/shop/productos'
+import type { Color, Producto, Variante } from '@/lib/shop/productos'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Planeta Shop: catálogo, ficha de producto y carrito. El pedido se registra en
@@ -32,7 +32,7 @@ type ItemCarrito = {
 
 const eur = (n: number) => `${new Intl.NumberFormat('es-ES').format(n)} €`
 
-export default function TiendaClient() {
+export default function TiendaClient({ productos }: { productos: Producto[] }) {
   const [carrito, setCarrito] = useState<ItemCarrito[]>([])
   const [abierto, setAbierto] = useState(false)
   const [ficha, setFicha] = useState<Producto | null>(null)
@@ -58,7 +58,7 @@ export default function TiendaClient() {
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {PRODUCTOS.map(p => <Tarjeta key={p.id} producto={p} onVer={() => setFicha(p)} />)}
+        {productos.map(p => <Tarjeta key={p.id} producto={p} onVer={() => setFicha(p)} />)}
       </div>
 
       {unidades > 0 && (

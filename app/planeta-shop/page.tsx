@@ -3,6 +3,7 @@ import { waNegocio } from '@/lib/whatsapp'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { breadcrumbsJsonLd } from '@/lib/seo'
 import TiendaClient from './TiendaClient'
+import { getProductos } from '@/lib/productos/store'
 
 export const metadata = {
   title: 'Planeta Shop — Colchonetas profesionales y equipación | Planeta Movimiento',
@@ -18,7 +19,10 @@ const GARANTIAS = [
   { titulo: 'Asesoramiento real', desc: 'Te ayudamos a elegir según la disciplina, la altura de trabajo y el espacio del que dispones.' },
 ]
 
-export default function PlanetaShopPage() {
+export const dynamic = 'force-dynamic'
+
+export default async function PlanetaShopPage() {
+  const productos = (await getProductos()).filter(p => p.activo)
   return (
     <main className="bg-pm-bg min-h-screen">
       <JsonLd data={breadcrumbsJsonLd([{ name: 'Inicio', path: '/' }, { name: 'Planeta Shop', path: '/planeta-shop' }])} />
@@ -70,7 +74,7 @@ export default function PlanetaShopPage() {
             </p>
           </div>
 
-          <TiendaClient />
+          <TiendaClient productos={productos} />
         </div>
       </section>
 

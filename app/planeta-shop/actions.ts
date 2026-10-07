@@ -6,7 +6,7 @@ import { enviarConfirmacionReserva } from '@/lib/emails/confirmacion'
 import { escHtml } from '@/lib/seguridad/sanitize'
 import { comprobarEnvioForm } from '@/lib/seguridad/guard'
 import type { Seguridad } from '@/lib/forms/actions'
-import { PRODUCTOS_MAP } from '@/lib/shop/productos'
+import { getProducto } from '@/lib/productos/store'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Pedido de Planeta Shop. Queda registrado en `product_orders` (lo ve el CRM),
@@ -59,7 +59,7 @@ export async function enviarPedidoShop(input: {
   }[] = []
   let total = 0
   for (const l of input.lineas) {
-    const p = PRODUCTOS_MAP.get(l.productoId)
+    const p = await getProducto(l.productoId)
     if (!p) continue
     const v = p.variantes.find(x => x.id === l.varianteId) ?? p.variantes[0]
     const cantidad = Math.min(20, Math.max(1, Math.round(Number(l.cantidad) || 1)))
