@@ -1,4 +1,4 @@
-import { requireSeccion } from '@/lib/admin/auth'
+import { requireSeccion, can } from '@/lib/admin/auth'
 import { getActividades, getParticipantes } from '@/lib/circo-inclusivo/data'
 import { AdminHeader } from '@/components/admin/ui'
 import CircoNav from '../CircoNav'
@@ -19,7 +19,7 @@ export default async function ActividadesPage() {
         subtitulo="Tipos de actividad disponibles para asignar a los participantes"
       />
       <CircoNav />
-      <ActividadesClient actividades={actividades} conteo={conteo} puedeGestionar={admin.role === 'principal'} />
+      <ActividadesClient actividades={actividades} conteo={conteo} puedeGestionar={can.edit(admin.role)} />
     </>
   )
 }

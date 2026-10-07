@@ -87,7 +87,7 @@ export type GrupoInput = {
 }
 
 export async function guardarGrupo(input: GrupoInput) {
-  const { admin, error: permErr } = await exigir('principal')
+  const { admin, error: permErr } = await exigir('editar')
   if (!admin) return { ok: false, error: permErr }
   if (!input.nombre?.trim()) return { ok: false, error: 'El nombre del grupo es obligatorio' }
 
@@ -113,7 +113,7 @@ export async function guardarGrupo(input: GrupoInput) {
 }
 
 export async function eliminarGrupo(id: string) {
-  const { admin, error: permErr } = await exigir('principal')
+  const { admin, error: permErr } = await exigir('editar')
   if (!admin) return { ok: false, error: permErr }
   const db = createAdminClient()
   const { error } = await db.from('ci_grupos').delete().eq('id', id)
@@ -127,7 +127,7 @@ export async function eliminarGrupo(id: string) {
 export type ActividadInput = { id?: string; nombre: string; descripcion?: string; orden?: number }
 
 export async function guardarActividad(input: ActividadInput) {
-  const { admin, error: permErr } = await exigir('principal')
+  const { admin, error: permErr } = await exigir('editar')
   if (!admin) return { ok: false, error: permErr }
   if (!input.nombre?.trim()) return { ok: false, error: 'El nombre de la actividad es obligatorio' }
 
@@ -145,7 +145,7 @@ export async function guardarActividad(input: ActividadInput) {
 }
 
 export async function eliminarActividad(id: string) {
-  const { admin, error: permErr } = await exigir('principal')
+  const { admin, error: permErr } = await exigir('editar')
   if (!admin) return { ok: false, error: permErr }
   const db = createAdminClient()
   const { error } = await db.from('ci_actividades').delete().eq('id', id)
@@ -248,7 +248,7 @@ export async function guardarSesion(input: SesionInput) {
 
 export async function eliminarSesion(id: string) {
   // Borrar es destructivo (arrastra sus evaluaciones): solo el principal.
-  const { admin, error: permErr } = await exigir('principal')
+  const { admin, error: permErr } = await exigir('editar')
   if (!admin) return { ok: false, error: permErr }
   const db = createAdminClient()
   const { error } = await db.from('ci_sesiones').delete().eq('id', id)
