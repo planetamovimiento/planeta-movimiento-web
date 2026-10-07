@@ -375,7 +375,7 @@ export default function EventosPageClient({ mananaMagica, diasSinCole, domingos,
   // La vista se deriva del hash de la URL (fuente única): así cada servicio tiene
   // su propia URL y al abrir /servicios/eventos#<servicio> se muestra el correcto.
   const hash = useSyncExternalStore(subscribeHash, leerHash, () => '')
-  const destino = HASH_A_TAB[hash] ?? { p: 'externo' as TabPrincipal }
+  const destino = HASH_A_TAB[hash] ?? { p: 'centro' as TabPrincipal, c: 'diassinc' as TabCentro }
   const tabPrincipal: TabPrincipal = destino.p
   const tabCentro: TabCentro = destino.c ?? 'diassinc'
 
@@ -412,18 +412,6 @@ export default function EventosPageClient({ mananaMagica, diasSinCole, domingos,
       <div className="sticky top-16 z-30 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex">
-            <button onClick={() => irAHash('animacion')}
-              className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-3 px-4 border-b-2 font-bold text-sm transition-all ${
-                tabPrincipal === 'externo'
-                  ? 'border-pm-red text-pm-red bg-pm-red-light'
-                  : 'border-transparent text-gray-500 hover:text-pm-navy hover:bg-pm-bg'
-              }`}>
-              <span className="text-xl">🏡</span>
-              <div className="text-center sm:text-left">
-                <div className="font-black text-xs sm:text-sm">Animación en tu evento</div>
-                <div className="text-xs font-normal opacity-60 hidden sm:block">Bodas · Comuniones · Bautizos · Fiestas</div>
-              </div>
-            </button>
             <button onClick={() => irAHash(CENTRO_SLUG[tabCentro])}
               className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-3 px-4 border-b-2 font-bold text-sm transition-all ${
                 tabPrincipal === 'centro'
@@ -434,6 +422,18 @@ export default function EventosPageClient({ mananaMagica, diasSinCole, domingos,
               <div className="text-center sm:text-left">
                 <div className="font-black text-xs sm:text-sm">Eventos en el centro</div>
                 <div className="text-xs font-normal opacity-60 hidden sm:block">Días Sin Cole · Domingos · Mañanas Mágicas · Halloween</div>
+              </div>
+            </button>
+            <button onClick={() => irAHash('animacion')}
+              className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-3 px-4 border-b-2 font-bold text-sm transition-all ${
+                tabPrincipal === 'externo'
+                  ? 'border-pm-red text-pm-red bg-pm-red-light'
+                  : 'border-transparent text-gray-500 hover:text-pm-navy hover:bg-pm-bg'
+              }`}>
+              <span className="text-xl">🏡</span>
+              <div className="text-center sm:text-left">
+                <div className="font-black text-xs sm:text-sm">Animación en tu evento</div>
+                <div className="text-xs font-normal opacity-60 hidden sm:block">Bodas · Comuniones · Bautizos · Fiestas</div>
               </div>
             </button>
           </div>
