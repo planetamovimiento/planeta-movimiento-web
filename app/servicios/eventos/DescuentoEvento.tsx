@@ -29,13 +29,15 @@ export function textoDescuento(d: Descuento): string {
 
 type Tema = 'claro' | 'oscuro'
 
-export function SelectorDescuento({ ninos, valor, onChange, tema = 'claro' }: {
+export function SelectorDescuento({ ninos, valor, onChange, tema = 'claro', soloSocio = false }: {
   ninos: number
   valor: Descuento
   onChange: (d: Descuento) => void
   tema?: Tema
+  /** true = solo se ofrece el descuento de socio (sin el de hermanos). */
+  soloSocio?: boolean
 }) {
-  const hermanosPosible = ninos >= 2
+  const hermanosPosible = !soloSocio && ninos >= 2
   // Si se baja a un solo niño, el de hermanos deja de valer.
   useEffect(() => {
     if (valor.tipo === 'hermanos' && !hermanosPosible) onChange(DESCUENTO_VACIO)
@@ -55,13 +57,15 @@ export function SelectorDescuento({ ninos, valor, onChange, tema = 'claro' }: {
 
   return (
     <div>
-      <label className={`block text-xs font-bold mb-2 ${etiqueta}`}>¿Tienes descuento? (solo uno)</label>
+      <label className={`block text-xs font-bold mb-2 ${etiqueta}`}>{soloSocio ? '¿Eres socio del club?' : '¿Tienes descuento? (solo uno)'}</label>
       <div className="flex flex-wrap gap-2">
+        {!soloSocio && (
         <button type="button" onClick={() => elegir('hermanos')} disabled={!hermanosPosible}
           className={`${base} ${valor.tipo === 'hermanos' ? sel : noSel} disabled:opacity-40 disabled:cursor-not-allowed`}>
           👧👦 Hermanos −20%
           <span className="block font-normal opacity-70">{hermanosPosible ? 'Para 2 niños o más' : 'Añade 2 niños o más'}</span>
         </button>
+        )}
         <button type="button" onClick={() => elegir('socio')}
           className={`${base} ${valor.tipo === 'socio' ? sel : noSel}`}>
           ⭐ Socio del club −15%
@@ -80,7 +84,7 @@ export function SelectorDescuento({ ninos, valor, onChange, tema = 'claro' }: {
       )}
 
       <p className={`text-[11px] mt-2 ${ayuda}`}>
-        Los descuentos no se acumulan. Comprobamos el nº de socio antes de la actividad.
+        {soloSocio ? 'Comprobamos el nº de socio antes de la actividad.' : 'Los descuentos no se acumulan. Comprobamos el nº de socio antes de la actividad.'}
       </p>
     </div>
   )

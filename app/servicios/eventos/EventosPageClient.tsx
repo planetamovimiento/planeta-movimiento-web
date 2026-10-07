@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { Galeria } from '@/components/ui/Galeria'
 import { useState, useSyncExternalStore } from 'react'
 import CalculadoraEventos from './CalculadoraEventos'
-import { ReservaDiasSinCole, ReservaDomingos, ReservaHalloween, ReservaMananaMagica } from './EventosInstalaciones'
+import { ReservaDiasSinCole, ReservaDomingos, ReservaHalloween, ReservaMananaMagica, ReservaPracticaLibre } from './EventosInstalaciones'
 import type { MananaMagica } from '@/lib/eventos/manana-magica'
 import type { EventoCentroCfg } from '@/lib/eventos/centro'
 import { CartelEvento } from './CartelEvento'
@@ -37,11 +37,12 @@ const FAQ = [
 
 // ─── Tabs principales ─────────────────────────────────────────────────────────
 type TabPrincipal = 'externo' | 'centro'
-type TabCentro    = 'diassinc' | 'domingos' | 'halloween' | 'manana'
+type TabCentro    = 'diassinc' | 'domingos' | 'practica' | 'halloween' | 'manana'
 
 const TABS_CENTRO = [
   { id: 'diassinc'  as TabCentro, label: 'Días Sin Cole',       emoji: '⚡', sub: 'Festivos escolares · 9:00-14:00' },
   { id: 'domingos'  as TabCentro, label: 'Domingos en Familia', emoji: '👨‍👩‍👧‍👦', sub: 'Todos los domingos · 11:00-13:00' },
+  { id: 'practica'  as TabCentro, label: 'Práctica Libre',      emoji: '🤸', sub: 'Martes y jueves · 20:00-21:30' },
   { id: 'manana'    as TabCentro, label: 'Mañanas Mágicas',     emoji: '✨', sub: 'Jornada temática · personaje del mes' },
   { id: 'halloween' as TabCentro, label: 'Noche de Halloween',  emoji: '🧟', sub: '31 oct · 22:00 – 09:00' },
 ]
@@ -50,13 +51,14 @@ const TABS_CENTRO = [
 // /servicios/eventos#animacion · #dias-sin-cole · #domingos-en-familia ·
 // #mananas-magicas · #halloween
 const CENTRO_SLUG: Record<TabCentro, string> = {
-  diassinc: 'dias-sin-cole', domingos: 'domingos-en-familia', manana: 'mananas-magicas', halloween: 'halloween',
+  diassinc: 'dias-sin-cole', domingos: 'domingos-en-familia', practica: 'practica-libre', manana: 'mananas-magicas', halloween: 'halloween',
 }
 const HASH_A_TAB: Record<string, { p: TabPrincipal; c?: TabCentro }> = {
   animacion: { p: 'externo' },
   centro: { p: 'centro', c: 'diassinc' },
   'dias-sin-cole': { p: 'centro', c: 'diassinc' },
   'domingos-en-familia': { p: 'centro', c: 'domingos' },
+  'practica-libre': { p: 'centro', c: 'practica' },
   'mananas-magicas': { p: 'centro', c: 'manana' },
   halloween: { p: 'centro', c: 'halloween' },
 }
@@ -330,6 +332,44 @@ function PanelMananaMagica({ cfg, ocupacion }: { cfg: MananaMagica; ocupacion: R
   )
 }
 
+// ─── Panel Práctica Libre ─────────────────────────────────────────────────────
+function PanelPracticaLibre({ cfg }: { cfg: EventoCentroCfg }) {
+  const bono = cfg.precioBono ? `Bono de ${cfg.sesionesBono} sesiones · ${cfg.precioBono} €` : ''
+  const suelta = cfg.precio ? `Clase suelta · ${cfg.precio} €` : ''
+  return (
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10">
+        <div className="space-y-6">
+          <div className="bg-gradient-to-br from-sky-600 to-sky-800 rounded-2xl p-8 text-white">
+            <CartelEvento src={cfg.imagen} alt="Práctica Libre" fondo="bg-sky-950/40" />
+            {cfg.subtitulo && <div className="text-white/70 font-black text-xs uppercase tracking-widest mb-1">{cfg.subtitulo}</div>}
+            <h2 className="text-3xl font-black mb-2">{cfg.titulo}</h2>
+            <p className="text-sky-100 text-sm leading-relaxed mb-4">{cfg.descripcion}</p>
+            <div className="flex flex-wrap gap-2">
+              {[cfg.horario, cfg.edad, bono, suelta, cfg.descuentoSocio ? `Socios −${cfg.descuentoSocio} %` : '', ...lineas(cfg.chips)].filter(Boolean).map(b => (
+                <span key={b} className="bg-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-full">{b}</span>
+              ))}
+            </div>
+            {cfg.nota && <p className="text-sky-100 text-xs mt-3">ℹ {cfg.nota}</p>}
+          </div>
+
+          <SeccionesEvento secciones={cfg.secciones} tema={TEMA_CLARO('text-sky-600', 'bg-sky-50 border border-sky-200 text-sky-700')} />
+        </div>
+
+        <div className="lg:sticky lg:top-28 lg:self-start">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+            <div className="bg-sky-600 text-white px-5 py-4">
+              <div className="font-black text-base">Reservar plaza</div>
+              <div className="text-sky-100 text-xs mt-0.5">Elige bono o clase suelta</div>
+            </div>
+            <div className="p-5"><ReservaPracticaLibre cfg={cfg} /></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Panel Halloween ──────────────────────────────────────────────────────────
 function PanelHalloween({ cfg }: { cfg: EventoCentroCfg }) {
   return (
@@ -367,8 +407,9 @@ function PanelHalloween({ cfg }: { cfg: EventoCentroCfg }) {
 }
 
 // ─── Página principal (cliente) ───────────────────────────────────────────────
-export default function EventosPageClient({ mananaMagica, diasSinCole, domingos, halloween, ocupacionDSC, ocupacionDomingos, ocupacionMM, senalEventos }: {
+export default function EventosPageClient({ mananaMagica, diasSinCole, domingos, halloween, practicaLibre, ocupacionDSC, ocupacionDomingos, ocupacionMM, senalEventos }: {
   mananaMagica: MananaMagica; diasSinCole: EventoCentroCfg; domingos: EventoCentroCfg; halloween: EventoCentroCfg
+  practicaLibre: EventoCentroCfg
   ocupacionDSC: Record<string, number>; ocupacionDomingos: Record<string, number>; ocupacionMM: Record<string, number>
   senalEventos: number
 }) {
@@ -470,6 +511,7 @@ export default function EventosPageClient({ mananaMagica, diasSinCole, domingos,
 
           {tabCentro === 'diassinc'  && <PanelDiasSinCole cfg={diasSinCole} ocupacion={ocupacionDSC} />}
           {tabCentro === 'domingos'  && <PanelDomingos cfg={domingos} ocupacion={ocupacionDomingos} />}
+          {tabCentro === 'practica'  && <PanelPracticaLibre cfg={practicaLibre} />}
           {tabCentro === 'manana'    && <PanelMananaMagica cfg={mananaMagica} ocupacion={ocupacionMM} />}
           {tabCentro === 'halloween' && <PanelHalloween cfg={halloween} />}
         </>

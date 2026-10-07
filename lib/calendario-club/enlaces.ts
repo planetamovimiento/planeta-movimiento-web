@@ -13,6 +13,7 @@ const REGLAS: { test: (t: string) => boolean; url: string }[] = [
   { test: t => t.includes('domingo'), url: '/servicios/eventos#domingos-en-familia' },
   { test: t => t.includes('manana magica') || t.includes('mananas magicas'), url: '/servicios/eventos#mananas-magicas' },
   { test: t => t.includes('halloween'), url: '/servicios/eventos#halloween' },
+  { test: t => t.includes('practica libre'), url: '/servicios/eventos#practica-libre' },
   { test: t => t.includes('campamento'), url: '/servicios/campamentos' },
   { test: t => t.includes('cumplea'), url: '/servicios/cumpleanos' },
   { test: t => t.includes('intensivo'), url: '/club/talleres-intensivos' },

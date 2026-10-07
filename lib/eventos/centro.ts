@@ -44,12 +44,17 @@ export type EventoCentroCfg = {
   chips: string
   /** Bloques de contenido que se ven debajo (programa, actividades…). */
   secciones: SeccionEvento[]
+  /** Práctica libre: precio del bono y nº de sesiones que incluye. */
+  precioBono: number
+  sesionesBono: number
+  /** % de descuento para socios del club (0 = sin descuento). */
+  descuentoSocio: number
   estado: EstadoMM
   updatedAt?: string | null
   updatedBy?: string | null
 }
 
-export const EVENTOS_CENTRO_IDS = ['dias-sin-cole', 'domingos', 'halloween'] as const
+export const EVENTOS_CENTRO_IDS = ['dias-sin-cole', 'domingos', 'halloween', 'practica-libre'] as const
 export type EventoCentroId = (typeof EVENTOS_CENTRO_IDS)[number]
 
 export const EVENTOS_CENTRO_DEFAULT: Record<EventoCentroId, EventoCentroCfg> = {
@@ -65,6 +70,7 @@ export const EVENTOS_CENTRO_DEFAULT: Record<EventoCentroId, EventoCentroCfg> = {
       '2027-01-07 = Post-Reyes',
     ].join('\n'),
     evento: '', plazas: 0, aforo: 0, imagen: '', estado: 'abierto',
+    precioBono: 0, sesionesBono: 0, descuentoSocio: 0,
     titulo: 'Días Sin Cole', subtitulo: '',
     descripcion: 'En los festivos escolares abrimos nuestras instalaciones para que los niños vivan una mañana épica de la Escuela de Superhéroes mientras las familias concilian.',
     chips: 'Hermanos −20%\nFestivos escolares',
@@ -82,6 +88,7 @@ export const EVENTOS_CENTRO_DEFAULT: Record<EventoCentroId, EventoCentroCfg> = {
   domingos: {
     precio: 15, ivaIncluido: true, horario: '11:00 – 13:00', edad: 'Desde 2 años',
     nota: 'Adultos gratis · Menores de 2 años gratis', fechas: '', evento: '', plazas: 0, aforo: 0, imagen: '', estado: 'abierto',
+    precioBono: 0, sesionesBono: 0, descuentoSocio: 0,
     titulo: 'Domingos en Familia', subtitulo: '',
     descripcion: 'Práctica libre dentro de nuestras instalaciones. Sin clases, sin presión — solo movimiento, juego y tiempo de calidad en familia.',
     chips: 'Todos los domingos\nAdultos gratis',
@@ -105,6 +112,7 @@ export const EVENTOS_CENTRO_DEFAULT: Record<EventoCentroId, EventoCentroCfg> = {
     precio: 0, ivaIncluido: true, horario: '22:00 – 09:00', edad: 'Mín. 10 años',
     nota: 'Plazas muy limitadas · El precio se confirma al contactar',
     fechas: '31 oct → 1 nov', evento: 'Apocalipsis Zombie', plazas: 20, aforo: 0, imagen: '', estado: 'proximo',
+    precioBono: 0, sesionesBono: 0, descuentoSocio: 0,
     titulo: 'Noche de Halloween', subtitulo: 'Evento anual especial',
     descripcion: 'Una noche épica e inolvidable. Fiesta de pijamas temática, gymkana zombie, actividades nocturnas, película de terror y desayuno con churros al amanecer.',
     chips: '',
@@ -120,6 +128,32 @@ export const EVENTOS_CENTRO_DEFAULT: Record<EventoCentroId, EventoCentroCfg> = {
           '08:00 – 09:00 = 🍫 Desayuno: churros con chocolate',
           '09:00 = 🏠 Recogida por las familias',
         ],
+      },
+    ],
+  },
+
+  // ───────────────────────────────────────────────────────────────────────────
+  'practica-libre': {
+    precio: 15, ivaIncluido: true, horario: 'Martes y jueves · 20:00 – 21:30', edad: 'Desde 14 años',
+    nota: 'Sesiones de hora y media. El bono se usa cuando quieras dentro de la temporada.',
+    fechas: 'Martes y jueves', evento: '', plazas: 0, aforo: 0, imagen: '', estado: 'abierto',
+    precioBono: 95, sesionesBono: 8, descuentoSocio: 15,
+    titulo: 'Práctica Libre', subtitulo: 'Entrena por tu cuenta',
+    descripcion: 'Abrimos la instalación para entrenar por tu cuenta: acrobacia, telas aéreas, parkour y preparación física, con un monitor de sala para resolver dudas y velar por la seguridad.',
+    chips: 'Hora y media por sesión\nMonitor de sala',
+    secciones: [
+      {
+        titulo: 'Cómo funciona', tipo: 'programa',
+        items: [
+          'Bono de 8 sesiones = 95 €, se usa cuando quieras dentro de la temporada',
+          'Clase suelta = 15 €, se paga el mismo día',
+          'Socios del club = 15 % de descuento en cualquiera de las dos opciones',
+          'Horario = Martes y jueves, de 20:00 a 21:30',
+        ],
+      },
+      {
+        titulo: 'Qué puedes trabajar', tipo: 'lista',
+        items: ['Acrobacia y suelo', 'Telas aéreas', 'Parkour', 'Preparación física', 'Trampolín', 'Material libre de la sala'],
       },
     ],
   },

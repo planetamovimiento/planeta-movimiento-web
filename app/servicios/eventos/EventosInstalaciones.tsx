@@ -457,6 +457,136 @@ export function ReservaMananaMagica({ cfg, onClose = () => {}, ocupacion = {}, o
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
+// PRÁCTICA LIBRE (bono de sesiones o clase suelta)
+// ──────────────────────────────────────────────────────────────────────────────
+/** Próximos martes y jueves, para elegir día en la clase suelta. */
+function proximosDias(n = 8): { iso: string; label: string }[] {
+  const out: { iso: string; label: string }[] = []
+  const d = new Date()
+  d.setHours(12, 0, 0, 0)
+  while (out.length < n) {
+    d.setDate(d.getDate() + 1)
+    const dia = d.getDay() // 2 = martes, 4 = jueves
+    if (dia === 2 || dia === 4) {
+      out.push({
+        iso: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+        label: d.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' }),
+      })
+    }
+  }
+  return out
+}
+
+/** 80.75 → '80,75 €' (sin depender del idioma del navegador). */
+const eurPL = (n: number) => `${String(Math.round(n * 100) / 100).replace('.', ',')} €`
+
+export function ReservaPracticaLibre({ cfg, onClose = () => {} }: { cfg?: EventoCentroCfg; onClose?: () => void }) {
+  const precioSuelta = cfg?.precio ?? 15
+  const precioBono = cfg?.precioBono ?? 95
+  const sesiones = cfg?.sesionesBono ?? 8
+  const dtoSocio = cfg?.descuentoSocio ?? 15
+  const horario = cfg?.horario || 'Martes y jueves · 20:00 – 21:30'
+
+  const [modalidad, setModalidad] = useState<'bono' | 'suelta'>('bono')
+  const [fecha, setFecha] = useState('')
+  const [desc, setDesc] = useState<Descuento>(DESCUENTO_VACIO)
+  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', notas: '' })
+  const [enviando, setEnviando] = useState(false)
+  const [listo, setListo] = useState(false)
+
+  const dias = useMemo(() => proximosDias(8), [])
+  const base = modalidad === 'bono' ? precioBono : precioSuelta
+  const total = desc.tipo === 'socio' ? Math.round(base * (1 - dtoSocio / 100) * 100) / 100 : base
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault(); setEnviando(true)
+    await submitBooking({
+      servicio: 'Práctica Libre',
+      cliente_nombre: form.nombre, cliente_email: form.email, cliente_telefono: form.telefono,
+      fecha: modalidad === 'suelta' ? fecha : undefined,
+      hora: horario,
+      participantes: 1,
+      precio: total,
+      observaciones: form.notas,
+      datos: {
+        modalidad: modalidad === 'bono' ? `Bono de ${sesiones} sesiones` : 'Clase suelta',
+        horario,
+        descuento: textoDescuento(desc), numeroSocio: desc.numeroSocio,
+        importe: eurPL(total),
+      },
+    })
+    setEnviando(false); setListo(true)
+  }
+
+  if (listo) return <Exito onClose={onClose} />
+
+  const opcion = (id: 'bono' | 'suelta', titulo: string, sub: string, precio: number) => (
+    <button type="button" key={id} onClick={() => setModalidad(id)}
+      className={`flex items-center justify-between gap-3 w-full px-4 py-3 rounded-xl border-2 text-sm transition-all ${
+        modalidad === id ? 'border-sky-500 bg-sky-50 text-sky-900' : 'border-gray-200 hover:border-sky-400 text-pm-navy'
+      }`}>
+      <span className="text-left">
+        <span className="block font-bold">{titulo}</span>
+        <span className="block text-xs opacity-70">{sub}</span>
+      </span>
+      <span className="font-black whitespace-nowrap">{eurPL(precio)}</span>
+    </button>
+  )
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-xs font-bold text-pm-navy mb-2">¿Qué prefieres? *</label>
+        <div className="space-y-2">
+          {opcion('bono', `Bono de ${sesiones} sesiones`, 'Se usa cuando quieras durante la temporada', precioBono)}
+          {opcion('suelta', 'Clase suelta', 'Una sesión de hora y media', precioSuelta)}
+        </div>
+      </div>
+
+      {modalidad === 'suelta' && (
+        <div>
+          <label className="block text-xs font-bold text-pm-navy mb-2">Elige el día *</label>
+          <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
+            {dias.map(d => (
+              <button key={d.iso} type="button" onClick={() => setFecha(d.iso)}
+                className={`px-4 py-2.5 rounded-xl border-2 text-sm text-left transition-all ${
+                  fecha === d.iso ? 'border-sky-500 bg-sky-50 text-sky-900' : 'border-gray-200 hover:border-sky-400 text-pm-navy'
+                }`}>
+                <span className="font-semibold capitalize">{d.label}</span>
+                <span className="block text-xs text-gray-400">20:00 – 21:30</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <SelectorDescuento ninos={1} valor={desc} onChange={setDesc} soloSocio />
+
+      <div className="bg-sky-50 border border-sky-200 rounded-xl p-3 text-sm">
+        <div className="flex justify-between text-sky-900">
+          <span>
+            {modalidad === 'bono' ? `Bono de ${sesiones} sesiones` : 'Clase suelta'}
+            {textoDescuento(desc) ? ` · ${textoDescuento(desc)}` : ''}
+          </span>
+          <strong>{eurPL(total)}</strong>
+        </div>
+      </div>
+
+      <input required type="text" placeholder="Nombre y apellidos *" value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-sky-500" />
+      <input required type="email" placeholder="Email *" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-sky-500" />
+      <input required type="tel" placeholder="Teléfono *" value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-sky-500" />
+      <textarea rows={2} placeholder="Disciplina que quieres trabajar, dudas…" value={form.notas} onChange={e => setForm(f => ({ ...f, notas: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-sky-500 resize-none" />
+
+      <button type="submit" disabled={enviando || !form.nombre || !form.email || !form.telefono || (modalidad === 'suelta' && !fecha)}
+        className="w-full bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">
+        {enviando ? 'Enviando…' : 'Reservar plaza'}
+      </button>
+      <p className="text-center text-xs text-gray-400">El pago se hace en la instalación o por transferencia al confirmar.</p>
+    </form>
+  )
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
 // COMPONENTE PRINCIPAL
 // ──────────────────────────────────────────────────────────────────────────────
 export default function EventosInstalaciones() {
