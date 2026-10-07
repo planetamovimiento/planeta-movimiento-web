@@ -260,7 +260,7 @@ export const CATALOGO_SERVICIOS: ServicioCatalogo[] = [
     descripcionCorta: 'Colchonetas profesionales: Nube Portátil, Dual Impact y Quitamiedos.',
     descripcionLarga: 'Colchonetas deportivas fabricadas a medida. Compra online o solicita personalización.',
     edad: '—', precioDesde: 349, horarios: '—', estado: 'activo',
-    botonTexto: 'Ver y comprar', botonAccion: 'carrito', enlace: '/colchonetas',
+    botonTexto: 'Ver y comprar', botonAccion: 'carrito', enlace: '/planeta-shop',
   },
 ]
 

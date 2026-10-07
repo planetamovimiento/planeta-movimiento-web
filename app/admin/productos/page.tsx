@@ -26,7 +26,7 @@ export default async function ProductosPage() {
                 className="group bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md hover:border-pm-red/30 transition-all">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl">{p.icon}</span>
+                    <span className="text-2xl"></span>
                     <h3 className="font-black text-pm-navy group-hover:text-pm-red transition-colors">{p.nombre}</h3>
                   </div>
                   <EstadoBadge estado={p.activo ? 'activo' : 'inactivo'} />

@@ -30,7 +30,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...servicios.map(s => p(`/servicios/${s}`, PRIORITARIOS.has(s) ? 0.9 : 0.8, 'monthly')),
     ...perfiles.map(s => p(`/actividades/${s}`, 0.6, 'monthly')),
     p('/club/talleres-intensivos', 0.7, 'monthly'),
-    p('/colchonetas', 0.7, 'monthly'),
+    p('/planeta-shop', 0.7, 'monthly'),
     // Campaña viva: durante la ruta se actualiza a diario (próxima parada, recaudación, crónicas).
     p('/50dias50provincias', 0.9, 'daily'),
     p('/planeta-tdah', 0.6, 'monthly'),

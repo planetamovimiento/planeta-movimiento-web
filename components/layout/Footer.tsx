@@ -8,7 +8,7 @@ const links = [
   { label: 'Eventos y celebraciones', href: '/servicios/eventos' },
   { label: 'Talleres', href: '/servicios/talleres' },
   { label: 'Ocio en el centro', href: '/ocio' },
-  { label: 'Colchonetas', href: '/colchonetas' },
+  { label: 'Planeta Shop', href: '/planeta-shop' },
   { label: '50 días · 50 provincias', href: '/50dias50provincias' },
 ]
 

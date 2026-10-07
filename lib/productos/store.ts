@@ -1,5 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin'
-import { PRODUCTOS, type Producto } from '@/app/colchonetas/productos'
+import { PRODUCTOS, type Producto } from '@/lib/shop/productos'
 
 export type ProductoFull = Producto & {
   activo: boolean

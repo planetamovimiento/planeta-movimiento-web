@@ -15,7 +15,7 @@ export default async function EditarProductoPage({ params }: { params: Promise<{
 
   return (
     <>
-      <AdminHeader titulo={<span className="flex items-center gap-2"><span>{producto.icon}</span> {producto.nombre}</span>} subtitulo="Producto · Colchonetas" />
+      <AdminHeader titulo={<span className="flex items-center gap-2"><span></span> {producto.nombre}</span>} subtitulo="Producto · Colchonetas" />
       <div className="p-6 lg:p-8">
         <div className="flex items-center gap-3 mb-6 text-sm">
           <Link href="/admin/productos" className="text-gray-500 hover:text-pm-red">← Productos</Link>

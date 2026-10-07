@@ -62,8 +62,8 @@ const NAV_ITEMS: NavItem[] = [
     ],
   },
   {
-    label: 'Colchonetas',
-    href: '/colchonetas',
+    label: 'Planeta Shop',
+    href: '/planeta-shop',
     items: [],
   },
   {

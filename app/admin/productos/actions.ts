@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getAdminUser, can, logActivity } from '@/lib/admin/auth'
-import { PRODUCTOS } from '@/app/colchonetas/productos'
+import { PRODUCTOS } from '@/lib/shop/productos'
 
 export async function guardarProducto(id: string, contenido: Record<string, unknown>) {
   const admin = await getAdminUser()
@@ -41,6 +41,6 @@ export async function guardarProducto(id: string, contenido: Record<string, unkn
     detalle: cambios.length ? `Campos: ${cambios.join(', ')}` : 'Sin cambios',
   })
   revalidatePath('/admin/productos')
-  revalidatePath('/colchonetas')
+  revalidatePath('/planeta-shop')
   return { ok: true, cambios: cambios.length }
 }
