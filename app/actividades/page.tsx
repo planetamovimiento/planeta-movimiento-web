@@ -1,4 +1,5 @@
 import ActividadesUI from './ActividadesUI'
+import { fotosDeEventos } from '@/lib/eventos/fotos'
 import { JsonLd } from '@/components/seo/JsonLd'
 import { breadcrumbsJsonLd } from '@/lib/seo'
 
@@ -9,11 +10,14 @@ export const metadata = {
   alternates: { canonical: '/actividades' },
 }
 
-export default function ActividadesPage() {
+export const dynamic = 'force-dynamic'
+
+export default async function ActividadesPage() {
+  const fotos = await fotosDeEventos()
   return (
     <>
       <JsonLd data={breadcrumbsJsonLd([{ name: 'Inicio', path: '/' }, { name: 'Más Actividades', path: '/actividades' }])} />
-      <ActividadesUI />
+      <ActividadesUI fotos={fotos} />
     </>
   )
 }

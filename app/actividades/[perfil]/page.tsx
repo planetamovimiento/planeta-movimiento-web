@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import ActividadesUI, { type CatId } from '../ActividadesUI'
+import { fotosDeEventos } from '@/lib/eventos/fotos'
 
 // Mapea el slug de la URL (/actividades/<slug>) a la pestaña de perfil.
 const SLUG_TO_CAT: Record<string, CatId> = {
@@ -32,5 +33,5 @@ export default async function ActividadesPerfilPage({ params }: { params: Promis
   const { perfil } = await params
   const cat = SLUG_TO_CAT[perfil]
   if (!cat) notFound()
-  return <ActividadesUI initialCat={cat} />
+  return <ActividadesUI initialCat={cat} fotos={await fotosDeEventos()} />
 }

@@ -38,7 +38,7 @@ const SERVICIOS: Servicio[] = [
     nombre: 'Domingos en Familia',
     desc: 'Práctica libre en nuestras instalaciones todos los domingos. Los adultos entran gratis.',
     edad: 'Desde 2 años · Adultos gratis',
-    href: '/servicios/eventos',
+    href: '/servicios/eventos#domingos-en-familia',
     icon: '👨‍👩‍👧‍👦',
     grad: 'from-emerald-600 to-emerald-800',
     tags: ['2-5', 'ocio'],
@@ -48,7 +48,7 @@ const SERVICIOS: Servicio[] = [
     nombre: 'Mañanas Mágicas',
     desc: 'Jornada temática con un personaje invitado distinto cada mes: show, manualidades, deportes y photocall.',
     edad: 'Infantil y primaria',
-    href: '/servicios/eventos',
+    href: '/servicios/eventos#mananas-magicas',
     icon: '✨',
     grad: 'from-fuchsia-600 to-violet-600',
     tags: ['2-5'],
@@ -58,7 +58,7 @@ const SERVICIOS: Servicio[] = [
     nombre: 'Días Sin Cole',
     desc: 'Escuela de Superhéroes en días festivos escolares. Mañana completa de actividades de 9:00 a 14:00.',
     edad: 'Desde 4 años',
-    href: '/servicios/eventos',
+    href: '/servicios/eventos#dias-sin-cole',
     icon: '⚡',
     grad: 'from-amber-500 to-orange-600',
     tags: ['2-5', '6-15', 'ocio'],
@@ -68,7 +68,7 @@ const SERVICIOS: Servicio[] = [
     nombre: 'Noche de Halloween',
     desc: 'Fiesta de pijamas temática «Apocalipsis Zombie». Gymkana, actividades nocturnas y churros al amanecer.',
     edad: 'Desde 10 años',
-    href: '/servicios/eventos',
+    href: '/servicios/eventos#halloween',
     icon: '🧟',
     grad: 'from-gray-900 to-orange-950',
     tags: ['6-15'],
@@ -207,7 +207,7 @@ const SERVICIOS: Servicio[] = [
     nombre: 'Animación en tu Evento',
     desc: 'Nos desplazamos a bodas, comuniones, bautizos y fiestas privadas. Pack Básico (150€) y Pack Grande (250€).',
     edad: 'Todas las edades',
-    href: '/servicios/eventos',
+    href: '/servicios/eventos#animacion',
     icon: '🎉',
     grad: 'from-purple-700 to-pm-navy',
     tags: ['empresa', 'ayto'],
@@ -306,21 +306,21 @@ const FOTO_SERVICIO: Record<string, string> = {
 }
 
 // ─── Tarjeta de servicio ──────────────────────────────────────────────────────
-function TarjetaServicio({ s, cat }: { s: Servicio; cat: typeof CATEGORIAS[0] }) {
+/** cartel = imagen subida desde el panel (suele ser vertical): se ve entera, sin recortar. */
+function TarjetaServicio({ s, cat, foto, cartel }: { s: Servicio; cat: typeof CATEGORIAS[0]; foto?: string; cartel?: boolean }) {
   const [imgError, setImgError] = useState(false)
-  const foto = FOTO_SERVICIO[s.id]
   return (
     <Link href={s.href}
       className="group flex flex-col bg-white border-2 border-gray-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-lg hover:border-gray-200 transition-all duration-200 hover:-translate-y-0.5">
 
       {/* Visual */}
-      <div className={`relative bg-gradient-to-br ${s.grad} h-28 flex items-center justify-center overflow-hidden`}>
+      <div className={`relative bg-gradient-to-br ${s.grad} ${cartel ? 'h-40' : 'h-28'} flex items-center justify-center overflow-hidden`}>
         {foto && !imgError ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={optImg(foto, 640)} alt={s.nombre} onError={() => setImgError(true)}
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />
+              className={`absolute inset-0 w-full h-full transition-transform duration-300 group-hover:scale-105 ${cartel ? 'object-contain p-1' : 'object-cover'}`} />
+            {!cartel && <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent" />}
           </>
         ) : (
           <svg className="w-10 h-10 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -357,7 +357,7 @@ function TarjetaServicio({ s, cat }: { s: Servicio; cat: typeof CATEGORIAS[0] })
 }
 
 // ─── Página principal ─────────────────────────────────────────────────────────
-export default function ActividadesUI({ initialCat = '6-15' }: { initialCat?: CatId }) {
+export default function ActividadesUI({ initialCat = '6-15', fotos = {} }: { initialCat?: CatId; fotos?: Record<string, string> }) {
   const [catActiva, setCatActiva] = useState<CatId>(initialCat)
 
   const cat = CATEGORIAS.find(c => c.id === catActiva)!
@@ -423,7 +423,7 @@ export default function ActividadesUI({ initialCat = '6-15' }: { initialCat?: Ca
         {serviciosFiltrados.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {serviciosFiltrados.map(s => (
-              <TarjetaServicio key={s.id} s={s} cat={cat} />
+              <TarjetaServicio key={s.id} s={s} cat={cat} foto={fotos[s.id] || FOTO_SERVICIO[s.id]} cartel={!!fotos[s.id]} />
             ))}
           </div>
         ) : (
