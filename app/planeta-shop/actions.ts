@@ -20,6 +20,8 @@ export type LineaPedido = {
   colorId?: string
   talla?: string
   nombrePersonalizado?: string
+  /** Nº de socio del club: activa su descuento. */
+  numeroSocio?: string
   cantidad: number
 }
 
@@ -52,7 +54,8 @@ export async function enviarPedidoShop(input: {
   // El precio SIEMPRE sale del catálogo del servidor, nunca del navegador.
   const items: {
     productoId: string; nombre: string; variante: string; color: string
-    talla: string; nombrePersonalizado: string; cantidad: number; precio: number; reserva: boolean
+    talla: string; nombrePersonalizado: string; numeroSocio: string; descuento: string
+    cantidad: number; precio: number; reserva: boolean; recogida: boolean
   }[] = []
   let total = 0
   for (const l of input.lineas) {
@@ -61,6 +64,10 @@ export async function enviarPedidoShop(input: {
     const v = p.variantes.find(x => x.id === l.varianteId) ?? p.variantes[0]
     const cantidad = Math.min(20, Math.max(1, Math.round(Number(l.cantidad) || 1)))
     const color = p.colores.find(c => c.id === l.colorId)
+    // El descuento de socio se recalcula aquí: el navegador no decide el precio.
+    const numeroSocio = txt(l.numeroSocio, 20)
+    const dto = numeroSocio && p.descuentoSocio ? p.descuentoSocio : 0
+    const precio = Math.round(v.precio * (1 - dto / 100) * 100) / 100
     items.push({
       productoId: p.id,
       nombre: p.nombre,
@@ -68,17 +75,20 @@ export async function enviarPedidoShop(input: {
       color: color?.label ?? '',
       talla: txt(l.talla, 10),
       nombrePersonalizado: txt(l.nombrePersonalizado, 20),
+      numeroSocio,
+      descuento: dto ? `Socio −${dto} %` : '',
       cantidad,
-      precio: v.precio,
+      precio,
       reserva: p.tipo === 'reserva',
+      recogida: !!p.recogida,
     })
-    total += v.precio * cantidad
+    total += precio * cantidad
   }
   if (!items.length) return { ok: false, error: 'El carrito está vacío' }
 
   const hayReserva = items.some(i => i.reserva)
   const linea = (i: typeof items[number]) =>
-    `${i.cantidad} × ${i.nombre} (${[i.variante, i.color, i.talla && `talla ${i.talla}`, i.nombrePersonalizado && `nombre: ${i.nombrePersonalizado}`].filter(Boolean).join(' · ')})`
+    `${i.cantidad} × ${i.nombre} (${[i.variante, i.color, i.talla && `talla ${i.talla}`, i.nombrePersonalizado && `nombre: ${i.nombrePersonalizado}`, i.numeroSocio && `socio ${i.numeroSocio}`, i.descuento].filter(Boolean).join(' · ')})`
     + (i.precio ? ` — ${i.precio * i.cantidad} €` : ' — precio por confirmar')
 
   try {
@@ -97,6 +107,7 @@ export async function enviarPedidoShop(input: {
     ['Cliente', nombre], ['Email', email], ['Teléfono', telefono],
     ['Pedido', items.map(linea).join(' | ')],
     ['Total', total ? `${total} €` : 'Por confirmar'],
+    ['Entrega', items.every(i => i.recogida) ? 'Recogida en la instalación' : 'Envío o recogida por confirmar'],
     ['Mensaje', mensaje],
   ]
     .filter(([, v]) => v)

@@ -21,9 +21,13 @@ type ItemCarrito = {
   colorHex?: string
   talla?: string
   nombrePersonalizado?: string
+  /** Precio final por unidad, con el descuento de socio ya aplicado. */
   precio: number
+  precioSinDescuento: number
+  numeroSocio?: string
   cantidad: number
   reserva: boolean
+  recogida: boolean
 }
 
 const eur = (n: number) => `${new Intl.NumberFormat('es-ES').format(n)} €`
@@ -132,8 +136,12 @@ function FichaProducto({ producto: p, onClose, onAnadir }: {
   const [talla, setTalla] = useState(p.tallas?.[0] ?? '')
   const [nombrePers, setNombrePers] = useState('')
   const [cantidad, setCantidad] = useState(1)
+  const [esSocio, setEsSocio] = useState(false)
+  const [numeroSocio, setNumeroSocio] = useState('')
 
-  const falta = !!p.pideNombre && !nombrePers.trim()
+  const dto = esSocio ? (p.descuentoSocio ?? 0) : 0
+  const precioUnidad = Math.round(variante.precio * (1 - dto / 100) * 100) / 100
+  const falta = (!!p.pideNombre && !nombrePers.trim()) || (esSocio && !numeroSocio.trim())
 
   return (
     <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
@@ -225,6 +233,31 @@ function FichaProducto({ producto: p, onClose, onAnadir }: {
               </div>
             )}
 
+            {!!p.descuentoSocio && (
+              <div>
+                <div className="text-xs font-black text-pm-navy uppercase tracking-wider mb-2">¿Eres socio del club?</div>
+                <button type="button" onClick={() => { setEsSocio(v => !v); setNumeroSocio('') }}
+                  className={`w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-bold transition-all ${
+                    esSocio ? 'border-pm-red bg-pm-red-light text-pm-red' : 'border-gray-200 text-pm-navy hover:border-pm-red/50'
+                  }`}>
+                  Descuento de socio −{p.descuentoSocio} %
+                  <span className="block font-normal opacity-70">Club Deportivo Origen</span>
+                </button>
+                {esSocio && (
+                  <input required value={numeroSocio} onChange={e => setNumeroSocio(e.target.value)} placeholder="Tu nº de socio"
+                    className="w-full mt-2 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pm-red" />
+                )}
+                <p className="text-[11px] text-gray-400 mt-2">Comprobamos el nº de socio antes de entregar el pedido.</p>
+              </div>
+            )}
+
+            {p.recogida && (
+              <div className="bg-pm-bg border border-gray-200 rounded-xl p-3 text-xs text-gray-600 leading-relaxed">
+                <span className="font-bold text-pm-navy">Recogida en nuestra instalación.</span> Polígono Los Palancares, 8 · 16004 Cuenca.
+                Te avisamos en cuanto esté lista; no se envía a domicilio.
+              </div>
+            )}
+
             <div className="flex items-center gap-3">
               <div className="text-xs font-black text-pm-navy uppercase tracking-wider">Cantidad</div>
               <div className="flex items-center gap-2">
@@ -238,8 +271,11 @@ function FichaProducto({ producto: p, onClose, onAnadir }: {
               <div>
                 {variante.precio > 0 ? (
                   <>
-                    <div className="text-2xl font-black text-pm-navy">{eur(variante.precio * cantidad)}</div>
-                    <div className="text-[11px] text-gray-400">{variante.nota}</div>
+                    <div className="flex items-baseline gap-2">
+                      {dto > 0 && <span className="text-sm text-gray-400 line-through">{eur(variante.precio * cantidad)}</span>}
+                      <span className="text-2xl font-black text-pm-navy">{eur(precioUnidad * cantidad)}</span>
+                    </div>
+                    <div className="text-[11px] text-gray-400">{dto > 0 ? `Socio −${dto} % · ${variante.nota}` : variante.nota}</div>
                   </>
                 ) : (
                   <div className="text-sm text-gray-500 max-w-[180px]">Te confirmamos precio y entrega al cerrar la reserva.</div>
@@ -251,7 +287,9 @@ function FichaProducto({ producto: p, onClose, onAnadir }: {
                   varianteId: variante.id, varianteLabel: variante.label,
                   colorId: color?.id, colorLabel: color?.label, colorHex: color?.hex,
                   talla: talla || undefined, nombrePersonalizado: nombrePers.trim() || undefined,
-                  precio: variante.precio, reserva: p.tipo === 'reserva',
+                  precio: precioUnidad, precioSinDescuento: variante.precio,
+                  numeroSocio: esSocio ? numeroSocio.trim() : undefined,
+                  reserva: p.tipo === 'reserva', recogida: !!p.recogida,
                 }, cantidad)}
                 className="bg-pm-red hover:bg-pm-red-dark disabled:opacity-40 text-white font-black px-6 py-3.5 rounded-xl transition-colors">
                 {p.tipo === 'reserva' ? 'Añadir reserva' : 'Añadir al carrito'}
@@ -300,10 +338,12 @@ function Carrito({ items, total, hayReserva, onClose, onCambiar, onQuitar, onVac
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState('')
   const { valores, hpRef, onToken } = useProteccion()
+  const soloRecogida = items.length > 0 && items.every(i => i.recogida)
 
   const lineas: LineaPedido[] = useMemo(() => items.map(i => ({
     productoId: i.productoId, varianteId: i.varianteId, colorId: i.colorId,
-    talla: i.talla, nombrePersonalizado: i.nombrePersonalizado, cantidad: i.cantidad,
+    talla: i.talla, nombrePersonalizado: i.nombrePersonalizado,
+    numeroSocio: i.numeroSocio, cantidad: i.cantidad,
   })), [items])
 
   async function enviar(e: React.FormEvent) {
@@ -353,7 +393,7 @@ function Carrito({ items, total, hayReserva, onClose, onCambiar, onQuitar, onVac
                   <div className="flex-1 min-w-0">
                     <div className="font-bold text-pm-navy text-sm">{i.nombre}</div>
                     <div className="text-xs text-gray-500">
-                      {[i.varianteLabel, i.colorLabel, i.talla && `Talla ${i.talla}`, i.nombrePersonalizado].filter(Boolean).join(' · ')}
+                      {[i.varianteLabel, i.colorLabel, i.talla && `Talla ${i.talla}`, i.nombrePersonalizado, i.numeroSocio && `Socio ${i.numeroSocio}`].filter(Boolean).join(' · ')}
                     </div>
                     {paso === 'carrito' && (
                       <div className="flex items-center gap-2 mt-2">
@@ -375,7 +415,14 @@ function Carrito({ items, total, hayReserva, onClose, onCambiar, onQuitar, onVac
                   <input required placeholder="Nombre y apellidos" value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} className={input} />
                   <input required type="email" placeholder="Correo electrónico" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className={input} />
                   <input required type="tel" placeholder="Teléfono" value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} className={input} />
-                  <textarea rows={3} placeholder="Dirección de envío, dudas o cualquier detalle" value={form.mensaje} onChange={e => setForm(f => ({ ...f, mensaje: e.target.value }))} className={`${input} resize-none`} />
+                  <textarea rows={3}
+                    placeholder={soloRecogida ? 'Dudas o cualquier detalle de tu pedido' : 'Dirección de envío, dudas o cualquier detalle'}
+                    value={form.mensaje} onChange={e => setForm(f => ({ ...f, mensaje: e.target.value }))} className={`${input} resize-none`} />
+                  {soloRecogida && (
+                    <p className="text-[11px] text-gray-500 bg-pm-bg border border-gray-200 rounded-xl p-3 leading-relaxed">
+                      Este pedido se recoge en nuestra instalación: Polígono Los Palancares, 8 · 16004 Cuenca. No hace falta dirección de envío.
+                    </p>
+                  )}
                   <ProteccionCampos hpRef={hpRef} onToken={onToken} />
                   {error && <p className="text-xs text-pm-red">{error}</p>}
                 </form>

@@ -41,6 +41,10 @@ export type Producto = {
   tallas?: string[]
   /** Producto textil: pide el nombre que va impreso. */
   pideNombre?: boolean
+  /** Se recoge en la instalación: no se pide dirección de envío. */
+  recogida?: boolean
+  /** % de descuento para socios del club (pide el nº de socio). */
+  descuentoSocio?: number
   destacados: Destacado[]
   caracteristicas: string[]
   materiales: string[]
@@ -170,31 +174,35 @@ export const PRODUCTOS: Producto[] = [
   // ───────────────────────────────────────────────────────────────────────────
   {
     id: 'camiseta-pro-pm',
-    nombre: 'Camiseta Pro PM · 10º Aniversario',
-    tagline: 'Edición especial de los diez años de Planeta Movimiento',
+    nombre: 'Camiseta 10º Aniversario Planeta Movimiento',
+    tagline: 'Edición limitada por los diez años de Planeta Movimiento',
     tipo: 'reserva',
-    categoria: 'Equipación',
+    categoria: 'Edición limitada',
     descripcionCorta:
       'Camiseta técnica de edición limitada por el 10º aniversario, personalizada con el nombre del deportista a la espalda.',
     descripcionLarga: [
       'Camiseta técnica sublimada de edición limitada, creada para celebrar los diez años de Planeta Movimiento.',
       'Lleva el escudo de la Escuela de Superhéroes en el pecho y en la espalda, con el nombre del deportista impreso arriba.',
-      'Se fabrica por encargo: se reserva indicando talla y nombre, y confirmamos precio y fecha de entrega al cerrar el pedido.',
+      'Se fabrica por encargo: se reserva indicando talla y nombre, y se recoge en nuestra instalación cuando esté lista.',
     ],
-    precioDesde: 0,
+    precioDesde: 35,
     imagen: '/fotos/shop/camiseta-pro-pm.webp',
     grad: 'from-pm-red to-amber-600',
     variantes: [
-      { id: 'unica', label: 'Camiseta personalizada', precio: 0, nota: 'Precio al confirmar la reserva' },
+      { id: 'unica', label: 'Camiseta personalizada', precio: 35, nota: 'IVA incluido · recogida en la instalación' },
     ],
     colores: [],
     tallas: ['4', '8', '12', '16', 'S', 'M', 'L', 'XL', '2XL'],
     pideNombre: true,
+    recogida: true,
+    descuentoSocio: 15,
     destacados: [
       { titulo: 'Edición limitada', texto: 'Diez años de Planeta Movimiento' },
       { titulo: 'Nombre a la espalda', texto: 'Personalizada para cada deportista' },
       { titulo: 'Tejido técnico', texto: 'Sublimado, transpirable y ligero' },
       { titulo: 'Por encargo', texto: 'Se fabrica con la reserva cerrada' },
+      { titulo: 'Socios del club', texto: '15 % de descuento con tu nº de socio' },
+      { titulo: 'Recogida', texto: 'En Polígono Los Palancares, 8' },
     ],
     caracteristicas: [
       'Diseño exclusivo del 10º aniversario',
@@ -209,8 +217,10 @@ export const PRODUCTOS: Producto[] = [
       { campo: 'Edición', valor: '10º aniversario, limitada' },
       { campo: 'Tallas', valor: 'De la 4 a la 2XL' },
       { campo: 'Personalización', valor: 'Nombre a la espalda' },
+      { campo: 'Precio', valor: '35 € (IVA incluido)' },
+      { campo: 'Socios del club', valor: '15 % de descuento' },
       { campo: 'Fabricación', valor: 'Por encargo' },
-      { campo: 'Entrega', valor: 'Se confirma al cerrar la reserva' },
+      { campo: 'Entrega', valor: 'Recogida en Polígono Los Palancares, 8' },
     ],
   },
 ]
