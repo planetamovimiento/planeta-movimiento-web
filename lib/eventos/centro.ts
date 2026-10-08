@@ -54,7 +54,7 @@ export type EventoCentroCfg = {
   updatedBy?: string | null
 }
 
-export const EVENTOS_CENTRO_IDS = ['dias-sin-cole', 'domingos', 'halloween', 'practica-libre'] as const
+export const EVENTOS_CENTRO_IDS = ['dias-sin-cole', 'domingos', 'halloween', 'practica-libre', 'talleres-infantiles'] as const
 export type EventoCentroId = (typeof EVENTOS_CENTRO_IDS)[number]
 
 export const EVENTOS_CENTRO_DEFAULT: Record<EventoCentroId, EventoCentroCfg> = {
@@ -133,6 +133,32 @@ export const EVENTOS_CENTRO_DEFAULT: Record<EventoCentroId, EventoCentroCfg> = {
   },
 
   // ───────────────────────────────────────────────────────────────────────────
+  // Talleres infantiles (va cambiando de temática: Halloween, otoño, invierno…)
+  'talleres-infantiles': {
+    precio: 20, ivaIncluido: true, horario: '11:30 – 13:30', edad: 'De 2 a 5 años',
+    nota: 'Pueden venir disfrazados, pero sin maquillaje: mancha el material de la sala.',
+    fechas: 'Sábado 31 de octubre', evento: 'Halloween Infantil', plazas: 0, aforo: 0, imagen: '', estado: 'abierto',
+    precioBono: 0, sesionesBono: 0, descuentoSocio: 15,
+    titulo: 'Halloween Infantil', subtitulo: 'Taller infantil',
+    descripcion: 'Dos horas de manualidades y juegos en la sala de colchonetas para los más pequeños de la casa. Papás y mamás son bienvenidos y entran gratis.',
+    chips: 'Papás y mamás gratis\nManualidades y juegos\nSala de colchonetas',
+    secciones: [
+      {
+        titulo: 'Qué vamos a hacer', tipo: 'lista',
+        items: ['Manualidades temáticas', 'Juegos en la sala de colchonetas', 'Circuito de psicomotricidad', 'Photocall para las fotos'],
+      },
+      {
+        titulo: 'Antes de venir', tipo: 'programa',
+        items: [
+          'Edad = De 2 a 5 años',
+          'Disfraces = Pueden venir disfrazados',
+          'Maquillaje = Mejor sin pintar la cara, porque mancha el material',
+          'Acompañantes = Papás y mamás pueden quedarse, sin coste',
+        ],
+      },
+    ],
+  },
+
   'practica-libre': {
     precio: 15, ivaIncluido: true, horario: 'Martes y jueves · 20:00 – 21:30', edad: 'Desde 14 años',
     nota: 'Sesiones de hora y media. El bono se usa cuando quieras dentro de la temporada.',

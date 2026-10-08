@@ -207,6 +207,22 @@ export const CATALOGO_SERVICIOS: ServicioCatalogo[] = [
     botonTexto: 'Editar evento', botonAccion: 'reserva', enlace: '/servicios/eventos',
   },
   {
+    id: 'talleres-infantiles', icon: '🎨', ...D,
+    nombre: 'Talleres infantiles', entidad: 'empresa', categoria: 'Eventos', tipo: 'evento',
+    descripcionCorta: 'Talleres de mañana para peques de 2 a 5 años, con temática que va cambiando.',
+    descripcionLarga: 'Manualidades y juegos en la sala de colchonetas. Temática, fecha, precio y textos editables desde aquí.',
+    edad: 'De 2 a 5 años', horarios: '11:30 – 13:30', estado: 'activo',
+    botonTexto: 'Editar taller', botonAccion: 'reserva', enlace: '/servicios/eventos#taller-infantil',
+  },
+  {
+    id: 'practica-libre', icon: '🤸', ...D,
+    nombre: 'Práctica Libre', entidad: 'empresa', categoria: 'Eventos', tipo: 'evento',
+    descripcionCorta: 'Entrenamiento por tu cuenta los martes y jueves, con bono o clase suelta.',
+    descripcionLarga: 'Instalación abierta con monitor de sala. Bono de sesiones o clase suelta, con descuento para socios.',
+    edad: 'Desde 14 años', horarios: 'Martes y jueves · 20:00 – 21:30', estado: 'activo',
+    botonTexto: 'Editar evento', botonAccion: 'reserva', enlace: '/servicios/eventos#practica-libre',
+  },
+  {
     id: 'talleres', icon: '🎪', ...D,
     nombre: 'Talleres de Circo', entidad: 'empresa', categoria: 'Eventos', tipo: 'taller',
     descripcionCorta: 'Talleres a medida para ayuntamientos, empresas y AMPAs.',

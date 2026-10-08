@@ -457,6 +457,90 @@ export function ReservaMananaMagica({ cfg, onClose = () => {}, ocupacion = {}, o
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
+// TALLERES INFANTILES (Halloween Infantil y los que vengan después)
+// ──────────────────────────────────────────────────────────────────────────────
+export function ReservaTallerInfantil({ cfg, onClose = () => {} }: { cfg?: EventoCentroCfg; onClose?: () => void }) {
+  const precio = cfg?.precio ?? 20
+  const dtoSocio = cfg?.descuentoSocio ?? 15
+  const [ninos, setNinos] = useState(1)
+  const [desc, setDesc] = useState<Descuento>(DESCUENTO_VACIO)
+  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', edades: '', notas: '' })
+  const [enviando, setEnviando] = useState(false)
+  const [listo, setListo] = useState(false)
+
+  const base = precio * ninos
+  const pct = desc.tipo === 'hermanos' ? 20 : desc.tipo === 'socio' ? dtoSocio : 0
+  const total = Math.round(base * (1 - pct / 100) * 100) / 100
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault(); setEnviando(true)
+    await submitBooking({
+      servicio: 'Talleres Infantiles',
+      cliente_nombre: form.nombre, cliente_email: form.email, cliente_telefono: form.telefono,
+      hora: cfg?.horario || '11:30 – 13:30',
+      participantes: ninos,
+      precio: total,
+      observaciones: form.notas,
+      datos: {
+        taller: cfg?.titulo || 'Halloween Infantil',
+        fecha: cfg?.fechas || '',
+        horario: cfg?.horario || '11:30 – 13:30',
+        edades: form.edades, numNinos: ninos,
+        descuento: textoDescuento(desc), numeroSocio: desc.numeroSocio,
+        importe: eurPL(total),
+      },
+    })
+    setEnviando(false); setListo(true)
+  }
+
+  if (listo) return <Exito onClose={onClose} />
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="bg-violet-50 border border-violet-200 rounded-xl p-4 text-sm">
+        <div className="font-black text-violet-800 mb-2">{cfg?.titulo || 'Halloween Infantil'}</div>
+        <div className="space-y-1 text-violet-900/70 text-xs">
+          <div>{cfg?.fechas || 'Sábado 31 de octubre'}</div>
+          <div>{cfg?.horario || '11:30 – 13:30'}</div>
+          <div>{cfg?.edad || 'De 2 a 5 años'}</div>
+          <div>{precio} € por niño · Papás y mamás gratis</div>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-xs font-bold text-pm-navy mb-2">Número de niños *</label>
+        <div className="flex items-center gap-4">
+          <button type="button" onClick={() => setNinos(n => Math.max(1, n - 1))} className="w-9 h-9 bg-violet-50 border border-violet-200 rounded-xl font-bold text-lg hover:border-violet-400 transition-colors">−</button>
+          <div className="flex-1 text-center text-3xl font-black text-pm-navy">{ninos}</div>
+          <button type="button" onClick={() => setNinos(n => Math.min(20, n + 1))} className="w-9 h-9 bg-violet-50 border border-violet-200 rounded-xl font-bold text-lg hover:border-violet-400 transition-colors">+</button>
+        </div>
+      </div>
+
+      <SelectorDescuento ninos={ninos} valor={desc} onChange={setDesc} />
+
+      <div className="bg-violet-50 border border-violet-200 rounded-xl p-3 text-sm">
+        <div className="flex justify-between text-violet-900">
+          <span>{ninos} niño{ninos > 1 ? 's' : ''} × {precio} €{textoDescuento(desc) ? ` · ${textoDescuento(desc)}` : ''}</span>
+          <strong>{eurPL(total)}</strong>
+        </div>
+      </div>
+
+      <input required type="text" placeholder="Nombre y apellidos *" value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500" />
+      <input required type="email" placeholder="Email *" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500" />
+      <input required type="tel" placeholder="Teléfono *" value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500" />
+      <input type="text" placeholder="Edad(es) de los niños" value={form.edades} onChange={e => setForm(f => ({ ...f, edades: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500" />
+      <textarea rows={2} placeholder="Alergias, necesidades especiales…" value={form.notas} onChange={e => setForm(f => ({ ...f, notas: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500 resize-none" />
+
+      <button type="submit" disabled={enviando || !form.nombre || !form.email || !form.telefono}
+        className="w-full bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">
+        {enviando ? 'Enviando…' : 'Reservar plaza'}
+      </button>
+      <p className="text-center text-xs text-gray-400">Te confirmamos la plaza y la forma de pago al recibir la reserva.</p>
+    </form>
+  )
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
 // PRÁCTICA LIBRE (bono de sesiones o clase suelta)
 // ──────────────────────────────────────────────────────────────────────────────
 /** Próximos martes y jueves, para elegir día en la clase suelta. */

@@ -12,6 +12,8 @@ const REGLAS: { test: (t: string) => boolean; url: string }[] = [
   { test: t => t.includes('sin cole'), url: '/servicios/eventos#dias-sin-cole' },
   { test: t => t.includes('domingo'), url: '/servicios/eventos#domingos-en-familia' },
   { test: t => t.includes('manana magica') || t.includes('mananas magicas'), url: '/servicios/eventos#mananas-magicas' },
+  { test: t => t.includes('halloween') && t.includes('infantil'), url: '/servicios/eventos#taller-infantil' },
+  { test: t => t.includes('taller infantil') || t.includes('talleres infantiles'), url: '/servicios/eventos#taller-infantil' },
   { test: t => t.includes('halloween'), url: '/servicios/eventos#halloween' },
   { test: t => t.includes('practica libre'), url: '/servicios/eventos#practica-libre' },
   { test: t => t.includes('campamento'), url: '/servicios/campamentos' },

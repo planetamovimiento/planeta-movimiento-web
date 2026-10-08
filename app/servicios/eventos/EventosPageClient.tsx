@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { Galeria } from '@/components/ui/Galeria'
 import { useState, useSyncExternalStore } from 'react'
 import CalculadoraEventos from './CalculadoraEventos'
-import { ReservaDiasSinCole, ReservaDomingos, ReservaHalloween, ReservaMananaMagica, ReservaPracticaLibre } from './EventosInstalaciones'
+import { ReservaDiasSinCole, ReservaDomingos, ReservaHalloween, ReservaMananaMagica, ReservaPracticaLibre, ReservaTallerInfantil } from './EventosInstalaciones'
 import type { MananaMagica } from '@/lib/eventos/manana-magica'
 import type { EventoCentroCfg } from '@/lib/eventos/centro'
 import { CartelEvento } from './CartelEvento'
@@ -37,7 +37,7 @@ const FAQ = [
 
 // ─── Tabs principales ─────────────────────────────────────────────────────────
 type TabPrincipal = 'externo' | 'centro'
-type TabCentro    = 'diassinc' | 'domingos' | 'practica' | 'halloween' | 'manana'
+type TabCentro    = 'diassinc' | 'domingos' | 'practica' | 'halloween' | 'infantil' | 'manana'
 
 const TABS_CENTRO = [
   { id: 'diassinc'  as TabCentro, label: 'Días Sin Cole',       emoji: '⚡', sub: 'Festivos escolares · 9:00-14:00' },
@@ -45,13 +45,14 @@ const TABS_CENTRO = [
   { id: 'practica'  as TabCentro, label: 'Práctica Libre',      emoji: '🤸', sub: 'Martes y jueves · 20:00-21:30' },
   { id: 'manana'    as TabCentro, label: 'Mañanas Mágicas',     emoji: '✨', sub: 'Jornada temática · personaje del mes' },
   { id: 'halloween' as TabCentro, label: 'Noche de Halloween',  emoji: '🧟', sub: '31 oct · 22:00 – 09:00' },
+  { id: 'infantil'  as TabCentro, label: 'Halloween Infantil',  emoji: '🎃', sub: '31 oct · 11:30 – 13:30 · 2 a 5 años' },
 ]
 
 // ─── Deep-links por hash (#): cada servicio tiene su propia URL compartible ─────
 // /servicios/eventos#animacion · #dias-sin-cole · #domingos-en-familia ·
 // #mananas-magicas · #halloween
 const CENTRO_SLUG: Record<TabCentro, string> = {
-  diassinc: 'dias-sin-cole', domingos: 'domingos-en-familia', practica: 'practica-libre', manana: 'mananas-magicas', halloween: 'halloween',
+  diassinc: 'dias-sin-cole', domingos: 'domingos-en-familia', practica: 'practica-libre', manana: 'mananas-magicas', halloween: 'halloween', infantil: 'taller-infantil',
 }
 const HASH_A_TAB: Record<string, { p: TabPrincipal; c?: TabCentro }> = {
   animacion: { p: 'externo' },
@@ -61,6 +62,8 @@ const HASH_A_TAB: Record<string, { p: TabPrincipal; c?: TabCentro }> = {
   'practica-libre': { p: 'centro', c: 'practica' },
   'mananas-magicas': { p: 'centro', c: 'manana' },
   halloween: { p: 'centro', c: 'halloween' },
+  'taller-infantil': { p: 'centro', c: 'infantil' },
+  'halloween-infantil': { p: 'centro', c: 'infantil' },
 }
 const subscribeHash = (cb: () => void) => {
   window.addEventListener('hashchange', cb)
@@ -370,6 +373,42 @@ function PanelPracticaLibre({ cfg }: { cfg: EventoCentroCfg }) {
   )
 }
 
+// ─── Panel de taller infantil ─────────────────────────────────────────────────
+function PanelTallerInfantil({ cfg }: { cfg: EventoCentroCfg }) {
+  return (
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-10">
+        <div className="space-y-6">
+          <div className="bg-gradient-to-br from-violet-600 to-orange-500 rounded-2xl p-8 text-white">
+            <CartelEvento src={cfg.imagen} alt={cfg.titulo} fondo="bg-violet-950/40" />
+            {cfg.subtitulo && <div className="text-white/80 font-black text-xs uppercase tracking-widest mb-1">{cfg.subtitulo}</div>}
+            <h2 className="text-3xl font-black mb-2">{cfg.titulo}</h2>
+            <p className="text-white/90 text-sm leading-relaxed mb-4">{cfg.descripcion}</p>
+            <div className="flex flex-wrap gap-2">
+              {[cfg.fechas, cfg.horario, cfg.edad, precioLabel(cfg), cfg.descuentoSocio ? `Socios −${cfg.descuentoSocio} %` : '', ...lineas(cfg.chips)].filter(Boolean).map(b => (
+                <span key={b} className="bg-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-full">{b}</span>
+              ))}
+            </div>
+            {cfg.nota && <p className="text-white/90 text-xs mt-3">ℹ {cfg.nota}</p>}
+          </div>
+
+          <SeccionesEvento secciones={cfg.secciones} tema={TEMA_CLARO('text-violet-600', 'bg-violet-50 border border-violet-200 text-violet-700')} />
+        </div>
+
+        <div className="lg:sticky lg:top-28 lg:self-start">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+            <div className="bg-violet-600 text-white px-5 py-4">
+              <div className="font-black text-base">Reservar plaza</div>
+              <div className="text-violet-100 text-xs mt-0.5">{cfg.fechas} · {cfg.horario}</div>
+            </div>
+            <div className="p-5"><ReservaTallerInfantil cfg={cfg} /></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Panel Halloween ──────────────────────────────────────────────────────────
 function PanelHalloween({ cfg }: { cfg: EventoCentroCfg }) {
   return (
@@ -407,9 +446,10 @@ function PanelHalloween({ cfg }: { cfg: EventoCentroCfg }) {
 }
 
 // ─── Página principal (cliente) ───────────────────────────────────────────────
-export default function EventosPageClient({ mananaMagica, diasSinCole, domingos, halloween, practicaLibre, ocupacionDSC, ocupacionDomingos, ocupacionMM, senalEventos }: {
+export default function EventosPageClient({ mananaMagica, diasSinCole, domingos, halloween, practicaLibre, tallerInfantil, ocupacionDSC, ocupacionDomingos, ocupacionMM, senalEventos }: {
   mananaMagica: MananaMagica; diasSinCole: EventoCentroCfg; domingos: EventoCentroCfg; halloween: EventoCentroCfg
   practicaLibre: EventoCentroCfg
+  tallerInfantil: EventoCentroCfg
   ocupacionDSC: Record<string, number>; ocupacionDomingos: Record<string, number>; ocupacionMM: Record<string, number>
   senalEventos: number
 }) {
@@ -512,6 +552,7 @@ export default function EventosPageClient({ mananaMagica, diasSinCole, domingos,
           {tabCentro === 'diassinc'  && <PanelDiasSinCole cfg={diasSinCole} ocupacion={ocupacionDSC} />}
           {tabCentro === 'domingos'  && <PanelDomingos cfg={domingos} ocupacion={ocupacionDomingos} />}
           {tabCentro === 'practica'  && <PanelPracticaLibre cfg={practicaLibre} />}
+          {tabCentro === 'infantil'  && <PanelTallerInfantil cfg={tallerInfantil} />}
           {tabCentro === 'manana'    && <PanelMananaMagica cfg={mananaMagica} ocupacion={ocupacionMM} />}
           {tabCentro === 'halloween' && <PanelHalloween cfg={halloween} />}
         </>

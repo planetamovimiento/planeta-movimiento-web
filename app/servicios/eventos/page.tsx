@@ -12,12 +12,13 @@ export const metadata = {
 }
 
 export default async function EventosPage() {
-  const [mananaMagica, diasSinCole, domingos, halloween, practicaLibre, ocupacionDSC, ocupacionDomingos, ocupacionMM, eventosSvc] = await Promise.all([
+  const [mananaMagica, diasSinCole, domingos, halloween, practicaLibre, tallerInfantil, ocupacionDSC, ocupacionDomingos, ocupacionMM, eventosSvc] = await Promise.all([
     getMananaMagica(),
     getEventoCentro('dias-sin-cole'),
     getEventoCentro('domingos'),
     getEventoCentro('halloween'),
     getEventoCentro('practica-libre'),
+    getEventoCentro('talleres-infantiles'),
     getOcupacionFecha('dias-sin-cole'),
     getOcupacionFecha('domingos'),
     getOcupacionFecha('manana-magica'),
@@ -31,6 +32,7 @@ export default async function EventosPage() {
       domingos={domingos}
       halloween={halloween}
       practicaLibre={practicaLibre}
+      tallerInfantil={tallerInfantil}
       ocupacionDSC={ocupacionDSC}
       ocupacionDomingos={ocupacionDomingos}
       ocupacionMM={ocupacionMM}
