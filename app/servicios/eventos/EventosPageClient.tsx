@@ -434,8 +434,8 @@ function PanelHalloween({ cfg }: { cfg: EventoCentroCfg }) {
         <div className="lg:sticky lg:top-28 lg:self-start">
           <div className="bg-gray-900 border border-orange-500/30 rounded-2xl shadow-xl overflow-hidden">
             <div className="bg-orange-900/60 border-b border-orange-500/30 text-white px-5 py-4">
-              <div className="font-black text-base text-orange-400">🧟 Reservar plaza — 2026</div>
-              <div className="text-orange-300/60 text-xs mt-0.5">Plazas muy limitadas · Respuesta en 24h</div>
+              <div className="font-black text-base text-orange-400">🧟 Reservar plaza</div>
+              <div className="text-orange-300/60 text-xs mt-0.5">{[cfg.fechas, cfg.horario].filter(Boolean).join(' · ') || 'Plazas muy limitadas'}</div>
             </div>
             <div className="p-5"><ReservaHalloween cfg={cfg} /></div>
           </div>

@@ -340,12 +340,13 @@ export function ReservaHalloween({ cfg, onClose = () => {} }: { cfg?: EventoCent
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Info evento */}
       <div className="bg-orange-950/20 border border-orange-500/30 rounded-xl p-4 text-sm">
-        <div className="font-black text-orange-400 mb-2">🧟 Noche de Halloween 2026</div>
+        <div className="font-black text-orange-400 mb-2">🧟 {cfg?.titulo || 'Noche de Halloween'}{evento ? ` · «${evento}»` : ''}</div>
         <div className="space-y-1 text-orange-200/80 text-xs">
-          <div>📅 Noche del 31 de octubre al 1 de noviembre</div>
-          <div>🕙 22:00 – 09:00 del día siguiente</div>
-          <div>👦 Edad mínima: 10 años</div>
-          <div>🎯 Plazas limitadas: {PLAZAS} máximo</div>
+          {cfg?.fechas && <div>📅 {cfg.fechas}</div>}
+          {cfg?.horario && <div>🕙 {cfg.horario}</div>}
+          {cfg?.edad && <div>👦 {cfg.edad}</div>}
+          {PLAZAS > 0 && <div>🎯 Plazas limitadas: {PLAZAS} máximo</div>}
+          {!!cfg?.precio && <div>💶 {cfg.precio} € por niño{cfg.ivaIncluido ? '' : ' + IVA'}</div>}
         </div>
       </div>
 
@@ -366,7 +367,7 @@ export function ReservaHalloween({ cfg, onClose = () => {} }: { cfg?: EventoCent
       <input type="text" placeholder="Edad(es) de los participantes" value={form.edades} onChange={e => setForm(f => ({...f, edades: e.target.value}))} className="w-full border border-orange-500/30 bg-orange-950/20 rounded-xl px-3 py-2.5 text-sm text-white placeholder-orange-300/50 focus:outline-none focus:border-orange-400"/>
       <textarea rows={2} placeholder="Alergias, necesidades especiales..." value={form.notas} onChange={e => setForm(f => ({...f, notas: e.target.value}))} className="w-full border border-orange-500/30 bg-orange-950/20 rounded-xl px-3 py-2.5 text-sm text-white placeholder-orange-300/50 focus:outline-none focus:border-orange-400 resize-none"/>
 
-      <p className="text-xs text-orange-300/70">El precio se confirmará al ponernos en contacto contigo. Plazas muy limitadas.</p>
+      <p className="text-xs text-orange-300/70">{cfg?.nota || 'Te confirmamos la plaza y la forma de pago al recibir la reserva.'}</p>
 
       <button type="submit" disabled={!form.nombre || !form.email || !form.telefono || enviando}
         className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">
