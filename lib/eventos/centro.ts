@@ -112,7 +112,7 @@ export const EVENTOS_CENTRO_DEFAULT: Record<EventoCentroId, EventoCentroCfg> = {
     precio: 0, ivaIncluido: true, horario: '22:00 – 09:00', edad: 'Mín. 10 años',
     nota: 'Plazas muy limitadas · El precio se confirma al contactar',
     fechas: '31 oct → 1 nov', evento: 'Apocalipsis Zombie', plazas: 20, aforo: 0, imagen: '', estado: 'proximo',
-    precioBono: 0, sesionesBono: 0, descuentoSocio: 0,
+    precioBono: 0, sesionesBono: 0, descuentoSocio: 15,
     titulo: 'Noche de Halloween', subtitulo: 'Evento anual especial',
     descripcion: 'Una noche épica e inolvidable. Fiesta de pijamas temática, gymkana zombie, actividades nocturnas, película de terror y desayuno con churros al amanecer.',
     chips: '',

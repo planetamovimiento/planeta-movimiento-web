@@ -24,6 +24,8 @@ export default function EditorEventoCentro({ id, inicial, puedeEditar }: { id: s
       precio: Number(f.precio) || 0, ivaIncluido: f.ivaIncluido, horario: f.horario, edad: f.edad,
       nota: f.nota, fechas: f.fechas, evento: f.evento, plazas: Number(f.plazas) || 0,
       aforo: Number(f.aforo) || 0, imagen: f.imagen || '',
+      precioBono: Number(f.precioBono) || 0, sesionesBono: Number(f.sesionesBono) || 0,
+      descuentoSocio: Number(f.descuentoSocio) || 0,
       titulo: f.titulo, subtitulo: f.subtitulo, descripcion: f.descripcion,
       chips: f.chips, secciones: f.secciones,
     }
@@ -122,6 +124,21 @@ export default function EditorEventoCentro({ id, inicial, puedeEditar }: { id: s
       <div>
         <label className={label}>Bloques de contenido de la web</label>
         <EditorSecciones value={f.secciones} disabled={!puedeEditar} onChange={v => set('secciones', v)} />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label className={label}>Descuento socios (%)</label>
+          <input type="number" min={0} max={100} value={f.descuentoSocio} disabled={!puedeEditar} onChange={e => set('descuentoSocio', e.target.value)} className={input} />
+        </div>
+        <div>
+          <label className={label}>Precio del bono (€)</label>
+          <input type="number" min={0} value={f.precioBono} disabled={!puedeEditar} onChange={e => set('precioBono', e.target.value)} className={input} placeholder="0 = sin bono" />
+        </div>
+        <div>
+          <label className={label}>Sesiones del bono</label>
+          <input type="number" min={0} value={f.sesionesBono} disabled={!puedeEditar} onChange={e => set('sesionesBono', e.target.value)} className={input} />
+        </div>
       </div>
 
       <div>
