@@ -13,16 +13,19 @@ import { MonthlyBars, HBars } from './Charts'
 import GastoModal from './GastoModal'
 import IngresoModal from './IngresoModal'
 import ImportarGastosModal from './ImportarGastosModal'
+import SueldosClient from './SueldosClient'
+import type { Sueldo } from '@/lib/sueldos/data'
 import Carpetas from './Carpetas'
 import type { Carpeta, Factura } from '@/lib/balance/documentos'
 import { eliminarGasto, eliminarIngresoManual, crearCategoria, editarCategoria, toggleCategoria } from './actions'
 
-type Tab = 'resumen' | 'carpetas' | 'ingresos' | 'gastos' | 'mensual' | 'anual' | 'categorias'
+type Tab = 'resumen' | 'carpetas' | 'ingresos' | 'gastos' | 'sueldos' | 'mensual' | 'anual' | 'categorias'
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: 'resumen', label: 'Resumen', icon: '📊' },
   { id: 'carpetas', label: 'Carpetas y facturas', icon: '📁' },
   { id: 'ingresos', label: 'Ingresos', icon: '📈' },
   { id: 'gastos', label: 'Gastos', icon: '📉' },
+  { id: 'sueldos', label: 'Sueldos', icon: '🧑‍🏫' },
   { id: 'mensual', label: 'Mensual', icon: '🗓️' },
   { id: 'anual', label: 'Anual', icon: '📅' },
   { id: 'categorias', label: 'Categorías', icon: '🏷️' },
@@ -68,7 +71,7 @@ function ExportMenu({ onExport }: { onExport: (f: 'csv' | 'xlsx' | 'pdf') => voi
   )
 }
 
-export default function BalanceClient({ ingresos, gastos, categorias, carpetas, facturas, docsOk, setupOk, role }: {
+export default function BalanceClient({ ingresos, gastos, categorias, carpetas, facturas, docsOk, setupOk, role, sueldos, monitores, sueldosOk }: {
   ingresos: IngresoMov[]
   gastos: GastoMov[]
   categorias: Categoria[]
@@ -77,6 +80,9 @@ export default function BalanceClient({ ingresos, gastos, categorias, carpetas, 
   docsOk: boolean
   setupOk: boolean
   role: AdminRole
+  sueldos: Sueldo[]
+  monitores: { id: string; nombre: string }[]
+  sueldosOk: boolean
 }) {
   const router = useRouter()
   const puedeEditar = role === 'principal' || role === 'gestor'
@@ -258,7 +264,7 @@ export default function BalanceClient({ ingresos, gastos, categorias, carpetas, 
       </div>
 
       {/* ── FILTROS ── */}
-      {tab !== 'categorias' && (
+      {tab !== 'categorias' && tab !== 'sueldos' && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 flex flex-wrap items-center gap-2">
           <select value={String(fAnio)} onChange={e => setFAnio(e.target.value === TODO ? TODO : Number(e.target.value))} className={sel}>
             <option value={TODO}>Todos los años</option>
@@ -297,6 +303,12 @@ export default function BalanceClient({ ingresos, gastos, categorias, carpetas, 
               className="text-xs font-bold text-pm-red hover:underline px-2">Limpiar</button>
           )}
         </div>
+      )}
+
+      {/* ════════════════ SUELDOS ════════════════ */}
+      {tab === 'sueldos' && (
+        <SueldosClient sueldos={sueldos} monitores={monitores} ambito={ambito}
+          puedeEditar={puedeEditar} puedeBorrar={puedeGestionar} setupOk={sueldosOk} />
       )}
 
       {/* ════════════════ RESUMEN ════════════════ */}

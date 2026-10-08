@@ -5,6 +5,7 @@ import {
   getCarpetas, getTodosDocumentos, getMovimientos, getHojasHoras, sinDatosSensibles,
 } from '@/lib/monitores/data'
 import { actividadesAutomaticas, getReglasMonitores, CATEGORIAS_EMPRESA } from '@/lib/monitores/reglas'
+import { getSueldos } from '@/lib/sueldos/data'
 import { ACTIVIDADES_CLUB } from '@/lib/club/constants'
 import MonitorPortal from './MonitorPortal'
 import MonitoresAdmin from './MonitoresAdmin'
@@ -51,8 +52,8 @@ export default async function MonitoresPage() {
       getFichajes(mon.id), getFichajeAbierto(mon.id),
     ])
     const actividades = [...manuales, ...automaticas].sort(porFecha)
-    const hojas = await getHojasHoras(mon.id)
-    return <MonitorPortal monitor={mon} actividades={actividades} fichajes={fichajes} abierto={abierto} carpetas={carpetas} documentos={documentos} hojasHoras={hojas} />
+    const [hojas, sueldos] = await Promise.all([getHojasHoras(mon.id), getSueldos(mon.id)])
+    return <MonitorPortal monitor={mon} actividades={actividades} fichajes={fichajes} abierto={abierto} carpetas={carpetas} documentos={documentos} hojasHoras={hojas} sueldos={sueldos} />
   }
 
   const [monitoresRaw, movimientos, manuales, automaticas, fichajes, reglas, hojasHoras] = await Promise.all([

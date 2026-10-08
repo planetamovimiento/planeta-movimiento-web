@@ -1,6 +1,8 @@
 import { requireSeccion } from '@/lib/admin/auth'
 import { getBalanceData } from '@/lib/balance/data'
 import { getCarpetas, getFacturas } from '@/lib/balance/documentos'
+import { getSueldos, sueldosListos } from '@/lib/sueldos/data'
+import { getMonitores } from '@/lib/monitores/data'
 import { AdminHeader } from '@/components/admin/ui'
 import BalanceClient from './BalanceClient'
 
@@ -8,7 +10,10 @@ export const dynamic = 'force-dynamic'
 
 export default async function BalancePage() {
   const admin = await requireSeccion('balance')
-  const [data, carp, fact] = await Promise.all([getBalanceData(), getCarpetas(), getFacturas()])
+  const [data, carp, fact, sueldos, sueldosOk, mons] = await Promise.all([
+    getBalanceData(), getCarpetas(), getFacturas(), getSueldos(), sueldosListos(), getMonitores(),
+  ])
+  const monitores = mons.map(m => ({ id: m.id, nombre: `${m.nombre} ${m.apellidos}`.trim() || m.email }))
 
   return (
     <>
@@ -22,6 +27,9 @@ export default async function BalancePage() {
           facturas={fact.facturas}
           docsOk={carp.ok && fact.ok}
           setupOk={data.setupOk}
+          sueldos={sueldos}
+          monitores={monitores}
+          sueldosOk={sueldosOk}
           role={admin?.role ?? 'lectura'}
         />
       </div>
