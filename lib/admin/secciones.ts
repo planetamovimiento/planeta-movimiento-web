@@ -18,6 +18,7 @@ export type SeccionId =
   | 'productos'
   | 'formularios'
   | 'calendario'
+  | 'navidad'
   | '50dias50provincias'
   | 'servicios'
   | 'promociones'
@@ -52,6 +53,7 @@ export const SECCIONES: SeccionMeta[] = [
   { id: 'productos',       label: 'Productos y pedidos', icon: '🛒', href: '/admin/productos',        grupo: 'Empresa' },
   { id: 'formularios',     label: 'Solicitudes',         icon: '✉️', href: '/admin/formularios',      grupo: 'Empresa' },
   { id: 'calendario',      label: 'Calendario',          icon: '🗓️', href: '/admin/calendario',       grupo: 'Empresa' },
+  { id: 'navidad',         label: 'Fábrica de Papá Noel', icon: '🎅', href: '/admin/navidad',       grupo: 'Empresa' },
   { id: '50dias50provincias', label: '50 días, 50 provincias', icon: '🗺️', href: '/admin/50dias50provincias', grupo: 'Empresa' },
   { id: 'monitores',       label: 'Monitores',           icon: '🧑‍🏫', href: '/admin/monitores',        grupo: 'Equipo' },
   { id: 'circo-inclusivo', label: 'Circo Inclusivo',     icon: '🤸', href: '/admin/circo-inclusivo',  grupo: 'Equipo' },
