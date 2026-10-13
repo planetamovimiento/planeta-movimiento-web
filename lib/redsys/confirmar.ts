@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { pagoAutorizado, type DatosNotificacion } from './firma'
 import { enviarConfirmacionReserva, avisarNegocioReserva } from '@/lib/emails/confirmacion'
+import { confirmarEntradasNavidad, SERVICIO_NAVIDAD } from '@/lib/navidad/confirmar'
 
 /**
  * Procesa una respuesta FIRMADA de Redsys (vale tanto para la notificación
@@ -68,8 +69,14 @@ export async function procesarRespuestaRedsys(datos: DatosNotificacion): Promise
           pagado: importe,
           pendiente: Number(p.pendiente) || 0,
         }
-        await enviarConfirmacionReserva(d)                                    // confirmación al cliente
-        await avisarNegocioReserva({ ...d, motivo: 'Pago recibido — reserva confirmada' }) // aviso interno
+        // La Fábrica de Papá Noel manda sus propias entradas (con localizador),
+        // así que no se envía además el correo genérico de reserva.
+        if (d.servicio === SERVICIO_NAVIDAD) {
+          await confirmarEntradasNavidad(order, true)
+        } else {
+          await enviarConfirmacionReserva(d)                                    // confirmación al cliente
+          await avisarNegocioReserva({ ...d, motivo: 'Pago recibido — reserva confirmada' }) // aviso interno
+        }
       }
     }
     await db.from('activity_log').insert({
@@ -78,6 +85,8 @@ export async function procesarRespuestaRedsys(datos: DatosNotificacion): Promise
     })
   } else {
     await db.from('payments').update({ estado: 'fallido' }).eq('id', p.id as string)
+    // Entradas de Navidad: el pago falló, así que la plaza se libera en el acto.
+    await confirmarEntradasNavidad(order, false)
     if (bookingId) await db.from('bookings').update({
       estado_pago: 'fallido',
       notas_internas: `❌ SIN PAGAR · Pago con tarjeta rechazado (Redsys). Pedido ${order}. Cobrar la señal en la instalación.`,

@@ -10,8 +10,22 @@ type NavItem = {
   label2?: string
   /** Resalta el enlace sobre el resto del menú (campaña en marcha). */
   destacado?: boolean
+  /** Campaña de Navidad: botón rojo/verde con filo dorado y gorro. */
+  navidad?: boolean
   href: string
   items: { label: string; href: string; desc: string }[]
+}
+
+/** Gorro de Papá Noel del botón del menú (dibujo propio, no un emoji). */
+function GorroNoel({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <path d="M3.4 17.2c1.6-6.2 5-10.4 9.6-11.3 3.3-.6 5.8 1 6.6 3.6.9 2.9-.6 5.4-4 6.6-2.9 1-6.9 1.2-12.2 1.1z"
+        fill="currentColor" />
+      <ellipse cx="12" cy="18.6" rx="9.2" ry="1.9" fill="#fff" />
+      <circle cx="20.4" cy="6.2" r="2" fill="#fff" />
+    </svg>
+  )
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -71,11 +85,13 @@ const NAV_ITEMS: NavItem[] = [
     href: '/planeta-tdah',
     items: [],
   },
+  // «50 días, 50 provincias» sale del menú durante la campaña de Navidad, pero
+  // la página y sus datos siguen ahí: /50dias50provincias funciona igual.
   {
-    label: '50 días en',
-    label2: '50 provincias',
-    destacado: true,
-    href: '/50dias50provincias',
+    label: 'Fábrica de',
+    label2: 'Papá Noel',
+    navidad: true,
+    href: '/fabrica-de-papa-noel',
     items: [],
   },
 ]
@@ -117,9 +133,17 @@ export default function Navbar() {
                   // El enlace de dos líneas no tiene desplegable, así que ahí se reduce para caber en el h-16.
                   className={`flex items-center gap-1 text-white text-sm transition-colors px-3 whitespace-nowrap ${
                     nav.label2 ? 'py-2' : 'py-5'
-                  } ${nav.destacado ? '' : 'hover:text-pm-red'}`}
+                  } ${nav.destacado || nav.navidad ? '' : 'hover:text-pm-red'}`}
                 >
-                  {nav.label2 ? (
+                  {nav.navidad ? (
+                    <span className="pm-navidad flex items-center gap-2 px-3 py-1.5">
+                      <GorroNoel className="w-4 h-4 text-red-200 shrink-0" />
+                      <span className="flex flex-col leading-tight text-left">
+                        <span className="font-bold text-white">{nav.label}</span>
+                        <span className="text-[11px] font-semibold text-amber-200">{nav.label2}</span>
+                      </span>
+                    </span>
+                  ) : nav.label2 ? (
                     // Las dos líneas van dentro de un único bloque: el hover ilumina el conjunto.
                     <span
                       className={`flex flex-col leading-tight text-center ${
@@ -204,11 +228,19 @@ export default function Navbar() {
                 <Link
                   href={nav.href}
                   className={`group flex items-center px-4 py-3 text-white text-sm font-semibold transition-colors ${
-                    nav.destacado ? '' : 'hover:text-pm-red'
+                    nav.destacado || nav.navidad ? '' : 'hover:text-pm-red'
                   }`}
                   onClick={() => setMobileOpen(false)}
                 >
-                  {nav.label2 ? (
+                  {nav.navidad ? (
+                    <span className="pm-navidad flex items-center gap-2 px-4 py-2">
+                      <GorroNoel className="w-5 h-5 text-red-200 shrink-0" />
+                      <span className="flex flex-col leading-tight">
+                        <span className="text-white">{nav.label}</span>
+                        <span className="text-xs font-semibold text-amber-200">{nav.label2}</span>
+                      </span>
+                    </span>
+                  ) : nav.label2 ? (
                     <span className={`flex flex-col leading-tight ${nav.destacado ? 'pm-destacado px-3 py-1.5' : ''}`}>
                       <span>{nav.label}</span>
                       <span
