@@ -7,6 +7,7 @@ import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
 import type { MananaMagica } from '@/lib/eventos/manana-magica'
 import { parseFechasDSC, type EventoCentroCfg } from '@/lib/eventos/centro'
 import { SelectorDescuento, aplicarDescuento, textoDescuento, DESCUENTO_VACIO, type Descuento } from './DescuentoEvento'
+import { CamposParticipantes, unParticipante, textoParticipantes, textoEdades, participantesCompletos, type Participante } from './Participantes'
 
 // ─── Días Sin Cole ─────────────────────────────────────────────────────────
 // Configurar aquí cada temporada
@@ -66,6 +67,7 @@ export function ReservaDiasSinCole({ cfg, onClose = () => {}, ocupacion = {}, on
   const [fecha, setFecha]      = useState('')
   const [ninos, setNinos]       = useState(1)
   const [form, setForm]         = useState({ nombre: '', email: '', telefono: '' })
+  const [parts, setParts]       = useState<Participante[]>([unParticipante()])
   const [desc, setDesc]         = useState<Descuento>(DESCUENTO_VACIO)
   const [enviando, setEnviando] = useState(false)
   const [error, setError]       = useState('')
@@ -88,7 +90,11 @@ export function ReservaDiasSinCole({ cfg, onClose = () => {}, ocupacion = {}, on
       servicioId: 'dias-sin-cole',
       cliente: { nombre: form.nombre, email: form.email, telefono: form.telefono },
       fecha, participantes: ninos, total: precioConIva,
-      datos: { horario: '9:00 - 14:00', numNinos: ninos, descuento: textoDescuento(desc), numeroSocio: desc.numeroSocio },
+      datos: {
+        horario: '9:00 - 14:00', numNinos: ninos,
+        participantes: textoParticipantes(parts), participantesLista: parts, edades: textoEdades(parts),
+        descuento: textoDescuento(desc), numeroSocio: desc.numeroSocio,
+      },
     }
     if (onReservar) { onReservar(payload); return }
     setEnviando(true)
@@ -158,12 +164,16 @@ export function ReservaDiasSinCole({ cfg, onClose = () => {}, ocupacion = {}, on
         </div>
       )}
 
-      <input required type="text" placeholder="Nombre *" value={form.nombre} onChange={e => setForm(f => ({...f, nombre: e.target.value}))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-amber-500"/>
+      <CamposParticipantes valor={parts} onChange={setParts} n={ninos} onCambiarN={setNinos}
+        max={Number.isFinite(libresSel) ? libresSel : 20} etiqueta="Niños que asisten" singular="Niño"
+        ayuda="Nombre, apellidos y edad de cada niño. Si vienen hermanos, añade uno por cada uno." />
+
+      <input required type="text" placeholder="Nombre y apellidos del responsable (quien paga) *" value={form.nombre} onChange={e => setForm(f => ({...f, nombre: e.target.value}))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-amber-500"/>
       <input required type="email" placeholder="Email *" value={form.email} onChange={e => setForm(f => ({...f, email: e.target.value}))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-amber-500"/>
       <input required type="tel" placeholder="Teléfono *" value={form.telefono} onChange={e => setForm(f => ({...f, telefono: e.target.value}))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-amber-500"/>
 
       {error && <p className="text-xs text-red-600">{error}</p>}
-      <button type="submit" disabled={!fecha || libresSel <= 0 || !form.nombre || !form.email || !form.telefono || enviando}
+      <button type="submit" disabled={!fecha || libresSel <= 0 || !form.nombre || !form.email || !form.telefono || !participantesCompletos(parts) || enviando}
         className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">
         {onReservar ? 'Continuar al pago →' : enviando ? 'Redirigiendo al pago…' : `Pagar ${precioConIva} € y reservar`}
       </button>
@@ -206,6 +216,7 @@ export function ReservaDomingos({ cfg, onClose = () => {}, ocupacion = {}, onRes
   const [fecha, setFecha]   = useState('')
   const [ninos, setNinos]   = useState(1)
   const [form, setForm]     = useState({ nombre: '', email: '', telefono: '' })
+  const [parts, setParts]   = useState<Participante[]>([unParticipante()])
   const [desc, setDesc]     = useState<Descuento>(DESCUENTO_VACIO)
   const [enviando, setEnviando] = useState(false)
   const [error, setError]   = useState('')
@@ -220,7 +231,11 @@ export function ReservaDomingos({ cfg, onClose = () => {}, ocupacion = {}, onRes
       servicioId: 'domingos',
       cliente: { nombre: form.nombre, email: form.email, telefono: form.telefono },
       fecha, participantes: ninos, total,
-      datos: { horario: '11:00 - 13:00', numNinos: ninos, nota: 'Adultos gratis', descuento: textoDescuento(desc), numeroSocio: desc.numeroSocio },
+      datos: {
+        horario: '11:00 - 13:00', numNinos: ninos, nota: 'Adultos gratis',
+        participantes: textoParticipantes(parts), participantesLista: parts, edades: textoEdades(parts),
+        descuento: textoDescuento(desc), numeroSocio: desc.numeroSocio,
+      },
     }
     if (onReservar) { onReservar(payload); return }
     setEnviando(true)
@@ -296,12 +311,16 @@ export function ReservaDomingos({ cfg, onClose = () => {}, ocupacion = {}, onRes
         </div>
       )}
 
-      <input required type="text" placeholder="Nombre *" value={form.nombre} onChange={e => setForm(f => ({...f, nombre: e.target.value}))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-green-500"/>
+      <CamposParticipantes valor={parts} onChange={setParts} n={ninos} onCambiarN={setNinos}
+        max={Number.isFinite(libresSel) ? libresSel : 20} etiqueta="Niños que asisten" singular="Niño"
+        ayuda="Nombre, apellidos y edad de cada niño. Si vienen hermanos, añade uno por cada uno." />
+
+      <input required type="text" placeholder="Nombre y apellidos del responsable (quien paga) *" value={form.nombre} onChange={e => setForm(f => ({...f, nombre: e.target.value}))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-green-500"/>
       <input required type="email" placeholder="Email *" value={form.email} onChange={e => setForm(f => ({...f, email: e.target.value}))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-green-500"/>
       <input required type="tel" placeholder="Teléfono *" value={form.telefono} onChange={e => setForm(f => ({...f, telefono: e.target.value}))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-green-500"/>
 
       {error && <p className="text-xs text-red-600">{error}</p>}
-      <button type="submit" disabled={!fecha || libresSel <= 0 || !form.nombre || !form.email || !form.telefono || enviando}
+      <button type="submit" disabled={!fecha || libresSel <= 0 || !form.nombre || !form.email || !form.telefono || !participantesCompletos(parts) || enviando}
         className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">
         {onReservar ? 'Continuar al pago →' : enviando ? 'Redirigiendo al pago…' : `Pagar ${total} € y reservar`}
       </button>
@@ -320,7 +339,8 @@ export function ReservaHalloween({ cfg, onClose = () => {} }: { cfg?: EventoCent
   const precio = cfg?.precio ?? 0
   const dtoSocio = cfg?.descuentoSocio ?? 15
   const [ninos, setNinos]   = useState(1)
-  const [form, setForm]     = useState({ nombre: '', email: '', telefono: '', edades: '', notas: '' })
+  const [form, setForm]     = useState({ nombre: '', email: '', telefono: '', notas: '' })
+  const [parts, setParts]   = useState<Participante[]>([unParticipante()])
   const [desc, setDesc]     = useState<Descuento>(DESCUENTO_VACIO)
   const [enviando, setEnviando] = useState(false)
   const [error, setError]   = useState('')
@@ -332,7 +352,8 @@ export function ReservaHalloween({ cfg, onClose = () => {} }: { cfg?: EventoCent
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault(); setError('')
     const extra = {
-      edades: form.edades, numNinos: ninos, evento,
+      participantes: textoParticipantes(parts), participantesLista: parts,
+      edades: textoEdades(parts), numNinos: ninos, evento,
       descuento: textoDescuento(desc), numeroSocio: desc.numeroSocio,
       fecha: cfg?.fechas || '', horario: cfg?.horario || '',
     }
@@ -390,10 +411,13 @@ export function ReservaHalloween({ cfg, onClose = () => {} }: { cfg?: EventoCent
 
       <SelectorDescuento ninos={ninos} valor={desc} onChange={setDesc} tema="oscuro" />
 
-      <input required type="text" placeholder="Nombre del responsable *" value={form.nombre} onChange={e => setForm(f => ({...f, nombre: e.target.value}))} className="w-full border border-orange-500/30 bg-orange-950/20 rounded-xl px-3 py-2.5 text-sm text-white placeholder-orange-300/50 focus:outline-none focus:border-orange-400"/>
+      <CamposParticipantes valor={parts} onChange={setParts} n={ninos} onCambiarN={setNinos} max={PLAZAS || 20}
+        tema="oscuro" etiqueta="Datos de los participantes" singular="Participante"
+        ayuda="Nombre, apellidos y edad de cada uno. Si vienen hermanos, añade uno por cada uno." />
+
+      <input required type="text" placeholder="Nombre y apellidos del responsable (quien paga) *" value={form.nombre} onChange={e => setForm(f => ({...f, nombre: e.target.value}))} className="w-full border border-orange-500/30 bg-orange-950/20 rounded-xl px-3 py-2.5 text-sm text-white placeholder-orange-300/50 focus:outline-none focus:border-orange-400"/>
       <input required type="email" placeholder="Email *" value={form.email} onChange={e => setForm(f => ({...f, email: e.target.value}))} className="w-full border border-orange-500/30 bg-orange-950/20 rounded-xl px-3 py-2.5 text-sm text-white placeholder-orange-300/50 focus:outline-none focus:border-orange-400"/>
       <input required type="tel" placeholder="Teléfono *" value={form.telefono} onChange={e => setForm(f => ({...f, telefono: e.target.value}))} className="w-full border border-orange-500/30 bg-orange-950/20 rounded-xl px-3 py-2.5 text-sm text-white placeholder-orange-300/50 focus:outline-none focus:border-orange-400"/>
-      <input type="text" placeholder="Edad(es) de los participantes" value={form.edades} onChange={e => setForm(f => ({...f, edades: e.target.value}))} className="w-full border border-orange-500/30 bg-orange-950/20 rounded-xl px-3 py-2.5 text-sm text-white placeholder-orange-300/50 focus:outline-none focus:border-orange-400"/>
       <textarea rows={2} placeholder="Alergias, necesidades especiales..." value={form.notas} onChange={e => setForm(f => ({...f, notas: e.target.value}))} className="w-full border border-orange-500/30 bg-orange-950/20 rounded-xl px-3 py-2.5 text-sm text-white placeholder-orange-300/50 focus:outline-none focus:border-orange-400 resize-none"/>
 
       {total > 0 && (
@@ -408,7 +432,7 @@ export function ReservaHalloween({ cfg, onClose = () => {} }: { cfg?: EventoCent
       {error && <p className="text-xs text-red-400">{error}</p>}
       <p className="text-xs text-orange-300/70">{cfg?.nota || 'Te confirmamos la plaza y la forma de pago al recibir la reserva.'}</p>
 
-      <button type="submit" disabled={!form.nombre || !form.email || !form.telefono || enviando}
+      <button type="submit" disabled={!form.nombre || !form.email || !form.telefono || !participantesCompletos(parts) || enviando}
         className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">
         {enviando ? 'Redirigiendo al pago…' : total > 0 ? `🧟 Pagar ${eurPL(total)} y reservar` : '🧟 Reservar plaza'}
       </button>
@@ -421,7 +445,8 @@ export function ReservaHalloween({ cfg, onClose = () => {} }: { cfg?: EventoCent
 // ──────────────────────────────────────────────────────────────────────────────
 export function ReservaMananaMagica({ cfg, onClose = () => {}, ocupacion = {}, onReservar }: { cfg: MananaMagica; onClose?: () => void; ocupacion?: Record<string, number>; onReservar?: (p: PagoReservaPayload) => void }) {
   const [ninos, setNinos] = useState(1)
-  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', edades: '' })
+  const [form, setForm] = useState({ nombre: '', email: '', telefono: '' })
+  const [parts, setParts] = useState<Participante[]>([unParticipante()])
   const [desc, setDesc] = useState<Descuento>(DESCUENTO_VACIO)
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState('')
@@ -437,7 +462,11 @@ export function ReservaMananaMagica({ cfg, onClose = () => {}, ocupacion = {}, o
       servicioId: 'manana-magica',
       cliente: { nombre: form.nombre, email: form.email, telefono: form.telefono },
       fecha: cfg.fecha || null, participantes: ninos, total,
-      datos: { personaje: cfg.personaje, tematica: cfg.tematica, horario: cfg.horario, fecha: cfg.fechaTexto, edades: form.edades, numNinos: ninos, descuento: textoDescuento(desc), numeroSocio: desc.numeroSocio },
+      datos: {
+        personaje: cfg.personaje, tematica: cfg.tematica, horario: cfg.horario, fecha: cfg.fechaTexto,
+        participantes: textoParticipantes(parts), participantesLista: parts, edades: textoEdades(parts),
+        numNinos: ninos, descuento: textoDescuento(desc), numeroSocio: desc.numeroSocio,
+      },
     }
     if (onReservar) { onReservar(payload); return }
     setEnviando(true)
@@ -481,13 +510,16 @@ export function ReservaMananaMagica({ cfg, onClose = () => {}, ocupacion = {}, o
         </div>
       </div>
 
-      <input required type="text" placeholder="Nombre *" value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-fuchsia-500" />
+      <CamposParticipantes valor={parts} onChange={setParts} n={ninos} onCambiarN={setNinos}
+        max={Number.isFinite(libres) ? libres : 20} etiqueta="Niños que asisten" singular="Niño"
+        ayuda="Nombre, apellidos y edad de cada niño. Si vienen hermanos, añade uno por cada uno." />
+
+      <input required type="text" placeholder="Nombre y apellidos del responsable (quien paga) *" value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-fuchsia-500" />
       <input required type="email" placeholder="Email *" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-fuchsia-500" />
       <input required type="tel" placeholder="Teléfono *" value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-fuchsia-500" />
-      <input type="text" placeholder="Edad(es) de los niños" value={form.edades} onChange={e => setForm(f => ({ ...f, edades: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-fuchsia-500" />
 
       {error && <p className="text-xs text-red-600">{error}</p>}
-      <button type="submit" disabled={completo || !form.nombre || !form.email || !form.telefono || enviando}
+      <button type="submit" disabled={completo || !form.nombre || !form.email || !form.telefono || !participantesCompletos(parts) || enviando}
         className="w-full bg-fuchsia-600 hover:bg-fuchsia-700 disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">
         {completo ? 'Plazas completas' : onReservar ? 'Continuar al pago →' : enviando ? 'Redirigiendo al pago…' : `✨ Pagar ${total} € y reservar`}
       </button>
@@ -504,7 +536,8 @@ export function ReservaTallerInfantil({ cfg, onClose = () => {} }: { cfg?: Event
   const dtoSocio = cfg?.descuentoSocio ?? 15
   const [ninos, setNinos] = useState(1)
   const [desc, setDesc] = useState<Descuento>(DESCUENTO_VACIO)
-  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', edades: '', notas: '' })
+  const [form, setForm] = useState({ nombre: '', email: '', telefono: '', notas: '' })
+  const [parts, setParts] = useState<Participante[]>([unParticipante()])
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState('')
   const [listo, setListo] = useState(false)
@@ -525,7 +558,8 @@ export function ReservaTallerInfantil({ cfg, onClose = () => {} }: { cfg?: Event
         taller: cfg?.titulo || 'Halloween Infantil',
         fecha: cfg?.fechas || '',
         horario: cfg?.horario || '11:30 – 13:30',
-        edades: form.edades, numNinos: ninos,
+        participantes: textoParticipantes(parts), participantesLista: parts,
+        edades: textoEdades(parts), numNinos: ninos,
         descuento: textoDescuento(desc), numeroSocio: desc.numeroSocio,
         importe: eurPL(total),
       },
@@ -568,13 +602,16 @@ export function ReservaTallerInfantil({ cfg, onClose = () => {} }: { cfg?: Event
         </div>
       </div>
 
-      <input required type="text" placeholder="Nombre y apellidos *" value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500" />
+      <CamposParticipantes valor={parts} onChange={setParts} n={ninos} onCambiarN={setNinos} max={20}
+        etiqueta="Niños que asisten" singular="Niño"
+        ayuda="Nombre, apellidos y edad de cada niño. Si vienen hermanos, añade uno por cada uno." />
+
+      <input required type="text" placeholder="Nombre y apellidos del responsable (quien paga) *" value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500" />
       <input required type="email" placeholder="Email *" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500" />
       <input required type="tel" placeholder="Teléfono *" value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500" />
-      <input type="text" placeholder="Edad(es) de los niños" value={form.edades} onChange={e => setForm(f => ({ ...f, edades: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500" />
       <textarea rows={2} placeholder="Alergias, necesidades especiales…" value={form.notas} onChange={e => setForm(f => ({ ...f, notas: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500 resize-none" />
 
-      <button type="submit" disabled={enviando || !form.nombre || !form.email || !form.telefono}
+      <button type="submit" disabled={enviando || !form.nombre || !form.email || !form.telefono || !participantesCompletos(parts)}
         className="w-full bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">
         {enviando ? 'Redirigiendo al pago…' : `Pagar ${eurPL(total)} y reservar`}
       </button>
@@ -619,12 +656,16 @@ export function ReservaPracticaLibre({ cfg, onClose = () => {} }: { cfg?: Evento
   const [fecha, setFecha] = useState('')
   const [desc, setDesc] = useState<Descuento>(DESCUENTO_VACIO)
   const [form, setForm] = useState({ nombre: '', email: '', telefono: '', notas: '' })
+  const [plazas, setPlazas] = useState(1)
+  const [parts, setParts] = useState<Participante[]>([unParticipante()])
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState('')
   const [listo, setListo] = useState(false)
 
   const dias = useMemo(() => proximosDias(8), [])
-  const base = modalidad === 'bono' ? precioBono : precioSuelta
+  // Cada persona paga su bono o su clase: el importe se multiplica por los que entran.
+  const unidad = modalidad === 'bono' ? precioBono : precioSuelta
+  const base = Math.round(unidad * plazas * 100) / 100
   const total = desc.tipo === 'socio' ? Math.round(base * (1 - dtoSocio / 100) * 100) / 100 : base
 
   async function handleSubmit(e: React.FormEvent) {
@@ -634,11 +675,13 @@ export function ReservaPracticaLibre({ cfg, onClose = () => {} }: { cfg?: Evento
       cliente: { nombre: form.nombre, email: form.email, telefono: form.telefono },
       fecha: modalidad === 'suelta' ? fecha : null,
       hora: horario,
-      participantes: 1, total,
+      participantes: plazas, total,
       observaciones: form.notas,
       datos: {
         modalidad: modalidad === 'bono' ? `Bono de ${sesiones} sesiones` : 'Clase suelta',
         horario,
+        participantes: textoParticipantes(parts), participantesLista: parts, edades: textoEdades(parts),
+        numPersonas: plazas,
         descuento: textoDescuento(desc), numeroSocio: desc.numeroSocio,
         importe: eurPL(total),
       },
@@ -697,18 +740,23 @@ export function ReservaPracticaLibre({ cfg, onClose = () => {} }: { cfg?: Evento
         <div className="flex justify-between text-sky-900">
           <span>
             {modalidad === 'bono' ? `Bono de ${sesiones} sesiones` : 'Clase suelta'}
+            {plazas > 1 ? ` × ${plazas} personas` : ''}
             {textoDescuento(desc) ? ` · ${textoDescuento(desc)}` : ''}
           </span>
           <strong>{eurPL(total)}</strong>
         </div>
       </div>
 
-      <input required type="text" placeholder="Nombre y apellidos *" value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-sky-500" />
+      <CamposParticipantes valor={parts} onChange={setParts} n={plazas} onCambiarN={setPlazas} max={8}
+        etiqueta="Quién va a entrenar" singular="Persona"
+        ayuda="Nombre, apellidos y edad de cada persona. Cada una paga su bono o su clase." />
+
+      <input required type="text" placeholder="Nombre y apellidos del responsable (quien paga) *" value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-sky-500" />
       <input required type="email" placeholder="Email *" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-sky-500" />
       <input required type="tel" placeholder="Teléfono *" value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-sky-500" />
       <textarea rows={2} placeholder="Disciplina que quieres trabajar, dudas…" value={form.notas} onChange={e => setForm(f => ({ ...f, notas: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-sky-500 resize-none" />
 
-      <button type="submit" disabled={enviando || !form.nombre || !form.email || !form.telefono || (modalidad === 'suelta' && !fecha)}
+      <button type="submit" disabled={enviando || !form.nombre || !form.email || !form.telefono || !participantesCompletos(parts) || (modalidad === 'suelta' && !fecha)}
         className="w-full bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">
         {enviando ? 'Redirigiendo al pago…' : `Pagar ${eurPL(total)} y reservar`}
       </button>
