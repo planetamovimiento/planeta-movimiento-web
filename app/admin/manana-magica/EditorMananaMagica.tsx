@@ -40,12 +40,12 @@ export default function EditorMananaMagica({ inicial, puedeEditar }: { inicial: 
       <div className="bg-gradient-to-br from-fuchsia-600 to-violet-600 rounded-2xl p-5 text-white">
         <div className="text-xs font-black uppercase tracking-widest text-white/70 mb-1">Personaje / temática del mes</div>
         <input value={f.personaje} disabled={!puedeEditar} onChange={e => set('personaje', e.target.value)}
-          placeholder="Ej. Las Guerreras K-POP"
+          placeholder="Ej. Mickey y Minnie Mouse"
           className="w-full bg-white/15 border border-white/30 rounded-xl px-3 py-2.5 text-lg font-black text-white placeholder-white/50 focus:outline-none focus:border-white" />
         <div className="grid grid-cols-2 gap-3 mt-3">
           <div>
             <div className="text-[11px] text-white/70 mb-1">Etiqueta corta (temática)</div>
-            <input value={f.tematica} disabled={!puedeEditar} onChange={e => set('tematica', e.target.value)} className="w-full bg-white/15 border border-white/30 rounded-lg px-2.5 py-1.5 text-sm text-white placeholder-white/50 focus:outline-none" placeholder="K-POP" />
+            <input value={f.tematica} disabled={!puedeEditar} onChange={e => set('tematica', e.target.value)} className="w-full bg-white/15 border border-white/30 rounded-lg px-2.5 py-1.5 text-sm text-white placeholder-white/50 focus:outline-none" placeholder="Disney" />
           </div>
           <div>
             <div className="text-[11px] text-white/70 mb-1">Emoji</div>

@@ -9,8 +9,8 @@ import type { SeccionEvento } from './centro'
 export type EstadoMM = 'proximo' | 'abierto' | 'completo'
 
 export type MananaMagica = {
-  personaje: string          // p. ej. "Las Guerreras K-POP"
-  tematica: string           // etiqueta corta, p. ej. "K-POP"
+  personaje: string          // p. ej. "Mickey y Minnie Mouse"
+  tematica: string           // etiqueta corta, p. ej. "Disney"
   emoji: string
   fecha: string              // ISO 'YYYY-MM-DD' (para el selector de reserva) o ''
   fechaTexto: string         // texto visible, p. ej. "Domingo 19 de abril"
@@ -34,31 +34,31 @@ export type MananaMagica = {
 }
 
 export const MANANA_MAGICA_DEFAULT: MananaMagica = {
-  personaje: 'Las Guerreras K-POP',
-  tematica: 'K-POP',
+  personaje: 'Mickey y Minnie Mouse',
+  tematica: 'Disney',
   emoji: '✨',
-  fecha: '',
-  fechaTexto: 'Próxima fecha por confirmar',
+  fecha: '2026-11-28',
+  fechaTexto: 'Sábado 28 de noviembre',
   horario: '11:00 – 13:00',
   precio: 30,
   descuentoHermanos: 20,
   aforo: 0,
   edades: 'Infantil y primaria',
-  imagen: '',
+  imagen: '/fotos/eventos-centro/manana-magica-mickey-minnie.webp',
   titulo: 'Mañanas Mágicas',
   subtitulo: 'Mañanas Mágicas · Personaje del mes',
   secciones: [],
   descripcion:
-    'Una mañana mágica llena de juego, creatividad y diversión sin pantallas. Una jornada temática con un personaje invitado distinto cada mes, pensada para que los peques disfruten de un montón de actividades en nuestras instalaciones.',
+    'Una mañana mágica llena de juego, creatividad y diversión sin pantallas. Esta vez nos visitan Mickey y Minnie Mouse: show, manualidades, pintacaras, photocall y muchos juegos para que los peques disfruten de una jornada temática en nuestras instalaciones.',
   actividades: [
-    'Show de animación del personaje del mes',
+    'Show de animación con Mickey y Minnie',
     'Manualidades temáticas para llevar a casa',
-    'Actividades deportivas y psicomotrices guiadas',
     'Pintacaras',
-    'Photocall temático',
+    'Photocall con los personajes',
+    'Actividades deportivas y psicomotrices guiadas',
     'Circuitos de agilidad y juegos cooperativos',
   ],
-  estado: 'proximo',
+  estado: 'abierto',
 }
 
 export const ESTADOS_MM: { id: EstadoMM; label: string; badge: string }[] = [
