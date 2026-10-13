@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   alternates: { canonical: '/fabrica-de-papa-noel' },
 }
 
+// Las plazas y el estado de la venta cambian solos: la página se regenera cada
+// minuto (y al instante cuando se guarda algo en el panel), en vez de quedarse
+// con lo que hubiera en el momento del despliegue.
+export const revalidate = 60
+
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
 
 /** "18, 19, 22, 23 y 24 de diciembre" a partir de los pases publicados. */
