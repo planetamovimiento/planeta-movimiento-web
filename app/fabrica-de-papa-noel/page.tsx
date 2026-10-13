@@ -3,7 +3,7 @@ import { waNegocio } from '@/lib/whatsapp'
 import { getAjustesNavidad, getPases, agruparPorFecha } from '@/lib/navidad/store'
 import { eurosDeCents } from '@/lib/navidad/precios'
 import ReservaNavidad from './ReservaNavidad'
-import { Nieve, Escena, DibujoFabrica, DibujoCartas, DibujoJuguetes, DibujoPapaNoel, DibujoFiesta } from './Ilustraciones'
+import { Nieve, Escena, DibujoFabrica, DibujoCartas, DibujoJuguetes, DibujoPapaNoel } from './Ilustraciones'
 
 export const metadata: Metadata = {
   title: 'La Fábrica de Papá Noel — Planeta Movimiento',
@@ -27,41 +27,38 @@ function textoFechas(fechas: string[]): string {
   return `${lista} de ${mes}`
 }
 
+/** Lo que dura la visita completa, de principio a fin. */
+const DURACION = 'Entre 1 h 15 y 1 h 20'
+
 const EXPERIENCIAS = [
   {
-    n: 1, titulo: 'El taller de cartas', duracion: '10 minutos',
+    n: 1, titulo: 'El taller de cartas',
     texto: 'Comienza tu aventura convirtiéndote en ayudante oficial de Papá Noel. Diseña tu propia carta navideña y prepárala para entregársela personalmente.',
     puntos: ['Carnet de ayudante oficial', 'Tu carta, hecha a mano', 'Lista para entregar en persona'],
     color: 'from-red-800 to-red-950', acento: 'text-amber-300',
   },
   {
-    n: 2, titulo: 'La fábrica de juguetes', duracion: '17 minutos',
+    n: 2, titulo: 'La fábrica de juguetes',
     texto: '¡Los elfos necesitan tu ayuda! Entra en una auténtica fábrica navideña, descubre cómo se preparan los juguetes y participa en divertidas misiones para que todos los regalos estén listos a tiempo.',
     puntos: ['Fabricación de juguetes', 'Clasificación de regalos', 'Empaquetado contrarreloj', 'Juegos de movimiento', 'Circuitos navideños', 'Misiones de los elfos', 'Encendido mágico de la fábrica'],
     color: 'from-emerald-800 to-emerald-950', acento: 'text-emerald-300',
   },
   {
-    n: 3, titulo: 'Conoce a Papá Noel', duracion: '16 minutos',
-    texto: 'Ha llegado el momento más esperado. Visita el despacho de Papá Noel, entrégale tu carta, cuéntale tus deseos y disfruta de un recuerdo inolvidable con una fotografía.',
-    puntos: ['Su despacho, tal cual', 'Entrega de la carta', 'Fotografía de recuerdo'],
+    n: 3, titulo: 'Conoce a Papá Noel',
+    texto: 'El momento más esperado y el final de la visita. Entra en el rincón de Papá Noel, entrégale tu carta, cuéntale tus deseos y llévate una fotografía de recuerdo.',
+    puntos: ['Su rincón navideño', 'Entrega de la carta', 'Fotografía de recuerdo', 'Despedida y vuelta a casa'],
     color: 'from-amber-700 to-red-950', acento: 'text-amber-200',
-  },
-  {
-    n: 4, titulo: 'Gran fiesta de despedida', duracion: '7 minutos',
-    texto: 'Antes de regresar a casa, disfruta de una fiesta navideña con música, baile, elfos y una última sorpresa de Papá Noel.',
-    puntos: ['Música y baile', 'Los elfos se vienen arriba', 'Una última sorpresa'],
-    color: 'from-violet-800 to-violet-950', acento: 'text-violet-200',
   },
 ]
 
 const FAQS = [
-  { q: '¿Cuánto dura la visita?', a: 'Unos 50 minutos en total, repartidos en las cuatro partes de la experiencia: el taller de cartas, la fábrica de juguetes, la visita a Papá Noel y la fiesta de despedida.' },
+  { q: '¿Cuánto dura la visita?', a: 'Entre una hora y cuarto y una hora y veinte, repartidos en las tres partes de la experiencia: el taller de cartas, la fábrica de juguetes y la visita a Papá Noel. Después de cada pase dejamos unos minutos para recoger y preparar el siguiente.' },
   { q: '¿Para qué edades es?', a: 'Está pensada para familias con niños. No hay edad mínima: los bebés menores de 2 años entran gratis, y los más mayores participan en todas las misiones.' },
   { q: '¿Los bebés pagan entrada?', a: 'Los menores de 2 años no pagan, pero hay que incluirlos en la reserva porque ocupan plaza dentro del aforo del pase.' },
   { q: '¿Pueden entrar los niños solos?', a: 'No. Los menores tienen que venir acompañados por un adulto responsable durante toda la visita, y ese adulto necesita su propia entrada.' },
   { q: '¿Cuánta gente entra en cada pase?', a: 'Como mucho 25 personas por pase, contando niños, adultos y bebés. Así la visita es tranquila y todos ven bien cada parte.' },
   { q: '¿Qué descuentos hay?', a: 'Un 20 % en reservas de 6 o más entradas de pago, y un 15 % para socios del Club Deportivo Origen. Solo se aplica uno de los dos: si cumples los dos, se queda el del 20 %.' },
-  { q: '¿Qué horarios hay?', a: 'Los días 18, 19, 22 y 23 hay pases de mañana (10:00, 11:00 y 12:00) y de tarde (16:00, 17:00, 18:00 y 19:00). El 24 de diciembre solo hay pases de mañana.' },
+  { q: '¿Qué horarios hay?', a: 'Los días 18, 19 y 23 hay dos pases de mañana (10:30 y 12:00) y tres de tarde (16:30, 18:00 y 19:30). El 24 de diciembre solo hay pases de mañana.' },
   { q: '¿Cómo sé que mi reserva está confirmada?', a: 'Al terminar el pago recibes un correo con tu localizador y los datos del pase. Si no llega el correo, escríbenos: sin localizador no hay reserva confirmada.' },
 ]
 
@@ -75,9 +72,8 @@ export default async function FabricaPapaNoelPage() {
     <DibujoCartas key="c" className="w-full h-full" />,
     <DibujoJuguetes key="j" className="w-full h-full" />,
     <DibujoPapaNoel key="p" className="w-full h-full" />,
-    <DibujoFiesta key="f" className="w-full h-full" />,
   ]
-  const fotos = [cfg.imagenCartas, cfg.imagenFabrica, cfg.imagenPapaNoel, cfg.imagenFiesta]
+  const fotos = [cfg.imagenCartas, cfg.imagenFabrica, cfg.imagenPapaNoel]
 
   return (
     <main className="bg-[#3b0a16]">
@@ -104,7 +100,7 @@ export default async function FabricaPapaNoelPage() {
               </p>
 
               <div className="flex flex-wrap gap-2 mt-6">
-                {[textoFechas(fechas), '50 minutos de experiencia', 'Plazas limitadas: 25 por pase'].map(t => (
+                {[textoFechas(fechas), `${DURACION} de experiencia`, 'Plazas limitadas: 25 por pase'].map(t => (
                   <span key={t} className="bg-white/10 border border-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-full">{t}</span>
                 ))}
               </div>
@@ -135,7 +131,7 @@ export default async function FabricaPapaNoelPage() {
           <div className="text-center mb-10">
             <span className="text-amber-300 text-xs font-black uppercase tracking-widest">La visita, paso a paso</span>
             <h2 className="text-3xl sm:text-4xl font-black text-white mt-2">¿Qué vivirás en la fábrica?</h2>
-            <p className="text-white/60 text-sm mt-2">Cuatro paradas, unos 50 minutos, cero prisas.</p>
+            <p className="text-white/60 text-sm mt-2">Tres paradas, alrededor de una hora y cuarto, cero prisas.</p>
           </div>
 
           <div className="space-y-6">
@@ -148,7 +144,7 @@ export default async function FabricaPapaNoelPage() {
                 <div className="p-7 sm:p-9 flex flex-col justify-center">
                   <div className="flex items-center gap-3 mb-3">
                     <span className="w-9 h-9 rounded-full bg-white/15 text-white font-black grid place-items-center">{e.n}</span>
-                    <span className={`text-xs font-black uppercase tracking-wider ${e.acento}`}>{e.duracion} aprox.</span>
+                    <span className={`text-xs font-black uppercase tracking-wider ${e.acento}`}>Parada {e.n} de {EXPERIENCIAS.length}</span>
                   </div>
                   <h3 className="text-2xl font-black text-white mb-2">{e.titulo}</h3>
                   <p className="text-white/80 text-sm leading-relaxed">{e.texto}</p>

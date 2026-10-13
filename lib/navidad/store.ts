@@ -31,7 +31,11 @@ export const NAVIDAD_AJUSTES_DEFAULT: NavidadAjustes = {
   ...NAVIDAD_DEFAULT,
   politicaCancelacion: '',
   avisoAccesibilidad: '',
-  imagenHero: '', imagenCartas: '', imagenFabrica: '', imagenPapaNoel: '', imagenFiesta: '',
+  imagenHero: '',
+  imagenCartas: '/fotos/navidad/taller-cartas.webp',
+  imagenFabrica: '/fotos/navidad/fabrica-juguetes.webp',
+  imagenPapaNoel: '/fotos/navidad/papa-noel.webp',
+  imagenFiesta: '',
 }
 
 const CLAVE = 'navidad_config'
@@ -42,6 +46,11 @@ export async function getAjustesNavidad(): Promise<NavidadAjustes> {
   if (!raw) return { ...NAVIDAD_AJUSTES_DEFAULT }
   try {
     const guardado = JSON.parse(raw) as Partial<NavidadAjustes>
+    // Un texto vacío guardado (p. ej. una imagen que nunca se subió) no pisa al
+    // valor por defecto: así las fotos del código se siguen viendo.
+    for (const k of Object.keys(guardado) as (keyof NavidadAjustes)[]) {
+      if (typeof guardado[k] === 'string' && guardado[k] === '') delete guardado[k]
+    }
     return { ...NAVIDAD_AJUSTES_DEFAULT, ...guardado }
   } catch {
     return { ...NAVIDAD_AJUSTES_DEFAULT }

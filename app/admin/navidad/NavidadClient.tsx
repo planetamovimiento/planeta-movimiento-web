@@ -271,7 +271,10 @@ export default function NavidadClient({ cfg, pases, reservas, resumen, puedeEdit
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-black text-pm-navy">{r.localizador}</span>
+                        <span className="inline-flex items-center gap-1.5 bg-red-50 border border-red-200 rounded-lg px-2 py-1">
+                          <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider">Código</span>
+                          <span className="font-black text-red-800 tracking-widest">{r.localizador}</span>
+                        </span>
                         <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${est.clase}`}>{est.label}</span>
                         {r.asistio && <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">Presente</span>}
                       </div>

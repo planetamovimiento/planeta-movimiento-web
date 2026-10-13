@@ -168,23 +168,25 @@ end;
 $$;
 
 -- ── Pases de la edición 2026 ─────────────────────────────────────────────────
--- 18, 19, 22 y 23 de diciembre: 7 pases. 24 de diciembre: solo mañanas.
+-- 18, 19 y 23 de diciembre: 2 pases de mañana y 3 de tarde.
+-- 24 de diciembre: solo los dos de mañana.
+-- Cada hueco es de hora y media: la visita dura 1 h 15 – 1 h 20 y quedan unos
+-- minutos para recoger y recibir al pase siguiente.
 insert into navidad_pases (fecha, hora, hora_fin, aforo)
 select dias.d::date, h.inicio, h.fin, 25
 from (values
-  ('2026-12-18'), ('2026-12-19'), ('2026-12-22'), ('2026-12-23')
+  ('2026-12-18'), ('2026-12-19'), ('2026-12-23')
 ) as dias(d)
 cross join (values
-  ('10:00','10:50'), ('11:00','11:50'), ('12:00','12:50'),
-  ('16:00','16:50'), ('17:00','17:50'), ('18:00','18:50'), ('19:00','19:50')
+  ('10:30','12:00'), ('12:00','13:30'),
+  ('16:30','18:00'), ('18:00','19:30'), ('19:30','21:00')
 ) as h(inicio, fin)
 on conflict (fecha, hora) do nothing;
 
 insert into navidad_pases (fecha, hora, hora_fin, aforo)
 values
-  ('2026-12-24','10:00','10:50',25),
-  ('2026-12-24','11:00','11:50',25),
-  ('2026-12-24','12:00','12:50',25)
+  ('2026-12-24','10:30','12:00',25),
+  ('2026-12-24','12:00','13:30',25)
 on conflict (fecha, hora) do nothing;
 
 -- ── Seguridad: solo el servidor (service role) toca estas tablas ─────────────

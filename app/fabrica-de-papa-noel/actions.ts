@@ -37,12 +37,12 @@ export type CompraResult =
 
 const SERVICIO_NAVIDAD = 'La Fábrica de Papá Noel'
 
-/** Localizador corto y legible: PN-7F3K9Q (sin letras que se confundan). */
+/** Código de la entrada: cinco letras mayúsculas al azar (p. ej. KRTMV). */
 function nuevoLocalizador(): string {
-  const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  const abc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
   let s = ''
-  for (let i = 0; i < 6; i++) s += abc[Math.floor(Math.random() * abc.length)]
-  return `PN-${s}`
+  for (let i = 0; i < 5; i++) s += abc[Math.floor(Math.random() * abc.length)]
+  return s
 }
 
 /** Hoy en Europe/Madrid (YYYY-MM-DD), para no vender pases ya pasados. */
@@ -121,8 +121,14 @@ export async function comprarEntradasNavidad(p: CompraNavidadPayload): Promise<C
 
   // ── Plaza bloqueada de forma atómica (anti-sobreventa) ─────────────────────
   const db = createAdminClient()
-  const localizador = nuevoLocalizador()
-  const { data: fila, error: errRpc } = await db.rpc('navidad_reservar', {
+  let localizador = nuevoLocalizador()
+  let intento = 0
+  let fila: unknown = null
+  let errRpc: { message?: string } | null = null
+
+  // Si el código ya existiera (muy raro: son 11,8 millones), se prueba con otro.
+  do {
+    const r = await db.rpc('navidad_reservar', {
     p_pase_id: pase.id,
     p_localizador: localizador,
     p_nombre: nombre,
@@ -137,9 +143,16 @@ export async function comprarEntradasNavidad(p: CompraNavidadPayload): Promise<C
     p_descuento_pct: calculo.pct,
     p_descuento_cents: calculo.descuentoCents,
     p_total_cents: calculo.totalCents,
-    p_socio: socioVerificado ? socioNumero : '',
-    p_minutos: cfg.minutosReserva,
-  })
+      p_socio: socioVerificado ? socioNumero : '',
+      p_minutos: cfg.minutosReserva,
+    })
+    fila = r.data
+    errRpc = r.error
+    const repetido = (errRpc?.message || '').includes('localizador')
+    if (!repetido) break
+    localizador = nuevoLocalizador()
+    intento++
+  } while (intento < 5)
 
   if (errRpc || !fila) {
     const m = errRpc?.message || ''
