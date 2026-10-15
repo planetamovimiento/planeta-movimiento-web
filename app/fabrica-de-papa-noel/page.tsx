@@ -18,7 +18,7 @@ export const revalidate = 60
 
 const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
 
-/** "18, 19, 22, 23 y 24 de diciembre" a partir de los pases publicados. */
+/** "19, 20, 23 y 24 de diciembre" a partir de los pases publicados. */
 function textoFechas(fechas: string[]): string {
   if (fechas.length === 0) return 'Diciembre de 2026'
   const dias = fechas.map(f => Number(f.slice(8, 10)))
@@ -58,7 +58,7 @@ const FAQS = [
   { q: '¿Pueden entrar los niños solos?', a: 'No. Los menores tienen que venir acompañados por un adulto responsable durante toda la visita, y ese adulto necesita su propia entrada.' },
   { q: '¿Cuánta gente entra en cada pase?', a: 'Como mucho 25 personas por pase, contando niños, adultos y bebés. Así la visita es tranquila y todos ven bien cada parte.' },
   { q: '¿Qué descuentos hay?', a: 'Un 20 % en reservas de 6 o más entradas de pago, y un 15 % para socios del Club Deportivo Origen. Solo se aplica uno de los dos: si cumples los dos, se queda el del 20 %.' },
-  { q: '¿Qué horarios hay?', a: 'Los días 18, 19 y 23 hay dos pases de mañana (10:30 y 12:00) y tres de tarde (16:30, 18:00 y 19:30). El 24 de diciembre solo hay pases de mañana.' },
+  { q: '¿Qué horarios hay?', a: 'Los días 19, 20 y 23 hay dos pases de mañana (10:30 y 12:00) y tres de tarde (16:30, 18:00 y 19:30). El 24 de diciembre solo hay pases de mañana.' },
   { q: '¿Cómo sé que mi reserva está confirmada?', a: 'Al terminar el pago recibes un correo con tu localizador y los datos del pase. Si no llega el correo, escríbenos: sin localizador no hay reserva confirmada.' },
 ]
 

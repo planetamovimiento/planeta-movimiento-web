@@ -168,14 +168,14 @@ end;
 $$;
 
 -- ── Pases de la edición 2026 ─────────────────────────────────────────────────
--- 18, 19 y 23 de diciembre: 2 pases de mañana y 3 de tarde.
+-- 19, 20 y 23 de diciembre: 2 pases de mañana y 3 de tarde.
 -- 24 de diciembre: solo los dos de mañana.
 -- Cada hueco es de hora y media: la visita dura 1 h 15 – 1 h 20 y quedan unos
 -- minutos para recoger y recibir al pase siguiente.
 insert into navidad_pases (fecha, hora, hora_fin, aforo)
 select dias.d::date, h.inicio, h.fin, 25
 from (values
-  ('2026-12-18'), ('2026-12-19'), ('2026-12-23')
+  ('2026-12-19'), ('2026-12-20'), ('2026-12-23')
 ) as dias(d)
 cross join (values
   ('10:30','12:00'), ('12:00','13:30'),
