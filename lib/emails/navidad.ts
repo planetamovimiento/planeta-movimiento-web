@@ -1,6 +1,7 @@
 import { enviarEmail, NOTIF_TO } from '@/lib/emails/enviar'
 import { escHtml } from '@/lib/seguridad/sanitize'
 import { eurosDeCents } from '@/lib/navidad/precios'
+import { politicaCancelacionHtml } from '@/lib/reservas/cancelacion'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Entradas de LA FÁBRICA DE PAPÁ NOEL por correo. Se envía cuando Redsys
@@ -116,6 +117,7 @@ export function htmlEntradasNavidad(e: EntradasNavidad): string {
       <p style="color:#475569;font-size:13px;line-height:1.6;margin:10px 0 0">
         Si necesitáis cambiar algo, responded a este correo indicando vuestro código ${escHtml(e.localizador)}.
       </p>
+      ${politicaCancelacionHtml()}
     </div>
     <div style="background:#f8fafc;padding:18px 28px;border-top:1px solid #e2e8f0">
       <p style="color:#94a3b8;font-size:12px;margin:0;line-height:1.6">

@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { iniciarPagoReserva } from '@/app/reservar/actions'
 import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
+import PoliticaCancelacion from '@/components/reserva/PoliticaCancelacion'
 import { useProteccion, ProteccionCampos } from '@/components/seguridad/ProteccionFormulario'
 import {
   CUMPLE_MIN_PARTICIPANTES as MIN_PARTICIPANTES,
@@ -538,6 +539,8 @@ export default function ReservaCumpleanos({ ocupados = {}, franjas = [] }: { ocu
           {errorPago && (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">{errorPago}</div>
           )}
+
+          <PoliticaCancelacion />
 
           {/* Botón final */}
           <button type="submit" disabled={!canConfirmar() || enviando}

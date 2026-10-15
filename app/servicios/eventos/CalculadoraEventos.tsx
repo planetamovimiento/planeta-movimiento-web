@@ -1,5 +1,6 @@
 'use client'
 
+import PoliticaCancelacion from '@/components/reserva/PoliticaCancelacion'
 import { useState, useMemo } from 'react'
 import { iniciarPagoReserva, type PagoReservaPayload } from '@/app/reservar/actions'
 import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
@@ -247,6 +248,7 @@ export default function CalculadoraEventos({ onReservar, senal = 0 }: { onReserv
             placeholder="Temática del evento, necesidades especiales, rango de edad de los niños, alergias, etc."/>
         </div>
 
+        <PoliticaCancelacion />
         {error && <p className="text-center text-sm text-red-600 font-semibold">{error}</p>}
         <button type="submit" disabled={!form.nombre || !form.email || !form.telefono || !form.tipoEvento || !form.fecha || !form.ubicacion || enviando}
           className="w-full bg-pm-red hover:bg-pm-red-dark disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-sm tracking-widest uppercase py-5 rounded-2xl transition-colors shadow-lg">

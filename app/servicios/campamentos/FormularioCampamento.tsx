@@ -1,5 +1,6 @@
 'use client'
 
+import PoliticaCancelacion from '@/components/reserva/PoliticaCancelacion'
 import { useState, useEffect } from 'react'
 
 export type Participante = { nombre: string; apellidos: string; fnac: string }
@@ -106,6 +107,8 @@ export default function FormularioCampamento({
 
       {/* Notas */}
       <textarea rows={2} placeholder="Notas (alergias, necesidades especiales...)" value={notas} onChange={e => setNotas(e.target.value)} className={`${inputCls} resize-none`} />
+
+      <PoliticaCancelacion />
 
       {/* Botones */}
       <div className="space-y-2">

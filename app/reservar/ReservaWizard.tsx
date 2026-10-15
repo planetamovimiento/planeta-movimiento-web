@@ -12,6 +12,7 @@ import {
 } from '@/app/servicios/eventos/EventosInstalaciones'
 import CalculadoraEventos from '@/app/servicios/eventos/CalculadoraEventos'
 import ReservaCumpleanos from '@/app/servicios/cumpleanos/ReservaCumpleanos'
+import PoliticaCancelacion from '@/components/reserva/PoliticaCancelacion'
 import CampamentosReservaWizard from './CampamentosReservaWizard'
 import type { ServicioReserva } from '@/lib/reservas/monto'
 import type { SlotSemanal } from '@/lib/reservas/slots'
@@ -252,6 +253,7 @@ export default function ReservaWizard({
                 <div className="text-3xl font-black text-pm-red">{euros(aPagar)}</div>
               </div>
 
+              <div className="mt-4"><PoliticaCancelacion /></div>
               {error && <p className="text-sm text-red-600 font-semibold mt-3">{error}</p>}
 
               {servicioId === 'campamentos' ? (

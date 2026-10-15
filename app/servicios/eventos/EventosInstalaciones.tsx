@@ -8,6 +8,7 @@ import type { MananaMagica } from '@/lib/eventos/manana-magica'
 import { parseFechasDSC, type EventoCentroCfg } from '@/lib/eventos/centro'
 import { SelectorDescuento, aplicarDescuento, textoDescuento, DESCUENTO_VACIO, type Descuento } from './DescuentoEvento'
 import { CamposParticipantes, unParticipante, textoParticipantes, textoEdades, participantesCompletos, type Participante } from './Participantes'
+import PoliticaCancelacion from '@/components/reserva/PoliticaCancelacion'
 
 // ─── Días Sin Cole ─────────────────────────────────────────────────────────
 // Configurar aquí cada temporada
@@ -173,6 +174,7 @@ export function ReservaDiasSinCole({ cfg, onClose = () => {}, ocupacion = {}, on
       <input required type="tel" placeholder="Teléfono *" value={form.telefono} onChange={e => setForm(f => ({...f, telefono: e.target.value}))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-amber-500"/>
 
       {error && <p className="text-xs text-red-600">{error}</p>}
+      <PoliticaCancelacion />
       <button type="submit" disabled={!fecha || libresSel <= 0 || !form.nombre || !form.email || !form.telefono || !participantesCompletos(parts) || enviando}
         className="w-full bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">
         {onReservar ? 'Continuar al pago →' : enviando ? 'Redirigiendo al pago…' : `Pagar ${precioConIva} € y reservar`}
@@ -320,6 +322,7 @@ export function ReservaDomingos({ cfg, onClose = () => {}, ocupacion = {}, onRes
       <input required type="tel" placeholder="Teléfono *" value={form.telefono} onChange={e => setForm(f => ({...f, telefono: e.target.value}))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-green-500"/>
 
       {error && <p className="text-xs text-red-600">{error}</p>}
+      <PoliticaCancelacion />
       <button type="submit" disabled={!fecha || libresSel <= 0 || !form.nombre || !form.email || !form.telefono || !participantesCompletos(parts) || enviando}
         className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">
         {onReservar ? 'Continuar al pago →' : enviando ? 'Redirigiendo al pago…' : `Pagar ${total} € y reservar`}
@@ -432,6 +435,7 @@ export function ReservaHalloween({ cfg, onClose = () => {} }: { cfg?: EventoCent
       {error && <p className="text-xs text-red-400">{error}</p>}
       <p className="text-xs text-orange-300/70">{cfg?.nota || 'Te confirmamos la plaza y la forma de pago al recibir la reserva.'}</p>
 
+      <PoliticaCancelacion tema="oscuro" />
       <button type="submit" disabled={!form.nombre || !form.email || !form.telefono || !participantesCompletos(parts) || enviando}
         className="w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">
         {enviando ? 'Redirigiendo al pago…' : total > 0 ? `🧟 Pagar ${eurPL(total)} y reservar` : '🧟 Reservar plaza'}
@@ -519,6 +523,7 @@ export function ReservaMananaMagica({ cfg, onClose = () => {}, ocupacion = {}, o
       <input required type="tel" placeholder="Teléfono *" value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-fuchsia-500" />
 
       {error && <p className="text-xs text-red-600">{error}</p>}
+      <PoliticaCancelacion />
       <button type="submit" disabled={completo || !form.nombre || !form.email || !form.telefono || !participantesCompletos(parts) || enviando}
         className="w-full bg-fuchsia-600 hover:bg-fuchsia-700 disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">
         {completo ? 'Plazas completas' : onReservar ? 'Continuar al pago →' : enviando ? 'Redirigiendo al pago…' : `✨ Pagar ${total} € y reservar`}
@@ -611,6 +616,7 @@ export function ReservaTallerInfantil({ cfg, onClose = () => {} }: { cfg?: Event
       <input required type="tel" placeholder="Teléfono *" value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500" />
       <textarea rows={2} placeholder="Alergias, necesidades especiales…" value={form.notas} onChange={e => setForm(f => ({ ...f, notas: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-violet-500 resize-none" />
 
+      <PoliticaCancelacion />
       <button type="submit" disabled={enviando || !form.nombre || !form.email || !form.telefono || !participantesCompletos(parts)}
         className="w-full bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">
         {enviando ? 'Redirigiendo al pago…' : `Pagar ${eurPL(total)} y reservar`}
@@ -756,6 +762,7 @@ export function ReservaPracticaLibre({ cfg, onClose = () => {} }: { cfg?: Evento
       <input required type="tel" placeholder="Teléfono *" value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-sky-500" />
       <textarea rows={2} placeholder="Disciplina que quieres trabajar, dudas…" value={form.notas} onChange={e => setForm(f => ({ ...f, notas: e.target.value }))} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-sky-500 resize-none" />
 
+      <PoliticaCancelacion />
       <button type="submit" disabled={enviando || !form.nombre || !form.email || !form.telefono || !participantesCompletos(parts) || (modalidad === 'suelta' && !fecha)}
         className="w-full bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors">
         {enviando ? 'Redirigiendo al pago…' : `Pagar ${eurPL(total)} y reservar`}

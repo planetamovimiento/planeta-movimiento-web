@@ -1,5 +1,6 @@
 'use client'
 
+import PoliticaCancelacion from '@/components/reserva/PoliticaCancelacion'
 import { useState } from 'react'
 import { montoReserva, eurosFmt, type ServicioReserva } from '@/lib/reservas/monto'
 
@@ -173,6 +174,8 @@ export default function StepDatos({ datos, onDatos, onSubmit, onBack, servicio, 
       {error && (
         <div className="mt-6 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">{error}</div>
       )}
+
+      <div className="mt-6"><PoliticaCancelacion /></div>
 
       <div className="flex justify-between mt-8">
         <button onClick={onBack} disabled={loading} className="px-6 py-3 border-2 border-gray-200 text-gray-600 font-bold rounded-xl hover:border-gray-300 transition-colors disabled:opacity-50">

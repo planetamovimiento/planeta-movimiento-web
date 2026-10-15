@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
 import { waNegocio } from '@/lib/whatsapp'
+import PoliticaCancelacion from '@/components/reserva/PoliticaCancelacion'
 import { useProteccion, ProteccionCampos } from '@/components/seguridad/ProteccionFormulario'
 import { calcularPrecio, eurosDeCents, type NavidadConfig } from '@/lib/navidad/precios'
 import type { PaseVista } from '@/lib/navidad/store'
@@ -309,6 +310,8 @@ export default function ReservaNavidad({ pasesIniciales, cfg, politicaCancelacio
           </span>
         </label>
       </Paso>
+
+      <PoliticaCancelacion tema="oscuro" />
 
       {error && <p className="bg-red-950/50 border border-red-400/40 text-red-200 text-sm rounded-xl px-4 py-3">{error}</p>}
 

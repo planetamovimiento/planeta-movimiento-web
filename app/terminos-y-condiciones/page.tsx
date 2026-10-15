@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { CANCELACION_TRAMOS, CANCELACION_NOTAS } from '@/lib/reservas/cancelacion'
 
 export const metadata = {
   title: 'Términos y Condiciones — Planeta Movimiento',
@@ -129,16 +130,21 @@ export default function TerminosPage() {
           </Section>
 
           {/* 9. Cancelaciones */}
-          <Section n="9" titulo="Cancelaciones, desistimiento y no asistencia">
+          <Section id="cancelaciones" n="9" titulo="Cancelaciones, desistimiento y no asistencia">
             <p>
               De acuerdo con el artículo 103.l) del Real Decreto Legislativo 1/2007, por el que se aprueba el texto
               refundido de la Ley General para la Defensa de los Consumidores y Usuarios, el derecho de desistimiento
               <strong> no resulta aplicable</strong> a los servicios relacionados con actividades de esparcimiento que
               prevean una fecha o periodo de ejecución específicos.
             </p>
+            <p className="mt-3"><strong>Política de cancelación</strong> (para todos los servicios con reserva):</p>
+            <ul className="list-disc pl-5 mt-1 space-y-0.5">
+              {CANCELACION_TRAMOS.map(t => <li key={t.cuando}><strong>{t.cuando}:</strong> {t.devolucion}.</li>)}
+              {CANCELACION_NOTAS.map(n => <li key={n}>{n}</li>)}
+            </ul>
             <p className="mt-3">
-              Las condiciones concretas de cancelación constarán en la ficha del servicio, en el proceso de reserva
-              y/o en la confirmación enviada. En caso de no presentación del cliente («no show»), la reserva podrá
+              Esta política se muestra en cada formulario antes de pagar y en el correo de confirmación de la reserva.
+              En caso de no presentación del cliente («no show»), la reserva podrá
               considerarse consumida total o parcialmente, sin derecho a reembolso.
             </p>
             <p className="mt-3">
@@ -236,9 +242,9 @@ export default function TerminosPage() {
   )
 }
 
-function Section({ n, titulo, children }: { n: string; titulo: string; children: React.ReactNode }) {
+function Section({ n, titulo, children, id }: { n: string; titulo: string; children: React.ReactNode; id?: string }) {
   return (
-    <section>
+    <section id={id} className="scroll-mt-24">
       <h2 className="text-lg font-black text-pm-navy mb-2">{n}. {titulo}</h2>
       <div className="space-y-1">{children}</div>
     </section>

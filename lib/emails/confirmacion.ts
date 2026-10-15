@@ -8,6 +8,7 @@
 import { enviarEmail, NOTIF_TO } from '@/lib/emails/enviar'
 import { escHtml } from '@/lib/seguridad/sanitize'
 import { CUOTA, eurosCuota, fechaLarga } from '@/lib/club/cuota'
+import { politicaCancelacionHtml } from '@/lib/reservas/cancelacion'
 
 /**
  * Mensaje específico por servicio. Se elige por palabras clave del nombre.
@@ -265,6 +266,7 @@ export function correoConfirmacion(p: DatosConfirmacion): { asunto: string; html
       </ul>` : ''}
       ${pl.cierre ? `<p style="color:#475569;font-size:13px;line-height:1.6;margin:18px 0 0">${pl.cierre}</p>` : ''}
       ${pagado ? `<p style="color:#475569;font-size:13px;line-height:1.6;margin:18px 0 0">Si necesitáis cambiar algo, responded a este correo indicando vuestro nº de reserva.${pl.antes?.length ? ' Os esperamos en Planeta Movimiento, Polígono Los Palancares nº 8, Cuenca.' : ''}</p>` : ''}
+      ${p.numero ? politicaCancelacionHtml() : ''}
     </div>
     <div style="background:#f8fafc;padding:18px 28px;border-top:1px solid #e2e8f0">
       <p style="color:#94a3b8;font-size:12px;margin:0;line-height:1.6">
