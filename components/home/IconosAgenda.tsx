@@ -7,7 +7,7 @@
 
 export type IconoId =
   | 'familia' | 'fiesta' | 'zombie' | 'instalacion' | 'calabaza'
-  | 'campamento' | 'taller' | 'gala' | 'cumple' | 'practica' | 'estrella'
+  | 'campamento' | 'taller' | 'gala' | 'cumple' | 'practica' | 'estrella' | 'regalo'
 
 export type ColorAgenda = 'azul' | 'rojo' | 'gris' | 'naranja' | 'morado' | 'verde' | 'amarillo' | 'negro' | 'teal' | 'rosa'
 
@@ -37,6 +37,7 @@ const norm = (s: string) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').t
  * tipo de evento sea genérico. Lo que no encaje usa el color de su tipo.
  */
 const REGLAS: { test: (t: string) => boolean; icono: IconoId; color: ColorAgenda }[] = [
+  { test: t => t.includes('papa noel'), icono: 'regalo', color: 'rojo' },
   { test: t => t.includes('halloween') && t.includes('infantil'), icono: 'calabaza', color: 'morado' },
   { test: t => t.includes('taller infantil') || t.includes('talleres infantiles'), icono: 'calabaza', color: 'morado' },
   { test: t => t.includes('halloween'), icono: 'zombie', color: 'rosa' },
@@ -142,6 +143,15 @@ const DIBUJOS: Record<IconoId, React.ReactNode> = {
   ),
   practica: (
     <path d="M3.2 10v4M6.4 7.2v9.6M17.6 7.2v9.6M20.8 10v4M6.4 12h11.2" {...TRAZO} />
+  ),
+  // Regalo con lazo: La Fábrica de Papá Noel.
+  regalo: (
+    <>
+      <path d="M4 10.5h16v9.3a1.2 1.2 0 0 1-1.2 1.2H5.2A1.2 1.2 0 0 1 4 19.8z" {...TRAZO} />
+      <path d="M2.8 7.3h18.4v3.2H2.8z" {...TRAZO} />
+      <path d="M12 7.3V21" {...TRAZO} />
+      <path d="M12 7.3c-1.3-2.8-4.6-4-5.6-2.2-.9 1.7 1.8 2.2 5.6 2.2zM12 7.3c1.3-2.8 4.6-4 5.6-2.2.9 1.7-1.8 2.2-5.6 2.2z" {...TRAZO} />
+    </>
   ),
   estrella: (
     <path d="M12 3.4l2.3 5.5 5.9.5-4.5 3.9 1.4 5.8L12 16l-5.1 3.1 1.4-5.8-4.5-3.9 5.9-.5z" {...TRAZO} />

@@ -11,6 +11,7 @@ import { getEventos, getExcepciones, getTipos } from '@/lib/calendario-club/data
 import { expandirOcurrencias } from '@/lib/calendario-club/expand'
 import { colorOcurrencia } from '@/lib/calendario-club/tipos'
 import { enlaceDeEvento } from '@/lib/calendario-club/enlaces'
+import { getPases } from '@/lib/navidad/store'
 
 export const metadata = {
   title: 'Planeta Movimiento — Educación, deporte y ocio en Cuenca',
@@ -71,8 +72,8 @@ const COLABORADORES = [
 export default async function HomePage() {
   // Reseñas reales de Google, editables desde Admin → Promociones.
   // Agenda del mes: lo PÚBLICO del Calendario del Club (lo mismo que ven las familias).
-  const [resenas, eventos, excepciones, tipos] = await Promise.all([
-    getResenasActivas(), getEventos(), getExcepciones(), getTipos(),
+  const [resenas, eventos, excepciones, tipos, pasesNavidad] = await Promise.all([
+    getResenasActivas(), getEventos(), getExcepciones(), getTipos(), getPases(),
   ])
   const hoy = new Date()
   const mes = String(hoy.getMonth() + 1).padStart(2, '0')
@@ -86,6 +87,29 @@ export default async function HomePage() {
       fecha: o.fecha, titulo: o.titulo, hora: o.todo_el_dia ? '' : (o.hora_inicio ?? ''),
       tipo: o.tipo, color: colorOcurrencia(o, tipos), url: enlaceDeEvento(o),
     }))
+
+  // La Fábrica de Papá Noel sale sola con sus días reales de pases (si cambian
+  // las fechas en el panel, el calendario cambia con ellas). Si alguien la
+  // apunta también en el Calendario del Club, ese día no se duplica.
+  const yaApuntada = new Set(agenda.filter(e => /pap[aá] noel/i.test(e.titulo)).map(e => e.fecha))
+  const diasFabrica = new Map<string, { inicio: string; fin: string }>()
+  for (const p of pasesNavidad) {
+    if (p.bloqueado || p.fecha < desde) continue
+    const d = diasFabrica.get(p.fecha)
+    diasFabrica.set(p.fecha, {
+      inicio: d && d.inicio < p.hora ? d.inicio : p.hora,
+      fin: d && d.fin > p.horaFin ? d.fin : p.horaFin,
+    })
+  }
+  for (const [fecha, h] of diasFabrica) {
+    if (yaApuntada.has(fecha)) continue
+    // Delante: si coincide con otra actividad (domingo 20), el recuadro enseña la Fábrica.
+    agenda.unshift({
+      fecha, titulo: 'La Fábrica de Papá Noel', hora: `${h.inicio} – ${h.fin}`,
+      tipo: 'evento', color: 'rojo', url: '/fabrica-de-papa-noel',
+    })
+  }
+
   return (
     <main className="bg-white">
 
