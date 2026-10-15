@@ -31,7 +31,7 @@ export const NAVIDAD_AJUSTES_DEFAULT: NavidadAjustes = {
   ...NAVIDAD_DEFAULT,
   politicaCancelacion: '',
   avisoAccesibilidad: '',
-  imagenHero: '/fotos/navidad/cartel-fabrica-papa-noel.webp',
+  imagenHero: '/fotos/navidad/cartel-fabrica-papa-noel-v2.webp',
   imagenCartas: '/fotos/navidad/taller-cartas.webp',
   imagenFabrica: '/fotos/navidad/fabrica-juguetes.webp',
   imagenPapaNoel: '/fotos/navidad/papa-noel.webp',
