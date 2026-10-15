@@ -116,7 +116,10 @@ export default async function FabricaPapaNoelPage() {
               </div>
             </div>
 
-            <div className="relative rounded-3xl overflow-hidden border-2 border-amber-300/30 shadow-2xl shadow-black/40 aspect-[4/3]">
+            {/* Con cartel (vertical) el marco toma su forma para verlo entero; sin él, el dibujo apaisado. */}
+            <div className={`relative rounded-3xl overflow-hidden border-2 border-amber-300/30 shadow-2xl shadow-black/40 ${
+              cfg.imagenHero ? 'aspect-[2/3] w-full max-w-md mx-auto lg:mr-0' : 'aspect-[4/3]'
+            }`}>
               <Escena foto={cfg.imagenHero} alt="La fábrica de Papá Noel iluminada en una noche nevada">
                 <DibujoFabrica className="w-full h-full" />
               </Escena>
