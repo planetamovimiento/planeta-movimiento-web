@@ -5,10 +5,10 @@ import { calcularPrecio, eurosDeCents } from '../lib/navidad/precios.ts'
 
 const casos = [
   ['1 niño + 1 adulto = 33 €',              { ninos: 1, adultos: 1, bebes: 0 }, false, 3300, 'ninguno', 2],
-  ['6 niños = 72 € (grupo −20 %)',          { ninos: 6, adultos: 0, bebes: 0 }, false, 7200, 'grupo',   6],
-  ['4 niños + 2 adultos = 76,80 €',         { ninos: 4, adultos: 2, bebes: 0 }, false, 7680, 'grupo',   6],
+  ['6 niños = 76,50 € (grupo −15 %)',       { ninos: 6, adultos: 0, bebes: 0 }, false, 7650, 'grupo',   6],
+  ['4 niños + 2 adultos = 81,60 €',         { ninos: 4, adultos: 2, bebes: 0 }, false, 8160, 'grupo',   6],
   ['socio + 2 niños = 25,50 €',             { ninos: 2, adultos: 0, bebes: 0 }, true,  2550, 'socio',   2],
-  ['socio + 6 niños = 72 € (solo el 20 %)', { ninos: 6, adultos: 0, bebes: 0 }, true,  7200, 'grupo',   6],
+  ['socio + 6 niños = 76,50 € (un solo 15 %)', { ninos: 6, adultos: 0, bebes: 0 }, true, 7650, 'grupo', 6],
   ['5 de pago + 1 bebé: sin grupo',         { ninos: 3, adultos: 2, bebes: 1 }, false, 8100, 'ninguno', 6],
   ['bebés gratis pero ocupan plaza',        { ninos: 0, adultos: 2, bebes: 3 }, false, 3600, 'ninguno', 5],
 ]
@@ -27,9 +27,9 @@ for (const [nombre, entradas, socio, totalEsperado, tipoEsperado, plazasEsperada
   }
 }
 
-// Los descuentos nunca se suman: grupo y socio a la vez sigue siendo el 20 %.
+// Los descuentos nunca se suman: grupo y socio a la vez sigue siendo un único 15 %.
 const ambos = calcularPrecio({ ninos: 6, adultos: 2, bebes: 1 }, { socioVerificado: true })
-assert.equal(ambos.pct, 20)
+assert.equal(ambos.pct, 15)
 assert.equal(ambos.plazas, 9)
 
 console.log(fallos === 0 ? '\nTodo correcto.' : `\n${fallos} caso(s) mal.`)

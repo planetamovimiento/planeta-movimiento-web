@@ -25,7 +25,7 @@ export const NAVIDAD_DEFAULT: NavidadConfig = {
   precioNinoCents: 1500,
   precioAdultoCents: 1800,
   minGrupo: 6,
-  pctGrupo: 20,
+  pctGrupo: 15,
   pctSocio: 15,
   minutosReserva: 30,
   maxPorCompra: 25,
@@ -61,7 +61,7 @@ export function normalizarEntradas(e: Partial<Entradas> | null | undefined): Ent
  * Precio final de una compra.
  *  - Los bebés (menores de 2 años) son gratis pero ocupan plaza.
  *  - Descuentos NO acumulables: si hay 6 o más asistentes de pago manda el de
- *    grupo (20 %); si no llega a 6 y es socio verificado, el de socio (15 %).
+ *    grupo (15 %); si no llega a 6 y es socio verificado, el de socio (15 %).
  *  - El descuento solo se aplica sobre las entradas de pago (los bebés valen 0).
  */
 export function calcularPrecio(
@@ -84,7 +84,7 @@ export function calcularPrecio(
   return { plazas, pagantes, subtotalCents, tipo, pct, descuentoCents, totalCents: subtotalCents - descuentoCents }
 }
 
-/** '76,80 €' a partir de céntimos. */
+/** '81,60 €' a partir de céntimos. */
 export function eurosDeCents(cents: number): string {
   const n = Math.round(Number(cents) || 0)
   return `${(n / 100).toFixed(2).replace('.', ',')} €`

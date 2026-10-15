@@ -260,7 +260,7 @@ export default function ReservaNavidad({ pasesIniciales, cfg, politicaCancelacio
       <Paso n={5} titulo="¿Eres socio del club?" activo={calculo.plazas > 0}>
         {calculo.pagantes >= cfg.minGrupo ? (
           <p className="text-white/70 text-sm">
-            Ya tienes el descuento de grupo (−{cfg.pctGrupo} %), que es mayor. Los descuentos no se suman.
+            Ya tienes el descuento de grupo (−{cfg.pctGrupo} %). Los descuentos no se suman, así que no hace falta el de socio.
           </p>
         ) : (
           <div className="flex flex-wrap items-center gap-2">

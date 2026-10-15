@@ -57,7 +57,7 @@ const FAQS = [
   { q: '¿Los bebés pagan entrada?', a: 'Los menores de 2 años no pagan, pero hay que incluirlos en la reserva porque ocupan plaza dentro del aforo del pase.' },
   { q: '¿Pueden entrar los niños solos?', a: 'No. Los menores tienen que venir acompañados por un adulto responsable durante toda la visita, y ese adulto necesita su propia entrada.' },
   { q: '¿Cuánta gente entra en cada pase?', a: 'Como mucho 25 personas por pase, contando niños, adultos y bebés. Así la visita es tranquila y todos ven bien cada parte.' },
-  { q: '¿Qué descuentos hay?', a: 'Un 20 % en reservas de 6 o más entradas de pago, y un 15 % para socios del Club Deportivo Origen. Solo se aplica uno de los dos: si cumples los dos, se queda el del 20 %.' },
+  { q: '¿Qué descuentos hay?', a: 'Un 15 % en reservas de 6 o más entradas de pago, y otro 15 % para socios del Club Deportivo Origen. No se suman: si cumples los dos, se aplica un único 15 %.' },
   { q: '¿Qué horarios hay?', a: 'Los días 19, 20 y 23 hay dos pases de mañana (10:30 y 12:00) y tres de tarde (16:30, 18:00 y 19:30). El 24 de diciembre solo hay pases de mañana.' },
   { q: '¿Cómo sé que mi reserva está confirmada?', a: 'Al terminar el pago recibes un correo con tu localizador y los datos del pase. Si no llega el correo, escríbenos: sin localizador no hay reserva confirmada.' },
 ]
@@ -197,7 +197,7 @@ export default async function FabricaPapaNoelPage() {
               <div className="text-amber-300 font-black">Socios del club · −{cfg.pctSocio} %</div>
               <p className="text-white/80 text-sm mt-1">
                 Para socios del Club Deportivo Origen. Comprobamos el nº de socio con el correo del Portal de
-                Familias. Los descuentos no se suman: se aplica el mayor de los dos.
+                Familias. Los descuentos no se suman: si cumples los dos, se aplica un único 15 %.
               </p>
             </div>
           </div>
