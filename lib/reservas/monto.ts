@@ -15,6 +15,10 @@ export type ServicioReserva = {
   fianza: number | null
   edad: string
   horarios: string
+  /** Foto o cartel de fondo de la tarjeta en /reservar. */
+  imagen?: string
+  /** Precio a enseñar cuando el del catálogo no aplica (eventos con precio propio). */
+  precioTexto?: string
 }
 
 export type Monto = {

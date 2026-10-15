@@ -6,8 +6,12 @@ import StepFecha from '@/components/reserva/StepFecha'
 import StepDatos, { type DatosForm } from '@/components/reserva/StepDatos'
 import { iniciarReserva, iniciarPagoReserva, reservarEnInstalacion, type PagoReservaPayload } from './actions'
 import { redirigirARedsys } from '@/components/reserva/redirigirARedsys'
-import { ReservaDiasSinCole, ReservaDomingos, ReservaMananaMagica } from '@/app/servicios/eventos/EventosInstalaciones'
+import {
+  ReservaDiasSinCole, ReservaDomingos, ReservaMananaMagica,
+  ReservaHalloween, ReservaTallerInfantil, ReservaPracticaLibre,
+} from '@/app/servicios/eventos/EventosInstalaciones'
 import CalculadoraEventos from '@/app/servicios/eventos/CalculadoraEventos'
+import ReservaCumpleanos from '@/app/servicios/cumpleanos/ReservaCumpleanos'
 import CampamentosReservaWizard from './CampamentosReservaWizard'
 import type { ServicioReserva } from '@/lib/reservas/monto'
 import type { SlotSemanal } from '@/lib/reservas/slots'
@@ -18,9 +22,11 @@ import type { CampamentosConfig } from '@/lib/campamentos/editable'
 type Reservados = Record<string, Record<string, Record<string, number>>>
 type OcupacionCampamentos = { verano: Record<string, number>; navidad: Record<string, number>; ssanta: Record<string, number> }
 
-// Servicios cuyo paso 2 usa su propio formulario de reserva (fecha + datos), y un
-// paso 3 de pago. (Cumpleaños usa el calendario de franjas + StepDatos.)
-const DEDICADOS = new Set(['dias-sin-cole', 'domingos', 'manana-magica', 'campamentos', 'eventos'])
+// Servicios cuyo paso 2 es EL MISMO formulario de su página (mismos datos para el
+// CRM). Los de PAGO_DIRECTO cobran ellos mismos, igual que en su página; el resto
+// pasa al paso 3 de pago del asistente.
+const PAGO_DIRECTO = new Set(['cumpleanos', 'halloween', 'talleres-infantiles', 'practica-libre'])
+const DEDICADOS = new Set(['dias-sin-cole', 'domingos', 'manana-magica', 'campamentos', 'eventos', ...PAGO_DIRECTO])
 
 const euros = (n: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(n)
 
@@ -35,6 +41,7 @@ export default function ReservaWizard({
   servicios, horarios, reservados,
   diasSinCole, domingos, mananaMagica, campamentos,
   ocupacionDSC, ocupacionDomingos, ocupacionMM, ocupacionCampamentos,
+  halloween, tallerInfantil, practicaLibre, cumpleOcupados, cumpleFranjas,
 }: {
   servicios: ServicioReserva[]
   horarios: Record<string, SlotSemanal[]>
@@ -47,6 +54,11 @@ export default function ReservaWizard({
   ocupacionDomingos: Record<string, number>
   ocupacionMM: Record<string, number>
   ocupacionCampamentos: OcupacionCampamentos
+  halloween: EventoCentroCfg
+  tallerInfantil: EventoCentroCfg
+  practicaLibre: EventoCentroCfg
+  cumpleOcupados: Record<string, string[]>
+  cumpleFranjas: SlotSemanal[]
 }) {
   const [paso, setPaso] = useState(1)
   const [servicioId, setServicioId] = useState<string | null>(null)
@@ -207,6 +219,13 @@ export default function ReservaWizard({
               {servicioId === 'manana-magica' && <ReservaMananaMagica cfg={mananaMagica} ocupacion={ocupacionMM} onReservar={handleReservar} />}
               {servicioId === 'campamentos' && <CampamentosReservaWizard cfg={campamentos} ocupacion={ocupacionCampamentos} onReservar={handleReservar} />}
               {servicioId === 'eventos' && <CalculadoraEventos onReservar={handleReservar} />}
+              {/* Estos cobran ellos mismos, exactamente como en su página. */}
+              {servicioId === 'cumpleanos' && <ReservaCumpleanos ocupados={cumpleOcupados} franjas={cumpleFranjas} />}
+              {servicioId === 'halloween' && (
+                <div className="bg-gray-950 rounded-2xl p-5"><ReservaHalloween cfg={halloween} /></div>
+              )}
+              {servicioId === 'talleres-infantiles' && <ReservaTallerInfantil cfg={tallerInfantil} />}
+              {servicioId === 'practica-libre' && <ReservaPracticaLibre cfg={practicaLibre} />}
             </div>
           )}
 

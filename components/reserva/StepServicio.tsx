@@ -1,6 +1,7 @@
 'use client'
 
 import { montoReserva, eurosFmt, type ServicioReserva } from '@/lib/reservas/monto'
+import { optImg } from '@/lib/img/opt'
 
 type Props = {
   servicios: ServicioReserva[]
@@ -21,32 +22,36 @@ export default function StepServicio({ servicios, servicioId, onSelect, onNext }
             <button
               key={s.id}
               onClick={() => onSelect(s.id)}
-              className={`relative text-left p-5 rounded-xl border-2 transition-all ${
-                selected
-                  ? 'border-pm-red bg-pm-red-light'
-                  : 'border-gray-200 bg-white hover:border-pm-red hover:bg-pm-red-light'
+              className={`group relative overflow-hidden text-left rounded-2xl min-h-[210px] flex flex-col justify-end bg-pm-navy transition-all ${
+                selected ? 'ring-4 ring-pm-red ring-offset-2' : 'hover:-translate-y-0.5 hover:shadow-xl'
               }`}
             >
-              {selected && (
-                <span className="absolute top-3 right-3 w-6 h-6 bg-pm-red rounded-full flex items-center justify-center text-white text-xs font-bold">✓</span>
+              {/* La foto o el cartel de la actividad, de fondo */}
+              {s.imagen && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={optImg(s.imagen, 750)} alt="" loading="lazy"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
               )}
-              <div className="text-3xl mb-2">{s.icon}</div>
-              <div className="font-bold text-pm-navy text-lg">{s.nombre}</div>
-              <div className="text-gray-600 text-sm mt-1 mb-3">{s.descripcionCorta}</div>
-              <div className="flex items-center gap-3 text-sm flex-wrap">
-                {monto.cents > 0 ? (
-                  <span className="font-semibold text-pm-red">
-                    {monto.esSenal ? `Señal ${eurosFmt(monto.euros)}` : eurosFmt(monto.euros)}
+              {/* Velo para que el texto se lea sobre cualquier imagen */}
+              <span className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/10" />
+
+              {selected && (
+                <span className="absolute top-3 right-3 z-10 w-7 h-7 bg-pm-red rounded-full flex items-center justify-center text-white text-sm font-bold shadow-lg">✓</span>
+              )}
+              <div className="relative p-5">
+                <div className="text-2xl mb-1 drop-shadow">{s.icon}</div>
+                <div className="font-black text-white text-lg leading-tight drop-shadow">{s.nombre}</div>
+                <div className="text-white/80 text-sm mt-1 mb-3 line-clamp-2">{s.descripcionCorta}</div>
+                <div className="flex items-center gap-2 text-sm flex-wrap">
+                  <span className="font-black text-white bg-pm-red px-2.5 py-1 rounded-lg">
+                    {s.precioTexto
+                      ? s.precioTexto
+                      : monto.cents > 0
+                        ? (monto.esSenal ? `Señal ${eurosFmt(monto.euros)}` : eurosFmt(monto.euros))
+                        : 'Reserva online'}
                   </span>
-                ) : (
-                  <span className="font-semibold text-pm-red">Reserva online</span>
-                )}
-                {s.edad && (
-                  <>
-                    <span className="text-gray-400">·</span>
-                    <span className="text-gray-500">{s.edad}</span>
-                  </>
-                )}
+                  {s.edad && <span className="text-white/80 font-semibold">{s.edad}</span>}
+                </div>
               </div>
             </button>
           )

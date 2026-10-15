@@ -1,5 +1,6 @@
 import { getServicios } from '@/lib/servicios/store'
-import { getHorarios } from '@/lib/reservas/horarios'
+import { getHorarios, getHorarioServicio } from '@/lib/reservas/horarios'
+import { getCumpleanosOcupados } from '@/lib/cumpleanos/disponibilidad'
 import { getReservadosPorServicio } from '@/lib/reservas/disponibilidad'
 import { getEventoCentro, getMananaMagica } from '@/lib/eventos/store'
 import { getCampamentosConfig } from '@/lib/campamentos/store'
@@ -44,7 +45,11 @@ export default async function ReservarPage() {
 
   // Horarios (franjas + plazas) y ocupación actual de cada servicio.
   const ids = servicios.map(s => s.id)
-  const [horarios, reservados, diasSinCole, domingos, mananaMagica, campamentos, ocupacionDSC, ocupacionDomingos, ocupacionMM, ocupacionCampamentos] = await Promise.all([
+  const [
+    horarios, reservados, diasSinCole, domingos, mananaMagica, campamentos,
+    ocupacionDSC, ocupacionDomingos, ocupacionMM, ocupacionCampamentos,
+    halloween, tallerInfantil, practicaLibre, cumpleOcupados, cumpleFranjas,
+  ] = await Promise.all([
     getHorarios(ids),
     getReservadosPorServicio(lista.map(s => ({ id: s.id, nombre: s.nombre }))),
     getEventoCentro('dias-sin-cole'),
@@ -55,11 +60,41 @@ export default async function ReservarPage() {
     getOcupacionFecha('domingos'),
     getOcupacionFecha('manana-magica'),
     getOcupacionCampamentos(),
+    getEventoCentro('halloween'),
+    getEventoCentro('talleres-infantiles'),
+    getEventoCentro('practica-libre'),
+    getCumpleanosOcupados(),
+    getHorarioServicio('cumpleanos'),
   ])
+
+  // Fondo de cada tarjeta: la misma foto o cartel que enseña la página del
+  // servicio, y el precio real que se configura en el panel de cada evento.
+  const eur = (n: number) => `${String(Math.round(n * 100) / 100).replace('.', ',')} €`
+  const aspecto: Record<string, { imagen?: string; precioTexto?: string }> = {
+    cumpleanos: { imagen: '/fotos/cumpleanos/1.webp' },
+    campamentos: { imagen: '/fotos/campamentos/1.webp' },
+    eventos: { imagen: '/fotos/eventos/1.webp' },
+    'manana-magica': { imagen: mananaMagica.imagen, precioTexto: `${eur(mananaMagica.precio)} / niño` },
+    'dias-sin-cole': {
+      imagen: diasSinCole.imagen || '/fotos/eventos-centro/dias-sin-cole.webp',
+      precioTexto: `${eur(diasSinCole.precio)}${diasSinCole.ivaIncluido ? '' : ' + IVA'} / niño`,
+    },
+    domingos: { imagen: domingos.imagen || '/fotos/eventos-centro/domingos.webp', precioTexto: `${eur(domingos.precio)} / niño` },
+    halloween: {
+      imagen: halloween.imagen || '/fotos/eventos-centro/halloween.webp',
+      precioTexto: halloween.precio > 0 ? `${eur(halloween.precio)} / niño` : undefined,
+    },
+    'talleres-infantiles': { imagen: tallerInfantil.imagen, precioTexto: `${eur(tallerInfantil.precio)} / niño` },
+    'practica-libre': {
+      imagen: practicaLibre.imagen,
+      precioTexto: `Clase ${eur(practicaLibre.precio)} · Bono ${eur(practicaLibre.precioBono)}`,
+    },
+  }
+  const conAspecto = servicios.map(s => ({ ...s, ...(aspecto[s.id] ?? {}) }))
 
   return (
     <ReservaWizard
-      servicios={servicios}
+      servicios={conAspecto}
       horarios={horarios}
       reservados={reservados}
       diasSinCole={diasSinCole}
@@ -70,6 +105,11 @@ export default async function ReservarPage() {
       ocupacionDomingos={ocupacionDomingos}
       ocupacionMM={ocupacionMM}
       ocupacionCampamentos={ocupacionCampamentos}
+      halloween={halloween}
+      tallerInfantil={tallerInfantil}
+      practicaLibre={practicaLibre}
+      cumpleOcupados={cumpleOcupados}
+      cumpleFranjas={cumpleFranjas}
     />
   )
 }
