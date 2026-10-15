@@ -1,6 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { pagoAutorizado, type DatosNotificacion } from './firma'
-import { enviarConfirmacionReserva, avisarNegocioReserva } from '@/lib/emails/confirmacion'
+import { enviarConfirmacionReserva, avisarNegocioReserva, datosDeObservaciones } from '@/lib/emails/confirmacion'
 import { confirmarEntradasNavidad, SERVICIO_NAVIDAD } from '@/lib/navidad/confirmar'
 
 /**
@@ -53,11 +53,13 @@ export async function procesarRespuestaRedsys(datos: DatosNotificacion): Promise
       // Email de confirmación al cliente (mensaje específico según el servicio).
       const { data: bk } = await db
         .from('bookings')
-        .select('numero, servicio, cliente_nombre, cliente_email, fecha, hora, participantes, precio')
+        .select('numero, servicio, cliente_nombre, cliente_email, fecha, hora, participantes, precio, observaciones')
         .eq('id', bookingId).maybeSingle()
       if (bk) {
         const b = bk as Record<string, unknown>
         const d = {
+          // Lo que guardó el formulario: nombres de los niños, modalidad, fecha en texto…
+          extra: datosDeObservaciones(b.observaciones),
           servicio: String(b.servicio || ''),
           clienteNombre: (b.cliente_nombre as string) || null,
           clienteEmail: (b.cliente_email as string) || null,

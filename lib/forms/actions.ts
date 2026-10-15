@@ -367,6 +367,7 @@ export async function submitBooking(input: {
       clienteNombre: cliente_nombre, clienteEmail: cliente_email,
       fecha: input.fecha, hora: input.hora,
       participantes: input.participantes ?? null, numero, total: input.precio ?? null,
+      extra: input.datos ?? {},
     })
     return { ok: true, numero }
   } catch (e) {

@@ -9,11 +9,129 @@ import { enviarEmail, NOTIF_TO } from '@/lib/emails/enviar'
 import { escHtml } from '@/lib/seguridad/sanitize'
 import { CUOTA, eurosCuota, fechaLarga } from '@/lib/club/cuota'
 
-/** Mensaje específico por servicio. Se elige por palabras clave del nombre. */
-type Plantilla = { titulo: string; intro: string; cierre?: string }
+/**
+ * Mensaje específico por servicio. Se elige por palabras clave del nombre.
+ * `antes`: avisos prácticos en lista («Antes de venir»).
+ */
+type Plantilla = { titulo: string; intro: string; cierre?: string; antes?: string[] }
 
-function plantillaPara(servicio: string): Plantilla {
+const txt = (v: unknown) => (typeof v === 'string' ? v.trim() : v == null ? '' : String(v).trim())
+
+/**
+ * Eventos en el centro (Días Sin Cole, Domingos, Mañanas Mágicas, Halloween,
+ * Talleres infantiles y Práctica Libre). Se pagan con tarjeta, así que cuando
+ * hay pago el correo CONFIRMA la plaza; sin pago (precio aún sin poner) es una
+ * solicitud.
+ */
+function plantillaEventoCentro(s: string, x: Record<string, unknown>, pagado: boolean): Plantilla | null {
+  // Lo que llega del formulario (personaje, taller…) se escapa: va tal cual al HTML.
+
+  if (s.includes('sin cole') || (s.includes('día') && s.includes('cole'))) return pagado ? {
+    titulo: '¡Plaza confirmada para el Día Sin Cole! ⚡',
+    intro: 'Hemos recibido el pago y la plaza está reservada. Vuestro peque vivirá una mañana épica en la Escuela de Superhéroes mientras la familia concilia.',
+    antes: [
+      'Os rogamos puntualidad en la entrada y en la recogida.',
+      'Ropa y calzado cómodos para moverse.',
+      'Almuerzo y botella de agua.',
+    ],
+  } : {
+    titulo: '¡Solicitud para el Día Sin Cole recibida! ⚡',
+    intro: 'Hemos recibido tu solicitud de plaza para el Día Sin Cole. Una mañana épica de juegos, retos y actividad mientras la familia concilia.',
+    cierre: 'Te confirmaremos la plaza y el pago en breve. Recuerda que harán falta ropa cómoda y almuerzo.',
+  }
+
+  if (s.includes('domingo')) return pagado ? {
+    titulo: '¡Domingo en Familia reservado! 👨‍👩‍👧‍👦',
+    intro: 'Hemos recibido el pago y vuestra plaza está reservada. Práctica libre, juego y tiempo de calidad en familia en nuestras instalaciones.',
+    antes: [
+      'Los adultos entran gratis y se quedan en la instalación durante toda la actividad: no es un servicio de guardería.',
+      'Los menores de 2 años también entran gratis.',
+      'Ropa cómoda para todos, ¡también para los mayores!',
+    ],
+  } : {
+    titulo: '¡Solicitud para el Domingo en Familia recibida! 👨‍👩‍👧‍👦',
+    intro: 'Hemos recibido vuestra solicitud para el Domingo en Familia. Práctica libre, juego y tiempo de calidad en familia.',
+    cierre: 'Te confirmaremos la plaza en breve. Recordad que los adultos permanecen en la instalación durante la actividad.',
+  }
+
+  if (s.includes('mañana')) {
+    const personaje = txt(x.personaje)
+    return pagado ? {
+      titulo: '¡Plaza confirmada para la Mañana Mágica! ✨',
+      intro: `Hemos recibido el pago y la plaza está reservada para la Mañana Mágica${personaje ? ` con ${escHtml(personaje)}` : ''}: show, manualidades, pintacaras, photocall y muchos juegos.`,
+      antes: [
+        'Llegad unos minutos antes de la hora de inicio.',
+        'Ropa cómoda para moverse y jugar.',
+      ],
+    } : {
+      titulo: '¡Solicitud para la Mañana Mágica recibida! ✨',
+      intro: 'Hemos recibido tu solicitud de plaza para la Mañana Mágica. Una jornada temática con el personaje del mes, talleres y muchas sorpresas.',
+      cierre: 'Te confirmaremos la plaza en breve. Trae ropa cómoda y muchas ganas de pasarlo en grande.',
+    }
+  }
+
+  // «Talleres infantiles» va antes que Halloween: su taller puede llamarse «Halloween Infantil».
+  if (s.includes('taller') && s.includes('infantil')) {
+    const taller = txt(x.taller) || 'el taller infantil'
+    const esHalloween = taller.toLowerCase().includes('halloween')
+    return pagado ? {
+      titulo: '¡Plaza confirmada para el taller infantil! 🎨',
+      intro: `Hemos recibido el pago y la plaza está reservada para «${escHtml(taller)}»: manualidades y juegos en nuestra sala de colchonetas.`,
+      antes: [
+        'Llegad unos minutos antes de la hora de inicio.',
+        'Papás y mamás pueden quedarse durante el taller, sin coste.',
+        ...(esHalloween ? ['Pueden venir disfrazados, pero mejor sin maquillaje en la cara: mancha el material de la sala.'] : []),
+      ],
+    } : {
+      titulo: '¡Inscripción al taller recibida! 🎨',
+      intro: `Hemos recibido tu inscripción para «${escHtml(taller)}». Te confirmaremos tu plaza en breve.`,
+      cierre: 'Si tienes cualquier duda, responde a este correo y te ayudamos.',
+    }
+  }
+
+  if (s.includes('halloween')) {
+    const evento = txt(x.evento)
+    return pagado ? {
+      titulo: '¡Plaza confirmada para la Noche de Halloween! 🧟',
+      intro: `Hemos recibido el pago y la plaza está reservada para la Noche de Halloween${evento ? ` «${escHtml(evento)}»` : ''}: gymkana zombie, retos, película de terror y desayuno de churros al amanecer.`,
+      antes: [
+        'Unos días antes os escribiremos con la hora exacta de entrada y recogida y con lo que hay que traer para pasar la noche.',
+        'Si hay alergias o algo que debamos saber, respondednos a este correo.',
+      ],
+    } : {
+      titulo: '¡Solicitud para la Noche de Halloween recibida! 🧟',
+      intro: 'Hemos recibido tu solicitud de plaza para la Noche de Halloween. Una noche épica e inolvidable de fiesta, retos y mucho terror divertido.',
+      cierre: 'Las plazas son limitadas: te confirmaremos la tuya lo antes posible y te enviaremos qué traer.',
+    }
+  }
+
+  if (s.includes('práctica libre') || s.includes('practica libre')) {
+    const modalidad = txt(x.modalidad)
+    const esBono = modalidad.toLowerCase().includes('bono')
+    return pagado ? {
+      titulo: '¡Práctica Libre reservada! 🤸',
+      intro: esBono
+        ? `Hemos recibido el pago. Tu ${escHtml(modalidad.toLowerCase())} de Práctica Libre ya está activo.`
+        : 'Hemos recibido el pago y tu clase suelta de Práctica Libre está reservada.',
+      antes: [
+        'Un monitor de sala estará para resolver dudas y velar por la seguridad.',
+        ...(esBono ? ['El bono se usa cuando quieras dentro de la temporada.'] : []),
+        'Ropa deportiva cómoda y botella de agua.',
+      ],
+    } : {
+      titulo: '¡Solicitud de Práctica Libre recibida! 🤸',
+      intro: 'Hemos recibido tu solicitud de Práctica Libre. Te confirmaremos la plaza en breve.',
+    }
+  }
+
+  return null
+}
+
+function plantillaPara(servicio: string, extra: Record<string, unknown> = {}, pagado = false): Plantilla {
   const s = (servicio || '').toLowerCase()
+
+  const centro = plantillaEventoCentro(s, extra, pagado)
+  if (centro) return centro
 
   if (s.includes('cumple')) return {
     titulo: '¡Cumpleaños reservado! 🎂',
@@ -29,26 +147,6 @@ function plantillaPara(servicio: string): Plantilla {
     titulo: '¡Plaza de campamento reservada! ⛺',
     intro: 'Hemos confirmado la plaza en el campamento. Prepárate para días llenos de actividad, juegos, circo y mucha diversión.',
     cierre: 'Te haremos llegar la información práctica (qué traer, horarios de entrada y recogida) antes del comienzo. El importe pendiente se abona según lo acordado.',
-  }
-  if (s.includes('sin cole') || (s.includes('día') && s.includes('cole'))) return {
-    titulo: '¡Solicitud para el Día Sin Cole recibida! ⚡',
-    intro: 'Hemos recibido tu solicitud de plaza para el Día Sin Cole. Una mañana épica de juegos, retos y actividad mientras la familia concilia.',
-    cierre: 'Te confirmaremos la plaza y el pago en breve. Recuerda que harán falta ropa cómoda y almuerzo.',
-  }
-  if (s.includes('domingo')) return {
-    titulo: '¡Solicitud para el Domingo en Familia recibida! 👨‍👩‍👧‍👦',
-    intro: 'Hemos recibido vuestra solicitud para el Domingo en Familia. Práctica libre, juego y tiempo de calidad en familia.',
-    cierre: 'Te confirmaremos la plaza en breve. Recordad que los adultos permanecen en la instalación durante la actividad.',
-  }
-  if (s.includes('mañana')) return {
-    titulo: '¡Solicitud para la Mañana Mágica recibida! ✨',
-    intro: 'Hemos recibido tu solicitud de plaza para la Mañana Mágica. Una jornada temática con el personaje del mes, talleres y muchas sorpresas.',
-    cierre: 'Te confirmaremos la plaza en breve. Trae ropa cómoda y muchas ganas de pasarlo en grande.',
-  }
-  if (s.includes('halloween')) return {
-    titulo: '¡Solicitud para la Noche de Halloween recibida! 🧟',
-    intro: 'Hemos recibido tu solicitud de plaza para la Noche de Halloween. Una noche épica e inolvidable de fiesta, retos y mucho terror divertido.',
-    cierre: 'Las plazas son limitadas: te confirmaremos la tuya lo antes posible y te enviaremos qué traer.',
   }
   if (s.includes('taller')) return {
     titulo: '¡Inscripción al taller recibida! 🎨',
@@ -96,27 +194,54 @@ export type DatosConfirmacion = {
   total?: number | null
   pagado?: number | null
   pendiente?: number | null
+  /** Datos extra que guardó el formulario (participantes, modalidad, fecha en texto…). */
+  extra?: Record<string, unknown>
 }
 
 /**
- * Envía el email de confirmación al cliente. Silencioso ante errores (nunca
- * rompe el flujo de la reserva). No hace nada si no hay email de cliente.
+ * Los formularios guardan sus datos como JSON en la última línea de
+ * `bookings.observaciones` (`notas\n{...}`). Devuelve ese objeto o {}.
  */
-export async function enviarConfirmacionReserva(p: DatosConfirmacion): Promise<void> {
-  const email = (p.clienteEmail || '').trim()
-  if (!email) return
-  const pl = plantillaPara(p.servicio)
+export function datosDeObservaciones(observaciones: unknown): Record<string, unknown> {
+  const lineas = String(observaciones ?? '').split('\n').map(l => l.trim()).filter(Boolean)
+  for (let i = lineas.length - 1; i >= 0; i--) {
+    const l = lineas[i]
+    if (!l.startsWith('{') || !l.endsWith('}')) continue
+    try { return JSON.parse(l) as Record<string, unknown> } catch { /* sigue buscando */ }
+  }
+  return {}
+}
 
-  const filas: [string, string][] = [
+/** Filas de la reserva, comunes al correo del cliente y al aviso interno. */
+function filasReserva(p: DatosConfirmacion): [string, string][] {
+  const x = p.extra ?? {}
+  const pagado = Number(p.pagado) || 0
+  const pendiente = Number(p.pendiente) || 0
+  const nombres = txt(x.participantes)
+  return [
     ['Servicio', p.servicio],
     ['Nº de reserva', p.numero || ''],
-    ['Fecha', p.fecha ? fmtFecha(p.fecha) : ''],
-    ['Horario', p.hora || ''],
-    ['Participantes', p.participantes && p.participantes > 0 ? String(p.participantes) : ''],
-    ['Importe total', p.total && p.total > 0 ? euro(p.total) : ''],
-    ['Pagado ahora (señal)', p.pagado && p.pagado > 0 ? euro(p.pagado) : ''],
-    ['Pendiente', p.pendiente && p.pendiente > 0 ? euro(p.pendiente) : ''],
+    ['Modalidad', txt(x.modalidad)],
+    ['Taller', txt(x.taller)],
+    // Halloween y talleres no guardan fecha exacta: va en texto en los datos.
+    ['Fecha', p.fecha ? fmtFecha(p.fecha) : txt(x.fecha)],
+    ['Horario', p.hora || txt(x.horario)],
+    ['Participantes', nombres || (p.participantes && p.participantes > 0 ? String(p.participantes) : '')],
+    ['Descuento', txt(x.descuento)],
+    ['Importe total', p.total && p.total > 0 && pendiente > 0 ? euro(p.total) : ''],
+    [pendiente > 0 ? 'Pagado ahora (señal)' : 'Total pagado', pagado > 0 ? euro(pagado) : ''],
+    ['Pendiente', pendiente > 0 ? euro(pendiente) : ''],
+    // Sin pago todavía (solicitud): el precio orientativo.
+    ['Importe', pagado <= 0 && pendiente <= 0 && p.total && p.total > 0 ? euro(p.total) : ''],
   ]
+}
+
+/** Asunto y HTML del correo al cliente (separado del envío para poder previsualizarlo). */
+export function correoConfirmacion(p: DatosConfirmacion): { asunto: string; html: string } {
+  const pagado = (Number(p.pagado) || 0) > 0
+  const pl = plantillaPara(p.servicio, p.extra ?? {}, pagado)
+
+  const filas = filasReserva(p)
   const tabla = filas
     .filter(([, v]) => v)
     .map(([k, v]) => `<tr><td style="padding:7px 14px;color:#64748b;font-size:14px">${escHtml(k)}</td><td style="padding:7px 14px;color:#0F1A3D;font-weight:700;font-size:14px;text-align:right">${escHtml(v)}</td></tr>`)
@@ -133,20 +258,37 @@ export async function enviarConfirmacionReserva(p: DatosConfirmacion): Promise<v
       ${p.clienteNombre ? `<p style="color:#334155;font-size:15px;margin:0 0 12px">Hola ${escHtml(p.clienteNombre.split(' ')[0])},</p>` : ''}
       <p style="color:#334155;font-size:15px;line-height:1.6;margin:0 0 18px">${pl.intro}</p>
       <table style="width:100%;border-collapse:collapse;background:#f8fafc;border-radius:10px;overflow:hidden">${tabla}</table>
+      ${pl.antes?.length ? `
+      <h2 style="color:#0F1A3D;font-size:15px;margin:22px 0 8px">Antes de venir</h2>
+      <ul style="color:#475569;font-size:14px;line-height:1.6;margin:0;padding-left:20px">
+        ${pl.antes.map(a => `<li style="margin:0 0 4px">${a}</li>`).join('')}
+      </ul>` : ''}
       ${pl.cierre ? `<p style="color:#475569;font-size:13px;line-height:1.6;margin:18px 0 0">${pl.cierre}</p>` : ''}
+      ${pagado ? `<p style="color:#475569;font-size:13px;line-height:1.6;margin:18px 0 0">Si necesitáis cambiar algo, responded a este correo indicando vuestro nº de reserva.${pl.antes?.length ? ' Os esperamos en Planeta Movimiento, Polígono Los Palancares nº 8, Cuenca.' : ''}</p>` : ''}
     </div>
     <div style="background:#f8fafc;padding:18px 28px;border-top:1px solid #e2e8f0">
       <p style="color:#94a3b8;font-size:12px;margin:0;line-height:1.6">
         Planeta Movimiento · Cuenca · <a href="mailto:info@planetamovimiento.com" style="color:#e11d2a;text-decoration:none">info@planetamovimiento.com</a><br>
-        Este correo confirma tu solicitud. Si no la has realizado tú, ignóralo.
+        ${pagado ? 'Este correo confirma tu reserva y tu pago.' : 'Este correo confirma tu solicitud.'} Si no la has realizado tú, ignóralo.
       </p>
     </div>
   </div>
 </div>`
 
+  return { asunto: `${pl.titulo} · Planeta Movimiento`, html }
+}
+
+/**
+ * Envía el email de confirmación al cliente. Silencioso ante errores (nunca
+ * rompe el flujo de la reserva). No hace nada si no hay email de cliente.
+ */
+export async function enviarConfirmacionReserva(p: DatosConfirmacion): Promise<void> {
+  const email = (p.clienteEmail || '').trim()
+  if (!email) return
+  const { asunto, html } = correoConfirmacion(p)
   await enviarEmail({
     to: email,
-    subject: `${pl.titulo} · Planeta Movimiento`,
+    subject: asunto,
     html,
     tipo: 'confirmacion-cliente',
     meta: { servicio: p.servicio, numero: p.numero ?? null },
@@ -160,20 +302,13 @@ export async function enviarConfirmacionReserva(p: DatosConfirmacion): Promise<v
 export async function avisarNegocioReserva(p: DatosConfirmacion & { motivo: string }): Promise<void> {
   const filas: [string, string][] = [
     ['Motivo', p.motivo],
-    ['Servicio', p.servicio],
-    ['Nº de reserva', p.numero || ''],
     ['Cliente', p.clienteNombre || ''],
     ['Email', p.clienteEmail || ''],
-    ['Fecha', p.fecha ? fmtFecha(p.fecha) : ''],
-    ['Horario', p.hora || ''],
-    ['Participantes', p.participantes && p.participantes > 0 ? String(p.participantes) : ''],
-    ['Importe total', p.total && p.total > 0 ? euro(p.total) : ''],
-    ['Pagado', p.pagado && p.pagado > 0 ? euro(p.pagado) : ''],
-    ['Pendiente', p.pendiente && p.pendiente > 0 ? euro(p.pendiente) : ''],
+    ...filasReserva(p),
   ]
   const tabla = filas
     .filter(([, v]) => v)
-    .map(([k, v]) => `<tr><td style="padding:6px 12px;color:#64748b">${k}</td><td style="padding:6px 12px;color:#0F1A3D;font-weight:600">${v}</td></tr>`)
+    .map(([k, v]) => `<tr><td style="padding:6px 12px;color:#64748b">${escHtml(k)}</td><td style="padding:6px 12px;color:#0F1A3D;font-weight:600">${escHtml(v)}</td></tr>`)
     .join('')
   const html = `<div style="font-family:sans-serif"><h2 style="color:#0F1A3D">${p.motivo} · ${p.servicio}</h2><table style="border-collapse:collapse;font-size:14px">${tabla}</table><p style="color:#94a3b8;font-size:12px;margin-top:16px">Gestiónalo en el panel de administración.</p></div>`
 
