@@ -158,7 +158,26 @@ const DIBUJOS: Record<IconoId, React.ReactNode> = {
   ),
 }
 
+/**
+ * Pegatinas propias de Planeta Movimiento (redondas, fondo transparente).
+ * Donde hay pegatina se usa ella; el resto de actividades sigue con su dibujo.
+ */
+export const PEGATINAS: Partial<Record<IconoId, string>> = {
+  regalo: '/fotos/pegatinas/fabrica-papa-noel.webp',
+  zombie: '/fotos/pegatinas/halloween.webp',
+  fiesta: '/fotos/pegatinas/dia-festivo.webp',
+  instalacion: '/fotos/pegatinas/dia-sin-cole.webp',
+  familia: '/fotos/pegatinas/domingos-en-familia.webp',
+}
+
+export const tienePegatina = (nombre: IconoId) => Boolean(PEGATINAS[nombre])
+
 export function IconoAgenda({ nombre, className = 'w-5 h-5' }: { nombre: IconoId; className?: string }) {
+  const pegatina = PEGATINAS[nombre]
+  if (pegatina) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={pegatina} alt="" aria-hidden="true" loading="lazy" className={`${className} object-contain drop-shadow-md`} />
+  }
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
       {DIBUJOS[nombre] ?? DIBUJOS.estrella}

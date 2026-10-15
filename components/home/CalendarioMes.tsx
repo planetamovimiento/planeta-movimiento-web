@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { IconoAgenda, aspectoEvento, tono } from './IconosAgenda'
+import { IconoAgenda, aspectoEvento, tono, tienePegatina } from './IconosAgenda'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Calendario del mes en la portada. Se alimenta solo del Calendario del Club
@@ -138,7 +138,7 @@ export default function CalendarioMes({ eventos, mesInicial }: { eventos: Evento
                     <span className={`text-[11px] sm:text-xs font-black leading-none ${esHoy ? 'text-white' : t ? t.texto : 'text-gray-400'}`}>{dia}</span>
                     {a && t && (
                       <span className={`mt-0.5 ${esHoy ? 'text-white' : t.icono}`}>
-                        <IconoAgenda nombre={a.icono} className="w-5 h-5 sm:w-7 sm:h-7" />
+                        <IconoAgenda nombre={a.icono} className={tienePegatina(a.icono) ? 'w-7 h-7 sm:w-10 sm:h-10' : 'w-5 h-5 sm:w-7 sm:h-7'} />
                       </span>
                     )}
                     {evs.length > 1 && (
@@ -171,7 +171,7 @@ export default function CalendarioMes({ eventos, mesInicial }: { eventos: Evento
                   const t = tono(l.color)
                   return (
                     <span key={l.titulo} className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full ${t.suave}`}>
-                      <IconoAgenda nombre={l.icono} className="w-3.5 h-3.5" />
+                      <IconoAgenda nombre={l.icono} className={tienePegatina(l.icono) ? 'w-5 h-5' : 'w-3.5 h-3.5'} />
                       {l.titulo}
                     </span>
                   )
@@ -197,7 +197,7 @@ export default function CalendarioMes({ eventos, mesInicial }: { eventos: Evento
                   return (
                     <li key={`${e.fecha}-${i}`} className={`flex items-center gap-3 p-2 rounded-2xl transition-colors hover:bg-gray-50 ${pasado ? 'opacity-50' : ''}`}>
                       <span className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center ${t.suave}`}>
-                        <IconoAgenda nombre={a.icono} className="w-5 h-5" />
+                        <IconoAgenda nombre={a.icono} className={tienePegatina(a.icono) ? 'w-10 h-10' : 'w-5 h-5'} />
                       </span>
                       <span className="w-9 shrink-0 text-center">
                         <span className={`block text-lg font-black leading-none ${e.fecha === hoyISO ? 'text-pm-red' : 'text-pm-navy'}`}>{dia}</span>
