@@ -6,6 +6,8 @@ import Footer from '@/components/layout/Footer'
 import FooterGate from '@/components/layout/FooterGate'
 import { Analytics } from '@vercel/analytics/next'
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, NEGOCIO_JSONLD, SITE_NAV_JSONLD } from '@/lib/seo'
+import DecoracionTemporada from '@/components/layout/Temporada'
+import { scriptTemporada } from '@/lib/temporada'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -42,7 +44,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="es">
+    // suppressHydrationWarning: el script de temporada marca <html> antes de que cargue React.
+    <html lang="es" suppressHydrationWarning>
+      <head>
+        {/* Temporada (Halloween / Navidad) según la fecha: colores desde el primer fotograma */}
+        <script dangerouslySetInnerHTML={{ __html: scriptTemporada() }} />
+      </head>
       <body className={inter.className}>
         {/* Datos estructurados del negocio (ficha local para Google) */}
         <script
@@ -57,6 +64,8 @@ export default function RootLayout({
         <Navbar />
         {children}
         <FooterGate><Footer /></FooterGate>
+        {/* Murciélagos en Halloween, nieve y luces en Navidad (solo web pública) */}
+        <DecoracionTemporada />
         {/* Analítica web cookieless (sin banner de cookies) */}
         <Analytics />
       </body>

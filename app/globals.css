@@ -318,6 +318,66 @@ html { overflow-x: clip; }
   .pm-copo { animation: none; opacity: .35; }
 }
 
+/* ── Temporadas (Halloween / Navidad) ──────────────────────────────────────── */
+/* Las pone solas lib/temporada.ts según la fecha en <html data-temporada>.
+   Cambiando los colores de marca se re-tiñe toda la web pública sin tocar
+   cada página; sin el atributo (panel, resto del año) todo queda como siempre. */
+html[data-temporada="halloween"] {
+  --color-pm-navy: #1b1029;
+  --color-pm-navy-md: #2e1a47;
+  --color-pm-red: #ea580c;
+  --color-pm-red-dark: #c2410c;
+  --color-pm-red-light: #fff3e8;
+  --color-pm-bg: #f7f1fb;
+}
+html[data-temporada="navidad"] {
+  --color-pm-navy: #10261c;
+  --color-pm-navy-md: #1b4030;
+  --color-pm-red: #c81e1e;
+  --color-pm-red-dark: #991b1b;
+  --color-pm-red-light: #fdf0f0;
+  --color-pm-bg: #f7f4ec;
+}
+
+/* Murciélagos: cruzan la pantalla despacio y aletean. */
+.pm-murcielago {
+  position: absolute;
+  left: 0;
+  opacity: 0;
+  will-change: transform;
+  animation: pmVuelo var(--dur, 30s) linear var(--delay, 0s) infinite;
+}
+@keyframes pmVuelo {
+  0%   { transform: translate(-12vw, 0);      opacity: 0; }
+  4%   { opacity: .75; }
+  25%  { transform: translate(20vw, -30px); }
+  50%  { transform: translate(50vw, 20px); }
+  75%  { transform: translate(80vw, -25px); }
+  96%  { opacity: .75; }
+  100% { transform: translate(112vw, 0);      opacity: 0; }
+}
+.pm-aleteo {
+  transform-origin: 50% 50%;
+  animation: pmAleteo .35s ease-in-out infinite alternate;
+}
+@keyframes pmAleteo { from { transform: scaleY(1); } to { transform: scaleY(.55); } }
+
+/* Guirnalda de luces de Navidad bajo el menú. */
+.pm-bombilla {
+  width: 7px;
+  height: 10px;
+  border-radius: 50% 50% 45% 45%;
+  box-shadow: 0 0 6px rgba(255, 255, 255, .45);
+  animation: pmBrillo 2.4s ease-in-out var(--delay, 0s) infinite;
+}
+.pm-bombilla:nth-child(even) { transform: translateY(5px); }
+@keyframes pmBrillo { 0%, 100% { opacity: .95; } 50% { opacity: .35; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .pm-murcielago, .pm-temporada .pm-copo { display: none; }
+  .pm-bombilla { animation: none; }
+}
+
 /* ── Factura imprimible (A4). El navegador imprime a PDF (Guardar como PDF). ── */
 /* Aísla el documento: en impresión solo se ve .pm-print-root, no el panel. */
 @media print {
