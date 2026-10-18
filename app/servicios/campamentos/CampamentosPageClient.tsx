@@ -146,10 +146,11 @@ export default function CampamentosPageClient({ cfg, ocupacion }: { cfg: Campame
                   <div className="text-2xl font-black text-blue-800">{cfg.precioDiaSuelto} €</div>
                   <div className="text-blue-600 text-xs">día suelto</div>
                 </div>
+                {/* Navidad: días sueltos siempre (sin precio de semana) y un solo descuento */}
                 <div className="bg-blue-600 border border-blue-700 rounded-xl p-4 text-center">
-                  <div className="text-2xl font-black text-white">{cfg.precioSemana} €</div>
-                  <div className="text-blue-100 text-xs">semana completa</div>
-                  <div className="text-xs text-blue-200 mt-0.5">vs {cfg.precioDiaSuelto * 5} € en días sueltos</div>
+                  <div className="text-2xl font-black text-white">−{cfg.descuentoHermanos}%</div>
+                  <div className="text-blue-100 text-xs">hermanos o socios del club</div>
+                  <div className="text-xs text-blue-200 mt-0.5">no se suman: uno de los dos</div>
                 </div>
               </div>
             </div>
@@ -160,7 +161,7 @@ export default function CampamentosPageClient({ cfg, ocupacion }: { cfg: Campame
                   <div className="text-blue-200 text-xs mt-0.5">Elige los días y paga tu reserva</div>
                 </div>
                 <div className="p-5 max-h-[80vh] overflow-y-auto">
-                  <ReservaBloque cfg={cfg} servicio="Campamento de Navidad" fechas={navDias} horario={cfg.navidadHorario} color="blue" nombreCorto="Navidad" ocupacionDia={ocupacion.navidad} />
+                  <ReservaBloque cfg={cfg} servicio="Campamento de Navidad" fechas={navDias} horario={cfg.navidadHorario} color="blue" nombreCorto="Navidad" ocupacionDia={ocupacion.navidad} ofertaSemana={false} />
                 </div>
               </div>
             </div>

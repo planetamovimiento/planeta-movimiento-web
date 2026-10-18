@@ -35,10 +35,14 @@ const TEMA = {
   },
 }
 
+type TipoDescuento = 'ninguno' | 'hermanos' | 'socio'
+
 // ─── Cálculo de precio (por niño) ──────────────────────────────────────────────
-function calcularPrecio(cfg: CampamentosConfig, fechas: string[], seleccionados: Set<string>, cuponAplicado: boolean, matinal: boolean, vespertino: boolean) {
+// El descuento (hermanos o socio, nunca los dos) se aplica a los días, no al
+// horario ampliado. Sin oferta de semana, cada día cuesta lo mismo.
+function calcularPrecio(cfg: CampamentosConfig, fechas: string[], seleccionados: Set<string>, pctDescuento: number, matinal: boolean, vespertino: boolean, ofertaSemana: boolean) {
   const numDias = seleccionados.size
-  const completa = fechas.length > 0 && numDias >= fechas.length
+  const completa = ofertaSemana && fechas.length > 0 && numDias >= fechas.length
   const desglose: { label: string; precio: number }[] = []
 
   let base = 0
@@ -52,7 +56,7 @@ function calcularPrecio(cfg: CampamentosConfig, fechas: string[], seleccionados:
     }
   }
 
-  const descuento = cuponAplicado ? Math.round(base * (cfg.descuentoHermanos / 100)) : 0
+  const descuento = pctDescuento > 0 ? Math.round(base * (pctDescuento / 100)) : 0
   const matinalCost = matinal ? cfg.precioMatinal * numDias : 0
   const vespertinoCost = vespertino ? cfg.precioVespertino * numDias : 0
   if (matinalCost) desglose.push({ label: `Matinal (8:00–9:00) · ${numDias} día${numDias > 1 ? 's' : ''}`, precio: matinalCost })
@@ -65,7 +69,7 @@ function calcularPrecio(cfg: CampamentosConfig, fechas: string[], seleccionados:
 
 // ─── Componente reutilizable (Navidad / Semana Santa) ───────────────────────────
 export default function ReservaBloque({
-  cfg, servicio, fechas, horario, color, nombreCorto, ocupacionDia = {}, onReservar,
+  cfg, servicio, fechas, horario, color, nombreCorto, ocupacionDia = {}, onReservar, ofertaSemana = true,
 }: {
   cfg: CampamentosConfig
   servicio: string
@@ -75,6 +79,8 @@ export default function ReservaBloque({
   nombreCorto: string   // p.ej. "Navidad", "Semana Santa"
   ocupacionDia?: Record<string, number>
   onReservar?: (p: PagoReservaPayload) => void
+  /** Precio especial si se cogen todos los días (false en Navidad: días sueltos siempre). */
+  ofertaSemana?: boolean
 }) {
   const t = TEMA[color]
   const aforoDia = cfg.aforoDia || 0
@@ -84,16 +90,23 @@ export default function ReservaBloque({
   const [matinal, setMatinal] = useState(false)
   const [vespertino, setVespertino] = useState(false)
   const [numNinos, setNumNinos] = useState(1)
-  const [cupon, setCupon] = useState('')
-  const [cuponAplicado, setCuponAplicado] = useState(false)
-  const [cuponError, setCuponError] = useState(false)
+  const [tipoDesc, setTipoDesc] = useState<TipoDescuento>('ninguno')
+  const [numeroSocio, setNumeroSocio] = useState('')
   const [paso, setPaso] = useState<'seleccion' | 'datos' | 'confirmado'>('seleccion')
   const [enviando, setEnviando] = useState(false)
   const [error, setError] = useState('')
 
+  // Hermanos solo vale si vienen 2 niños o más.
+  const hermanosPosible = numNinos >= 2
+  useEffect(() => { if (tipoDesc === 'hermanos' && !hermanosPosible) setTipoDesc('ninguno') }, [hermanosPosible]) // eslint-disable-line react-hooks/exhaustive-deps
+  const pctDescuento = tipoDesc === 'hermanos' ? cfg.descuentoHermanos : tipoDesc === 'socio' ? (cfg.descuentoSocio ?? 15) : 0
+  const textoDescuento = tipoDesc === 'hermanos'
+    ? `Hermanos −${cfg.descuentoHermanos}%`
+    : tipoDesc === 'socio' ? `Socio del club −${cfg.descuentoSocio ?? 15}%${numeroSocio.trim() ? ` · nº ${numeroSocio.trim()}` : ''}` : ''
+
   const { subtotal, descuento, total, desglose, completa } = useMemo(
-    () => calcularPrecio(cfg, fechas, seleccionados, cuponAplicado, matinal, vespertino),
-    [cfg, fechas, seleccionados, cuponAplicado, matinal, vespertino]
+    () => calcularPrecio(cfg, fechas, seleccionados, pctDescuento, matinal, vespertino, ofertaSemana),
+    [cfg, fechas, seleccionados, pctDescuento, matinal, vespertino, ofertaSemana]
   )
 
   // Máximo de niños según las plazas libres del día más ajustado de la selección.
@@ -120,11 +133,6 @@ export default function ReservaBloque({
     else setSeleccionados(new Set(libres))
   }
 
-  function aplicarCupon() {
-    if (cupon.trim().toUpperCase() === cfg.cuponHermanos.toUpperCase()) { setCuponAplicado(true); setCuponError(false) }
-    else { setCuponError(true); setCuponAplicado(false) }
-  }
-
   function construirPayload(p: PayloadCampamento): PagoReservaPayload {
     const dias = Array.from(seleccionados).sort()
     const n = p.participantes.length
@@ -141,7 +149,8 @@ export default function ReservaBloque({
         numDias: dias.length,
         matinal: matinal ? 'Sí (8:00–9:00)' : 'No',
         vespertino: vespertino ? 'Sí (14:00–15:00)' : 'No',
-        cuponHermanos: cuponAplicado ? `Aplicado (-${cfg.descuentoHermanos}%)` : 'No',
+        descuento: textoDescuento || 'Sin descuento',
+        numeroSocio: tipoDesc === 'socio' ? numeroSocio.trim() : '',
         participantes: textoParticipantes(p.participantes),
         numNinos: n,
       },
@@ -180,7 +189,7 @@ export default function ReservaBloque({
         <div><span className="text-gray-500">Niños:</span> <strong>{numNinos}</strong></div>
         <div><span className="text-gray-500">Total:</span> <strong>{total * numNinos} €</strong></div>
       </div>
-      <button onClick={() => { setPaso('seleccion'); setSeleccionados(new Set()); setCuponAplicado(false); setCupon('') }} className="text-pm-red underline text-sm">
+      <button onClick={() => { setPaso('seleccion'); setSeleccionados(new Set()); setTipoDesc('ninguno'); setNumeroSocio('') }} className="text-pm-red underline text-sm">
         Hacer otra reserva
       </button>
     </div>
@@ -193,10 +202,12 @@ export default function ReservaBloque({
         <div className="flex items-center justify-between mb-1">
           <div className="font-black text-pm-navy text-sm">Elige tus días</div>
           <button onClick={seleccionarTodo} className={`text-xs ${t.accent} underline font-semibold`}>
-            {seleccionados.size === fechas.length ? 'Quitar todos' : `Semana completa · ${cfg.precioSemana} €`}
+            {seleccionados.size === fechas.length ? 'Quitar todos' : ofertaSemana ? `Semana completa · ${cfg.precioSemana} €` : 'Elegir todos'}
           </button>
         </div>
-        <p className="text-xs text-gray-400 mb-3">{cfg.precioDiaSuelto} € día suelto · {cfg.precioSemana} € la semana completa</p>
+        <p className="text-xs text-gray-400 mb-3">
+          {ofertaSemana ? `${cfg.precioDiaSuelto} € día suelto · ${cfg.precioSemana} € la semana completa` : `${cfg.precioDiaSuelto} € por día · elige los días que quieras`}
+        </p>
         <div className="grid grid-cols-5 gap-2">
           {fechas.map(dia => {
             const d = new Date(dia + 'T12:00:00')
@@ -255,26 +266,33 @@ export default function ReservaBloque({
             )}
           </div>
 
-          {/* Cupón hermanos */}
+          {/* Descuento: hermanos o socio, nunca los dos */}
           <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
-            <div className="font-black text-pm-navy text-sm mb-1">🏷️ Cupón de hermanos</div>
-            <div className="text-xs text-gray-500 mb-3">Si tus hijos vienen juntos, aplica un {cfg.descuentoHermanos}% de descuento</div>
-            {cuponAplicado ? (
-              <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-sm rounded-xl px-4 py-2.5">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
-                </svg>
-                <span className="font-bold">Cupón {cfg.cuponHermanos} aplicado — {cfg.descuentoHermanos}%</span>
-                <button onClick={() => { setCuponAplicado(false); setCupon('') }} className="ml-auto text-xs underline text-green-600">Quitar</button>
-              </div>
-            ) : (
-              <div className="flex gap-2">
-                <input type="text" value={cupon} onChange={e => { setCupon(e.target.value.toUpperCase()); setCuponError(false) }} placeholder={`Ej. ${cfg.cuponHermanos}`}
-                  className={`flex-1 border rounded-xl px-3 py-2 text-sm focus:outline-none ${cuponError ? 'border-pm-red bg-pm-red-light' : 'border-gray-200 focus:border-pm-navy'}`} />
-                <button onClick={aplicarCupon} className="bg-pm-navy text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-pm-navy-md transition-colors">Aplicar</button>
-              </div>
+            <div className="font-black text-pm-navy text-sm mb-1">🏷️ ¿Tienes descuento? (solo uno)</div>
+            <div className="text-xs text-gray-500 mb-3">Los descuentos no se suman y se aplican a los días de campamento.</div>
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" disabled={!hermanosPosible}
+                onClick={() => setTipoDesc(tipoDesc === 'hermanos' ? 'ninguno' : 'hermanos')}
+                className={`border-2 rounded-xl p-3 text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+                  tipoDesc === 'hermanos' ? `${t.accentBorder} ${t.accentBg}` : 'border-gray-200 hover:border-gray-300'
+                }`}>
+                <div className={`font-bold text-sm ${tipoDesc === 'hermanos' ? t.accent : 'text-pm-navy'}`}>Hermanos −{cfg.descuentoHermanos}%</div>
+                <div className="text-xs text-gray-500 mt-0.5">{hermanosPosible ? 'Para 2 niños o más' : 'Añade 2 niños o más'}</div>
+              </button>
+              <button type="button"
+                onClick={() => setTipoDesc(tipoDesc === 'socio' ? 'ninguno' : 'socio')}
+                className={`border-2 rounded-xl p-3 text-left transition-all ${
+                  tipoDesc === 'socio' ? `${t.accentBorder} ${t.accentBg}` : 'border-gray-200 hover:border-gray-300'
+                }`}>
+                <div className={`font-bold text-sm ${tipoDesc === 'socio' ? t.accent : 'text-pm-navy'}`}>Socio del club −{cfg.descuentoSocio ?? 15}%</div>
+                <div className="text-xs text-gray-500 mt-0.5">Club Deportivo Origen</div>
+              </button>
+            </div>
+            {tipoDesc === 'socio' && (
+              <input type="text" value={numeroSocio} onChange={e => setNumeroSocio(e.target.value)} placeholder="Tu nº de socio *"
+                className="w-full mt-2 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-pm-navy" />
             )}
-            {cuponError && <p className="text-xs text-pm-red mt-1">Cupón no válido. Prueba con &quot;{cfg.cuponHermanos}&quot;.</p>}
+            {tipoDesc === 'socio' && <p className="text-xs text-gray-400 mt-1">Comprobamos el nº de socio antes del campamento.</p>}
           </div>
 
           {/* Resumen de precio */}
@@ -295,9 +313,9 @@ export default function ReservaBloque({
                 <span className="font-semibold">{subtotal * numNinos} €</span>
               </div>
             )}
-            {cuponAplicado && (
+            {pctDescuento > 0 && (
               <div className="flex justify-between text-green-600 text-sm">
-                <span>Descuento hermanos ({cfg.descuentoHermanos}%)</span>
+                <span>Descuento {tipoDesc === 'socio' ? 'socio' : 'hermanos'} ({pctDescuento}%)</span>
                 <span className="font-semibold">− {descuento * numNinos} €</span>
               </div>
             )}
@@ -309,7 +327,8 @@ export default function ReservaBloque({
 
           {/* Botón continuar */}
           {paso === 'seleccion' && (
-            <button onClick={() => setPaso('datos')} className={`w-full ${t.btn} text-white font-black py-3.5 rounded-xl transition-colors`}>
+            <button onClick={() => setPaso('datos')} disabled={tipoDesc === 'socio' && !numeroSocio.trim()}
+              className={`w-full ${t.btn} disabled:opacity-50 text-white font-black py-3.5 rounded-xl transition-colors`}>
               Continuar con mis datos →
             </button>
           )}

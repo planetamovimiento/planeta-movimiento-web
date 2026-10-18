@@ -51,7 +51,7 @@ export default function CampamentosReservaWizard({ cfg, ocupacion, onReservar }:
       </div>
 
       {sub === 'verano' && <ReservaVerano cfg={cfg} ocupacionDia={ocupacion.verano} onReservar={onReservar} />}
-      {sub === 'navidad' && <ReservaBloque cfg={cfg} servicio="Campamento de Navidad" fechas={navDias} horario={cfg.navidadHorario} color="blue" nombreCorto="Navidad" ocupacionDia={ocupacion.navidad} onReservar={onReservar} />}
+      {sub === 'navidad' && <ReservaBloque cfg={cfg} servicio="Campamento de Navidad" fechas={navDias} horario={cfg.navidadHorario} color="blue" nombreCorto="Navidad" ocupacionDia={ocupacion.navidad} onReservar={onReservar} ofertaSemana={false} />}
       {sub === 'ssanta' && <ReservaBloque cfg={cfg} servicio="Campamento de Semana Santa" fechas={ssDias} horario={cfg.ssantaHorario} color="violet" nombreCorto="Semana Santa" ocupacionDia={ocupacion.ssanta} onReservar={onReservar} />}
     </div>
   )
