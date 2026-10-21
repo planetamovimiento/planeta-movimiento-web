@@ -12,6 +12,7 @@ import { expandirOcurrencias } from '@/lib/calendario-club/expand'
 import { colorOcurrencia } from '@/lib/calendario-club/tipos'
 import { enlaceDeEvento } from '@/lib/calendario-club/enlaces'
 import { getPases } from '@/lib/navidad/store'
+import { eventosDeServicios } from '@/lib/home/agenda-servicios'
 
 export const metadata = {
   title: 'Planeta Movimiento — Educación, deporte y ocio en Cuenca',
@@ -87,6 +88,14 @@ export default async function HomePage() {
       fecha: o.fecha, titulo: o.titulo, hora: o.todo_el_dia ? '' : (o.hora_inicio ?? ''),
       tipo: o.tipo, color: colorOcurrencia(o, tipos), url: enlaceDeEvento(o),
     }))
+
+  // Mañana Mágica, Campamento de Navidad y Talleres infantiles salen solos con las
+  // fechas de su panel; si ya están apuntados ese día en el Calendario del Club, no se repiten.
+  const hoyISO = `${mesInicial}-${String(hoy.getDate()).padStart(2, '0')}`
+  for (const { evento, patron } of await eventosDeServicios(desde, hoyISO)) {
+    if (agenda.some(e => e.fecha === evento.fecha && patron.test(e.titulo))) continue
+    agenda.push(evento)
+  }
 
   // La Fábrica de Papá Noel sale sola con sus días reales de pases (si cambian
   // las fechas en el panel, el calendario cambia con ellas). Si alguien la

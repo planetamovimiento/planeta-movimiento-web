@@ -8,6 +8,7 @@
 export type IconoId =
   | 'familia' | 'fiesta' | 'zombie' | 'instalacion' | 'calabaza'
   | 'campamento' | 'taller' | 'gala' | 'cumple' | 'practica' | 'estrella' | 'regalo'
+  | 'magia' | 'campamentoNavidad'
 
 export type ColorAgenda = 'azul' | 'rojo' | 'gris' | 'naranja' | 'morado' | 'verde' | 'amarillo' | 'negro' | 'teal' | 'rosa'
 
@@ -43,8 +44,9 @@ const REGLAS: { test: (t: string) => boolean; icono: IconoId; color: ColorAgenda
   { test: t => t.includes('halloween'), icono: 'zombie', color: 'rosa' },
   { test: t => t.includes('sin cole'), icono: 'instalacion', color: 'naranja' },
   { test: t => t.includes('domingo'), icono: 'familia', color: 'amarillo' },
-  { test: t => t.includes('manana magica') || t.includes('mananas magicas'), icono: 'gala', color: 'teal' },
+  { test: t => t.includes('manana magica') || t.includes('mananas magicas'), icono: 'magia', color: 'teal' },
   { test: t => t.includes('practica libre'), icono: 'practica', color: 'azul' },
+  { test: t => t.includes('campamento') && t.includes('navidad'), icono: 'campamentoNavidad', color: 'verde' },
   { test: t => t.includes('campamento'), icono: 'campamento', color: 'verde' },
   { test: t => t.includes('cumplea'), icono: 'cumple', color: 'rojo' },
   { test: t => t.includes('gala') || t.includes('festival') || t.includes('exhibic'), icono: 'gala', color: 'morado' },
@@ -70,7 +72,8 @@ export function aspectoEvento(e: { titulo?: string | null; tipo?: string | null;
 
 const TRAZO = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
 
-const DIBUJOS: Record<IconoId, React.ReactNode> = {
+// Los que tienen pegatina (magia, campamento de Navidad) no necesitan dibujo propio.
+const DIBUJOS: Partial<Record<IconoId, React.ReactNode>> = {
   // Adulto y niño: Domingos en Familia.
   familia: (
     <>
@@ -164,6 +167,9 @@ const DIBUJOS: Record<IconoId, React.ReactNode> = {
  */
 export const PEGATINAS: Partial<Record<IconoId, string>> = {
   regalo: '/fotos/pegatinas/fabrica-papa-noel.webp',
+  calabaza: '/fotos/pegatinas/taller-infantil-halloween.webp',
+  magia: '/fotos/pegatinas/manana-magica.webp',
+  campamentoNavidad: '/fotos/pegatinas/campamento-navidad.webp',
   zombie: '/fotos/pegatinas/halloween.webp',
   fiesta: '/fotos/pegatinas/dia-festivo.webp',
   instalacion: '/fotos/pegatinas/dia-sin-cole.webp',

@@ -49,6 +49,8 @@ export type EventoCentroCfg = {
   sesionesBono: number
   /** % de descuento para socios del club (0 = sin descuento). */
   descuentoSocio: number
+  /** Días anulados en el Calendario del Club (Domingos en Familia): no se ofrecen al reservar. */
+  diasCancelados?: string[]
   estado: EstadoMM
   updatedAt?: string | null
   updatedBy?: string | null

@@ -27,6 +27,19 @@ export async function getTipos(): Promise<TipoEvento[]> {
   return rows.length ? rows : TIPOS_DEFAULT
 }
 
+/**
+ * Días anulados (excepción «cancelar») de los eventos del calendario cuyo título
+ * encaja con `patron` (p. ej. /domingos en familia/i). Así los formularios de
+ * reserva no ofrecen un día que no se va a hacer.
+ */
+export async function diasCancelados(patron: RegExp): Promise<string[]> {
+  const [eventos, excepciones] = await Promise.all([getEventos(), getExcepciones()])
+  const ids = new Set(eventos.filter(e => patron.test(e.titulo)).map(e => e.id))
+  return excepciones
+    .filter(x => x.accion === 'cancelar' && ids.has(x.evento_id))
+    .map(x => String(x.fecha).slice(0, 10))
+}
+
 /** Grupos del Club ya creados (tabla club_grupos del CRM). */
 export async function getClubGrupos(): Promise<string[]> {
   const db = createAdminClient()

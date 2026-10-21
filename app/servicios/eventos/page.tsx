@@ -1,3 +1,4 @@
+import { diasCancelados } from '@/lib/calendario-club/data'
 import { getMananaMagica, getEventoCentro } from '@/lib/eventos/store'
 import { getOcupacionFecha } from '@/lib/reservas/aforo'
 import { getServicio } from '@/lib/servicios/store'
@@ -15,7 +16,7 @@ export default async function EventosPage() {
   const [mananaMagica, diasSinCole, domingos, halloween, practicaLibre, tallerInfantil, ocupacionDSC, ocupacionDomingos, ocupacionMM, eventosSvc] = await Promise.all([
     getMananaMagica(),
     getEventoCentro('dias-sin-cole'),
-    getEventoCentro('domingos'),
+    getEventoCentro('domingos').then(async d => ({ ...d, diasCancelados: await diasCancelados(/domingos? en familia/i) })),
     getEventoCentro('halloween'),
     getEventoCentro('practica-libre'),
     getEventoCentro('talleres-infantiles'),

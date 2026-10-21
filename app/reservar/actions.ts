@@ -13,6 +13,7 @@ import { validarAforo } from '@/lib/reservas/aforo'
 import { CUMPLE_MIN_PARTICIPANTES, calcularTotalCumple } from '@/lib/cumpleanos/precio'
 import { enviarConfirmacionReserva, avisarNegocioReserva } from '@/lib/emails/confirmacion'
 import { comprobarEnvioForm } from '@/lib/seguridad/guard'
+import { diasCancelados } from '@/lib/calendario-club/data'
 
 export type DatosReserva = {
   nombre: string
@@ -308,6 +309,11 @@ async function comprobarReserva(p: PagoReservaPayload): Promise<{ ok: true; data
     if (!slot) return { ok: false, error: 'La franja elegida no está disponible para esa fecha.' }
     const ya = await contarReservas(servicio.nombre, fecha, horaInicioDe(hora))
     if (ya >= slot.plazas) return { ok: false, error: 'Esa franja acaba de quedarse sin plazas. Elige otra.' }
+  }
+
+  // Domingos en Familia anulados en el Calendario del Club: ese día no hay actividad.
+  if (servicioId === 'domingos' && fecha && (await diasCancelados(/domingos? en familia/i)).includes(fecha)) {
+    return { ok: false, error: 'Ese domingo no hay Domingos en Familia. Elige otro, por favor.' }
   }
 
   // Aforo por fecha (Días Sin Cole / Domingos / Mañanas / Campamentos). Autoritativo en servidor.

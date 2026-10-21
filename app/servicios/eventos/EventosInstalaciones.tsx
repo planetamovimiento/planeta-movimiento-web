@@ -270,7 +270,8 @@ export function ReservaDomingos({ cfg, onClose = () => {}, ocupacion = {}, onRes
             const pasado = obj < hoy
             const libres = libresDe(d)
             const lleno = aforo > 0 && libres <= 0
-            const bloqueado = pasado || lleno
+            const anulado = cfg?.diasCancelados?.includes(d) ?? false
+            const bloqueado = pasado || lleno || anulado
             return (
               <button key={d} type="button" disabled={bloqueado} onClick={() => setFecha(d)}
                 className={`px-3 py-2.5 rounded-xl border-2 text-sm transition-all text-center ${
@@ -279,8 +280,8 @@ export function ReservaDomingos({ cfg, onClose = () => {}, ocupacion = {}, onRes
                   : 'border-gray-200 hover:border-green-400 text-pm-navy'
                 }`}>
                 <div className="font-black">{obj.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}</div>
-                <div className={`text-xs ${lleno ? 'text-red-500 font-bold' : 'text-gray-400'}`}>
-                  {lleno ? 'Completo' : aforo > 0 ? `${libres} libre${libres === 1 ? '' : 's'}` : '11:00 – 13:00'}
+                <div className={`text-xs ${lleno || anulado ? 'text-red-500 font-bold' : 'text-gray-400'}`}>
+                  {anulado ? 'No hay' : lleno ? 'Completo' : aforo > 0 ? `${libres} libre${libres === 1 ? '' : 's'}` : '11:00 – 13:00'}
                 </div>
               </button>
             )

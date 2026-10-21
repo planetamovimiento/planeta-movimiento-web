@@ -1,6 +1,7 @@
 import { getServicios } from '@/lib/servicios/store'
 import { getHorarios, getHorarioServicio } from '@/lib/reservas/horarios'
 import { getCumpleanosOcupados } from '@/lib/cumpleanos/disponibilidad'
+import { diasCancelados } from '@/lib/calendario-club/data'
 import { getReservadosPorServicio } from '@/lib/reservas/disponibilidad'
 import { getEventoCentro, getMananaMagica } from '@/lib/eventos/store'
 import { getCampamentosConfig } from '@/lib/campamentos/store'
@@ -53,7 +54,7 @@ export default async function ReservarPage() {
     getHorarios(ids),
     getReservadosPorServicio(lista.map(s => ({ id: s.id, nombre: s.nombre }))),
     getEventoCentro('dias-sin-cole'),
-    getEventoCentro('domingos'),
+    getEventoCentro('domingos').then(async d => ({ ...d, diasCancelados: await diasCancelados(/domingos? en familia/i) })),
     getMananaMagica(),
     getCampamentosConfig(),
     getOcupacionFecha('dias-sin-cole'),
