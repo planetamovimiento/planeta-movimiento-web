@@ -28,6 +28,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     p('/educacion', 0.8, 'weekly'),
     p('/empresas', 0.8, 'weekly'),
     ...servicios.map(s => p(`/servicios/${s}`, PRIORITARIOS.has(s) ? 0.9 : 0.8, 'monthly')),
+    // Dirección propia de cada campamento (la usan los QR de los carteles).
+    p('/campamento/navidad', 0.8, 'weekly'),
+    p('/campamento/semana-santa', 0.7, 'monthly'),
+    p('/campamento/verano', 0.7, 'monthly'),
+    p('/fabrica-de-papa-noel', 0.8, 'weekly'),
     ...perfiles.map(s => p(`/actividades/${s}`, 0.6, 'monthly')),
     p('/club/talleres-intensivos', 0.7, 'monthly'),
     p('/planeta-shop', 0.7, 'monthly'),

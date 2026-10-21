@@ -9,6 +9,20 @@ import type { EstadoMM } from '@/lib/eventos/manana-magica'
 export type Elemento = 'Tierra' | 'Agua' | 'Fuego' | 'Aire'
 export type SemanaCfg = { id: number; elemento: Elemento; inicio: string; fin: string }
 
+/** Los tres campamentos, con la dirección propia de cada uno (para QR): /campamento/<slug>. */
+export type CampamentoId = 'navidad' | 'semanasanta' | 'verano'
+
+export const SLUG_CAMPAMENTO: Record<CampamentoId, string> = {
+  navidad: 'navidad',
+  semanasanta: 'semana-santa',
+  verano: 'verano',
+}
+
+export function campamentoDeSlug(slug: string): CampamentoId | null {
+  const par = (Object.entries(SLUG_CAMPAMENTO) as [CampamentoId, string][]).find(([, s]) => s === slug)
+  return par ? par[0] : null
+}
+
 export type CampamentosConfig = {
   // Precios (verano)
   precioDiaSuelto: number
@@ -18,6 +32,8 @@ export type CampamentosConfig = {
   descuentoHermanos: number   // % (ej. 15)
   /** % para socios del club (Navidad / Semana Santa). No se suma al de hermanos. */
   descuentoSocio: number
+  /** Campamento que se ve primero al entrar en /servicios/campamentos. */
+  campamentoPrincipal: CampamentoId
   cuponHermanos: string
   aforoDia: number            // plazas (niños) por día; 0 = sin límite (un niño ocupa cada día que elige)
   // Navidad
@@ -44,7 +60,7 @@ export type CampamentosConfig = {
 
 export const CAMPAMENTOS_DEFAULT: CampamentosConfig = {
   precioDiaSuelto: 25, precioSemana: 95, precioMatinal: 5, precioVespertino: 5,
-  descuentoHermanos: 15, descuentoSocio: 15, cuponHermanos: 'HERMANOS', aforoDia: 0,
+  descuentoHermanos: 15, descuentoSocio: 15, campamentoPrincipal: 'navidad', cuponHermanos: 'HERMANOS', aforoDia: 0,
   navidadFechas: [
     '2026-12-28', '2026-12-29', '2026-12-30', '2026-12-31',
     '2027-01-04', '2027-01-05', '2027-01-07', '2027-01-08',

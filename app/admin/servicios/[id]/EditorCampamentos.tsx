@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { ESTADOS_MM, type EstadoMM } from '@/lib/eventos/manana-magica'
-import { ELEMENTOS, type CampamentosConfig, type SemanaCfg, type Elemento } from '@/lib/campamentos/editable'
+import { ELEMENTOS, SLUG_CAMPAMENTO, type CampamentosConfig, type SemanaCfg, type Elemento, type CampamentoId } from '@/lib/campamentos/editable'
 import { SubirImagen } from '@/components/admin/SubirImagen'
 import { guardarEventoConfig } from '../evento-actions'
 import EditorFechas from './EditorFechas'
@@ -26,6 +26,7 @@ export default function EditorCampamentos({ inicial, puedeEditar }: { inicial: C
       precioDiaSuelto: Number(f.precioDiaSuelto) || 0, precioSemana: Number(f.precioSemana) || 0,
       precioMatinal: Number(f.precioMatinal) || 0, precioVespertino: Number(f.precioVespertino) || 0,
       descuentoHermanos: Number(f.descuentoHermanos) || 0, cuponHermanos: f.cuponHermanos,
+      descuentoSocio: Number(f.descuentoSocio) || 0, campamentoPrincipal: f.campamentoPrincipal,
       aforoDia: Number(f.aforoDia) || 0,
       navidadFechas: f.navidadFechas, navidadHorario: f.navidadHorario, navidadEstado: f.navidadEstado,
       navidadDescripcion: f.navidadDescripcion, navidadImagen: f.navidadImagen,
@@ -53,6 +54,28 @@ export default function EditorCampamentos({ inicial, puedeEditar }: { inicial: C
 
   return (
     <div className="space-y-6 max-w-4xl">
+      {/* CAMPAMENTO PRINCIPAL + DIRECCIONES */}
+      <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <h3 className="font-black text-pm-navy mb-1">⭐ Campamento que se ve primero</h3>
+        <p className="text-xs text-gray-500 mb-3">El que aparece abierto al entrar en Campamentos, listo para reservar.</p>
+        <div className="flex flex-wrap gap-2">
+          {(Object.keys(SLUG_CAMPAMENTO) as CampamentoId[]).map(id => (
+            <button key={id} type="button" disabled={!puedeEditar} onClick={() => set('campamentoPrincipal', id)}
+              className={`text-sm font-bold px-4 py-2 rounded-xl border-2 transition-colors ${
+                f.campamentoPrincipal === id ? 'border-pm-red bg-pm-red-light text-pm-red' : 'border-gray-200 text-gray-600 hover:border-pm-navy'
+              }`}>
+              {id === 'navidad' ? '⛄ Navidad' : id === 'semanasanta' ? '🌸 Semana Santa' : '☀️ Verano'}
+            </button>
+          ))}
+        </div>
+        <div className="mt-4 text-xs text-gray-500 space-y-1">
+          <div className="font-bold text-pm-navy">Direcciones propias (para QR y carteles):</div>
+          {(Object.entries(SLUG_CAMPAMENTO) as [CampamentoId, string][]).map(([id, slug]) => (
+            <div key={id} className="font-mono text-[12px]">planetamovimiento.com/campamento/{slug}</div>
+          ))}
+        </div>
+      </section>
+
       {/* PRECIOS */}
       <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <h3 className="font-black text-pm-navy mb-4">💶 Precios (Verano)</h3>
@@ -60,6 +83,7 @@ export default function EditorCampamentos({ inicial, puedeEditar }: { inicial: C
           <div><label className={label}>Día suelto (€)</label><input type="number" value={f.precioDiaSuelto} disabled={!puedeEditar} onChange={e => set('precioDiaSuelto', e.target.value)} className={input} /></div>
           <div><label className={label}>Semana completa (€)</label><input type="number" value={f.precioSemana} disabled={!puedeEditar} onChange={e => set('precioSemana', e.target.value)} className={input} /></div>
           <div><label className={label}>Descuento hermanos (%)</label><input type="number" value={f.descuentoHermanos} disabled={!puedeEditar} onChange={e => set('descuentoHermanos', e.target.value)} className={input} /></div>
+          <div><label className={label}>Descuento socios (%) · Navidad y S. Santa</label><input type="number" value={f.descuentoSocio} disabled={!puedeEditar} onChange={e => set('descuentoSocio', e.target.value)} className={input} /></div>
           <div><label className={label}>Matinal (€/día)</label><input type="number" value={f.precioMatinal} disabled={!puedeEditar} onChange={e => set('precioMatinal', e.target.value)} className={input} /></div>
           <div><label className={label}>Vespertino (€/día)</label><input type="number" value={f.precioVespertino} disabled={!puedeEditar} onChange={e => set('precioVespertino', e.target.value)} className={input} /></div>
           <div><label className={label}>Cupón hermanos</label><input value={f.cuponHermanos} disabled={!puedeEditar} onChange={e => set('cuponHermanos', e.target.value.toUpperCase())} className={input} /></div>

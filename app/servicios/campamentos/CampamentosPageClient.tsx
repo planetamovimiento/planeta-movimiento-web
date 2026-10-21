@@ -6,9 +6,9 @@ import { Galeria } from '@/components/ui/Galeria'
 import { optImg } from '@/lib/img/opt'
 import ReservaBloque from './ReservaBloque'
 import ReservaVerano from './ReservaVerano'
-import { semanasResueltas, parseFechasLista, type CampamentosConfig } from '@/lib/campamentos/editable'
+import { semanasResueltas, parseFechasLista, SLUG_CAMPAMENTO, type CampamentosConfig, type CampamentoId } from '@/lib/campamentos/editable'
 
-type Panel = 'navidad' | 'semanasanta' | 'verano'
+type Panel = CampamentoId
 
 const HABILIDADES = [
   { nombre: 'Agilidad',      img: '/insignias/agilidad.png',            desc: 'Parkour y movimiento libre' },
@@ -42,8 +42,20 @@ function rangoCorto(dias: string[]): string {
 
 type OcupacionCampamentos = { verano: Record<string, number>; navidad: Record<string, number>; ssanta: Record<string, number> }
 
-export default function CampamentosPageClient({ cfg, ocupacion }: { cfg: CampamentosConfig; ocupacion: OcupacionCampamentos }) {
-  const [panelActivo, setPanelActivo] = useState<Panel>('verano')
+export default function CampamentosPageClient({ cfg, ocupacion, inicial }: {
+  cfg: CampamentosConfig
+  ocupacion: OcupacionCampamentos
+  /** Campamento que viene en la URL (/campamento/navidad…). Sin él, el que se elija en el panel. */
+  inicial?: Panel
+}) {
+  const [panelActivo, setPanelActivo] = useState<Panel>(inicial ?? cfg.campamentoPrincipal ?? 'navidad')
+
+  // Cada campamento tiene su dirección: al cambiar de pestaña se actualiza la URL
+  // (sin recargar), así lo que se comparta abre directamente ese campamento.
+  function elegir(p: Panel) {
+    setPanelActivo(p)
+    window.history.replaceState(null, '', `/campamento/${SLUG_CAMPAMENTO[p]}`)
+  }
 
   const SEMANAS = semanasResueltas(cfg)
   const navDias = parseFechasLista(cfg.navidadFechas)
@@ -98,7 +110,7 @@ export default function CampamentosPageClient({ cfg, ocupacion }: { cfg: Campame
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex">
             {PANELS.map(p => (
-              <button key={p.id} onClick={() => setPanelActivo(p.id)}
+              <button key={p.id} onClick={() => elegir(p.id)}
                 className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 py-3 px-2 border-b-2 font-bold text-sm transition-all ${
                   panelActivo === p.id ? 'border-b-pm-red text-pm-red bg-pm-red-light' : 'border-b-transparent text-gray-500 hover:text-pm-navy hover:bg-pm-bg'
                 }`}>
