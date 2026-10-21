@@ -59,7 +59,7 @@ function calcularPrecio(cfg: CampamentosConfig, fechas: string[], seleccionados:
   const descuento = pctDescuento > 0 ? Math.round(base * (pctDescuento / 100)) : 0
   const matinalCost = matinal ? cfg.precioMatinal * numDias : 0
   const vespertinoCost = vespertino ? cfg.precioVespertino * numDias : 0
-  if (matinalCost) desglose.push({ label: `Matinal (8:00–9:00) · ${numDias} día${numDias > 1 ? 's' : ''}`, precio: matinalCost })
+  if (matinalCost) desglose.push({ label: `Matinal (9:00–10:00) · ${numDias} día${numDias > 1 ? 's' : ''}`, precio: matinalCost })
   if (vespertinoCost) desglose.push({ label: `Vespertino (14:00–15:00) · ${numDias} día${numDias > 1 ? 's' : ''}`, precio: vespertinoCost })
 
   const subtotal = base
@@ -147,7 +147,7 @@ export default function ReservaBloque({
       datos: {
         diasSeleccionados: dias.join(', '),
         numDias: dias.length,
-        matinal: matinal ? 'Sí (8:00–9:00)' : 'No',
+        matinal: matinal ? 'Sí (9:00–10:00)' : 'No',
         vespertino: vespertino ? 'Sí (14:00–15:00)' : 'No',
         descuento: textoDescuento || 'Sin descuento',
         numeroSocio: tipoDesc === 'socio' ? numeroSocio.trim() : '',
@@ -241,7 +241,7 @@ export default function ReservaBloque({
               <button onClick={() => setMatinal(!matinal)}
                 className={`border-2 rounded-xl p-3 text-left transition-all ${matinal ? `${t.accentBorder} ${t.accentBg}` : 'border-gray-200 hover:border-gray-300'}`}>
                 <div className={`font-bold text-sm ${matinal ? t.accent : 'text-pm-navy'}`}>Matinal</div>
-                <div className="text-xs text-gray-500 mt-0.5">Entrada de 8:00 a 9:00</div>
+                <div className="text-xs text-gray-500 mt-0.5">Entrada de 9:00 a 10:00</div>
                 <div className={`text-xs font-bold ${t.accent} mt-1`}>+{cfg.precioMatinal} € por niño y día</div>
               </button>
               <button onClick={() => setVespertino(!vespertino)}
