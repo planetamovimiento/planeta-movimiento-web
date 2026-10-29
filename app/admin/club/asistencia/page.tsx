@@ -4,7 +4,9 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getEventos } from '@/lib/calendario-club/data'
 import { diaSemana } from '@/lib/calendario-club/tipos'
 import { temporadaDisplay } from '@/lib/club/constants'
+import { getExtras, extrasDeLista } from '@/lib/club/asistencia-extras'
 import BarraAsistencia from './BarraAsistencia'
+import ExtrasAsistencia from './ExtrasAsistencia'
 
 export const dynamic = 'force-dynamic'
 
@@ -81,11 +83,12 @@ export default async function AsistenciaPage({ searchParams }: { searchParams: P
   const dias = (sp.dias ?? '').split(',').map(Number).filter(n => n >= 1 && n <= 7)
 
   const db = createAdminClient()
-  const [subsRes, gestRes, grupRes, eventos] = await Promise.all([
+  const [subsRes, gestRes, grupRes, eventos, todosExtras] = await Promise.all([
     db.from('form_submissions').select('id, nombre, datos').eq('tipo', 'inscripcion_club').limit(2000),
     db.from('club_gestion').select('submission_id, grupo, estado_general, temporada'),
     db.from('club_grupos').select('nombre, actividad, horario'),
     getEventos(),
+    getExtras(),
   ])
 
   type Gest = { submission_id: string; grupo: string | null; estado_general: string | null; temporada: string | null }
@@ -115,6 +118,16 @@ export default async function AsistenciaPage({ searchParams }: { searchParams: P
       !EXCLUIR.has(a.estado))
     .sort((a, b) => (a.apellidos || a.nombre).localeCompare(b.apellidos || b.nombre, 'es') || a.nombre.localeCompare(b.nombre, 'es'))
 
+  // Añadidos a mano (otro grupo, un solo día…): van al final, con su nota.
+  const extras = extrasDeLista(todosExtras, { actividad, grupo, temporada, desde, hasta })
+  const filas = [
+    ...alumnos.map(a => ({ nombre: a.nombre, apellidos: a.apellidos, nota: '' })),
+    ...extras.map(e => ({
+      nombre: e.nombre, apellidos: e.apellidos,
+      nota: [e.nota, e.fecha && `solo ${e.fecha.split('-').reverse().slice(0, 2).join('/')}`].filter(Boolean).join(' · ') || 'añadido',
+    })),
+  ]
+
   // Días bloqueados por el Calendario Club (festivos + días sin clase, con rangos).
   const bloqueados = new Set<string>()
   for (const e of eventos) {
@@ -143,6 +156,8 @@ export default async function AsistenciaPage({ searchParams }: { searchParams: P
         <BarraAsistencia nombreArchivo={nombreArchivo} />
       </div>
 
+      <ExtrasAsistencia actividad={actividad} grupo={grupo} temporada={temporada} desde={desde} hasta={hasta} extras={extras} />
+
       <div className="asis-hoja pm-print-root max-w-5xl mx-auto bg-white shadow-sm rounded-lg p-8">
         {/* Cabecera */}
         <div className="asis-cabecera flex items-center gap-4 border-b-2 border-pm-red pb-4 mb-4">
@@ -162,7 +177,7 @@ export default async function AsistenciaPage({ searchParams }: { searchParams: P
           </div>
         </div>
 
-        {alumnos.length === 0 ? (
+        {filas.length === 0 ? (
           <p className="text-gray-400 italic">No hay alumnos activos en este grupo para la temporada indicada.</p>
         ) : sesiones.length === 0 ? (
           <p className="text-gray-400 italic">No hay sesiones en el periodo con los días elegidos (revisa fechas, días de la semana y festivos).</p>
@@ -183,11 +198,12 @@ export default async function AsistenciaPage({ searchParams }: { searchParams: P
                   </tr>
                 </thead>
                 <tbody>
-                  {alumnos.map((a, i) => (
+                  {filas.map((a, i) => (
                     <tr key={i} className={i % 2 ? 'bg-gray-50' : ''}>
                       <td className="border border-gray-400 px-1 py-1 text-center text-[10px] text-gray-400">{i + 1}</td>
                       <td className="border border-gray-400 px-2 py-1 text-[13px] text-pm-navy whitespace-nowrap">
                         <span className="font-semibold">{a.apellidos}</span>{a.apellidos ? ', ' : ''}{a.nombre}
+                        {a.nota && <span className="text-[10px] italic text-gray-500"> ({a.nota})</span>}
                       </td>
                       {bloque.map(f => <td key={f} className="border border-gray-400 h-8 min-w-[44px]" />)}
                     </tr>
@@ -199,7 +215,7 @@ export default async function AsistenciaPage({ searchParams }: { searchParams: P
         )}
 
         <div className="mt-6 pt-3 border-t border-gray-200 flex items-center justify-between text-[11px] text-gray-400">
-          <span>{alumnos.length} {alumnos.length === 1 ? 'alumno' : 'alumnos'} · {sesiones.length} {sesiones.length === 1 ? 'sesión' : 'sesiones'}</span>
+          <span>{filas.length} {filas.length === 1 ? 'alumno' : 'alumnos'}{extras.length ? ` (${extras.length} añadido${extras.length === 1 ? '' : 's'} a mano)` : ''} ·{sesiones.length} {sesiones.length === 1 ? 'sesión' : 'sesiones'}</span>
           <span>Planeta Movimiento · Club Deportivo Origen</span>
         </div>
       </div>
