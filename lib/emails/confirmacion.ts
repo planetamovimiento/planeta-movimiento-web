@@ -431,3 +431,31 @@ export async function enviarAltaSocio(d: { email: string; tutor: string; partici
     meta: { servicio: 'Alta de socio · Club Deportivo Origen' },
   })
 }
+
+/** Justificante de la autorización de imagen firmada (portal o enlace). */
+export async function enviarJustificanteAutorizacion(d: {
+  email: string; tutor: string; dni: string; menores: string[]; actividad: string
+  canales: { label: string; autoriza: boolean }[]; conformidadMenor: boolean; version: string
+}): Promise<void> {
+  const fecha = new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid', dateStyle: 'long', timeStyle: 'short' })
+  const filas = d.canales.map(c =>
+    `<li>${c.autoriza ? '<b style="color:#15803d">AUTORIZO</b>' : '<b style="color:#b91c1c">NO AUTORIZO</b>'} · ${esc(c.label)}</li>`).join('')
+
+  const html = envolver(`
+      ${saludo(d.tutor)}
+      ${parrafo('Hemos recibido tu <b>autorización para la captación y uso de imágenes de menores</b>. Este correo es tu justificante.')}
+      ${parrafo(`Menor${d.menores.length > 1 ? 'es' : ''}: ${listaNombres(d.menores.map(n => `<b>${esc(n)}</b>`))}${d.actividad ? `<br>Actividad: <b>${esc(d.actividad)}</b>` : ''}`)}
+      <ul style="color:#334155;font-size:15px;line-height:1.6;margin:0 0 14px;padding-left:20px">${filas}</ul>
+      ${d.conformidadMenor ? parrafo('Se ha indicado la conformidad del menor.') : ''}
+      ${parrafo(`Firmado electrónicamente por <b>${esc(d.tutor)}</b> (DNI/NIE ${esc(d.dni)}) el ${fecha}. Versión del documento: ${esc(d.version)}.`)}
+      ${parrafo('Puedes cambiar tu elección o retirar el consentimiento cuando quieras desde el Portal de Familias, firmando de nuevo en planetamovimiento.com/autorizacion, o escribiéndonos a info@planetamovimiento.com.')}
+      <p style="color:#0F1A3D;font-size:15px;line-height:1.6;margin:0;font-weight:700">Planeta Carlos, S. L.<br>Planeta Movimiento</p>`)
+
+  await enviarEmail({
+    to: d.email,
+    subject: 'Justificante: autorización de imágenes de menores',
+    html,
+    tipo: 'confirmacion-cliente',
+    meta: { servicio: 'Autorización de imagen', menores: d.menores },
+  })
+}

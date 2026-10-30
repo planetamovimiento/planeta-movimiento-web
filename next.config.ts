@@ -61,6 +61,9 @@ const nextConfig: NextConfig = {
       // ── Talleres intensivos ──
       { source: "/intensivos", destination: "/club/talleres-intensivos", permanent: true },
 
+      // ── Autorización de imágenes: también con tilde ──
+      { source: "/autorizaci%C3%B3n", destination: "/autorizacion", permanent: true },
+
       // ── Eventos / formación ──
       { source: "/eventos/cursos-certificados", destination: "/educacion", permanent: true },
       { source: "/eventos/:slug*", destination: "/servicios/eventos", permanent: true },

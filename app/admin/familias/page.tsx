@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { requireSeccion, can } from '@/lib/admin/auth'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { AdminHeader } from '@/components/admin/ui'
@@ -55,6 +56,10 @@ export default async function FamiliasPage() {
         subtitulo="Cuentas de familias, alumnos vinculados y acceso al portal privado"
       />
       <div className="p-4 lg:p-8">
+        <Link href="/admin/familias/autorizaciones"
+          className="inline-flex items-center gap-2 mb-4 text-sm font-bold text-pm-navy border border-gray-200 hover:border-pm-navy rounded-xl px-4 py-2 bg-white">
+          📸 Autorizaciones de imagen
+        </Link>
         <AvisosManager avisos={await getAvisos()} puedeEditar={can.edit(admin.role)} />
         <FamiliasClient familias={familias} links={links} alumnos={alumnos} migrado={famsRes.ok && linksRes.ok} puedeEditar={can.edit(admin.role)} />
       </div>
