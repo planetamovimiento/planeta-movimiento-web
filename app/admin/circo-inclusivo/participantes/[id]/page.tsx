@@ -74,14 +74,14 @@ export default async function FichaParticipantePage({ params }: { params: Promis
             <Bloque titulo="Evaluación mensual (automática)" sub="Media de las sesiones válidas de cada mes. Provisional hasta el cierre.">
               {meses.length === 0
                 ? <Vacio texto="Aún no hay medias: se calculan solas al evaluar sesiones." />
-                : <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{meses.map(m => <TarjetaMes key={m.clave} m={m} />)}</div>}
+                : <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{meses.map(m => <TarjetaMes key={m.clave} m={m} informe={`${base}/informe?tipo=mes&clave=${m.clave}`} />)}</div>}
             </Bloque>
 
             {/* Resumen trimestral automático */}
             <Bloque titulo="Evaluación trimestral (automática)" sub="Media de las evaluaciones mensuales del trimestre.">
               {trimestres.length === 0
                 ? <Vacio texto="Se calcula automáticamente a partir de los meses." />
-                : <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{trimestres.map(t => <TarjetaTrimestre key={t.clave} t={t} />)}</div>}
+                : <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{trimestres.map(t => <TarjetaTrimestre key={t.clave} t={t} informe={`${base}/informe?tipo=trimestre&clave=${t.clave}`} />)}</div>}
             </Bloque>
 
             {/* Evaluaciones de sesión */}
@@ -152,7 +152,16 @@ function Criterios({ pc }: { pc: Record<string, number | null> }) {
   )
 }
 
-function TarjetaMes({ m }: { m: ResumenMes }) {
+/** Enlace a la hoja imprimible (Guardar como PDF). */
+function Descargar({ href }: { href: string }) {
+  return (
+    <Link href={href} target="_blank" className="inline-block mt-2 text-xs font-bold text-pm-red hover:underline">
+      📄 Ver / descargar informe
+    </Link>
+  )
+}
+
+function TarjetaMes({ m, informe }: { m: ResumenMes; informe: string }) {
   return (
     <div className="border border-gray-100 rounded-xl p-3">
       <div className="flex items-center justify-between">
@@ -164,11 +173,12 @@ function TarjetaMes({ m }: { m: ResumenMes }) {
         {m.provisional && <span className="ml-1 text-amber-600 font-semibold">· provisional</span>}
       </div>
       <Criterios pc={m.porCriterio} />
+      <Descargar href={informe} />
     </div>
   )
 }
 
-function TarjetaTrimestre({ t }: { t: ResumenTrimestre }) {
+function TarjetaTrimestre({ t, informe }: { t: ResumenTrimestre; informe: string }) {
   return (
     <div className="border border-gray-100 rounded-xl p-3">
       <div className="flex items-center justify-between">
@@ -181,6 +191,7 @@ function TarjetaTrimestre({ t }: { t: ResumenTrimestre }) {
           : <span>3 de 3 meses</span>}
       </div>
       <Criterios pc={t.porCriterio} />
+      <Descargar href={informe} />
     </div>
   )
 }
