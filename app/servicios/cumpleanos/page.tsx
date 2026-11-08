@@ -5,18 +5,77 @@ import ReservaCumpleanos from './ReservaCumpleanos'
 import { getCumpleanosOcupados } from '@/lib/cumpleanos/disponibilidad'
 import { getHorarioServicio } from '@/lib/reservas/horarios'
 import { JsonLd } from '@/components/seo/JsonLd'
-import { breadcrumbsJsonLd } from '@/lib/seo'
+import { breadcrumbsJsonLd, SITE_URL } from '@/lib/seo'
+import { CANCELACION_TRAMOS } from '@/lib/reservas/cancelacion'
 
 export const dynamic = 'force-dynamic'
 
 // 🎥 Enlace del vídeo explicativo de YouTube (déjalo vacío para ocultar la sección).
 const VIDEO_CUMPLE = 'https://www.youtube.com/shorts/HsIbAnQt6qc'
 
+const TITULO = 'Cumpleaños Infantiles en Cuenca | Planeta Movimiento'
+const DESCRIPCION =
+  'Celebra el cumpleaños de tu hijo en Cuenca: 2 horas con monitores, juegos, circo y retos en grupo, merienda y bebidas incluidas. Desde 11 € por niño. Reserva online.'
+
 export const metadata = {
-  title: 'Cumpleaños Infantiles y Celebraciones en Cuenca | Planeta Movimiento',
-  description:
-    'Cumpleaños infantiles y celebraciones temáticas de superhéroes en Cuenca: 2 horas de actividad guiada, juegos, retos en grupo y merienda incluida. Desde 11 €/participante.',
+  title: TITULO,
+  description: DESCRIPCION,
+  keywords: ['cumpleaños Cuenca', 'cumpleaños infantiles Cuenca', 'celebrar cumpleaños en Cuenca', 'fiestas de cumpleaños Cuenca', 'dónde celebrar un cumpleaños en Cuenca'],
   alternates: { canonical: '/servicios/cumpleanos' },
+  openGraph: {
+    title: TITULO,
+    description: DESCRIPCION,
+    url: '/servicios/cumpleanos',
+    type: 'website',
+    locale: 'es_ES',
+  },
+}
+
+// Preguntas frecuentes: se muestran en la página y van también como FAQPage.
+const FAQ: { p: string; r: string }[] = [
+  { p: '¿Cuánto cuesta celebrar un cumpleaños en Planeta Movimiento?',
+    r: 'De lunes a jueves, 11 € por participante; viernes, sábados, domingos y festivos, 13 € por participante. El mínimo es de 13 participantes (si venís menos se puede celebrar igualmente, facturando el mínimo). A partir de 25 participantes se añade un monitor extra (+20 €).' },
+  { p: '¿Qué incluye el cumpleaños?',
+    r: '1 hora y media de actividad guiada con monitor especializado (juegos, retos, circuitos y circo), 30 minutos de merienda con bebidas, cubiertos y vasos, y seguro. La tarta no está incluida: podéis traerla vosotros.' },
+  { p: '¿Cuánto dura un cumpleaños?',
+    r: 'Dos horas en total: 1 h 30 min de actividad y 30 min de merienda para soplar las velas.' },
+  { p: '¿Qué merienda hay?',
+    r: 'Cada niño elige el día del cumpleaños entre sándwich mixto, sándwich de Nocilla, nuggets o salchipapas, con agua, Aquarius de limón o naranja, o zumo de melocotón o piña.' },
+  { p: '¿Qué horarios tenéis?',
+    r: 'De lunes a viernes, de 18:15 a 20:15. Sábados y domingos hay dos turnos: de 16:45 a 18:45 y de 18:15 a 20:15.' },
+  { p: '¿Cómo se reserva un cumpleaños?',
+    r: 'Desde esta misma página: eliges el día y el horario libres, rellenas los datos y pagas online una señal de 50 € para confirmar la fecha. El resto se abona el día del cumpleaños en la instalación.' },
+  { p: '¿Y si tenemos que cancelar?',
+    r: `La señal de 50 € sigue la política general de cancelación: ${CANCELACION_TRAMOS.map(t => `${t.cuando.toLowerCase()}, ${t.devolucion}`).join('; ')}.` },
+  { p: '¿Dónde se celebra?',
+    r: 'En las instalaciones de Planeta Movimiento, en el Polígono Los Palancares, 8, 16004 Cuenca.' },
+]
+
+const SERVICIO_JSONLD = {
+  '@context': 'https://schema.org',
+  '@type': 'Service',
+  '@id': `${SITE_URL}/servicios/cumpleanos#servicio`,
+  name: 'Cumpleaños infantiles en Cuenca',
+  serviceType: 'Fiestas de cumpleaños infantiles',
+  description: DESCRIPCION,
+  url: `${SITE_URL}/servicios/cumpleanos`,
+  image: `${SITE_URL}/fotos/cumpleanos/1.webp`,
+  provider: { '@id': `${SITE_URL}/#negocio` },
+  areaServed: { '@type': 'City', name: 'Cuenca' },
+  offers: {
+    '@type': 'AggregateOffer',
+    priceCurrency: 'EUR',
+    lowPrice: 11,
+    highPrice: 13,
+    description: 'Precio por participante (mínimo 13 participantes)',
+    url: `${SITE_URL}/servicios/cumpleanos`,
+  },
+}
+
+const FAQ_JSONLD = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: FAQ.map(f => ({ '@type': 'Question', name: f.p, acceptedAnswer: { '@type': 'Answer', text: f.r } })),
 }
 
 const incluye = [
@@ -34,7 +93,9 @@ export default async function CumpleanosPage() {
   const [ocupados, franjas] = await Promise.all([getCumpleanosOcupados(), getHorarioServicio('cumpleanos')])
   return (
     <main className="bg-pm-bg min-h-screen">
-      <JsonLd data={breadcrumbsJsonLd([{ name: 'Inicio', path: '/' }, { name: 'Ocio', path: '/ocio' }, { name: 'Cumpleaños', path: '/servicios/cumpleanos' }])} />
+      <JsonLd data={breadcrumbsJsonLd([{ name: 'Inicio', path: '/' }, { name: 'Ocio', path: '/ocio' }, { name: 'Cumpleaños en Cuenca', path: '/servicios/cumpleanos' }])} />
+      <JsonLd data={SERVICIO_JSONLD} />
+      <JsonLd data={FAQ_JSONLD} />
       {/* Breadcrumb */}
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
@@ -57,17 +118,17 @@ export default async function CumpleanosPage() {
             {/* Imagen principal — foto real de cumpleaños */}
             <div className="relative bg-pm-navy rounded-2xl overflow-hidden aspect-[16/9]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/fotos/cumpleanos/1.webp" alt="Cumpleaños en Planeta Movimiento" className="absolute inset-0 w-full h-full object-cover" />
+              <img src="/fotos/cumpleanos/1.webp" alt="Niños celebrando un cumpleaños infantil en Planeta Movimiento, Cuenca" fetchPriority="high" className="absolute inset-0 w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-pm-navy/90 via-pm-navy/45 to-pm-navy/20" />
               <div className="relative h-full flex flex-col items-center justify-center text-center px-8">
-                <div className="text-white font-black text-3xl mb-2 [text-shadow:0_2px_16px_rgba(0,0,0,0.5)]">Celebración de<br/>cumpleaños</div>
+                <div className="text-white font-black text-3xl mb-2 [text-shadow:0_2px_16px_rgba(0,0,0,0.5)]">Celebra tu<br/>cumpleaños en Cuenca</div>
                 <div className="text-white/85 text-sm [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">Planeta Movimiento · Cuenca</div>
               </div>
             </div>
 
             {/* Descripción */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h1 className="text-2xl font-black text-pm-navy mb-3">Celebración de cumpleaños</h1>
+              <h1 className="text-2xl font-black text-pm-navy mb-3">Cumpleaños infantiles en Cuenca</h1>
               <p className="text-gray-700 text-sm leading-relaxed mb-4">
                 Celebra un <strong className="text-pm-navy">cumpleaños a lo grande en Cuenca</strong> en las instalaciones de Planeta Movimiento.{' '}
                 <strong className="text-pm-navy">2 horas</strong> de diversión activa con{' '}
@@ -160,6 +221,30 @@ export default async function CumpleanosPage() {
               </div>
               <div className="mt-3 text-xs text-gray-500 text-center">Duración total: 2 horas</div>
             </div>
+
+            {/* Texto para quien busca dónde celebrar un cumpleaños en Cuenca */}
+            <section className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-3 text-sm text-gray-700 leading-relaxed">
+              <h2 className="font-black text-pm-navy text-base">¿Dónde celebrar un cumpleaños en Cuenca?</h2>
+              <p>
+                En Planeta Movimiento convertimos el cumpleaños de tu hijo o hija en una fiesta activa y diferente:
+                los niños se mueven, juegan en equipo y prueban actividades de circo y acrobacia guiados por monitores,
+                mientras las familias se despreocupan de organizar nada. Es una alternativa a los parques de bolas
+                para celebrar cumpleaños infantiles en Cuenca con más movimiento y más diversión.
+              </p>
+              <p>
+                La fiesta dura dos horas: hora y media de juegos, retos y circuitos, y media hora de merienda con
+                bebidas para soplar las velas. El monitor, el seguro, los cubiertos y los vasos están incluidos;
+                vosotros solo tenéis que traer la tarta (y si no la traéis, usamos nuestra tarta decorativa y los
+                niños ganan 15 minutos más de juego).
+              </p>
+              <p>
+                Puedes ver los días libres y <strong className="text-pm-navy">reservar el cumpleaños online</strong> en
+                esta misma página, con una señal de 50 €. Estamos en el Polígono Los Palancares, 8, en Cuenca.
+                ¿Buscas otros planes? Mira también nuestros{' '}
+                <Link href="/servicios/campamentos" className="text-pm-red font-semibold hover:underline">campamentos</Link>{' '}
+                y los <Link href="/servicios/eventos" className="text-pm-red font-semibold hover:underline">eventos en el centro</Link>.
+              </p>
+            </section>
           </div>
 
           {/* ── COLUMNA DERECHA — Widget de reserva ── */}
@@ -179,6 +264,24 @@ export default async function CumpleanosPage() {
       </div>
       <VideoYoutube url={VIDEO_CUMPLE} titulo="Cómo es un cumpleaños en Planeta Movimiento" subtitulo="Dale al play y descúbrelo en vídeo" fondo="bg-white" />
       <Galeria slug="cumpleanos" titulo="Galería" subtitulo="Cumpleaños llenos de circo y diversión" fondo="bg-pm-bg" />
+
+      {/* Preguntas frecuentes (también en FAQ_JSONLD) */}
+      <section className="bg-white py-12" aria-labelledby="faq-cumple">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+          <h2 id="faq-cumple" className="text-2xl font-black text-pm-navy mb-6 text-center">Preguntas frecuentes sobre los cumpleaños</h2>
+          <div className="space-y-3">
+            {FAQ.map(f => (
+              <details key={f.p} className="group bg-pm-bg rounded-xl border border-gray-100 p-4">
+                <summary className="font-bold text-pm-navy cursor-pointer list-none flex justify-between gap-3">
+                  <h3 className="text-sm sm:text-base">{f.p}</h3>
+                  <span className="text-pm-red group-open:rotate-45 transition-transform" aria-hidden="true">+</span>
+                </summary>
+                <p className="text-sm text-gray-700 leading-relaxed mt-2">{f.r}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
     </main>
   )
 }
